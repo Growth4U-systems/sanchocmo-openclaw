@@ -110,7 +110,7 @@ export function buildClientContextBlock(pack, options = {}) {
       remaining -= excerpt.length;
     }
     lines.push("");
-    lines.push("Regla de contexto: responde desde el HTML recibido y estos extractos. Cuando uses el Brain, cita brevemente la ruta exacta de la fuente. No intentes volver a leerlos con herramientas.");
+    lines.push("Regla de contexto: el HTML recibido es la fuente principal. Usa estos extractos solo si la pregunta requiere contexto adicional o una conexion util con Growth4U; si no, ignoralos. Cuando uses el Brain, cita brevemente la ruta exacta de la fuente.");
   } else if (docPaths.length > 0) {
     lines.push("");
     lines.push("Documentos de contexto disponibles (lee de forma selectiva, no los cargues completos por defecto):");

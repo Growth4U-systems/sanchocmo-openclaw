@@ -35,16 +35,17 @@ test("invalid configured docs models fail closed to the known fast model", () =>
   );
 });
 
-test("docs reviews disable runtime overhead and tools for a single fast turn", () => {
-  assert.deepEqual(buildDocsReviewReplyOptions("nan/qwen3.6"), {
+test("docs reviews disable runtime overhead without sending an empty tools array", () => {
+  const options = buildDocsReviewReplyOptions("nan/qwen3.6");
+  assert.deepEqual(options, {
     modelOverride: "nan/qwen3.6",
     thinkingLevelOverride: "off",
     fastModeOverride: true,
     bootstrapContextMode: "lightweight",
-    disableTools: true,
     skillFilter: [],
     suppressToolErrorWarnings: true,
     suppressDefaultToolProgressMessages: true,
   });
+  assert.equal("disableTools" in options, false);
   assert.deepEqual(buildDocsReviewReplyOptions(null), {});
 });
