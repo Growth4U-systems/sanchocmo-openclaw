@@ -21,7 +21,7 @@ export function modelSessionSlug(model) {
     .slice(0, 96) || "default";
 }
 
-export function buildAgentSessionKey(agentId, chatId, cfg) {
-  const model = resolveAgentModel(cfg, agentId);
+export function buildAgentSessionKey(agentId, chatId, cfg, modelOverride) {
+  const model = modelFromValue(modelOverride) || resolveAgentModel(cfg, agentId);
   return `agent:${agentId}:model:${modelSessionSlug(model)}:${chatId}`;
 }

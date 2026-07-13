@@ -92,7 +92,7 @@ function escapeDocumentDelimiter(value: string): string {
 export function buildDocsAssistantPrompt(input: DocsAssistantQuestion): string {
   const history = (input.history || [])
     .slice(-4)
-    .map((item) => `${item.role === "user" ? "Usuario" : "Sancho"}: ${bounded(item.content, 2_000)}`)
+    .map((item) => `${item.role === "user" ? "Usuario" : "Growie"}: ${bounded(item.content, 2_000)}`)
     .join("\n");
 
   return [
@@ -111,6 +111,7 @@ export function buildDocsAssistantPrompt(input: DocsAssistantQuestion): string {
     "--- END UNTRUSTED_DOCUMENT ---",
     `Pregunta del usuario: ${input.question}`,
     "Cuando uses informacion externa al HTML, indica el archivo o fuente del Brain de forma breve. Si no hay evidencia suficiente, dilo claramente.",
+    "Da una respuesta facil de escanear en Markdown sencillo: subtitulos breves, listas con bullets y negritas cuando ayuden. Evita tablas y bloques decorativos.",
     "[/Docs Review Request]",
   ].filter(Boolean).join("\n\n");
 }
@@ -167,7 +168,7 @@ export async function dispatchDocsAssistantQuestion(
     // The status and bounded raw response below are enough for diagnostics.
   }
   if (!response.ok || typeof payload.runId !== "string") {
-    throw new Error(`Sancho chat dispatch failed (${response.status}): ${raw.slice(0, 300)}`);
+    throw new Error(`Growie chat dispatch failed (${response.status}): ${raw.slice(0, 300)}`);
   }
 
   return {
@@ -228,7 +229,7 @@ export function readDocsAssistantRun(runId: string): DocsAssistantRunState {
       ? run.output as Record<string, unknown>
       : {};
     const answer = typeof output.text === "string" ? output.text.trim() : "";
-    if (!answer) return { status: "failed", error: "Sancho termino sin una respuesta visible" };
+    if (!answer) return { status: "failed", error: "Growie termino sin una respuesta visible" };
     return {
       status: "completed",
       answer,
@@ -236,5 +237,5 @@ export function readDocsAssistantRun(runId: string): DocsAssistantRunState {
     };
   }
   if (run.status === "cancelled") return { status: "failed", error: "La consulta fue cancelada" };
-  return { status: "failed", error: "Sancho no pudo completar la consulta" };
+  return { status: "failed", error: "Growie no pudo completar la consulta" };
 }

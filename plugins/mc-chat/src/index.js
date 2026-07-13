@@ -30,6 +30,7 @@ import {
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
+import { resolveTurnModelOverride } from "./model-routing.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
 import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js";
 import { mcChatCostGuard } from "./cost-guard.js";
@@ -287,6 +288,12 @@ export default defineChannelPluginEntry({
         const isTemporarySancho = temporaryAgent === true && requestedAgent === "sancho";
         const isReadOnly = readOnly === true;
         const isControlFollowup = controlDepth === 1 || isReadOnly;
+        const turnModelOverride = resolveTurnModelOverride({
+          readOnly: isReadOnly,
+          source: _source,
+          slug,
+          userId,
+        });
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
 
@@ -296,7 +303,7 @@ export default defineChannelPluginEntry({
           : `channel:mc-chat:${slug}:${threadId}`;
 
         if (isStopCommand(text)) {
-          const stopSessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg);
+          const stopSessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg, turnModelOverride);
           const cancelled = mcChatCostGuard.cancelRun(
             stopSessionKey,
             "La ejecución fue detenida por el usuario.",
@@ -393,8 +400,8 @@ export default defineChannelPluginEntry({
         // OpenRouter to Fireworks, reusing `agent:sancho:<chat>` can keep the old
         // provider pinned for the next turn. Changing the model changes the key,
         // forcing a fresh runtime session while preserving agent routing.
-        const resolvedModel = resolveAgentModel(cfg, requestedAgent);
-        const sessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg);
+        const resolvedModel = turnModelOverride || resolveAgentModel(cfg, requestedAgent);
+        const sessionKey = buildAgentSessionKey(requestedAgent, chatId, cfg, turnModelOverride);
         const dispatchFamilyKey = semanticSessionFamilyKey(sessionKey);
         logger.info(`[mc-chat] resolved agent=${requestedAgent} model=${resolvedModel || "default"} session=${sessionKey} dispatchFamily=${dispatchFamilyKey}`);
         const guardRunId = `mc-chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -484,13 +491,17 @@ export default defineChannelPluginEntry({
             }, guardLimits.maxWallClockMs)
           : null;
         try {
-          try {
-            const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
-            if (result.removedBlocks > 0) {
-              logger.warn(`[mc-chat] sanitized ${result.removedBlocks} thinking block(s) from ${result.filesChanged} ${requestedAgent} session file(s) before dispatch`);
+          if (turnModelOverride) {
+            logger.info(`[mc-chat] skipping global thinking-history scan for isolated read-only docs session=${sessionKey}`);
+          } else {
+            try {
+              const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
+              if (result.removedBlocks > 0) {
+                logger.warn(`[mc-chat] sanitized ${result.removedBlocks} thinking block(s) from ${result.filesChanged} ${requestedAgent} session file(s) before dispatch`);
+              }
+            } catch (e) {
+              logger.warn(`[mc-chat] thinking-history sanitizer skipped: ${e?.message || e}`);
             }
-          } catch (e) {
-            logger.warn(`[mc-chat] thinking-history sanitizer skipped: ${e?.message || e}`);
           }
 
           // Default to Next.js (port 3000) — it owns chat thread writes since
@@ -578,6 +589,7 @@ export default defineChannelPluginEntry({
               sourceReplyDeliveryMode: "automatic",
               runId: guardRunId,
               abortSignal: abortController.signal,
+              ...(turnModelOverride ? { modelOverride: turnModelOverride } : {}),
               timeoutOverrideSeconds: guardLimits.enabled
                 ? Math.ceil(guardLimits.maxWallClockMs / 1000)
                 : undefined,
