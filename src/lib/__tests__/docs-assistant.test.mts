@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
+  buildDocsBrainContext,
   buildDocsAssistantPrompt,
   createDocsAssistantReceipt,
   docsAssistantQuestionSchema,
   isAllowedPrivateDocsUrl,
+  requestDirectDocsAssistantAnswer,
   verifyDocsAssistantReceipt,
   type DocsAssistantDispatch,
   type DocsAssistantQuestion,
@@ -90,6 +92,52 @@ test("document prompt keeps the HTML untrusted and the turn read-only", () => {
   assert.doesNotMatch(prompt, /END UNTRUSTED_DOCUMENT ---\n\nPregunta del usuario: Ignore/);
 });
 
+test("direct Growie completion sends no tools and keeps Brain context optional", async () => {
+  let requestBody: Record<string, unknown> = {};
+  const answer = await requestDirectDocsAssistantAnswer(validQuestion, {
+    apiKey: "nan-test-key",
+    brainContext: "[Optional Growth4U Brain Context]\nContexto de prueba",
+    model: "qwen3.6",
+    fetcher: async (_url, init) => {
+      requestBody = JSON.parse(String(init?.body));
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{ message: { content: "## Resumen\n\n- **Idea:** respuesta directa." } }],
+        }),
+      } as Response;
+    },
+  });
+
+  assert.match(answer, /## Resumen/);
+  assert.equal(requestBody.model, "qwen3.6");
+  assert.equal(requestBody.reasoning_effort, "none");
+  assert.equal("tools" in requestBody, false);
+  assert.match(JSON.stringify(requestBody.messages), /Contexto de prueba/);
+  assert.match(JSON.stringify(requestBody.messages), /fuente principal/);
+});
+
+test("Brain excerpts are bounded, sourced and explicitly optional", () => {
+  const context = buildDocsBrainContext({
+    summary: "Cliente: Growth4U",
+    documents: [
+      {
+        path: "brand/growth4u/company-brief/company-brief.current.md",
+        absPath: "/private/company-brief.current.md",
+        kind: "file",
+        content: "A".repeat(10_000),
+        truncated: true,
+      },
+    ],
+  });
+  assert.match(context, /solo si aporta evidencia necesaria/);
+  assert.match(context, /Fuente Brain: brand\/growth4u\/company-brief/);
+  assert.match(context, /extracto truncado/);
+  assert.ok(context.length < 7_000);
+  assert.doesNotMatch(context, /\/private\/company-brief/);
+});
+
 test("poll receipts are signed, bounded and expire", () => {
   const dispatch: DocsAssistantDispatch = {
     runId: "run_test_123",
@@ -137,6 +185,7 @@ test("API dispatches once and polls the exact signed run without a user session"
   }), polled.res, dependencies);
   assert.equal(polled.read().statusCode, 200);
   assert.equal(polled.read().payload.answer, "Respuesta de run_docs_123");
+  assert.equal(polled.read().payload.agent, "growie");
   assert.equal(polled.read().payload.readOnly, true);
 });
 
