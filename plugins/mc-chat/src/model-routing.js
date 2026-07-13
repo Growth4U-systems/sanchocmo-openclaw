@@ -25,7 +25,6 @@ export function buildDocsReviewReplyOptions(modelOverride) {
     thinkingLevelOverride: "off",
     fastModeOverride: true,
     bootstrapContextMode: "lightweight",
-    disableTools: true,
     skillFilter: [],
     suppressToolErrorWarnings: true,
     suppressDefaultToolProgressMessages: true,
