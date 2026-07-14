@@ -130,10 +130,15 @@ Then manage the whole lifecycle with the same CLI — no `docker compose -f …`
 remember:
 
 ```bash
-./sancho up | down | restart | status | logs
-./sancho update [vX.Y.Z|edge|latest]   # pull (and optionally pin) a version
-./sancho destroy                       # wipe containers + data (asks to confirm)
+sancho up | down | restart | status | logs
+sancho update [vX.Y.Z|edge|latest]     # pull (and optionally pin) a version
+sancho destroy                         # wipe containers + data (asks to confirm)
 ```
+
+`install` links `sancho` into your `PATH` (no sudo, best-effort), so you can call
+it from anywhere — `./sancho` from the install dir keeps working just the same.
+Run `sancho link` to (re)create the link by hand. See
+[`docs/INSTALL.md`](docs/INSTALL.md#sancho-from-anywhere-san-446).
 
 (`./install.sh` still works — it's a thin shim for `./sancho install`.)
 
