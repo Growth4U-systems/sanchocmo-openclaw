@@ -76,4 +76,28 @@ run_link --force >/dev/null || { echo "FAIL E: --force falló"; exit 1; }
 [ -L "$LINK" ] || { echo "FAIL E: --force no reemplazó el ajeno por el symlink"; exit 1; }
 [ "$(readlink "$LINK")" = "$INSTALL/sancho" ] || { echo "FAIL E: --force dejó un symlink mal apuntado"; exit 1; }
 
+# ---------------------------------------------------------------------------
+# Caso F: `install --no-up` TAMBIÉN deja el symlink. El link es conveniencia de
+# PATH, no tiene que ver con levantar el stack — y `reconfigure` es justamente
+# `install --force --no-up`, así que sin esto tampoco linkeaba. (SAN-460)
+# ---------------------------------------------------------------------------
+rm -f "$LINK"
+# Sandbox aparte: install --no-up necesita .env + shims de los prereqs.
+NOUP="$TMP/noup"
+mkdir -p "$NOUP/scripts"
+cp "$ROOT/sancho" "$NOUP/sancho"
+cp "$ROOT/scripts/compose-env.sh" "$ROOT/scripts/checklist.sh" "$NOUP/scripts/"
+printf '#!/usr/bin/env bash\n' > "$NOUP/scripts/wizard.sh"
+touch "$NOUP/docker-compose.yml"
+printf 'NEXTAUTH_SECRET=x\n' > "$NOUP/.env"
+for c in docker openssl; do printf '#!/usr/bin/env bash\nexit 0\n' > "$TMP/bin/$c"; chmod +x "$TMP/bin/$c"; done
+
+NOUP_LINK="$TMP/home/.local/bin/sancho"
+out="$( cd "$NOUP" && HOME="$TMP/home" PATH="$TMP/bin:$PATH" SANCHO_LINK_DIR="$LINK_DIR" \
+        bash ./sancho install --no-up 2>&1 )" \
+  || { echo "FAIL F: install --no-up salió con error"; echo "$out"; exit 1; }
+[ -L "$NOUP_LINK" ] || { echo "FAIL F: install --no-up no dejó el symlink global"; echo "$out"; exit 1; }
+[ "$(readlink "$NOUP_LINK")" = "$NOUP/sancho" ] \
+  || { echo "FAIL F: el symlink de --no-up apunta a '$(readlink "$NOUP_LINK")', esperaba '$NOUP/sancho'"; exit 1; }
+
 echo "PASS"
