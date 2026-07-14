@@ -397,16 +397,25 @@ jobs:
             # Apply GitHub `production` Environment to ~/.openclaw/.env.
             # When unpopulated (current state), this is a no-op — empty
             # secrets/vars are filtered out by the payload builder.
-            ENV_HASH_BEFORE=$(sha256sum .env 2>/dev/null | cut -d' ' -f1 || echo "missing")
+            # ENV_CHANGED drives a `--force-recreate` of EVERY service, so it has to
+            # mean "a real config value changed" — not "we shipped a new version".
+            # SANCHOCMO_IMAGE is excluded from the hash on purpose (SAN-463): image
+            # mode rewrites it on every release, which made every deploy recreate
+            # open-design and yalc too, even though nothing about them changed
+            # (observed on v1.5.0: yalc went from `Running` to `Recreated`). It's
+            # also redundant — Compose already recreates `sanchocmo` by itself when
+            # the resolved image changes, which is exactly what a version bump does.
+            env_hash() { grep -v '^SANCHOCMO_IMAGE=' "$1" 2>/dev/null | sha256sum | cut -d' ' -f1; }
+            ENV_HASH_BEFORE=$([ -f .env ] && env_hash .env || echo "missing")
             if [ -n "${PAYLOAD_B64:-}" ]; then
               echo "▶ Upserting envs from GitHub \`production\` Environment…"
               echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
             fi
-            ENV_HASH_AFTER=$(sha256sum .env | cut -d' ' -f1)
+            ENV_HASH_AFTER=$(env_hash .env)
             ENV_CHANGED=0
             if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
               ENV_CHANGED=1
-              echo "▶ .env content changed (will force-recreate sanchocmo)"
+              echo "▶ .env config changed (will force-recreate all services)"
             fi
             rm -f /tmp/upsert-env.py
 
