@@ -81,18 +81,35 @@ env "${BASE_ENV[@]}" WIZARD_MODE=advanced PROVIDER=anthropic ANTHROPIC_AUTH_MODE
 grep -qE '^GOOGLE_CLIENT_ID=gid\.apps\.example$' "$sb/.env" || fail "google-on: client id not written"
 grep -qE '^GOOGLE_CLIENT_SECRET=gsecret$'        "$sb/.env" || fail "google-on: client secret not written"
 
-# --- 5b. QUICK deja Google apagado, aunque le pasen credenciales -------------
-# Es a propósito (wizard.sh: "Quick: admin login is the token printed at the
-# end; Google stays off"). Se fija acá para que el caso 5 no vuelva a correr sin
-# WIZARD_MODE y "fallar" contra un comportamiento que en realidad es el diseño.
+# --- 5b. QUICK: sin pre-seed, Google queda apagado ---------------------------
+# Quick nunca PREGUNTA por Google (eso es de advanced): sin nada en el entorno
+# queda off y se entra con el admin token.
+sb="$(make_sandbox)"
+env "${BASE_ENV[@]}" WIZARD_MODE=quick PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
+  bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "quick run exited non-zero"
+grep -qE '^GOOGLE_CLIENT_ID=$'     "$sb/.env" || fail "quick: sin pre-seed Google debía quedar apagado"
+grep -qE '^GOOGLE_CLIENT_SECRET=$' "$sb/.env" || fail "quick: sin pre-seed el secret debía quedar vacío"
+
+# --- 5c. QUICK: un pre-seed explícito del entorno SÍ se honra ----------------
+# Misma regla que YALC/OD, que el wizard ya aplica: "an explicit env value always
+# wins". Antes Google era la excepción y se descartaba en silencio. (SAN-461)
 sb="$(make_sandbox)"
 env "${BASE_ENV[@]}" WIZARD_MODE=quick PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
   ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=gid.apps.example GOOGLE_CLIENT_SECRET=gsecret \
   bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "quick+google run exited non-zero"
-grep -qE '^GOOGLE_CLIENT_ID=$'     "$sb/.env" || fail "quick: Google debía quedar apagado"
-grep -qE '^GOOGLE_CLIENT_SECRET=$' "$sb/.env" || fail "quick: Google secret debía quedar vacío"
-# La credencial del proveedor SÍ se honra en quick (contraste con Google).
-grep -qE '^ANTHROPIC_API_KEY=sk-ant-x$' "$sb/.env" || fail "quick: la credencial del proveedor no se honró"
+grep -qE '^GOOGLE_CLIENT_ID=gid\.apps\.example$' "$sb/.env" || fail "quick: no honró el GOOGLE_CLIENT_ID pre-seedeado"
+grep -qE '^GOOGLE_CLIENT_SECRET=gsecret$'        "$sb/.env" || fail "quick: no honró el GOOGLE_CLIENT_SECRET pre-seedeado"
+grep -qE '^ANTHROPIC_API_KEY=sk-ant-x$'          "$sb/.env" || fail "quick: la credencial del proveedor no se honró"
+
+# --- 5d. QUICK: pre-seed INCOMPLETO → off, no habilitar con creds rotas ------
+# NextAuth prende Google si ambas son no vacías; media credencial daría
+# invalid_client en el login. Mejor off. (SAN-461)
+sb="$(make_sandbox)"
+env "${BASE_ENV[@]}" WIZARD_MODE=quick PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
+  ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=gid.apps.example \
+  bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "quick+google incompleto exited non-zero"
+grep -qE '^GOOGLE_CLIENT_ID=$'     "$sb/.env" || fail "quick: pre-seed incompleto debía dejar Google off"
+grep -qE '^GOOGLE_CLIENT_SECRET=$' "$sb/.env" || fail "quick: pre-seed incompleto debía dejar el secret vacío"
 
 # --- 6. clobber guard: existing config + no --force (non-interactive) aborts -
 sb="$(make_sandbox)"

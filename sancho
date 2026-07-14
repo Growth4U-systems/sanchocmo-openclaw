@@ -183,6 +183,15 @@ link_global() {
 
 cmd_link() { link_global "$@"; }
 
+# La sección de link que imprime cmd_install. Vive en las DOS salidas (con y sin
+# `up`), y siempre lo más abajo posible: arriba del pull/up quedaría enterrada
+# bajo su output (que es lo que evita el checklist de SAN-447). Nunca fatal.
+_link_section() {
+  echo ""
+  bold "▸ sancho global"
+  link_global || true
+}
+
 # ---------------------------------------------------------------------------
 # install — wizard (si falta .env) + up. Reemplaza al viejo install.sh.
 # ---------------------------------------------------------------------------
@@ -230,9 +239,12 @@ cmd_install() {
   resolve_host_ports
 
   if [ "$DO_UP" != "1" ]; then
+    # Configurado pero sin levantar (incluye `reconfigure`): linkeamos igual —
+    # el install quedó usable y el próximo paso que le sugerimos es `sancho up`.
+    _link_section
     echo ""
     bold "Configurado. Levantalo cuando quieras:"
-    echo "  ./sancho up"
+    echo "  sancho up"
     return 0
   fi
 
@@ -253,10 +265,7 @@ cmd_install() {
       || die "No se pudieron levantar los contenedores. El detalle está arriba y en $SANCHO_LOG"
   fi
   announce_ready
-  # Conveniencia, nunca fatal: si el link falla, el install igual está OK.
-  echo ""
-  bold "▸ sancho global"
-  link_global || true
+  _link_section
   echo ""
   echo "  Otros comandos:  sancho logs · status · update · down"
 }

@@ -82,7 +82,12 @@ selector:
 - **Admin & login access** — admin email domain (emails `@domain` become
   admins), an admin contact email, and **optional Google login** (off by
   default; needs a Google OAuth client id + secret). Skip Google and log in
-  with the admin token printed at the end.
+  with the admin token printed at the end. Quick never *asks* about Google, but
+  it does honour a pre-seed — same rule as the optional services below, an
+  explicit env value always wins:
+  `ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=… GOOGLE_CLIENT_SECRET=… ./sancho install`.
+  Half a credential leaves Google **off** on purpose (both must be non-empty or
+  the login fails with `invalid_client`).
 - **Database** — `local` (bundled Postgres, recommended) or `external` (e.g.
   Neon `DATABASE_URL`).
 - **Host ports** — relocate any host port already in use (Mission Control,
@@ -223,6 +228,30 @@ never type `-f docker-compose.*.yml` by hand:
 First install (wizard + start) is `./sancho install` (the classic `./install.sh`
 is a thin shim for it). Opt into optional services at install time with
 `./sancho install --od` / `--yalc`.
+
+### `sancho` from anywhere (SAN-446)
+
+`install` links `sancho` into your `PATH` (best-effort), so after the first run
+you can drop the `./` and call it from any directory:
+
+```bash
+sancho up          # instead of  cd ~/sanchocmo && ./sancho up
+sancho link        # (re)create the link by hand; --force overwrites a foreign `sancho`
+```
+
+It never uses sudo: it picks `/usr/local/bin` when that's writable as your user
+and falls back to `~/.local/bin` (override with `SANCHO_LINK_DIR`). If the
+directory isn't on your `PATH` it prints the exact line to add — it won't edit
+your shell rc for you. Linking is a convenience: `./sancho` keeps working, and a
+failed link never fails the install.
+
+### Where the install output went (SAN-447)
+
+`install` / `up` / `update` print one line per step instead of the raw
+`docker pull`/`build` firehose. The full output goes to
+**`.sancho/last-install.log`** — and it's dumped to screen automatically if a
+step fails, so an error is never swallowed. To watch the raw stream live
+instead, run with `SANCHO_VERBOSE=1`.
 
 > Why a CLI? It always loads the right compose overlays (from your `.env`) and
 > `down` passes `--remove-orphans`, so the project network is always cleaned up
