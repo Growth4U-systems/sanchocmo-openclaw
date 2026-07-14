@@ -494,10 +494,27 @@ if [ "$WIZARD_MODE" = "advanced" ]; then
       ;;
   esac
 else
-  # Quick: admin login is the token printed at the end; Google stays off.
+  # Quick: admin login is the token printed at the end, and Google is never
+  # ASKED about (that's an advanced question). It still honours a complete
+  # pre-seed from the environment — the same rule the optional services below
+  # already follow ("an explicit env value always wins"). Google used to be the
+  # odd one out: it blanked the credentials you had just passed, without saying
+  # so, while ANTHROPIC_API_KEY right above was honoured. (SAN-461)
   ADMIN_EMAIL_DOMAIN="${ADMIN_EMAIL_DOMAIN:-example.com}"
   ADMIN_IDENTITY_EMAIL="${ADMIN_IDENTITY_EMAIL:-admin@${ADMIN_EMAIL_DOMAIN}}"
-  GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+  case "$(printf '%s' "${ENABLE_GOOGLE:-no}" | tr '[:upper:]' '[:lower:]')" in
+    y|yes|true|1)
+      # Media credencial es peor que ninguna: NextAuth prende Google cuando las
+      # dos son no vacías, y con una sola el login da invalid_client.
+      if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+        warn "Google client id/secret incompleto — dejo Google login OFF (usá el admin token)."
+        GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+      fi
+      ;;
+    *)
+      GOOGLE_CLIENT_ID=""; GOOGLE_CLIENT_SECRET=""
+      ;;
+  esac
 fi
 
 # --- 3. Database -------------------------------------------------------------
