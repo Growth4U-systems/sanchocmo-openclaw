@@ -242,13 +242,13 @@ Exposed via reverse proxy (nginx on a server) or Tailscale Funnel (local dev).
 ## Development workflow
 
 ```
-<author>/san-N-*  ──squash PR──▶  staging  ──release-please PR──▶  vX.Y.Z (tag from staging)  ──ff──▶  main  ──▶  deploy (manual gate)
+<author>/san-N-*  ──squash PR──▶  main  ──release-please PR──▶  vX.Y.Z (tag from main)  ──▶  deploy (manual gate)
+                                   └──auto-deploy──▶ staging/QA VPS
 ```
 
-- **`staging`** = the trunk (default branch). **Every** change — feature, fix, *and* hotfix — branches off fresh `origin/staging` and squash-PRs back into `staging`. Branch name `<author>/san-<n>-<kebab-desc>`; every change needs a Linear `SAN-<n>` in the branch, title, or body.
-- **`main`** = a **fast-forward-only pointer** to the latest production release, moved *only* by automation (`promote-main.yml`). Never PR into `main`, never push or tag it by hand.
-- **Releases** are cut from `staging`: [release-please](https://github.com/googleapis/release-please) runs on `staging` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `staging`; `main` then fast-forwards to that tag and `deploy-prod.yml` deploys **after a manual approval** on the `production` environment gate.
-- **Hotfixes** are normal `fix:` PRs to `staging` (no separate path) — `staging` is kept always-releasable. The rare true-emergency procedure lives in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) §Hotfixes.
+- **`main`** = the single trunk (default branch). **Every** change — feature, fix, *and* hotfix — branches off fresh `origin/main` and squash-PRs back into `main`. Branch name `<author>/san-<n>-<kebab-desc>`; every change needs a Linear `SAN-<n>` in the branch, title, or body. There is no `staging` branch — `main` auto-deploys to the staging/QA **environment** on every push.
+- **Releases** are tags cut from `main`: [release-please](https://github.com/googleapis/release-please) runs on `main` and keeps one open `chore: release vX.Y.Z` PR. Merging it (squash) tags from `main` and builds the image; `deploy-prod.yml` then deploys the tag **after a manual dispatch** on the `production` environment gate. Never create tags by hand.
+- **Hotfixes** are normal `fix:` PRs to `main` (no separate path) — the trunk is kept always-releasable. The rare true-emergency procedure lives in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) §Hotfixes.
 - Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) — enforced by commitlint (`feat:` → minor, `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major).
 
 Full guide: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Deploy details: [docs/DEPLOY.md](docs/DEPLOY.md).

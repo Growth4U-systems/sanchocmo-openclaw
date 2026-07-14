@@ -523,7 +523,7 @@ docker compose restart
 
 ## Connect this VPS to the CI/CD pipeline (GitHub Actions)
 
-Once the VPS is running manually (steps 1–10 above), the next step is to plug it into the pipeline. A push to `staging` auto-deploys to the staging VPS; prod is shipped **manually** by dispatching `deploy-prod.yml` with a tag (publishing a release does not auto-deploy prod). The workflows (`.github/workflows/deploy-staging.yml`, `deploy-prod.yml`) read everything from a GitHub **Environment** — one per VPS.
+Once the VPS is running manually (steps 1–10 above), the next step is to plug it into the pipeline. A push to `main` (the single trunk) auto-deploys to the staging/QA VPS; prod is shipped **manually** by dispatching `deploy-prod.yml` with a tag (publishing a release does not auto-deploy prod). The workflows (`.github/workflows/deploy-staging.yml`, `deploy-prod.yml`) read everything from a GitHub **Environment** — one per VPS.
 
 ### The two SSH keys you need
 
@@ -599,7 +599,7 @@ In the repo: **Settings → Environments**. Two environments exist, one per VPS:
 
 | Environment | Triggered by | Required reviewers | Used by |
 |---|---|---|---|
-| `staging` | merge / push to `staging` | none (auto-deploy) | `deploy-staging.yml` |
+| `staging` | merge / push to `main` (the trunk) | none (auto-deploy) | `deploy-staging.yml` |
 | `production` | **manual `workflow_dispatch` only** (enter the tag) | none — running it is the deliberate go-live | `deploy-prod.yml` |
 
 Both environments use the **same secret and variable names** — only the values differ. Add for the environment matching this VPS:
@@ -623,14 +623,14 @@ Both environments use the **same secret and variable names** — only the values
 
 ### Step 4 — Trigger the first deploy and verify
 
-**For `staging`:** any push or merge to the `staging` branch triggers `deploy-staging.yml`. To force a run on a clean VPS without code changes:
+**For `staging`:** any push or merge to the `main` branch (the trunk) triggers `deploy-staging.yml`. To force a run on a clean VPS without code changes:
 
 ```bash
 git commit --allow-empty -m "chore: trigger first staging deploy"
 git push origin staging
 ```
 
-**For `production`:** the deploy is **manual only** — publishing a GitHub Release does *not* deploy prod (it only builds the image and fast-forwards `main`). Ship a tag via the Actions UI:
+**For `production`:** the deploy is **manual only** — publishing a GitHub Release does *not* deploy prod (it only builds the image). Ship a tag via the Actions UI:
 
 1. Actions → "Deploy to Production"
 2. "Run workflow" → enter the tag (e.g. `v0.2.0`) → Run

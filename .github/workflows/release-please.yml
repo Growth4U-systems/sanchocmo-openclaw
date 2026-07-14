@@ -1,16 +1,15 @@
 name: Release Please
 
 # Branching model (docs/CONTRIBUTING.md → "Release to production"):
-# release-please runs on `staging` — the trunk where all work integrates.
-# It keeps a single open "release PR" (chore: release vX.Y.Z) that accumulates
-# every Conventional Commit since the last release. Merging that PR cuts the
-# tag + GitHub Release FROM staging; a separate job (promote-main.yml) then
-# fast-forwards `main` to the tag. `main` never receives a release PR — that is
-# what keeps it from diverging.
+# release-please runs on `main` — the single trunk where all work integrates
+# (SAN-444). It keeps a single open "release PR" (chore: release vX.Y.Z) that
+# accumulates every Conventional Commit since the last release. Merging that PR
+# cuts the tag + GitHub Release from `main`. The tags ARE the releases — there is
+# no separate release-pointer branch to keep in sync.
 
 on:
   push:
-    branches: [staging]
+    branches: [main]
 
 permissions:
   contents: write
@@ -28,10 +27,10 @@ jobs:
           # GitHub Actions from creating PRs, so the default token can't
           # open the release PR. A user PAT bypasses that org restriction.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          # No target-branch: the repo's default branch is `staging`, which is
-          # exactly where the release PR + tag must live now. (Previously this
-          # pinned `main`; the new model cuts releases from staging instead, and
-          # promote-main.yml fast-forwards main to the resulting tag.)
+          # No target-branch: the repo's default branch is `main` (the single
+          # trunk, SAN-444), which is exactly where the release PR + tag live.
+          # Tags ARE the releases; there is no separate release-pointer branch to
+          # promote (promote-main.yml was retired with the two-branch model).
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
     outputs:

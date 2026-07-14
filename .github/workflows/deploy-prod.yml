@@ -45,7 +45,7 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::'$TAG' is not a published GitHub Release. Prod only deploys release-please tags. Do NOT create tags by hand — merge the release PR on staging to cut a real release, then dispatch this workflow with that tag."
+            echo "::error::'$TAG' is not a published GitHub Release. Prod only deploys release-please tags. Do NOT create tags by hand — merge the release PR on main to cut a real release, then dispatch this workflow with that tag."
             exit 1
           fi
           echo "✓ '$TAG' is a published Release — cleared to deploy."
