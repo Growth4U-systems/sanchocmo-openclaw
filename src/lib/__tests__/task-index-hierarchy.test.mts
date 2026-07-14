@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { TaskIndexEntry } from "../task-index-types";
 
-const { projectTaskIndex, taskIndexEntryKey } = await import("../task-index-hierarchy");
+const {
+  projectTaskIndex,
+  taskIndexEntryKey,
+  taskIndexProjectIsExpanded,
+} = await import("../task-index-hierarchy");
 
 function entry(taskId: string, overrides: Partial<TaskIndexEntry> = {}): TaskIndexEntry {
   return {
@@ -29,6 +33,14 @@ const childTwo = entry("P00-T01.2", { parentTaskId: parent.taskId, taskName: "Ve
 const sibling = entry("P00-T02", { taskName: "Meeting Intelligence" });
 const hierarchy = [parent, childOne, childTwo, sibling];
 
+test("project accordions start closed and open automatically for active projections", () => {
+  assert.equal(taskIndexProjectIsExpanded("P00", new Set(), "all", ""), false);
+  assert.equal(taskIndexProjectIsExpanded("P00", new Set(["P00"]), "all", ""), true);
+  assert.equal(taskIndexProjectIsExpanded("P00", new Set(), "issues", ""), true);
+  assert.equal(taskIndexProjectIsExpanded("P00", new Set(), "all", "fuentes"), true);
+  assert.equal(taskIndexProjectIsExpanded("P00", new Set(), "all", "   "), false);
+});
+
 test("the approved default keeps child rows collapsed", () => {
   const groups = projectTaskIndex(hierarchy, { filter: "all", search: "", expanded: new Set() });
 
@@ -36,6 +48,7 @@ test("the approved default keeps child rows collapsed", () => {
   assert.deepEqual(groups[0].rows.map((row) => row.entry.taskId), ["P00-T01", "P00-T02"]);
   assert.equal(groups[0].rows[0].hasChildren, true);
   assert.equal(groups[0].rows[0].expanded, false);
+  assert.equal(groups[0].rows[0].autoExpanded, false);
 });
 
 test("expanding a task only inserts its indented descendants inline", () => {
@@ -55,6 +68,7 @@ test("search retains and auto-expands the ancestor of a matching child", () => {
 
   assert.deepEqual(groups[0].rows.map((row) => row.entry.taskId), ["P00-T01", "P00-T01.1"]);
   assert.equal(groups[0].rows[0].expanded, true);
+  assert.equal(groups[0].rows[0].autoExpanded, true);
 });
 
 test("issue filtering keeps parent context without leaking unrelated rows", () => {
