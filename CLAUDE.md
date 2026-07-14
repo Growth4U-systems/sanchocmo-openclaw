@@ -12,29 +12,29 @@ invoke it before any branch/commit/PR/release work; it fires automatically when
 you're about to do git in this repo. Do not invent branch/merge conventions. The
 essentials:
 
-- **`staging` is the trunk.** Every change — feature, fix, *and* hotfix — branches
-  off `staging`, uses Conventional Commits, and PRs back into `staging` with
+- **`main` is the single trunk.** Every change — feature, fix, *and* hotfix —
+  branches off `main`, uses Conventional Commits, and PRs back into `main` with
   **squash**. There is no separate hotfix procedure (see `docs/CONTRIBUTING.md` §Hotfixes).
-- **Branch from fresh `origin/staging`; name it `<author>/san-<n>-<kebab-desc>`**
+- **Branch from fresh `origin/main`; name it `<author>/san-<n>-<kebab-desc>`**
   (e.g. `nahuel/san-230-branching-model`). Every code change needs a Linear
   `SAN-<n>` in the branch/title/body or CI fails — create the issue first if none.
-- **`main` never receives direct work.** It is a **fast-forward-only pointer** to
-  the latest production release, moved *only* by automation (`promote-main.yml`).
-  Never open a PR into `main`, never push to it, never merge into it.
-- **Releases are cut from `staging`.** release-please runs on `staging` and keeps
-  one open `chore: release vX.Y.Z` PR (base `staging`, **squash** like any other).
-  Merging it creates the tag from staging; `main` then fast-forwards to that tag.
-  Publishing a release does **not** deploy prod — `deploy-prod.yml` is
-  **`workflow_dispatch` only**: a human runs it from the Actions tab and enters
-  the tag to ship (validated against real tags). Prod never auto-deploys.
+- **There is no `staging` branch.** The trunk `main` continuously deploys to the
+  staging/QA **environment** (the VPS is still called "staging") on every push;
+  prod is a separate manual step. Don't reintroduce a second long-lived branch.
+- **Releases are tags cut from `main`.** release-please runs on `main` and keeps
+  one open `chore: release vX.Y.Z` PR (base `main`, **squash** like any other).
+  Merging it creates the tag + GitHub Release from `main`. The tags **are** the
+  releases — there is no release-pointer branch to promote. Publishing a release
+  does **not** deploy prod — `deploy-prod.yml` is **`workflow_dispatch` only**: a
+  human runs it from the Actions tab and enters the tag to ship (validated against
+  real Releases). Prod never auto-deploys.
 - **Commits use Conventional Commits** (enforced by commitlint): `feat:` → minor,
   `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major. release-please reads these.
-- **Never push directly to `main` or `staging`**, never force-push protected
-  branches, never `--no-verify` without a stated reason. You don't create tags or
-  touch `main` by hand — automation owns both.
+- **Never push directly to `main`**, never force-push it, never `--no-verify`
+  without a stated reason. You don't create tags by hand — merge the release PR to
+  cut a release; automation owns tagging.
 
-When creating PRs in this repo, the base is **always `staging`**. A PR into `main`
-is never correct.
+When creating PRs in this repo, the base is **always `main`**.
 
 ## Other source-of-truth docs
 

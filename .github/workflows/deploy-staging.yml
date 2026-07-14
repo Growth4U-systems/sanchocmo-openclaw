@@ -1,8 +1,10 @@
 name: Deploy to Staging
 
+# Deploys the trunk to the staging/QA VPS. The BRANCH is `main` (the single
+# trunk, SAN-444); the ENVIRONMENT is still "staging" (the QA VPS).
 on:
   push:
-    branches: [staging]
+    branches: [main]
   workflow_dispatch: {}
 
 concurrency:
@@ -202,8 +204,8 @@ jobs:
           ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
-            echo "▶ Fetching staging…"
-            git fetch origin staging --prune
+            echo "▶ Fetching main…"
+            git fetch origin main --prune
 
             # Backup `workspace-sancho/brand/<slug>/` folders before checkout.
             # Historically these were committed to git; the staging branch is

@@ -1,6 +1,6 @@
 name: PR title
 
-# The squash-merge commit that lands on `staging` takes its message from the PR
+# The squash-merge commit that lands on `main` takes its message from the PR
 # title, and release-please reads those Conventional Commits to compute the next
 # version. A non-conventional PR title therefore silently breaks versioning. This
 # check lints the PR title with the same commitlint config as the commit-msg hook
