@@ -63,3 +63,30 @@ jobs:
 
       - name: Run unit tests
         run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
+
+  # Los tests del installer (bash puro, sin deps) existían desde v1.0.0 pero no
+  # los corría nadie: wizard.test.sh llevaba meses roto en main sin que se viera,
+  # y con él quedaron sin ejecutar nunca los casos que después destaparon SAN-457
+  # y SAN-458. Un test que no corre se pudre callado. (SAN-456)
+  verify-installer:
+    name: Installer tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # El caso interactivo del wizard levanta un pty con python3.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run installer tests
+        run: |
+          rc=0
+          for t in tests/installer/*.test.sh; do
+            echo "::group::$t"
+            # Sin `set -e`: corremos TODOS y reportamos al final, así un fallo no
+            # esconde el estado de los demás.
+            if bash "$t"; then echo "PASS  $t"; else echo "FAIL  $t"; rc=1; fi
+            echo "::endgroup::"
+          done
+          exit "$rc"

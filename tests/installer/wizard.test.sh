@@ -58,8 +58,11 @@ fi
 [ -f "$sb/.env" ] && fail "wizard wrote .env despite aborting on missing credential"
 
 # --- 4. Google skipped → empty (not placeholder) ----------------------------
+# Google login only exists in ADVANCED mode; quick keeps it off by design (see
+# case 5b). Sin WIZARD_MODE=advanced este caso pasa trivialmente — quick blanquea
+# las credenciales igual, sin probar nada.
 sb="$(make_sandbox)"
-env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x ENABLE_GOOGLE=no \
+env "${BASE_ENV[@]}" WIZARD_MODE=advanced PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x ENABLE_GOOGLE=no \
   bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "google-off run exited non-zero"
 grep -qE '^GOOGLE_CLIENT_ID=$'     "$sb/.env" || fail "google-off: client id not empty"
 grep -qE '^GOOGLE_CLIENT_SECRET=$' "$sb/.env" || fail "google-off: client secret not empty"
@@ -70,13 +73,26 @@ if grep -qE 'your-google-'  "$sb/.env"; then fail "placeholder 'your-google-' su
 grep -qE '"adminToken": *"[0-9a-f]{16,}"' "$sb/config/clients.json" || fail "clients.json adminToken missing"
 grep -qE '^MC_ADMIN_TOKEN=[0-9a-f]{32,}$' "$sb/.env"                || fail "MC_ADMIN_TOKEN not mirrored to .env"
 
-# --- 5. Google provided → values written ------------------------------------
+# --- 5. Google provided (advanced) → values written --------------------------
 sb="$(make_sandbox)"
-env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
+env "${BASE_ENV[@]}" WIZARD_MODE=advanced PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
   ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=gid.apps.example GOOGLE_CLIENT_SECRET=gsecret \
   bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "google-on run exited non-zero"
 grep -qE '^GOOGLE_CLIENT_ID=gid\.apps\.example$' "$sb/.env" || fail "google-on: client id not written"
 grep -qE '^GOOGLE_CLIENT_SECRET=gsecret$'        "$sb/.env" || fail "google-on: client secret not written"
+
+# --- 5b. QUICK deja Google apagado, aunque le pasen credenciales -------------
+# Es a propósito (wizard.sh: "Quick: admin login is the token printed at the
+# end; Google stays off"). Se fija acá para que el caso 5 no vuelva a correr sin
+# WIZARD_MODE y "fallar" contra un comportamiento que en realidad es el diseño.
+sb="$(make_sandbox)"
+env "${BASE_ENV[@]}" WIZARD_MODE=quick PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
+  ENABLE_GOOGLE=yes GOOGLE_CLIENT_ID=gid.apps.example GOOGLE_CLIENT_SECRET=gsecret \
+  bash "$sb/scripts/wizard.sh" >/dev/null 2>&1 || fail "quick+google run exited non-zero"
+grep -qE '^GOOGLE_CLIENT_ID=$'     "$sb/.env" || fail "quick: Google debía quedar apagado"
+grep -qE '^GOOGLE_CLIENT_SECRET=$' "$sb/.env" || fail "quick: Google secret debía quedar vacío"
+# La credencial del proveedor SÍ se honra en quick (contraste con Google).
+grep -qE '^ANTHROPIC_API_KEY=sk-ant-x$' "$sb/.env" || fail "quick: la credencial del proveedor no se honró"
 
 # --- 6. clobber guard: existing config + no --force (non-interactive) aborts -
 sb="$(make_sandbox)"
@@ -86,10 +102,25 @@ if env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC
   fail "wizard should abort on existing .env without --force (non-interactive)"
 fi
 grep -q "Refusing to overwrite" "$sb/out.log" || fail "missing 'Refusing to overwrite' message"
-# --force lets it through.
+# --force lets it through. El .env preexistente NO tiene MC_CHAT_SECRET — que es
+# el caso de cualquier install anterior a SAN-443. El wizard lo relee para no
+# rotar el pairing del gateway, y bajo `set -euo pipefail` un grep sin match
+# mataba el script acá (SAN-457).
 env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
   bash "$sb/scripts/wizard.sh" --force >/dev/null 2>&1 || fail "--force should overwrite existing config"
 grep -qE '^ANTHROPIC_API_KEY=sk-ant-x$' "$sb/.env" || fail "--force did not regenerate .env"
+# Sin MC_CHAT_SECRET previo se acuña uno nuevo (si no, el primer chat da 503).
+grep -qE '^MC_CHAT_SECRET=[0-9a-f]{16,}$' "$sb/.env" || fail "--force: MC_CHAT_SECRET no se generó"
+
+# --- 6 (cont.). --force con clients.json SIN adminToken ----------------------
+# Misma causa que arriba (SAN-457): el wizard relee adminToken del clients.json
+# preservado, y el grep sin match mataba el script bajo pipefail.
+sb="$(make_sandbox)"
+mkdir -p "$sb/config"
+printf '{"clients":[{"slug":"acme"}]}\n' > "$sb/config/clients.json"
+env "${BASE_ENV[@]}" PROVIDER=anthropic ANTHROPIC_AUTH_MODE=api_key ANTHROPIC_API_KEY=sk-ant-x \
+  bash "$sb/scripts/wizard.sh" --force >/dev/null 2>&1 || fail "--force murió con un clients.json sin adminToken"
+grep -qE '^MC_ADMIN_TOKEN=[0-9a-f]{32,}$' "$sb/.env" || fail "--force: no se acuñó admin token faltante"
 
 # --- 6b. Open Design opt-in: off → no token; on → token minted + web URL -----
 # Off (default): the wizard must not write a live OD_API_TOKEN, so install.sh
@@ -111,14 +142,19 @@ grep -qE '^OD_ALLOWED_ORIGINS=http://localhost:7456$' "$sb/.env" || fail "od-on:
 # Guards the bug where pre-seeding ANTHROPIC_AUTH_MODE to a default made `ask`
 # treat the question as answered and skip straight to the API key, so picking
 # subscription was impossible interactively. Needs a pty; skip if no python3.
+#
+# El primer \n contesta el prompt de "Setup mode" (quick), el segundo el de
+# "Provider" (anthropic). Si agregás un prompt ANTES del de provider, corré uno
+# más acá — si no, las respuestas se desfasan y el wizard aborta pidiendo la
+# API key (que es como se pudrió este caso cuando se sumaron los modos).
 if command -v python3 >/dev/null 2>&1; then
   sb="$(make_sandbox)"
   PTY_SB="$sb" python3 - <<'PY' || fail "interactive subscription run failed"
 import pty, os, sys
 sb = os.environ["PTY_SB"]
 env = {"PATH": os.environ["PATH"], "HOME": os.environ["HOME"], "TERM": "xterm"}
-# Enter(provider=anthropic), "subscription", token, then defaults for the rest.
-data = b"\nsubscription\nsk-ant-oat-ITEST\n" + b"\n"*9
+# Enter(mode=quick), Enter(provider=anthropic), "subscription", token, defaults.
+data = b"\n\nsubscription\nsk-ant-oat-ITEST\n" + b"\n"*9
 pid, fd = pty.fork()
 if pid == 0:
     os.chdir(sb); os.execvpe("bash", ["bash", "scripts/wizard.sh"], env)
