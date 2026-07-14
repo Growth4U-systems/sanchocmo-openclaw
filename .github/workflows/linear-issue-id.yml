@@ -2,7 +2,7 @@ name: Linear issue ID
 
 on:
   pull_request:
-    branches: [staging, main]
+    branches: [main]
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
 jobs:
