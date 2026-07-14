@@ -9,6 +9,7 @@ cp "$ROOT/install.sh" "$TMP/install.sh"
 cp "$ROOT/sancho" "$TMP/sancho"
 mkdir -p "$TMP/scripts" "$TMP/bin"
 cp "$ROOT/scripts/compose-env.sh" "$TMP/scripts/compose-env.sh"
+cp "$ROOT/scripts/checklist.sh" "$TMP/scripts/checklist.sh"
 # wizard stub: no-op (se llama solo si falta .env; acá ya existe)
 printf '#!/usr/bin/env bash\n' > "$TMP/scripts/wizard.sh"
 # Shims para los prereqs de la sección 1 (no instalar nada real).

@@ -40,6 +40,8 @@ REAL_SCRIPT="$SCRIPT_DIR/$(basename "$SOURCE")"
 cd "$SCRIPT_DIR"
 # shellcheck source=scripts/compose-env.sh
 source "$SCRIPT_DIR/scripts/compose-env.sh"
+# shellcheck source=scripts/checklist.sh
+source "$SCRIPT_DIR/scripts/checklist.sh"
 
 IMAGE_REPO="ghcr.io/growth4u-systems/sanchocmo"
 
@@ -203,6 +205,7 @@ cmd_install() {
   done
 
   bold "SanchoCMO — instalación"
+  step_log_init
   check_prereqs
 
   # Configurar (wizard) si falta .env o se fuerza.
@@ -236,15 +239,18 @@ cmd_install() {
   echo ""
   if [ "$BUILD" = "1" ]; then
     [ -f "$SCRIPT_DIR/Dockerfile" ] || die "--build necesita el source (Dockerfile) en $SCRIPT_DIR. En un install de producto (sin clonar) usá el modo normal."
-    bold "Buildeando y levantando ($COMPOSE $COMPOSE_ARGS up -d --build)"
     # shellcheck disable=SC2086
-    $COMPOSE $COMPOSE_ARGS up -d --build
+    step_run "Construyendo imagen y levantando contenedores" -- \
+      $COMPOSE $COMPOSE_ARGS up -d --build \
+      || die "Falló el build. El detalle está arriba y en $SANCHO_LOG"
   else
-    bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
+    # pull_images se maneja solo: manda el dump al log y, si falla, muestra la
+    # guía de login a GHCR + retry interactivo (no se puede envolver en spinner).
     pull_images
-    bold "Levantando contenedores ($COMPOSE $COMPOSE_ARGS up -d)"
+    echo "  ✅ Imágenes descargadas"
     # shellcheck disable=SC2086
-    $COMPOSE $COMPOSE_ARGS up -d
+    step_run "Levantando contenedores" -- $COMPOSE $COMPOSE_ARGS up -d \
+      || die "No se pudieron levantar los contenedores. El detalle está arriba y en $SANCHO_LOG"
   fi
   announce_ready
   # Conveniencia, nunca fatal: si el link falla, el install igual está OK.
@@ -260,9 +266,10 @@ cmd_install() {
 # ---------------------------------------------------------------------------
 cmd_up() {
   require_env; detect_compose; build_compose_args; resolve_host_ports
-  bold "Levantando ($COMPOSE $COMPOSE_ARGS up -d)"
+  step_log_init
   # shellcheck disable=SC2086
-  $COMPOSE $COMPOSE_ARGS up -d
+  step_run "Levantando contenedores" -- $COMPOSE $COMPOSE_ARGS up -d \
+    || die "No se pudieron levantar los contenedores. El detalle está arriba y en $SANCHO_LOG"
   announce_ready
 }
 
@@ -292,11 +299,12 @@ cmd_update() {
     set_env_var SANCHOCMO_IMAGE "$IMAGE_REPO:$tag"
   fi
   build_compose_args
-  bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
+  step_log_init
   pull_images
-  bold "Aplicando ($COMPOSE $COMPOSE_ARGS up -d)"
+  echo "  ✅ Imágenes descargadas"
   # shellcheck disable=SC2086
-  $COMPOSE $COMPOSE_ARGS up -d
+  step_run "Aplicando la actualización" -- $COMPOSE $COMPOSE_ARGS up -d \
+    || die "No se pudo aplicar la actualización. El detalle está arriba y en $SANCHO_LOG"
   announce_ready
 }
 

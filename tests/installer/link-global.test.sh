@@ -9,6 +9,7 @@ INSTALL="$TMP/install"
 mkdir -p "$INSTALL/scripts" "$TMP/home" "$TMP/bin"
 cp "$ROOT/sancho" "$INSTALL/sancho"
 cp "$ROOT/scripts/compose-env.sh" "$INSTALL/scripts/compose-env.sh"
+cp "$ROOT/scripts/checklist.sh" "$INSTALL/scripts/checklist.sh"
 printf '#!/usr/bin/env bash\n' > "$INSTALL/scripts/wizard.sh"
 # Marcador: sólo el dir real del install lo tiene. Sirve para probar que
 # SCRIPT_DIR resuelve al install y no al dir del symlink.

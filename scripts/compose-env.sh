@@ -57,11 +57,23 @@ set_env_var() {
 
 # pull_images — `$COMPOSE $COMPOSE_ARGS pull` con manejo del 403 de GHCR privado.
 # Requiere COMPOSE, COMPOSE_ARGS y SCRIPT_DIR ya seteados por el caller.
+# _pull_log — manda el dump del pull al log del run si hay uno (checklist.sh lo
+# define); si no, a stdout como siempre. Así el camino feliz no escupe cientos
+# de líneas de docker, pero la lib sigue sirviendo sourceada sola.
+_pull_log() {
+  if [ -n "${SANCHO_LOG:-}" ] && [ -f "${SANCHO_LOG:-}" ]; then
+    printf '%s\n' "$1" >> "$SANCHO_LOG" 2>/dev/null && return 0
+  fi
+  printf '%s\n' "$1"
+}
+
 pull_images() {
   local out
   if out="$($COMPOSE $COMPOSE_ARGS pull 2>&1)"; then
-    printf '%s\n' "$out"; return 0
+    _pull_log "$out"; return 0
   fi
+  # Camino de fallo: SIEMPRE a la vista. La guía de login a GHCR y el retry son
+  # interactivos — esconderlos en el log rompería el acceso a la imagen privada.
   printf '%s\n' "$out"
   if printf '%s' "$out" | grep -qiE 'denied|unauthorized|403|forbidden'; then
     bold "La imagen de GHCR es privada (o no estás logueado)."
