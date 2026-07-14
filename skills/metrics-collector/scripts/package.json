@@ -9,7 +9,6 @@
     "test": "node --test adapters/__tests__/*.test.mjs"
   },
   "dependencies": {
-    "google-auth-library": "^10.9.0",
-    "googleapis": "^140.0.0"
+    "google-auth-library": "^10.9.0"
   }
 }
