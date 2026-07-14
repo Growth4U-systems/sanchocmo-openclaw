@@ -204,6 +204,35 @@ jobs:
           ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
+
+            # SAN-445: back up + clear untracked working-tree paths that collide
+            # with a path the target ref tracks (e.g. the specialist-agent
+            # workspace-<agent>/{brand,_system} symlinks added by SAN-438). The
+            # `git stash --include-untracked` below already covers this on
+            # staging, but this guard makes the checkout robust if that logic
+            # ever narrows — and keeps staging/prod behaviourally in sync. Moves
+            # (never rm) each colliding path to .deploy-collision-backups/<ts>/;
+            # no-op when the tree is clean.
+            clear_checkout_collisions() {
+              local ref="$1" bk tt th p cleared=0
+              bk=".deploy-collision-backups/$(date -u +%Y%m%dT%H%M%SZ)"
+              tt="$(mktemp)"; th="$(mktemp)"
+              git ls-tree -r --name-only "$ref" | sort > "$tt"
+              git ls-files | sort > "$th"
+              while IFS= read -r p; do
+                [ -n "$p" ] || continue
+                { [ -e "$p" ] || [ -L "$p" ]; } || continue
+                git ls-files --error-unmatch "$p" >/dev/null 2>&1 && continue
+                mkdir -p "$bk/$(dirname "$p")"
+                mv "$p" "$bk/$p"
+                echo "▶ SAN-445: backed up + cleared colliding untracked path: $p → $bk/$p"
+                cleared=$((cleared+1))
+              done < <(comm -23 "$tt" "$th")
+              rm -f "$tt" "$th"
+              [ "$cleared" -gt 0 ] && echo "▶ SAN-445: cleared $cleared colliding path(s) into $bk"
+              return 0
+            }
+
             echo "▶ Fetching main…"
             git fetch origin main --prune
 
@@ -254,6 +283,7 @@ jobs:
             # Self-heal: discard stray local edits under src/ that would abort the
             # checkout. Runtime state under agents/ and workspace-*/ is preserved.
             git checkout -- src 2>/dev/null || true
+            clear_checkout_collisions "$SHA"
             git checkout "$SHA"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 

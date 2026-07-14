@@ -230,6 +230,34 @@ jobs:
           ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
+
+            # SAN-445: move (never rm) every untracked working-tree path that
+            # would block `git checkout <ref>` — i.e. a path the target ref
+            # tracks but the current index doesn't, that already exists on disk
+            # untracked (a real dir, file, or symlink). Backs each up under
+            # .deploy-collision-backups/<ts>/ so runtime data is recoverable,
+            # then returns so the caller's checkout can recreate the tracked
+            # version. No-op (creates nothing) when the tree is already clean.
+            clear_checkout_collisions() {
+              local ref="$1" bk tt th p cleared=0
+              bk=".deploy-collision-backups/$(date -u +%Y%m%dT%H%M%SZ)"
+              tt="$(mktemp)"; th="$(mktemp)"
+              git ls-tree -r --name-only "$ref" | sort > "$tt"
+              git ls-files | sort > "$th"
+              while IFS= read -r p; do
+                [ -n "$p" ] || continue
+                { [ -e "$p" ] || [ -L "$p" ]; } || continue
+                git ls-files --error-unmatch "$p" >/dev/null 2>&1 && continue
+                mkdir -p "$bk/$(dirname "$p")"
+                mv "$p" "$bk/$p"
+                echo "▶ SAN-445: backed up + cleared colliding untracked path: $p → $bk/$p"
+                cleared=$((cleared+1))
+              done < <(comm -23 "$tt" "$th")
+              rm -f "$tt" "$th"
+              [ "$cleared" -gt 0 ] && echo "▶ SAN-445: cleared $cleared colliding path(s) into $bk"
+              return 0
+            }
+
             echo "▶ Fetching tags…"
             git fetch --tags --prune
 
@@ -293,6 +321,16 @@ jobs:
               workspace-sancho/_system/output/presentation-summary-protocol.md \
               workspace-sancho/mission-control.html \
               2>/dev/null || true
+            # SAN-445: back up + clear untracked working-tree paths that collide
+            # with a path the target ref tracks (e.g. the specialist-agent
+            # workspace-<agent>/{brand,_system} symlinks added by SAN-438, which
+            # the running container recreates untracked on the VPS). `git checkout`
+            # aborts on such collisions ("untracked working tree files would be
+            # overwritten"). We deliberately DON'T use `git stash --include-untracked`
+            # here (it would sweep away all live runtime data). Instead move only the
+            # exact colliding paths to a backup dir — never a blind rm — so no
+            # runtime data is lost, then let checkout recreate the tracked version.
+            clear_checkout_collisions "$TAG"
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
 
@@ -397,6 +435,30 @@ jobs:
           ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH FAILED_TAG=$FAILED_TAG bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
+
+            # SAN-445: same collision guard as the deploy step (separate SSH
+            # session → redefined here). Backs up + clears untracked paths that
+            # would block the rollback checkout; no-op when the tree is clean.
+            clear_checkout_collisions() {
+              local ref="$1" bk tt th p cleared=0
+              bk=".deploy-collision-backups/$(date -u +%Y%m%dT%H%M%SZ)"
+              tt="$(mktemp)"; th="$(mktemp)"
+              git ls-tree -r --name-only "$ref" | sort > "$tt"
+              git ls-files | sort > "$th"
+              while IFS= read -r p; do
+                [ -n "$p" ] || continue
+                { [ -e "$p" ] || [ -L "$p" ]; } || continue
+                git ls-files --error-unmatch "$p" >/dev/null 2>&1 && continue
+                mkdir -p "$bk/$(dirname "$p")"
+                mv "$p" "$bk/$p"
+                echo "▶ SAN-445: backed up + cleared colliding untracked path: $p → $bk/$p"
+                cleared=$((cleared+1))
+              done < <(comm -23 "$tt" "$th")
+              rm -f "$tt" "$th"
+              [ "$cleared" -gt 0 ] && echo "▶ SAN-445: cleared $cleared colliding path(s) into $bk"
+              return 0
+            }
+
             PREV=$(git tag --sort=-creatordate --list 'v*.*.*' | awk -v failed="${FAILED_TAG:-}" '$0 != failed { print; exit }')
             if [ -z "$PREV" ]; then
               echo "No previous tag found; cannot rollback"
@@ -408,6 +470,7 @@ jobs:
               echo "▶ Stashing untracked $CHECKOUT_BLOCKER before rollback checkout..."
               git stash push --include-untracked -m "deploy-prod-rollback-untracked-$(date -u +%Y%m%dT%H%M%SZ)" -- "$CHECKOUT_BLOCKER" || true
             fi
+            clear_checkout_collisions "$PREV"
             git checkout "$PREV"
             export GIT_COMMIT="$(git rev-parse HEAD)"
             COMPOSE_ARGS="-f docker-compose.yml"

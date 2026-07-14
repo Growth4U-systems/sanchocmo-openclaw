@@ -245,6 +245,11 @@ OD_VERSION.txt
 PLAN-chat-progress-streaming.md
 openclaw.json.last-good
 
+# SAN-445: deploy checkout-collision backups (untracked paths that would block
+# `git checkout <ref>` on the VPS are moved here before checkout; kept for
+# recovery, ignored so they never themselves block a future checkout).
+.deploy-collision-backups/
+
 # ACP / Codex local config (per-machine)
 acpx/codex-home/
 
