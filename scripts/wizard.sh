@@ -628,8 +628,13 @@ esac
 # Open Design needs a browser-reachable URL. When enabled without one (quick, or
 # a scripted install that set ENABLE_OD but not OD_WEB_URL) default to localhost;
 # resolve_host_ports repoints it if host port 7456 gets relocated.
-if [ "$ENABLE_OD" = "1" ] && [ -z "$OD_WEB_URL" ]; then
-  OD_WEB_URL="http://localhost:7456"
+#
+# Los origins se derivan de la URL SIEMPRE que falten — no sólo cuando falta la
+# URL. Atarlos al mismo `if` dejaba OD_ALLOWED_ORIGINS vacío justo en el caso de
+# un deploy real (ENABLE_OD=yes + OD_WEB_URL pública), y el daemon de OD rechaza
+# al browser por CORS. Advanced ya lo hacía bien; esto empareja a quick. SAN-458.
+if [ "$ENABLE_OD" = "1" ]; then
+  [ -n "$OD_WEB_URL" ] || OD_WEB_URL="http://localhost:7456"
   OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-$OD_WEB_URL}"
 fi
 
@@ -647,7 +652,9 @@ SANCHO_INTERNAL_API_TOKEN="$(gen_hex)"
 # like adminToken) so an existing gateway pairing isn't rotated out.
 MC_CHAT_SECRET="${MC_CHAT_SECRET:-}"
 if [ -z "$MC_CHAT_SECRET" ] && [ -f "$ENV_FILE" ]; then
-  MC_CHAT_SECRET="$(grep -E '^[[:space:]]*MC_CHAT_SECRET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'")"
+  # `|| true`: sin match, grep sale 1 y `set -o pipefail` mataría el wizard —
+  # que es justo el caso normal (un .env anterior a esta variable). SAN-457.
+  MC_CHAT_SECRET="$(grep -E '^[[:space:]]*MC_CHAT_SECRET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'" || true)"
 fi
 [ -n "$MC_CHAT_SECRET" ] || MC_CHAT_SECRET="$(gen_hex)"
 # adminToken: stateful, like POSTGRES_PASSWORD. config/clients.json (the brand
@@ -657,7 +664,9 @@ fi
 # admin login out from under the user. Reuse the existing one when present.
 ADMIN_TOKEN=""
 if [ -f "$CLIENTS_FILE" ]; then
-  ADMIN_TOKEN="$(grep -oE '"adminToken"[[:space:]]*:[[:space:]]*"[^"]+"' "$CLIENTS_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"[[:space:]]*$/\1/')"
+  # `|| true` por la misma razón que MC_CHAT_SECRET arriba (SAN-457): un
+  # clients.json sin adminToken es un archivo válido, no un error.
+  ADMIN_TOKEN="$(grep -oE '"adminToken"[[:space:]]*:[[:space:]]*"[^"]+"' "$CLIENTS_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"[[:space:]]*$/\1/' || true)"
   [ -n "$ADMIN_TOKEN" ] && say "  ${DIM}Reusing existing adminToken (keeps the preserved clients.json and login token in sync).${RST}"
 fi
 [ -z "$ADMIN_TOKEN" ] && ADMIN_TOKEN="$(gen_hex)"
