@@ -6,6 +6,7 @@ import { useOpenChat } from "@/hooks/useChat";
 import { buildContentTaskThread, buildTaskThread } from "@/lib/chat-openers";
 import {
   projectTaskIndex,
+  taskIndexProjectIsExpanded,
   type TaskIndexFilter,
   type VisibleTaskIndexRow,
 } from "@/lib/task-index-hierarchy";
@@ -44,34 +45,40 @@ function TaskLabel({ row, slug, onToggle }: {
   onToggle: (key: string) => void;
 }) {
   const task = row.entry;
+  // Every table row is a real child of the project accordion above it.
+  const visualDepth = row.depth + 1;
 
   return (
     <div
       className="flex min-w-0 items-center"
-      style={{ paddingLeft: `${Math.min(row.depth, 8) * 16}px` }}
+      style={{ paddingLeft: `${Math.min(visualDepth, 8) * 16}px` }}
     >
       {row.hasChildren ? (
         <button
           type="button"
           onClick={() => onToggle(row.key)}
+          disabled={row.autoExpanded}
           aria-expanded={row.expanded}
-          aria-label={`${row.expanded ? "Contraer" : "Desplegar"} ${task.taskId}`}
-          className="mr-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] text-muted-foreground hover:text-[#2C3E50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust/40"
+          aria-label={row.autoExpanded
+            ? `${task.taskId} abierto por los filtros activos`
+            : `${row.expanded ? "Contraer" : "Desplegar"} ${task.taskId}`}
+          title={row.autoExpanded ? "Abierto por los filtros activos" : undefined}
+          className="-ml-1 mr-0 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-[10px] text-muted-foreground hover:text-[#2C3E50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust/40 disabled:cursor-default disabled:hover:text-muted-foreground"
         >
           {row.expanded ? "▾" : "▸"}
         </button>
-      ) : row.depth > 0 ? (
+      ) : visualDepth > 0 ? (
         <span className="mr-1 inline-block w-4 shrink-0 text-center text-muted-foreground/60" aria-hidden="true">↳</span>
       ) : null}
       <Link
         href={taskHref(slug, task)}
-        className="shrink-0 font-medium text-[#2C3E50] no-underline hover:text-rust"
+        className="min-w-0 max-w-[45%] shrink truncate font-medium text-[#2C3E50] no-underline hover:text-rust"
       >
         {task.taskId}
       </Link>
-      <span className="ml-1.5 truncate text-muted-foreground">{task.taskName.slice(0, 40)}</span>
+      <span className="ml-1.5 min-w-0 flex-1 truncate text-muted-foreground">{task.taskName.slice(0, 40)}</span>
       {task.isContentTask ? (
-        <span className="ml-1.5 shrink-0 rounded-full bg-rust/10 px-1.5 py-0.5 text-[9px] text-rust">
+        <span className="ml-1.5 max-w-[35%] shrink-0 truncate rounded-full bg-rust/10 px-1.5 py-0.5 text-[9px] text-rust">
           ✍️ content
           {task.targetChannels?.length ? ` · ${task.targetChannels.join("/")}` : ""}
         </span>
@@ -88,6 +95,7 @@ export function TaskIndexPanel({ slug }: Props) {
   const [filter, setFilter] = useState<TaskIndexFilter>("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => new Set());
   const openChat = useOpenChat();
 
   useEffect(() => {
@@ -98,6 +106,7 @@ export function TaskIndexPanel({ slug }: Props) {
     setLoading(true);
     setError("");
     setExpanded(new Set());
+    setExpandedProjects(new Set());
 
     void fetch(`/api/tasks?slug=${encodeURIComponent(slug)}&view=index`, { signal: controller.signal })
       .then(async (response) => {
@@ -127,12 +136,22 @@ export function TaskIndexPanel({ slug }: Props) {
     () => projectTaskIndex(entries, { filter, search, expanded }),
     [entries, expanded, filter, search],
   );
+  const projectionActive = filter !== "all" || search.trim().length > 0;
 
   const toggleExpanded = (key: string) => {
     setExpanded((current) => {
       const next = new Set(current);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleProject = (projectId: string) => {
+    setExpandedProjects((current) => {
+      const next = new Set(current);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
       return next;
     });
   };
@@ -246,32 +265,67 @@ export function TaskIndexPanel({ slug }: Props) {
         </div>
       </div>
 
-      {groups.map((group) => (
-        <section key={group.projectId} className="mb-4">
-          <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {group.projectId} — {group.projectName}
-          </h3>
-          <div className="overflow-hidden rounded-lg border border-[#E8E2D9] bg-white" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-[11px]">
-                <thead>
-                  <tr className="border-b border-[#E8E2D9] bg-muted/20">
-                    <th scope="col" className="px-3 py-1.5 text-left font-semibold text-muted-foreground">Tarea</th>
-                    <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Doc</th>
-                    <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Skill</th>
-                    <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Thread</th>
-                    <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.rows.map((row) => {
-                    const task = row.entry;
-                    const draftHref = contentDraftHref(slug, task);
-                    return (
-                      <tr key={row.key} className="border-b border-[#E8E2D9]/50 last:border-0 hover:bg-muted/10">
-                        <td className="px-3 py-2">
-                          <TaskLabel row={row} slug={slug} onToggle={toggleExpanded} />
-                        </td>
+      {groups.map((group) => {
+        const projectExpanded = taskIndexProjectIsExpanded(
+          group.projectId,
+          expandedProjects,
+          filter,
+          search,
+        );
+        const panelId = `task-index-project-${slug}-${group.projectId}`.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+        return (
+          <section key={group.projectId} className="mb-4">
+            <h3 className="mb-1.5">
+              <button
+                type="button"
+                onClick={() => toggleProject(group.projectId)}
+                disabled={projectionActive}
+                aria-expanded={projectExpanded}
+                aria-controls={panelId}
+                title={projectionActive ? "Abierto por los filtros activos" : undefined}
+                className="flex min-h-11 w-full items-center gap-1.5 rounded-lg border border-[#E8E2D9] bg-white px-3 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/10 hover:text-[#2C3E50] active:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust/40 disabled:cursor-default disabled:hover:bg-white disabled:hover:text-muted-foreground disabled:active:bg-white"
+                style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+              >
+                <span className="inline-flex w-3 shrink-0 items-center justify-center text-[10px]" aria-hidden="true">
+                  {projectExpanded ? "▾" : "▸"}
+                </span>
+                <span className="min-w-0 truncate">{group.projectId} — {group.projectName}</span>
+              </button>
+            </h3>
+            <div
+              id={panelId}
+              hidden={!projectExpanded}
+              className="overflow-hidden rounded-lg border border-[#E8E2D9] bg-white"
+              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] table-fixed text-[11px]">
+                  <colgroup>
+                    <col className="w-[55%]" />
+                    <col className="w-[6%]" />
+                    <col className="w-[21%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[10%]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-[#E8E2D9] bg-muted/20">
+                      <th scope="col" className="px-3 py-1.5 text-left font-semibold text-muted-foreground">Tarea</th>
+                      <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Doc</th>
+                      <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Skill</th>
+                      <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Thread</th>
+                      <th scope="col" className="px-2 py-1.5 text-center font-semibold text-muted-foreground">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.rows.map((row) => {
+                      const task = row.entry;
+                      const draftHref = contentDraftHref(slug, task);
+                      return (
+                        <tr key={row.key} className="border-b border-[#E8E2D9]/50 last:border-0 hover:bg-muted/10">
+                          <td className="overflow-hidden px-3 py-2">
+                            <TaskLabel row={row} slug={slug} onToggle={toggleExpanded} />
+                          </td>
                         <td className="px-2 py-2 text-center">
                           {task.docExists ? (
                             <Link
@@ -335,15 +389,16 @@ export function TaskIndexPanel({ slug }: Props) {
                             {task.status}
                           </span>
                         </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </section>
-      ))}
+          </section>
+        );
+      })}
 
       {groups.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">

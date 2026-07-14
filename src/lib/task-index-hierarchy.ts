@@ -8,6 +8,7 @@ export interface VisibleTaskIndexRow {
   depth: number;
   hasChildren: boolean;
   expanded: boolean;
+  autoExpanded: boolean;
 }
 
 export interface TaskIndexGroup {
@@ -20,6 +21,17 @@ interface ProjectionOptions {
   filter: TaskIndexFilter;
   search: string;
   expanded: ReadonlySet<string>;
+}
+
+export function taskIndexProjectIsExpanded(
+  projectId: string,
+  expandedProjects: ReadonlySet<string>,
+  filter: TaskIndexFilter,
+  search: string,
+): boolean {
+  return expandedProjects.has(projectId)
+    || filter !== "all"
+    || search.trim().length > 0;
 }
 
 const naturalCollator = new Intl.Collator("es", {
@@ -141,6 +153,7 @@ export function projectTaskIndex(
           depth,
           hasChildren: visibleChildren.length > 0,
           expanded: isExpanded,
+          autoExpanded: autoExpanded.has(key),
         });
 
         if (isExpanded) {
