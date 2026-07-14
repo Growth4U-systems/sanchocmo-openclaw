@@ -647,7 +647,9 @@ SANCHO_INTERNAL_API_TOKEN="$(gen_hex)"
 # like adminToken) so an existing gateway pairing isn't rotated out.
 MC_CHAT_SECRET="${MC_CHAT_SECRET:-}"
 if [ -z "$MC_CHAT_SECRET" ] && [ -f "$ENV_FILE" ]; then
-  MC_CHAT_SECRET="$(grep -E '^[[:space:]]*MC_CHAT_SECRET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'")"
+  # `|| true`: sin match, grep sale 1 y `set -o pipefail` mataría el wizard —
+  # que es justo el caso normal (un .env anterior a esta variable). SAN-457.
+  MC_CHAT_SECRET="$(grep -E '^[[:space:]]*MC_CHAT_SECRET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d "\"'" || true)"
 fi
 [ -n "$MC_CHAT_SECRET" ] || MC_CHAT_SECRET="$(gen_hex)"
 # adminToken: stateful, like POSTGRES_PASSWORD. config/clients.json (the brand
@@ -657,7 +659,9 @@ fi
 # admin login out from under the user. Reuse the existing one when present.
 ADMIN_TOKEN=""
 if [ -f "$CLIENTS_FILE" ]; then
-  ADMIN_TOKEN="$(grep -oE '"adminToken"[[:space:]]*:[[:space:]]*"[^"]+"' "$CLIENTS_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"[[:space:]]*$/\1/')"
+  # `|| true` por la misma razón que MC_CHAT_SECRET arriba (SAN-457): un
+  # clients.json sin adminToken es un archivo válido, no un error.
+  ADMIN_TOKEN="$(grep -oE '"adminToken"[[:space:]]*:[[:space:]]*"[^"]+"' "$CLIENTS_FILE" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"[[:space:]]*$/\1/' || true)"
   [ -n "$ADMIN_TOKEN" ] && say "  ${DIM}Reusing existing adminToken (keeps the preserved clients.json and login token in sync).${RST}"
 fi
 [ -z "$ADMIN_TOKEN" ] && ADMIN_TOKEN="$(gen_hex)"
