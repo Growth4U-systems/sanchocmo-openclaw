@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.5.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.4.0...v1.5.0) (2026-07-14)
+
+
+### Features
+
+* **cli:** comando sancho global + output de install tipo checklist (SAN-446, SAN-447) ([#1271](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1271)) ([9228fd3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9228fd3509b9d2c007c115679aa480136919cea1))
+* **deploy:** let prod ship the pre-built release image (flagged off) ([#1290](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1290)) ([d55370d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d55370d4fc62d059612612d673f0f20e7f46c7f6))
+* **deploy:** pick prod version from Releases, guard dispatch ref ([#1275](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1275)) ([c9c26d6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c9c26d6571f8d118782edab6042581b2f36b5d7b))
+* **docs:** route Growie through direct inference (SAN-442) ([6422de7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6422de7195ac505af4dd4fec05968b26a631b00c))
+
+
+### Bug Fixes
+
+* **cli:** close the installer UX gaps and document what shipped (SAN-460) ([#1291](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1291)) ([1d3c46f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1d3c46f49999aef3f956fa40ece1dfe4c151a2c9))
+* **deploy:** clear untracked paths that block the VPS git checkout (SAN-445) ([#1266](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1266)) ([42296c1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/42296c1f9c4bcba2aa6e91de6601add194f46984))
+* **deploy:** make the prod rollback restore the app, not just the tree ([#1285](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1285)) ([e20a711](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e20a7112fc2240084d2ae5b92bf40e20d521bffc))
+* **docs:** keep Growie provider compatible (SAN-442) ([1043748](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1043748937f5180791f8327131999d0638490e8e))
+* **docs:** make Growie reviews fast (SAN-442) ([6f99a3d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6f99a3dc72feff517f663172d1ce9061b96bbc2c))
+* **wizard:** run installer tests in CI, fix the two bugs they hid (SAN-456) ([#1284](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1284)) ([bdbb03d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/bdbb03d42fcbba9ff1c350afb2a9936f7e6a8261))
+
 ## [1.4.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.3.0...v1.4.0) (2026-07-13)
 
 
