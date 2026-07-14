@@ -29,6 +29,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Log del último install/up/update que escribe el checklist del CLI sancho.
+.sancho/
+
 # local env files + ALL .env variants (backups, pre-rotation snapshots, etc.)
 # Operators create ad-hoc .env backups during key rotations with arbitrary
 # suffixes (.env.bak-*, .env.backup-*, .env.pre-*, ...). Catch them all and

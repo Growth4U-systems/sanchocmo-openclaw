@@ -19,14 +19,29 @@
 #   ./sancho status         estado de los contenedores del stack
 #   ./sancho destroy        down -v — BORRA los datos (pide confirmación)
 #   ./sancho reconfigure    re-corre el wizard de configuración
+#   ./sancho link [--force] deja `sancho` en el PATH (lo hace install solo)
 #   ./sancho help           esta ayuda
 # ============================================================================
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolvé la cadena de symlinks hasta el archivo real ANTES de calcular
+# SCRIPT_DIR: si se invoca vía el symlink global (`sancho`, ver `link`),
+# BASH_SOURCE[0] es el symlink, y su dirname (p.ej. ~/.local/bin) no tiene los
+# docker-compose*.yml ni el .env. A mano en vez de `readlink -f`, que no es
+# portable a macOS.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  link_dir="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in /*) ;; *) SOURCE="$link_dir/$SOURCE" ;; esac
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+REAL_SCRIPT="$SCRIPT_DIR/$(basename "$SOURCE")"
 cd "$SCRIPT_DIR"
 # shellcheck source=scripts/compose-env.sh
 source "$SCRIPT_DIR/scripts/compose-env.sh"
+# shellcheck source=scripts/checklist.sh
+source "$SCRIPT_DIR/scripts/checklist.sh"
 
 IMAGE_REPO="ghcr.io/growth4u-systems/sanchocmo"
 
@@ -47,6 +62,7 @@ sancho — CLI único de ciclo de vida de SanchoCMO.
   ./sancho status         estado de los contenedores del stack
   ./sancho destroy        down -v — BORRA los datos (pide confirmación)
   ./sancho reconfigure    re-corre el wizard de configuración
+  ./sancho link [--force] deja `sancho` en el PATH (para no usar ./sancho)
   ./sancho help           esta ayuda
 EOF
 }
@@ -115,6 +131,59 @@ open_browser() {
 }
 
 # ---------------------------------------------------------------------------
+# link — deja `sancho` disponible en el PATH, para no depender de `./sancho`
+# desde el dir del install. Nunca usa sudo: si /usr/local/bin no es escribible
+# como el usuario actual, cae a ~/.local/bin.
+# ---------------------------------------------------------------------------
+link_global() {
+  local force=0 target dir rc_file shell_name
+  [ "${1:-}" = "--force" ] && force=1
+
+  # SANCHO_LINK_DIR permite fijar el destino (útil en tests y en setups raros).
+  if [ -n "${SANCHO_LINK_DIR:-}" ]; then
+    dir="$SANCHO_LINK_DIR"
+  elif [ -d /usr/local/bin ] && [ -w /usr/local/bin ]; then
+    dir="/usr/local/bin"
+  else
+    dir="$HOME/.local/bin"
+  fi
+  mkdir -p "$dir" || { echo "  ⚠ No pude crear $dir — salteo el link global."; return 1; }
+  target="$dir/sancho"
+
+  # No pisar algo que no sea nuestro symlink, salvo --force explícito.
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$REAL_SCRIPT" ]; then
+      if [ "$force" != "1" ]; then
+        echo "  ⚠ Ya existe $target y no es un link a este install — lo salteo."
+        echo "    Si querés pisarlo:  ./sancho link --force"
+        return 1
+      fi
+    fi
+  fi
+
+  ln -sfn "$REAL_SCRIPT" "$target" || { echo "  ⚠ No pude crear el symlink en $target."; return 1; }
+  echo "  ✅ sancho global: $target → $REAL_SCRIPT"
+
+  # Aviso de PATH (no editamos ningún rc automáticamente).
+  case ":$PATH:" in
+    *":$dir:"*) ;;
+    *)
+      shell_name="$(basename "${SHELL:-bash}")"
+      case "$shell_name" in
+        zsh) rc_file="~/.zshrc" ;;
+        *)   rc_file="~/.bashrc" ;;
+      esac
+      echo "  ⚠ $dir no está en tu PATH. Agregalo a $rc_file:"
+      printf '       export PATH="%s:$PATH"\n' "$dir"
+      echo "    (después: abrí otra terminal o corré  source $rc_file)"
+      ;;
+  esac
+  return 0
+}
+
+cmd_link() { link_global "$@"; }
+
+# ---------------------------------------------------------------------------
 # install — wizard (si falta .env) + up. Reemplaza al viejo install.sh.
 # ---------------------------------------------------------------------------
 cmd_install() {
@@ -136,6 +205,7 @@ cmd_install() {
   done
 
   bold "SanchoCMO — instalación"
+  step_log_init
   check_prereqs
 
   # Configurar (wizard) si falta .env o se fuerza.
@@ -169,19 +239,26 @@ cmd_install() {
   echo ""
   if [ "$BUILD" = "1" ]; then
     [ -f "$SCRIPT_DIR/Dockerfile" ] || die "--build necesita el source (Dockerfile) en $SCRIPT_DIR. En un install de producto (sin clonar) usá el modo normal."
-    bold "Buildeando y levantando ($COMPOSE $COMPOSE_ARGS up -d --build)"
     # shellcheck disable=SC2086
-    $COMPOSE $COMPOSE_ARGS up -d --build
+    step_run "Construyendo imagen y levantando contenedores" -- \
+      $COMPOSE $COMPOSE_ARGS up -d --build \
+      || die "Falló el build. El detalle está arriba y en $SANCHO_LOG"
   else
-    bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
+    # pull_images se maneja solo: manda el dump al log y, si falla, muestra la
+    # guía de login a GHCR + retry interactivo (no se puede envolver en spinner).
     pull_images
-    bold "Levantando contenedores ($COMPOSE $COMPOSE_ARGS up -d)"
+    echo "  ✅ Imágenes descargadas"
     # shellcheck disable=SC2086
-    $COMPOSE $COMPOSE_ARGS up -d
+    step_run "Levantando contenedores" -- $COMPOSE $COMPOSE_ARGS up -d \
+      || die "No se pudieron levantar los contenedores. El detalle está arriba y en $SANCHO_LOG"
   fi
   announce_ready
+  # Conveniencia, nunca fatal: si el link falla, el install igual está OK.
   echo ""
-  echo "  Otros comandos:  ./sancho logs · status · update · down"
+  bold "▸ sancho global"
+  link_global || true
+  echo ""
+  echo "  Otros comandos:  sancho logs · status · update · down"
 }
 
 # ---------------------------------------------------------------------------
@@ -189,9 +266,10 @@ cmd_install() {
 # ---------------------------------------------------------------------------
 cmd_up() {
   require_env; detect_compose; build_compose_args; resolve_host_ports
-  bold "Levantando ($COMPOSE $COMPOSE_ARGS up -d)"
+  step_log_init
   # shellcheck disable=SC2086
-  $COMPOSE $COMPOSE_ARGS up -d
+  step_run "Levantando contenedores" -- $COMPOSE $COMPOSE_ARGS up -d \
+    || die "No se pudieron levantar los contenedores. El detalle está arriba y en $SANCHO_LOG"
   announce_ready
 }
 
@@ -221,11 +299,12 @@ cmd_update() {
     set_env_var SANCHOCMO_IMAGE "$IMAGE_REPO:$tag"
   fi
   build_compose_args
-  bold "Bajando imágenes ($COMPOSE $COMPOSE_ARGS pull)"
+  step_log_init
   pull_images
-  bold "Aplicando ($COMPOSE $COMPOSE_ARGS up -d)"
+  echo "  ✅ Imágenes descargadas"
   # shellcheck disable=SC2086
-  $COMPOSE $COMPOSE_ARGS up -d
+  step_run "Aplicando la actualización" -- $COMPOSE $COMPOSE_ARGS up -d \
+    || die "No se pudo aplicar la actualización. El detalle está arriba y en $SANCHO_LOG"
   announce_ready
 }
 
@@ -293,6 +372,7 @@ case "$cmd" in
   status|ps)          cmd_status ;;
   destroy)            cmd_destroy ;;
   reconfigure)        cmd_reconfigure "$@" ;;
+  link)               cmd_link "$@" ;;
   help|-h|--help)     usage ;;
   *) die "Comando desconocido: $cmd  (probá: ./sancho help)" ;;
 esac
