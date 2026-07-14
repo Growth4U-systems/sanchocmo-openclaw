@@ -600,7 +600,7 @@ In the repo: **Settings → Environments**. Two environments exist, one per VPS:
 | Environment | Triggered by | Required reviewers | Used by |
 |---|---|---|---|
 | `staging` | merge / push to `main` (the trunk) | none (auto-deploy) | `deploy-staging.yml` |
-| `production` | **manual `workflow_dispatch` only** (enter the tag) | none — running it is the deliberate go-live | `deploy-prod.yml` |
+| `production` | **manual `workflow_dispatch` only** — `npm run deploy:prod`, or the Actions UI with `tag` empty for the latest Release | none — running it is the deliberate go-live | `deploy-prod.yml` |
 
 Both environments use the **same secret and variable names** — only the values differ. Add for the environment matching this VPS:
 
@@ -627,15 +627,37 @@ Both environments use the **same secret and variable names** — only the values
 
 ```bash
 git commit --allow-empty -m "chore: trigger first staging deploy"
-git push origin staging
+git push origin main
 ```
 
-**For `production`:** the deploy is **manual only** — publishing a GitHub Release does *not* deploy prod (it only builds the image). Ship a tag via the Actions UI:
+**For `production`:** the deploy is **manual only** — publishing a GitHub Release does *not* deploy prod (it only builds the image). You pick a **version**, never a branch. Two ways, both equivalent:
+
+**a) From the terminal (recommended — this is the version picker):**
+
+```bash
+npm run deploy:prod              # lists published Releases, you choose, it confirms
+npm run deploy:prod -- --latest  # ship the newest Release, no prompt
+npm run deploy:prod -- --dry-run # show what it would dispatch, ship nothing
+```
+
+Only *published Releases* are offered, and `--ref main` is pinned for you.
+
+**b) From the Actions UI:**
 
 1. Actions → "Deploy to Production"
-2. "Run workflow" → enter the tag (e.g. `v0.2.0`) → Run
+2. Leave "Use workflow from" on **`main`** (see the warning below)
+3. "Run workflow" → **leave `tag` empty to ship the latest published Release**, or type a tag (e.g. `v1.2.3`) → Run
 
-The workflow validates the tag exists before touching prod, so a typo or a tag that was never published fails fast instead of deploying nothing.
+> **Why is there no version dropdown?** GitHub reads `workflow_dispatch` inputs from static YAML and cannot populate them from the Releases API — a dropdown would have to be hardcoded and regenerated on every release. Hence: empty = latest, or use `npm run deploy:prod` for a real list. (SAN-450)
+
+> ⚠️ **"Use workflow from" is not the version.** That picker selects which copy of `deploy-prod.yml` *runs*, not what gets deployed — the version comes from the `tag` input. Dispatching from a feature branch would ship a legit tag using that branch's unreviewed deploy logic, so the workflow **refuses any ref except `main`**.
+
+Two guards run before prod is touched, so mistakes fail fast instead of half-deploying:
+
+| Guard | Rejects |
+|---|---|
+| dispatch must come from `main` | a run dispatched from any other branch/ref |
+| tag must be a published Release | a typo, or a hand-cut tag with no Release (e.g. `v1.0.6`–`v1.0.8` exist as tags but are **not** deployable — see SAN-430) |
 
 Watch the run at `https://github.com/<org>/<repo>/actions`. Expected step order and what each failure means:
 
