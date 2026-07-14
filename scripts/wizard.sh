@@ -628,8 +628,13 @@ esac
 # Open Design needs a browser-reachable URL. When enabled without one (quick, or
 # a scripted install that set ENABLE_OD but not OD_WEB_URL) default to localhost;
 # resolve_host_ports repoints it if host port 7456 gets relocated.
-if [ "$ENABLE_OD" = "1" ] && [ -z "$OD_WEB_URL" ]; then
-  OD_WEB_URL="http://localhost:7456"
+#
+# Los origins se derivan de la URL SIEMPRE que falten — no sólo cuando falta la
+# URL. Atarlos al mismo `if` dejaba OD_ALLOWED_ORIGINS vacío justo en el caso de
+# un deploy real (ENABLE_OD=yes + OD_WEB_URL pública), y el daemon de OD rechaza
+# al browser por CORS. Advanced ya lo hacía bien; esto empareja a quick. SAN-458.
+if [ "$ENABLE_OD" = "1" ]; then
+  [ -n "$OD_WEB_URL" ] || OD_WEB_URL="http://localhost:7456"
   OD_ALLOWED_ORIGINS="${OD_ALLOWED_ORIGINS:-$OD_WEB_URL}"
 fi
 
