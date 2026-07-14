@@ -96,6 +96,31 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
+      # The rollback target is "whatever prod was serving before we touched it" —
+      # so read it off the box BEFORE the checkout, while it's still true. The old
+      # rollback instead guessed it as "newest tag that isn't the failed one",
+      # which is wrong twice: it ignores which version was actually running (a
+      # deliberate redeploy of an older tag would "roll back" forward), and
+      # `git tag` includes hand-cut tags that were never Releases — the exact
+      # thing SAN-430 refuses to deploy. (SAN-454)
+      - name: Capture the version prod is running (rollback target)
+        id: current
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
+        run: |
+          # Prefer the exact tag (prod is normally detached at one); fall back to
+          # the raw SHA, which still rolls the tree back — the image pin just
+          # can't apply, and the rollback falls back to building.
+          CUR=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && (git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)" | tr -d '[:space:]')
+          if [ -z "$CUR" ]; then
+            echo "::warning::Could not read the currently-deployed ref; rollback will be unavailable."
+          else
+            echo "✓ Prod is currently running: $CUR"
+          fi
+          echo "ref=$CUR" >> "$GITHUB_OUTPUT"
+
       - name: Deploy via SSH
         env:
           # ── Deploy infra ──────────────────────────────────────────────
@@ -459,16 +484,33 @@ jobs:
           echo "::error::Health check failed after 60s"
           exit 1
 
+      # SAN-454: a rollback must put back the version prod was SERVING, not just
+      # the source tree. The app runs out of the image (`/app/mc-nextjs`), while
+      # the checkout only feeds the `~/.openclaw` volume (workspace/skills/prompts)
+      # — so `git checkout $PREV` alone rolls back the data and leaves the failed
+      # build serving traffic, then reports success. Both have to move together:
+      # check out $PREV *and* pin `SANCHOCMO_IMAGE` to $PREV's published image.
       - name: Rollback on failure
-        if: failure() && steps.tag.outcome == 'success'
+        if: failure() && steps.tag.outcome == 'success' && steps.current.outputs.ref != ''
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           FAILED_TAG: ${{ steps.tag.outputs.tag }}
+          PREV: ${{ steps.current.outputs.ref }}
+          # Passed explicitly: the remote script reads `${ENABLE_*:-1}`, so without
+          # these a rollback would compose a different overlay set than the deploy
+          # it is undoing (harmless today — production has ENABLE_YALC_SERVICE=1,
+          # which matches the default — but only by coincidence). (SAN-454)
+          ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
         run: |
-          echo "::warning::Deploy failed. Attempting rollback to previous tag…"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH FAILED_TAG=$FAILED_TAG bash -s" <<'EOF'
+          if [ "$PREV" = "$FAILED_TAG" ]; then
+            echo "::warning::Prod was already running $FAILED_TAG before this run; nothing to roll back to."
+            exit 0
+          fi
+          echo "::warning::Deploy of $FAILED_TAG failed. Rolling back to $PREV (the version prod was running)…"
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH FAILED_TAG=$FAILED_TAG PREV=$PREV ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE ENABLE_OD_SERVICE=$ENABLE_OD_SERVICE bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
 
@@ -495,12 +537,28 @@ jobs:
               return 0
             }
 
-            PREV=$(git tag --sort=-creatordate --list 'v*.*.*' | awk -v failed="${FAILED_TAG:-}" '$0 != failed { print; exit }')
-            if [ -z "$PREV" ]; then
-              echo "No previous tag found; cannot rollback"
+            if [ -z "${PREV:-}" ]; then
+              echo "No rollback target captured; cannot rollback"
               exit 1
             fi
             echo "▶ Rolling back to $PREV"
+
+            # Client data & config across a rollback — why this step doesn't carry
+            # the deploy step's brand backup/restore (verified 2026-07-14):
+            #  • brand/<slug>/ is UNTRACKED (.gitignore keeps only `example/`), and
+            #    NO Release v1.0.0..v1.4.0 tracks a client slug — SAN-340's orphan
+            #    squash finished that transition. So `git checkout $PREV` has no
+            #    client file to delete, and clear_checkout_collisions has none to
+            #    move. Re-track a slug and that stops being true.
+            #  • Live data survives the container swap because it's a BIND MOUNT
+            #    (~/.openclaw → /root/.openclaw); --force-recreate replaces the
+            #    container, never the mount. Postgres keeps a named volume and
+            #    --no-deps leaves it untouched (prod is on Neon regardless).
+            #  • `.env` is deliberately NOT reverted: the deploy may have upserted
+            #    new values before failing, and those are usually the correct ones
+            #    (e.g. a rotated secret). Old code ignores keys it doesn't read.
+            #  • No schema skew: RUN_DB_MIGRATIONS is unset in both Environments,
+            #    so a deploy never migrates — old code can't meet a newer schema.
             CHECKOUT_BLOCKER="plugins/mc-chat/src/attachments.js"
             if [ -e "$CHECKOUT_BLOCKER" ] && ! git ls-files --error-unmatch "$CHECKOUT_BLOCKER" >/dev/null 2>&1; then
               echo "▶ Stashing untracked $CHECKOUT_BLOCKER before rollback checkout..."
@@ -512,6 +570,34 @@ jobs:
             COMPOSE_ARGS="-f docker-compose.yml"
             [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
+
+            # Pin the app to $PREV's own image instead of whatever `:latest` points
+            # at locally — after a failed deploy that's the build we're undoing.
+            # Compose interpolates this from the shell env, which wins over `.env`.
+            export SANCHOCMO_IMAGE="ghcr.io/growth4u-systems/sanchocmo:$PREV"
+
+            # This pull MUST name the service. The `pull --ignore-buildable` below
+            # skips `sanchocmo` by design (it has a `build:`, so a build host never
+            # pulls a foreign image) — and prod builds from source, so $PREV's image
+            # is not in the local cache either. Without an explicit pull there'd be
+            # nothing to roll back TO.
+            ROLLED_BACK_VIA="image $SANCHOCMO_IMAGE"
+            if ! docker compose $COMPOSE_ARGS pull sanchocmo; then
+              # No published image for $PREV — e.g. prod sits on a pre-image-era
+              # tag, on a raw SHA, or the package was pruned. Rebuild from the
+              # tree we just checked out: slow, but a rollback that gives up is
+              # worse than a slow one.
+              echo "::warning::No image for $PREV — falling back to building it from source."
+              docker compose $COMPOSE_ARGS build sanchocmo
+              ROLLED_BACK_VIA="source build at $PREV"
+            fi
             docker compose $COMPOSE_ARGS pull --ignore-buildable || true
+
+            # --force-recreate is the whole point: same image NAME as the running
+            # container is not the same image. Without it Compose sees no config
+            # change and leaves the failed container up.
+            docker compose $COMPOSE_ARGS up -d --force-recreate --no-deps sanchocmo
             docker compose $COMPOSE_ARGS up -d
+            echo "▶ Rolled back to $PREV via $ROLLED_BACK_VIA"
+            docker compose $COMPOSE_ARGS ps
           EOF
