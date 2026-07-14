@@ -65,8 +65,36 @@ release.
    tag + GitHub Release on the `main` commit and builds the image
    (`docker-image.yml`).
 2. **Prod does NOT auto-deploy.** `deploy-prod.yml` is **`workflow_dispatch`
-   only**: a human runs it from the Actions tab and enters the tag to ship
-   (rejected if the tag isn't a published Release). You do not deploy prod.
+   only** and a **human** runs it. **You do not deploy prod** — you tell the
+   human how (below).
+
+## Deploying prod — what to tell the human (you don't run this)
+
+Prod ships a **version, never a branch**. Asked to "deploy prod" / "ship vX.Y.Z",
+hand them one of these — don't dispatch it yourself:
+
+```bash
+npm run deploy:prod              # picker: lists published Releases, they choose
+npm run deploy:prod -- --latest  # ship the newest Release
+npm run deploy:prod -- --dry-run # show what it would dispatch, ship nothing
+```
+
+Or: Actions → "Deploy to Production" → "Run workflow" → **leave `tag` empty for
+the latest published Release**, or type a tag.
+
+Three things worth knowing when this comes up:
+
+- **There is no version dropdown and that's not an oversight.** GitHub reads
+  `workflow_dispatch` inputs from static YAML and can't populate them from the
+  Releases API. Empty `tag` = latest Release; `npm run deploy:prod` is the real
+  picker. Don't "fix" this by hardcoding a `type: choice` list (SAN-450).
+- **"Use workflow from" is NOT the version.** It picks which copy of
+  `deploy-prod.yml` runs. The workflow **refuses any ref but `main`** — if
+  someone hits that error, the fix is re-dispatching from `main`, not changing
+  the tag.
+- **Tags ≠ Releases.** Only published Releases deploy (SAN-430). `v1.0.6`–`v1.0.8`
+  exist as tags and are *not* deployable. Never fix a rejection by hand-cutting
+  a tag — cut a real release.
 
 Merging the release PR does **not** freeze the trunk — keep working immediately.
 
@@ -104,7 +132,11 @@ git tag -a "$NEW" -m "hotfix: <summary> (SAN-<n>)"
 git push origin "$NEW"
 gh release create "$NEW" --title "$NEW" --notes "Hotfix: <summary> (SAN-<n>)"
 
-# 4. Ship it: Actions → "Deploy to Production" → Run workflow → tag=$NEW.
+# 4. Ship it (the human runs this): npm run deploy:prod -- --tag $NEW
+#    Name the tag explicitly — don't use --latest. This is exactly the window
+#    where "latest" is a moving target: if the trunk's release PR gets merged
+#    while you work, `latest` becomes THAT release — the unshippable trunk you
+#    opened this emergency path to avoid.
 ```
 
 Then **forward-port** the fix into `main` so it isn't lost: open a **squash PR**

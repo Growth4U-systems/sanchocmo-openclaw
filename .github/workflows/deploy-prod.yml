@@ -5,12 +5,18 @@ name: Deploy to Production
 # fast-forwards `main`). Shipping to prod is the human go/no-go: dispatch this with the
 # tag. The tag MUST be a release-please Release (enforced by the guard job below) — a
 # hand-created tag is not deployable. This keeps a single tagging path (SAN-430).
+#
+# Picking the version (SAN-450): GitHub can't populate a `type: choice` input from
+# the Releases API — dispatch inputs are static YAML — so there is no native version
+# dropdown. Instead: leave `tag` empty to ship the latest published Release (the
+# common case), or run `npm run deploy:prod` locally to pick an older one from a
+# real list. Typing a tag by hand still works and is still guarded below.
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to deploy (must be a published GitHub Release, e.g. v1.2.3)'
-        required: true
+        description: 'Release tag to deploy (e.g. v1.2.3). Leave EMPTY to ship the latest published Release.'
+        required: false
 
 concurrency:
   group: deploy-production
@@ -18,19 +24,49 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ inputs.tag }} to prod VPS
+    name: Deploy ${{ inputs.tag || 'latest release' }} to prod VPS
     runs-on: ubuntu-latest
     environment:
       name: production
       url: ${{ vars.HEALTH_URL }}
     steps:
+      # `workflow_dispatch` always shows a "Use workflow from <ref>" picker and it
+      # cannot be hidden. It doesn't change WHAT ships (the VPS checks out $TAG
+      # below), but it does decide which copy of THIS FILE and of
+      # scripts/upsert-env.py runs — so a dispatch from a feature branch would
+      # deploy a legit tag using that branch's unreviewed deploy logic. The deploy
+      # procedure must come from the trunk. (SAN-450)
+      - name: Guard — dispatch must come from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Dispatched from '${{ github.ref_name }}'. Prod deploys run the workflow file from the trunk only — re-run with 'Use workflow from' set to main (or use \`npm run deploy:prod\`, which pins --ref main). Note this picker selects the DEPLOY LOGIC, not the version: choose the version with the 'tag' input."
+          exit 1
+
       - name: Checkout (need scripts/upsert-env.py for scp)
         uses: actions/checkout@v7
 
+      # An empty `tag` input means "ship the newest thing we cut" — the common case,
+      # and the one where hand-typing a version is pure risk for zero benefit.
+      # `gh release view` (no tag arg) returns the latest *published Release*, which
+      # is exactly the set the guard below accepts — so the default can never be a
+      # hand-cut tag that has no Release (v1.0.6/7/8 exist as tags but aren't
+      # deployable). (SAN-450)
       - name: Resolve target tag
         id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          TAG="${{ inputs.tag }}"
+          TAG="$INPUT_TAG"
+          if [ -z "$TAG" ]; then
+            echo "▶ No tag given — resolving the latest published Release…"
+            TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+            if [ -z "$TAG" ]; then
+              echo "::error::No published Release found to deploy. Merge the open 'chore: release vX.Y.Z' PR on main to cut one first."
+              exit 1
+            fi
+            echo "✓ Latest published Release is '$TAG'"
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Deploying tag: $TAG"
 

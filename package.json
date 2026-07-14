@@ -19,6 +19,7 @@
     "smoke:runtime:external-http:bridge": "node scripts/smoke-external-http.mjs --protocol=mc-bridge",
     "smoke:runtime:codex": "node scripts/smoke-cli-runtime.mjs --runtime=codex",
     "smoke:runtime:claude-code": "node scripts/smoke-cli-runtime.mjs --runtime=claude-code",
+    "deploy:prod": "node scripts/deploy-prod.mjs",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",
     "check:drafts": "tsx scripts/check-legacy-media.mts",
     "audit:docs": "tsx scripts/audit-doc-paths.mts --check",
