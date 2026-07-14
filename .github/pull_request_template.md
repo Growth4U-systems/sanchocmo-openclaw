@@ -25,7 +25,10 @@ Refs SAN-123
 
 ---
 
-**Target branch: always `staging`.** Feature, fix, hotfix, and the
-release-please release PR all target `staging` and merge with **squash**. `main`
-is automation-only (fast-forwarded to each release tag) — never open a PR into it.
+**Target branch: always `main`.** `main` is the single trunk (SAN-444): feature,
+fix, hotfix, and the release-please release PR all target `main` and merge with
+**squash**. There is no `staging` *branch* — the trunk auto-deploys to the
+staging/QA *environment* (the VPS is still called "staging") on every push, and
+prod is a separate manual step (`deploy-prod.yml` is `workflow_dispatch` only).
+Releases are tags cut from `main` by release-please; don't tag by hand.
 See `docs/CONTRIBUTING.md` / the `git-workflow` skill.
