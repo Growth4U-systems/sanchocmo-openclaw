@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.4.0...v1.5.0) (2026-07-14)
+
+
+### Features
+
+* **docs:** route Growie through direct inference (SAN-442) ([6422de7](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6422de7195ac505af4dd4fec05968b26a631b00c))
+
+
+### Bug Fixes
+
+* **docs:** keep Growie provider compatible (SAN-442) ([1043748](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1043748937f5180791f8327131999d0638490e8e))
+* **docs:** make Growie reviews fast (SAN-442) ([6f99a3d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6f99a3dc72feff517f663172d1ce9061b96bbc2c))
+
 ## [1.4.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.3.0...v1.4.0) (2026-07-13)
 
 
