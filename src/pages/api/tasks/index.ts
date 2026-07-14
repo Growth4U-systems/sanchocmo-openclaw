@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, withAuth, withErrorHandler, canAccessSlug } from "@/lib/api-middleware";
+import { buildTaskIndex } from "@/lib/data/task-index";
 import { createTask, listProjectsWithTasks, listUnifiedTaskRowsAsync } from "@/lib/data/tasks";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,8 +11,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const include = req.query.include as string | undefined;
     const type = req.query.type as string | undefined;
-    const projects = await listProjectsWithTasks(slug);
+    const view = req.query.view as string | undefined;
+
+    if (view === "index") {
+      const rows = await listUnifiedTaskRowsAsync(slug);
+      const { entries, stats } = buildTaskIndex(slug, rows);
+      return res.status(200).json({ ok: true, slug, entries, stats });
+    }
+
     if (type === "project" || include === "children") {
+      const projects = await listProjectsWithTasks(slug);
       return res.status(200).json({ ok: true, slug, projects });
     }
     const rows = await listUnifiedTaskRowsAsync(slug);
