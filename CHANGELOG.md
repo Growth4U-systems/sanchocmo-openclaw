@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.5.0...v1.6.0) (2026-07-14)
+
+
+### Features
+
+* **tasks:** unify task index UX ([#1297](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1297)) ([175f919](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/175f91906d63e0a0d8ac2db31a9a4efc6f8c5598))
+
+
+### Bug Fixes
+
+* **deploy:** stop recreating every service just because the version changed ([#1294](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1294)) ([7ec8242](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7ec82420069f02e2735fd939ff15113efa5d664e))
+* **tasks:** align task index accordions ([#1298](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1298)) ([7f5c30a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7f5c30a435e28f9ebd0b4f90bac214effc18d356))
+
 ## [1.5.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.4.0...v1.5.0) (2026-07-14)
 
 
