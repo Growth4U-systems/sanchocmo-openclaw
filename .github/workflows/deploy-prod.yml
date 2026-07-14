@@ -69,6 +69,13 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Deploying tag: $TAG"
+          # /commits/<ref> dereferences annotated tags for us, so this is the
+          # commit either way. It's what the image bakes as GIT_COMMIT at build
+          # time and what `git rev-parse HEAD` yields after the VPS checks the tag
+          # out — i.e. the same value in both deploy modes. (SAN-455)
+          COMMIT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" -q .sha)
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Expected commit: $COMMIT"
 
       # Single tagging path (SAN-430): only tags cut by release-please — i.e. tags
       # that have a *published GitHub Release* — are deployable. A hand-created tag
@@ -85,6 +92,29 @@ jobs:
             exit 1
           fi
           echo "✓ '$TAG' is a published Release — cleared to deploy."
+
+      # In image mode the tag is no longer sufficient on its own: `docker-image.yml`
+      # only starts on `release: published` and takes minutes to push a multi-arch
+      # manifest, so "merge the release PR, then deploy" races it. Prod builds its
+      # own source today, which is why this race doesn't exist yet. Wait for the
+      # image rather than failing the operator's dispatch, and only then touch the
+      # VPS. (SAN-455)
+      - name: Guard — the release image must exist (image mode only)
+        if: vars.DEPLOY_FROM_IMAGE == '1'
+        env:
+          IMAGE: ghcr.io/growth4u-systems/sanchocmo:${{ steps.tag.outputs.tag }}
+        run: |
+          echo "▶ Waiting for $IMAGE (up to 10 min)…"
+          for i in $(seq 1 30); do
+            if docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
+              echo "✓ $IMAGE is published — cleared to deploy."
+              exit 0
+            fi
+            echo "  … not published yet (${i}/30); the release image build may still be running."
+            sleep 20
+          done
+          echo "::error::$IMAGE never appeared. Check the 'Publish sanchocmo image' workflow for this release — it runs on 'release: published'. Re-dispatch once it's green, or unset DEPLOY_FROM_IMAGE on the production Environment to deploy by building on the VPS."
+          exit 1
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.10.0
@@ -134,6 +164,13 @@ jobs:
           # YALC ships as a public GHCR image (SAN-135). Override the tag here
           # to pin a version; empty falls back to the compose default (:edge).
           YALC_IMAGE: ${{ vars.YALC_IMAGE }}
+          # SAN-455: set DEPLOY_FROM_IMAGE=1 on the Environment to ship the image CI
+          # built for this tag instead of rebuilding it on the VPS. Unset → source
+          # build (today's behaviour). SANCHOCMO_IMAGE is only computed in image
+          # mode; empty otherwise, so the payload builder filters it out and nothing
+          # is pinned in `.env`.
+          DEPLOY_FROM_IMAGE: ${{ vars.DEPLOY_FROM_IMAGE || '0' }}
+          SANCHOCMO_IMAGE: ${{ vars.DEPLOY_FROM_IMAGE == '1' && format('ghcr.io/growth4u-systems/sanchocmo:{0}', steps.tag.outputs.tag) || '' }}
           # ── Tier 1 — Auth & infra secrets ─────────────────────────────
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
@@ -274,6 +311,10 @@ jobs:
               # Variables (non-sensitive config)
               "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
+              # SAN-455: only set in DEPLOY_FROM_IMAGE mode. Persisting the pin in
+              # `.env` keeps a manual `docker compose up -d` on the box on the same
+              # version instead of resolving the `:latest` compose default.
+              "SANCHOCMO_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
@@ -288,7 +329,7 @@ jobs:
 
           scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
 
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME DEPLOY_FROM_IMAGE=$DEPLOY_FROM_IMAGE SANCHOCMO_IMAGE=$SANCHOCMO_IMAGE bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
 
@@ -427,8 +468,25 @@ jobs:
             # YALC (Outreach) is an opt-in overlay; its image is public on GHCR
             # (pulled below via `pull --ignore-buildable`, same as Open Design).
             [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
-            echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
-            docker compose $COMPOSE_ARGS build --pull
+            # SAN-455 (Fase 7, prod-only): ship the artifact CI already built for
+            # this tag instead of recompiling the same source on the VPS (~2-3 min
+            # of `npm ci` + `next build`, and the reason SERVER-OPS.md prescribes
+            # swap + a build-cache prune cron). Opt-in per Environment via
+            # DEPLOY_FROM_IMAGE=1; unset → the source build below, unchanged.
+            #
+            # The pull MUST name the service: `pull --ignore-buildable` further down
+            # deliberately skips `sanchocmo` (it has a `build:`), so it would fetch
+            # nothing. SANCHOCMO_IMAGE is also written to `.env` by the payload, so a
+            # manual `docker compose up -d` on the box resolves the same version
+            # instead of drifting to `:latest`.
+            if [ "${DEPLOY_FROM_IMAGE:-0}" = "1" ]; then
+              echo "▶ Pulling the published image for $TAG (GIT_COMMIT=$GIT_COMMIT)…"
+              echo "▶   SANCHOCMO_IMAGE=$SANCHOCMO_IMAGE"
+              docker compose $COMPOSE_ARGS pull sanchocmo
+            else
+              echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
+              docker compose $COMPOSE_ARGS build --pull
+            fi
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
               echo "▶ Running DB migrations…"
               # Apply only the curated additive deploy migrations via the
@@ -482,6 +540,39 @@ jobs:
             sleep 2
           done
           echo "::error::Health check failed after 60s"
+          exit 1
+
+      # The health check above only proves *something* answers — it would pass just
+      # as happily if the new image was pulled but never swapped in. That's the one
+      # failure mode image mode introduces, so assert the served commit is the one
+      # we shipped. Scoped to image mode on purpose: the build path's behaviour is
+      # not this PR's business. Failing here trips the rollback (SAN-454), which
+      # now actually restores the previous app. (SAN-455)
+      - name: Verify prod is serving the deployed commit (image mode only)
+        if: vars.DEPLOY_FROM_IMAGE == '1'
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          EXPECTED_COMMIT: ${{ steps.tag.outputs.commit }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::warning::HEALTH_URL not set; cannot verify the served commit."
+            exit 0
+          fi
+          echo "▶ Expecting $TAG → commit $EXPECTED_COMMIT"
+          for i in $(seq 1 30); do
+            body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
+            if [ -n "$body" ]; then
+              commit="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit",""))' <<<"$body" 2>/dev/null || true)"
+              if [ "$commit" = "$EXPECTED_COMMIT" ]; then
+                echo "✓ Prod is serving $TAG ($commit)"
+                exit 0
+              fi
+              echo "  … serving '${commit:-missing}', expected '$EXPECTED_COMMIT'"
+            fi
+            sleep 2
+          done
+          echo "::error::Prod answered health checks but never reported commit $EXPECTED_COMMIT — the new image is not the one serving traffic. Rolling back."
           exit 1
 
       # SAN-454: a rollback must put back the version prod was SERVING, not just

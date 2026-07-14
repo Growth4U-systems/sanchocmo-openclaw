@@ -618,8 +618,27 @@ Both environments use the **same secret and variable names** — only the values
 |---|---|---|
 | `DEPLOY_PATH` | Absolute path of the repo clone on the VPS | Output of `echo $HOME/.openclaw` on the VPS as the SSH user (e.g. `/home/deploy/.openclaw`, `/root/.openclaw`). Can be left unset to default to `~/.openclaw`. |
 | `HEALTH_URL` | Public URL the workflow polls after deploy | `https://<env-domain>/api/health` — e.g. `https://staging.example.com/api/health`, `https://app.example.com/api/health` |
+| `DEPLOY_FROM_IMAGE` | **`production` only, optional.** `1` → deploy by pulling the image CI built for the tag. Unset/`0` → build from source on the VPS (current default). See *Deploying prod from the pre-built image* below | `1` or unset |
 
 > **Secrets vs variables, why two?** Secrets are encrypted at rest and masked as `***` in workflow logs — use them for anything sensitive (private keys, tokens). Variables are stored in plain text and shown in logs — use them for non-sensitive config (paths, public URLs). GitHub does not let you put a secret in a `vars.` context or vice versa, so the names above are not interchangeable.
+
+### Deploying prod from the pre-built image (`DEPLOY_FROM_IMAGE`)
+
+By default prod does `git checkout <tag>` + `docker compose build --pull` — it **recompiles on the VPS** the same source CI already built into `ghcr.io/growth4u-systems/sanchocmo:<tag>` when the release was published. That's ~2-3 min of `npm ci` + `next build` per deploy, and the reason [`SERVER-OPS.md`](./SERVER-OPS.md) prescribes swap and a build-cache prune cron.
+
+Set **`DEPLOY_FROM_IMAGE=1`** on the `production` Environment to pull that image instead. Deploys drop to seconds, build failures surface in CI instead of mid-go-live, and prod runs the exact artifact CI produced rather than a same-source rebuild whose base layers may have drifted. (SAN-455 — Fase 7 of the packaging plan, prod-only.)
+
+What changes when it's on:
+
+- The workflow **waits for the release image to exist** before touching the VPS (up to 10 min). `Publish sanchocmo image` runs on `release: published` and takes minutes, so "merge the release PR, then deploy immediately" would otherwise race it. This guard doesn't exist in build mode because there the tag alone is sufficient.
+- `SANCHOCMO_IMAGE=ghcr.io/growth4u-systems/sanchocmo:<tag>` is pinned and **written to `.env` on the VPS**, so a manual `docker compose up -d` on the box stays on the same version instead of resolving the `:latest` compose default.
+- An extra step **asserts `/api/health` reports the deployed commit**, so a pulled-but-not-swapped container fails the deploy (and trips the rollback) instead of passing a plain ping.
+
+The git checkout still happens either way — `~/.openclaw` is both the clone and the container's bind mount, so the workspace/skills/prompts come from the tree while the app comes from the image.
+
+**To turn it off**, unset the variable: the next deploy builds from source again. Note the `SANCHOCMO_IMAGE` line already written to `.env` is not removed (the upsert only adds/updates); it's harmless — Compose tags the local build with that name — but delete the line on the VPS if you want the box back to a pristine build-mode `.env`.
+
+**Rolling it out:** flip it on, deploy one release, and confirm `/api/health` reports that release's commit. If anything looks wrong, unset the variable and re-dispatch — that's a full return to the current behaviour, no code change needed.
 
 ### Step 4 — Trigger the first deploy and verify
 
