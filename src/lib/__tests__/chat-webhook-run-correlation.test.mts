@@ -435,6 +435,13 @@ test("successful webhook persists causal artifact readback only for a matching f
   // The write must happen at or after the causally bound progress receipt.
   await new Promise((resolve) => setTimeout(resolve, 5));
   fs.writeFileSync(output, "causal bytes after progress");
+  // The kernel stamps mtime from the coarse clock, granular to one timer tick
+  // (10ms at CONFIG_HZ=100), which can put the write before the receipt and drop
+  // the readback. Pin mtime to the wall clock so the gap above is what counts.
+  // It must stay a whole millisecond wide: utimes round-trips through ns and
+  // reads back ~0.001ms low, and the lower bound has no pre-progress tolerance.
+  const writtenAt = new Date();
+  fs.utimesSync(output, writtenAt, writtenAt);
 
   const final = mockResponse();
   await webhookHandler(
