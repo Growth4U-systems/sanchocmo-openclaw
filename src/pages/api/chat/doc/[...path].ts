@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
-import { withErrorHandler } from "@/lib/api-middleware";
+import {
+  canAccessSlug,
+  compose,
+  withAuth,
+  withErrorHandler,
+} from "@/lib/api-middleware";
 import { BASE } from "@/lib/data/paths";
 import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
 
@@ -9,7 +14,7 @@ import { resolveWorkspaceDocPath } from "@/lib/server/doc-paths";
  * Ported from mc-server.js:5239-5263
  * Returns raw doc content for pinned docs in chat
  */
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function chatDocHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const pathParts = req.query.path;
@@ -18,6 +23,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const parts = docPath.replace(/^\/+/, "").split("/").filter(Boolean);
   const slug = parts[0] === "brand" ? parts[1] : parts[0];
+  if (!slug || !/^[a-z0-9][a-z0-9-]*$/i.test(slug)) {
+    return res.status(400).json({ error: "Invalid document path" });
+  }
+  if (!canAccessSlug(req.ctx, slug)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
   const brandPath = parts[0] === "brand" ? docPath : `brand/${docPath}`;
 
   let resolved;
@@ -45,4 +56,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-export default withErrorHandler(handler);
+export default compose(withErrorHandler, withAuth)(chatDocHandler);

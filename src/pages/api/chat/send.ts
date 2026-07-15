@@ -7,6 +7,10 @@ import {
   withErrorHandler,
 } from "@/lib/api-middleware";
 import {
+  ChatAttachmentValidationError,
+  validateChatAttachments,
+} from "@/lib/chat-attachments";
+import {
   addMessage,
   clearStatus,
   getThread,
@@ -29,11 +33,11 @@ import {
   toThreadRouting,
 } from "@/lib/runtime/agent-execution-policy";
 import {
-  createAgentRun,
-  getAgentRunByIdempotencyKey,
-  markAgentRunCompleted,
-  markAgentRunDispatched,
-  markAgentRunFailed,
+  createAgentRunWithReceiptAsync,
+  getAgentRunByIdempotencyKeyAsync,
+  markAgentRunCompletedAsync,
+  markAgentRunDispatchedAsync,
+  markAgentRunFailedAsync,
 } from "@/lib/data/agent-runs";
 import {
   discardPendingTaskRouteProposal,
@@ -51,6 +55,17 @@ import {
 import { resolveActiveOutboundWorkflow } from "@/lib/outreach/active-workflow";
 import { dispatchOutboundCommand } from "@/lib/yalc/outbound-command";
 import { resolveYalcConfig } from "@/lib/yalc/client";
+import { traceContextFromHeaders, tracePropagationHeaders } from "@/lib/trace-context";
+import {
+  canonicalThreadId,
+  isValidTenantSlug,
+  parseThreadId,
+} from "@/lib/thread-id";
+import {
+  buildGrowieSupportContext,
+  GROWIE_SUPPORT_SOURCE,
+  isGrowieSupportThreadId,
+} from "@/lib/support/growie";
 
 function normalizedIdempotencyKey(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -95,6 +110,7 @@ function resultNumber(value: unknown): number | null {
  */
 export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const traceContext = req.traceContext ?? traceContextFromHeaders(req.headers);
 
   const {
     slug,
@@ -122,7 +138,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     readOnly: claimedReadOnly,
   } = req.body;
 
-  if (!slug || !text) {
+  if (!isValidTenantSlug(slug) || typeof text !== "string" || !text.trim()) {
     return res.status(400).json({ error: "Missing slug or text" });
   }
 
@@ -153,15 +169,37 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   }
   const controlDepth: 0 | 1 = trustedRuntimeRequest && claimedControlDepth === 1 ? 1 : 0;
 
-  const tid = threadId || `${slug}:general`;
-  if (typeof tid !== "string" || !tid.startsWith(`${slug}:`)) {
+  const rawThreadId = threadId || `${slug}:general`;
+  const parsedThread = parseThreadId(rawThreadId);
+  if (!parsedThread || parsedThread.slug !== slug) {
     return res.status(400).json({ error: "Thread does not belong to slug" });
   }
+  const tid = canonicalThreadId(rawThreadId);
   const shortThreadId =
     tid.slice(String(slug).length + 1);
+  const isGrowieSupport = isGrowieSupportThreadId(tid, String(slug));
+  if (isGrowieSupport && !trustedRuntimeRequest && req.ctx?.isAdmin !== true) {
+    return res.status(403).json({ error: "Growie support is currently limited to staff" });
+  }
+  const resolvedThreadName = isGrowieSupport ? "Growie · Soporte" : threadName || tid;
+  const resolvedLinkedTo = isGrowieSupport ? "support/growie" : linkedTo || undefined;
+  const effectiveSource = isGrowieSupport ? GROWIE_SUPPORT_SOURCE : _source;
+  const supportContext = isGrowieSupport
+    ? buildGrowieSupportContext({
+        referrer: req.headers.referer,
+        deployedCommit: process.env.GIT_COMMIT,
+        imageDigest: process.env.SANCHOCMO_IMAGE_DIGEST,
+        environment: process.env.NEXT_PUBLIC_ENV_LABEL || process.env.NODE_ENV,
+      })
+    : undefined;
   const persistedRoute = getThreadRouting(tid);
   const namespaceRoute = resolveNamespaceThreadConfig(slug, tid);
-  const requestRoute = { agent, scope, skillMode, skill, skills };
+  // The support namespace is a trusted server policy. Browser routing fields
+  // cannot turn Growie's read-only diagnostic into a specialist with a wider
+  // toolset, and a stale persisted route cannot do so on a reopened case.
+  const requestRoute = isGrowieSupport
+    ? { agent: "sancho", scope: "agent", skillMode: "auto" }
+    : { agent, scope, skillMode, skill, skills };
   const taskExecution = await resolveTaskThreadExecutionRoute(slug, tid);
   if (taskExecution.kind === "ambiguous") {
     return res.status(409).json({
@@ -195,9 +233,11 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       );
     }
   }
-  const persistedExecutionRoute = !taskExecutionRoute && persistedRoute?.scope === "task"
-    ? { ...persistedRoute, scope: "agent" as const, skillMode: "auto" as const }
-    : persistedRoute;
+  const persistedExecutionRoute = isGrowieSupport
+    ? undefined
+    : !taskExecutionRoute && persistedRoute?.scope === "task"
+      ? { ...persistedRoute, scope: "agent" as const, skillMode: "auto" as const }
+      : persistedRoute;
   const requestedExecutionRoute = !taskExecutionRoute && requestRoute.scope === "task"
     ? { ...requestRoute, scope: "agent" as const, skillMode: "auto" as const }
     : requestRoute;
@@ -222,8 +262,15 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       ? policy.skillHint
       : undefined;
   const effectiveSkills = policy.availableSkills;
-  const parsedAttachments: ChatAttachment[] | undefined =
-    Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined;
+  let parsedAttachments: ChatAttachment[] | undefined;
+  try {
+    parsedAttachments = validateChatAttachments(attachments, String(slug));
+  } catch (error) {
+    if (error instanceof ChatAttachmentValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    throw error;
+  }
 
   // Runtime follow-ups preserve the original principal, but browser JSON never
   // chooses a sender id and a trusted client can never claim the reserved admin
@@ -232,7 +279,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     ? claimedIsAdmin === true && claimedSenderRole === "admin"
     : req.ctx?.isAdmin === true;
   const senderRole: "admin" | "client" = isAdmin ? "admin" : "client";
-  const readOnly = trustedRuntimeRequest && claimedReadOnly === true;
+  const readOnly = isGrowieSupport || (trustedRuntimeRequest && claimedReadOnly === true);
   const resolvedUserId = resolveChatUserId({
     trustedRuntimeRequest,
     isAdmin,
@@ -240,10 +287,11 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     claimedUserId: userId,
   });
   const resolvedUserName = userName || (isAdmin ? "Admin" : slug);
-  const acceptedIdempotencyKey = trustedRuntimeRequest
-    ? normalizedIdempotencyKey(claimedIdempotencyKey)
-    : undefined;
-  if (trustedRuntimeRequest && claimedIdempotencyKey !== undefined && !acceptedIdempotencyKey) {
+  // Authenticated browser and runtime callers share the same thread-scoped
+  // idempotency contract. A browser cannot affect another tenant because slug
+  // access and canonical thread ownership were established above.
+  const acceptedIdempotencyKey = normalizedIdempotencyKey(claimedIdempotencyKey);
+  if (claimedIdempotencyKey !== undefined && !acceptedIdempotencyKey) {
     return res.status(400).json({ error: "Invalid idempotencyKey" });
   }
 
@@ -251,7 +299,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // between opening the chooser and selecting an option keeps the same route.
   if (turnPolicy.persistRoute) setThreadRouting(tid, toThreadRouting(policy));
 
-  if (isOutboundCampaignStartPrompt(text)) {
+  if (!isGrowieSupport && isOutboundCampaignStartPrompt(text)) {
     addMessage(tid, "user", String(text), undefined, parsedAttachments);
     const prepared = buildOutboundCampaignOptions(String(slug));
     addMessage(tid, "bot", prepared.message, resolvedAgent || "rocinante");
@@ -263,8 +311,11 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
-  const outboundSelectionAttempt = /^\[ask:outbound_ecp_v1\]\s*respuesta:/m.test(String(text));
-  const outboundChoice = resolveOutboundWorkflowChoice(getThread(tid), String(text));
+  const outboundSelectionAttempt = !isGrowieSupport
+    && /^\[ask:outbound_ecp_v1\]\s*respuesta:/m.test(String(text));
+  const outboundChoice = isGrowieSupport
+    ? null
+    : resolveOutboundWorkflowChoice(getThread(tid), String(text));
   if (outboundSelectionAttempt && !outboundChoice) {
     addMessage(tid, "user", stripAskProtocol(String(text)), undefined, parsedAttachments);
     addMessage(
@@ -373,20 +424,19 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  // Claim the retry key synchronously before any message/thread side effect.
-  // Node handles the lookup + create without an await between them, so two
-  // concurrent retries in this process cannot both create a run.
+  // Fast-path an already claimed retry key before any message/thread side
+  // effect. The repository repeats this as an atomic Postgres claim below, so
+  // correctness does not depend on this process-local optimistic lookup.
   if (acceptedIdempotencyKey) {
-    const existingRun = getAgentRunByIdempotencyKey(tid, acceptedIdempotencyKey);
+    const existingRun = await getAgentRunByIdempotencyKeyAsync(tid, acceptedIdempotencyKey);
     // Only a run that is still in flight or already succeeded is a genuine
     // duplicate. A prior run that failed to reach the runtime (or was
     // cancelled) must NOT wedge the key: a transient gateway outage would
     // otherwise brick the delegation forever — every retry with the same
     // deterministic key would 409, even after the gateway recovered. Fall
     // through so a fresh run is created below; because
-    // getAgentRunByIdempotencyKey scans newest-first, the new run supersedes
-    // the failed one for all future lookups. No await runs between here and
-    // createAgentRun, so the single-writer atomicity above is preserved.
+    // getAgentRunByIdempotencyKey scans newest-first, so a new durable run
+    // supersedes the failed one for future lookups.
     if (existingRun
       && (existingRun.status === "queued"
         || existingRun.status === "running"
@@ -395,16 +445,20 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         ok: true,
         duplicate: true,
         runId: existingRun.id,
+        traceId: existingRun.traceId ?? traceContext.traceId,
         status: existingRun.status,
         chatId: tid,
       });
     }
   }
 
-  const activeOutboundWorkflow = resolveActiveOutboundWorkflow(getThread(tid));
-  const run = createAgentRun({
+  const activeOutboundWorkflow = isGrowieSupport
+    ? undefined
+    : resolveActiveOutboundWorkflow(getThread(tid));
+  const { run, created: runCreated } = await createAgentRunWithReceiptAsync({
     idempotencyKey: acceptedIdempotencyKey,
     threadId: tid,
+    traceId: traceContext.traceId,
     runtime: runtime.id,
     agent: resolvedAgent || "sancho",
     skill: resolvedSkill,
@@ -415,12 +469,14 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     input: {
       slug,
       threadId: tid,
-      threadName: threadName || tid,
+      threadName: resolvedThreadName,
       text,
-      linkedTo: linkedTo || undefined,
+      linkedTo: resolvedLinkedTo,
       docPath: docPath || undefined,
       docKind: typeof docKind === "string" ? docKind : undefined,
-      source: _source,
+      source: effectiveSource,
+      channelMode: isGrowieSupport ? "support-diagnostic" : undefined,
+      supportContext,
       temporaryAgent: isTemporarySancho,
       controlDepth,
       trigger: isTemporarySancho ? "temporary_sancho" : undefined,
@@ -437,6 +493,19 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       activeOutboundWorkflow,
     },
   });
+  // The repository owns the unique idempotency claim. A second process may
+  // have won after the optimistic lookup above; do not duplicate chat/runtime
+  // side effects when that happens.
+  if (!runCreated) {
+    return res.status(200).json({
+      ok: true,
+      duplicate: true,
+      runId: run.id,
+      traceId: run.traceId ?? traceContext.traceId,
+      status: run.status,
+      chatId: tid,
+    });
+  }
 
   // Agent ownership and auto/pinned policy are server state, not browser
   // state. Persist the route before the message so Discord, callbacks and a
@@ -449,17 +518,21 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // clarify doc's questions, flip `clarify_status` to "answered" so the UI
   // and the writer gate don't depend on the agent remembering to do it.
   // Never let a failure here block the chat message.
-  try {
-    const clarifyResult = maybeMarkClarifyAnswered(slug, tid, text);
-    if (clarifyResult.marked) {
-      console.log(`[clarify-autostatus] ${tid}: clarify_status → answered`);
+  if (!isGrowieSupport) {
+    try {
+      const clarifyResult = maybeMarkClarifyAnswered(slug, tid, text);
+      if (clarifyResult.marked) {
+        console.log(`[clarify-autostatus] ${tid}: clarify_status → answered`);
+      }
+    } catch (e) {
+      console.error("[clarify-autostatus] failed:", e instanceof Error ? e.message : e);
     }
-  } catch (e) {
-    console.error("[clarify-autostatus] failed:", e instanceof Error ? e.message : e);
   }
   if (resolvedAgent) {
     setStatusEntry(tid, {
-      text: isTemporarySancho
+      text: isGrowieSupport
+        ? "Growie está revisando la evidencia..."
+        : isTemporarySancho
         ? "Sancho está interviniendo temporalmente..."
         : shortThreadId === "yalc"
           ? "YALC está preparando la respuesta..."
@@ -469,7 +542,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     });
   }
 
-  let pendingTaskRouteProposal = await getPendingTaskRouteProposal(slug, tid);
+  let pendingTaskRouteProposal = isGrowieSupport
+    ? undefined
+    : await getPendingTaskRouteProposal(slug, tid);
   if (pendingTaskRouteProposal && isExplicitTaskCreationRejection(text)) {
     await discardPendingTaskRouteProposal(slug, tid);
     pendingTaskRouteProposal = undefined;
@@ -479,12 +554,14 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     slug,
     threadId: tid,
     missionControlRunId: run.id,
+    traceId: run.traceId ?? traceContext.traceId,
+    traceparent: traceContext.traceparent,
     controlDepth,
-    threadName: threadName || tid,
+    threadName: resolvedThreadName,
     text,
     userId: resolvedUserId,
     userName: resolvedUserName,
-    linkedTo: linkedTo || undefined,
+    linkedTo: resolvedLinkedTo,
     skill: resolvedSkill || undefined,
     primarySkill: resolvedPrimarySkill,
     skills: effectiveSkills || undefined,
@@ -511,7 +588,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     isAdmin,
     senderRole,
     readOnly,
-    _source,
+    channelMode: isGrowieSupport ? "support-diagnostic" : undefined,
+    supportContext,
+    _source: effectiveSource,
     // Force routing: when the thread carries an `agent` field, the gateway
     // dispatches to that agent (e.g. dulcinea for content tasks, maese-pedro
     // for Media Creation skills) instead of falling back to the default
@@ -524,11 +603,13 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     agent: resolvedAgent,
   };
   try {
-    const result = await runtime.messaging.sendInbound(payload);
+    const result = await runtime.messaging.sendInbound(payload, {
+      headers: tracePropagationHeaders(traceContext),
+    });
     if (!result.ok) {
       if (result.status === 0) {
         const msg = result.error || result.raw || "Gateway unreachable";
-        markAgentRunFailed(run.id, tid, msg, "runtime_unreachable", {
+        await markAgentRunFailedAsync(run.id, tid, msg, "runtime_unreachable", {
           errorDetail: gatewayErrorDetail(msg),
         });
         console.error("[mc-chat] Forward error:", msg);
@@ -547,7 +628,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(502).json({ error: "Gateway unreachable: " + msg });
       }
       const detail = `HTTP ${result.status}${result.raw ? `: ${result.raw.slice(0, 500)}` : ""}`;
-      markAgentRunFailed(run.id, tid, detail, "runtime_rejected", {
+      await markAgentRunFailedAsync(run.id, tid, detail, "runtime_rejected", {
         status: result.status,
         raw: result.raw,
         errorDetail: gatewayErrorDetail(detail, result.status),
@@ -561,7 +642,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       console.error("[mc-chat] Gateway rejected message:", detail);
       return res.status(502).json({ error: "Gateway rejected message: " + detail });
     }
-    markAgentRunDispatched(run.id, tid, {
+    await markAgentRunDispatchedAsync(run.id, tid, {
       status: result.status,
       chatId: result.chatId || tid,
     });
@@ -572,7 +653,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         threadId: tid,
         missionControlRunId: run.id,
         controlDepth,
-        threadName: threadName || tid,
+        threadName: resolvedThreadName,
         respondingAgent: finalAgent,
         temporaryAgent: isTemporarySancho,
         userText: text,
@@ -580,8 +661,8 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         userName: resolvedUserName,
         isAdmin,
         senderRole,
-        source: _source,
-        linkedTo: linkedTo || undefined,
+        source: effectiveSource,
+        linkedTo: resolvedLinkedTo,
         docPath: docPath || undefined,
         docKind: typeof docKind === "string" ? docKind : undefined,
         attachments: parsedAttachments,
@@ -594,7 +675,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
           });
       const visibleText = parsedControl?.text ?? result.finalText;
       clearStatus(tid);
-      markAgentRunCompleted(run.id, tid, {
+      await markAgentRunCompletedAsync(run.id, tid, {
         agent: finalAgent,
         text: visibleText.slice(0, 4096),
         synchronous: true,
@@ -610,12 +691,23 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
           addMessage(tid, "bot", followup, "sancho");
         }
       }
-      return res.status(200).json({ ok: true, runId: run.id, chatId: result.chatId || tid, completed: true });
+      return res.status(200).json({
+        ok: true,
+        runId: run.id,
+        traceId: run.traceId ?? traceContext.traceId,
+        chatId: result.chatId || tid,
+        completed: true,
+      });
     }
-    res.status(200).json({ ok: true, runId: run.id, chatId: result.chatId || tid });
+    res.status(200).json({
+      ok: true,
+      runId: run.id,
+      traceId: run.traceId ?? traceContext.traceId,
+      chatId: result.chatId || tid,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Gateway unreachable";
-    markAgentRunFailed(run.id, tid, msg, "runtime_unreachable", {
+    await markAgentRunFailedAsync(run.id, tid, msg, "runtime_unreachable", {
       errorDetail: gatewayErrorDetail(msg),
     });
     console.error("[mc-chat] Forward error:", msg);

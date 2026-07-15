@@ -3,6 +3,7 @@ import { useCallback, useMemo } from "react";
 import { useChatStore } from "@/stores/chat";
 import type { ThreadConfig } from "@/lib/chat-openers";
 import type { ThreadRouting } from "@/lib/runtime/agent-execution-policy";
+import { GROWIE_SUPPORT_THREAD_PREFIX } from "@/lib/support/growie";
 
 // ============================================================
 // Chat Hooks — TanStack Query integration for MC Chat system
@@ -151,11 +152,17 @@ export function useThreadList(slug: string | null) {
       const res = await fetch(`/api/chat/threads/${slug}`);
       if (!res.ok) return [];
       const data = await res.json();
-      const threads: ThreadListItem[] = data.threads || [];
+      // Growie conversations have their own support surface and lifecycle.
+      // Keep them out of the generic Sancho thread picker so reopening either
+      // UI cannot silently change the identity or safety contract.
+      const threads: ThreadListItem[] = (data.threads || []).filter(
+        (thread: ThreadListItem) => !thread.shortId.startsWith(GROWIE_SUPPORT_THREAD_PREFIX),
+      );
 
       // Merge local threads that aren't in the server list
       for (const tid of localThreads) {
         if (!tid.startsWith(slug + ":")) continue;
+        if (tid.slice(slug.length + 1).startsWith(GROWIE_SUPPORT_THREAD_PREFIX)) continue;
         if (!threads.some((t) => t.id === tid)) {
           const shortId = tid.replace(`${slug}:`, "");
           threads.push({
@@ -206,6 +213,7 @@ export function useSendMessage() {
       if (!tid) throw new Error("No thread selected");
       const meta = threadMeta[tid] || {};
       const slug = tid.split(":")[0];
+      const idempotencyKey = globalThis.crypto.randomUUID();
 
       const res = await fetch("/api/chat/send", {
         method: "POST",
@@ -213,6 +221,7 @@ export function useSendMessage() {
         body: JSON.stringify({
           slug,
           threadId: tid,
+          idempotencyKey,
           text,
           userName: "Admin",
           ...meta,
@@ -253,7 +262,7 @@ export function useCancelMessage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ threadId }: { threadId?: string }) => {
+    mutationFn: async ({ threadId, runId }: { threadId?: string; runId: string }) => {
       const tid = threadId || currentThread;
       if (!tid) throw new Error("No thread");
       const slug = tid.split(":")[0];
@@ -262,7 +271,7 @@ export function useCancelMessage() {
       const res = await fetch("/api/chat/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, threadId: tid, ...(agent ? { agent } : {}) }),
+        body: JSON.stringify({ slug, threadId: tid, runId, ...(agent ? { agent } : {}) }),
       });
       if (!res.ok) throw new Error("Failed to cancel");
       return res.json();

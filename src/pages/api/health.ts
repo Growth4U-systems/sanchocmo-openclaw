@@ -9,7 +9,7 @@ const STARTED_AT = Date.now();
  * Liveness endpoint for deploy verification, monitoring, and load balancers.
  * No auth, no I/O — designed to respond in single-digit ms.
  */
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export function healthHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ ok: false, error: "Method not allowed" });
@@ -20,8 +20,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     ok: true,
     version: pkg.version,
     commit: process.env.GIT_COMMIT ?? null,
+    imageDigest: process.env.SANCHOCMO_IMAGE_DIGEST ?? null,
+    imageRef: process.env.SANCHOCMO_IMAGE ?? null,
     env: process.env.NEXT_PUBLIC_ENV_LABEL || process.env.NODE_ENV || "unknown",
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor((Date.now() - STARTED_AT) / 1000),
   });
 }
+
+export default healthHandler;

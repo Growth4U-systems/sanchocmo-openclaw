@@ -815,7 +815,7 @@ export function ChatSidebar() {
     for (const pf of files) {
       const form = new FormData();
       form.append("file", pf.file);
-      const res = await fetch("/api/upload-file", { method: "POST", body: form });
+      const res = await fetch(`/api/upload-file?slug=${encodeURIComponent(slug)}`, { method: "POST", body: form });
       if (!res.ok) {
         const detail = await res.json().catch(() => null);
         if (res.status === 413) {
@@ -827,7 +827,7 @@ export function ChatSidebar() {
       results.push(await res.json());
     }
     return results;
-  }, []);
+  }, [slug]);
 
   // Drag & drop handlers
   const handleDragOver = useCallback((e: DragEvent) => { e.preventDefault(); setDragOver(true); }, []);
@@ -1998,7 +1998,15 @@ export function ChatSidebar() {
           />
           {isAwaitingReply || cancelMutation.isPending ? (
             <button
-              onClick={() => cancelMutation.mutate({ threadId: activeThreadId ?? undefined })}
+              onClick={() => {
+                if (activeRun?.id) {
+                  cancelMutation.mutate({
+                    threadId: activeThreadId ?? undefined,
+                    runId: activeRun.id,
+                  });
+                }
+              }}
+              disabled={!activeRun?.id || cancelMutation.isPending}
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
               title={t("stop")}
             >

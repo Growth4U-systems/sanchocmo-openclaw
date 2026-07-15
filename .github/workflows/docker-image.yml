@@ -11,8 +11,9 @@ name: Publish sanchocmo image
 # ubuntu-latest, arm64 on ubuntu-24.04-arm — then merged into one manifest list.
 # No QEMU emulation (the old single-runner build emulated the arm64 leg and took
 # ~40 min). Native arm64 runners are available on this org's GitHub Team plan.
-# We don't build on every push to staging: deploy-staging builds `sanchocmo`
-# from source on the VPS, and docker-compose.yml defaults to `:latest`.
+# We don't publish this image on every push to `main`: deploy-staging builds
+# `sanchocmo` from source on the QA VPS, and docker-compose.yml defaults to
+# `:latest`.
 #
 # NOTE: the GHCR package starts PRIVATE. Making it public is gated on Fase 0
 # (secret + client-data purge). See docs/plans/sanchocmo-packaging-plan.md.
@@ -91,6 +92,7 @@ jobs:
           sbom: true
           build-args: |
             GIT_COMMIT=${{ github.sha }}
+            NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED=${{ vars.NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED || '0' }}
             INSTALL_HERMES=1
             HERMES_AGENT_REF=v2026.7.7.2
           # Registry buildcache in a SEPARATE package (`sanchocmo-buildcache`), not

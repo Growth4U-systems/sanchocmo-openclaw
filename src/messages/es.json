@@ -173,6 +173,48 @@
     "stop": "Detener",
     "send": "Enviar"
   },
+  "growieSupport": {
+    "open": "Abrir soporte de Growie",
+    "launcher": "¿Algo no funciona?",
+    "beta": "Beta de staging",
+    "subtitle": "Diagnóstico en tiempo real, sin cambios automáticos",
+    "newCase": "Nuevo caso",
+    "readOnly": "Diagnóstico · solo lectura",
+    "phases": {
+      "received": "Recibido",
+      "analysing": "Analizando",
+      "diagnosis": "Diagnóstico"
+    },
+    "dropImage": "Soltá aquí la captura",
+    "eyebrow": "Soporte dentro de Sancho",
+    "emptyTitle": "Mostrame qué no está funcionando.",
+    "emptyBody": "Contame qué intentabas hacer, qué ocurrió y qué esperabas. Puedo mirar esta pantalla y contrastarlo con el producto y el código.",
+    "prompts": {
+      "broken": "Algo que funcionaba dejó de funcionar",
+      "confusing": "No entiendo cómo completar esta tarea",
+      "missing": "Esperaba una función que no encuentro"
+    },
+    "analysing": "Growie está revisando el contexto…",
+    "attachedImages": "Capturas adjuntas",
+    "removeImage": "Quitar {name}",
+    "messageLabelFirst": "¿Qué está pasando?",
+    "messageLabelFollowup": "Agregá un detalle",
+    "placeholder": "Describí el problema y lo que esperabas que pasara…",
+    "capture": "Capturar pantalla",
+    "attach": "Adjuntar",
+    "send": "Enviar",
+    "privacyNote": "Preview interno de staging. Revisá las capturas antes de enviarlas y no incluyas claves ni datos sensibles.",
+    "screenshotOnly": "Adjunto una captura del problema.",
+    "errors": {
+      "load": "No se pudo cargar esta conversación.",
+      "imageType": "Solo podés adjuntar imágenes.",
+      "imageSize": "Cada imagen debe pesar menos de 8 MB.",
+      "captureUnsupported": "Este navegador no permite capturar la pantalla.",
+      "capture": "No se pudo capturar la pantalla.",
+      "upload": "No se pudo subir la captura.",
+      "send": "No se pudo enviar el mensaje."
+    }
+  },
   "settings": {
     "title": "Ajustes",
     "subtitle": "Configuración del sistema",

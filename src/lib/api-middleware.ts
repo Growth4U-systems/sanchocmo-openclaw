@@ -1,4 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import {
+  getTraceContext,
+  traceContextFromHeaders,
+  withTraceContext,
+  type TraceContext,
+} from "@/lib/trace-context";
 
 // ============================================================
 // API Middleware — Auth, validation, error handling
@@ -48,6 +54,7 @@ function isLocalDashboardBypass(req: NextApiRequest): boolean {
 declare module "next" {
   interface NextApiRequest {
     ctx?: RequestContext;
+    traceContext?: TraceContext;
   }
 }
 
@@ -70,13 +77,22 @@ export function withMethod(methods: string[], handler: ApiHandler): ApiHandler {
  */
 export function withErrorHandler(handler: ApiHandler): ApiHandler {
   return async (req, res) => {
+    const traceContext = getTraceContext() ?? traceContextFromHeaders(req.headers);
+    req.traceContext = traceContext;
+    res.setHeader("X-Request-Id", traceContext.traceId);
+    res.setHeader("traceparent", traceContext.traceparent);
     try {
-      await handler(req, res);
+      await withTraceContext(traceContext, () => handler(req, res));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Internal server error";
-      console.error(`[API Error] ${req.method} ${req.url}:`, err);
+      console.error(
+        `[API Error] ${req.method} ${req.url} traceId=${traceContext.traceId}:`,
+        err,
+      );
       if (!res.headersSent) {
-        res.status(500).json({ error: message });
+        res.status(500).json({
+          error: "Internal server error",
+          traceId: traceContext.traceId,
+        });
       }
     }
   };

@@ -124,3 +124,25 @@ test("terminal agent-run state is monotonic under late callbacks", () => {
     ["run_created", "bot_reply"],
   );
 });
+
+test("async facade atomically reuses an in-flight idempotency key and correlates trace events", async () => {
+  const input = {
+    threadId: "acme:concurrent",
+    runtime: "external-http",
+    idempotencyKey: "retry:concurrent:1",
+    traceId: "trace-concurrent-1",
+  };
+  const receipts = await Promise.all([
+    agentRuns.createAgentRunWithReceiptAsync(input),
+    agentRuns.createAgentRunWithReceiptAsync(input),
+  ]);
+
+  assert.equal(receipts.filter((receipt) => receipt.created).length, 1);
+  assert.equal(new Set(receipts.map((receipt) => receipt.run.id)).size, 1);
+  const run = receipts[0].run;
+  assert.equal(run.traceId, "trace-concurrent-1");
+  const events = await agentRuns.listAgentRunEventsForTraceAsync("trace-concurrent-1");
+  assert.deepEqual(events.map((event) => event.type), ["run_created"]);
+  assert.equal(events[0].runId, run.id);
+  assert.equal(events[0].traceId, run.traceId);
+});

@@ -11,11 +11,10 @@ import { getRuntime } from "@/lib/runtime";
  * posts `{ slug, skill }` with the shared secret; we return the assembled
  * context pack `{ slug, skill, summary, docPaths, verdict }`.
  *
- * Auth: same shared-secret contract as /api/chat/webhook — the `X-MC-Secret`
- * header must equal the active runtime's shared secret. When no secret is
- * configured (local dev) the check is skipped, mirroring the webhook.
+ * Auth: same fail-closed shared-secret contract as /api/chat/webhook — the
+ * `X-MC-Secret` header must equal the active runtime's shared secret.
  */
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function contextPackHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -23,7 +22,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Verify shared secret (identical guard to /api/chat/webhook).
   const secret = getRuntime().messaging.getSharedSecret?.();
-  if (secret && req.headers["x-mc-secret"] !== secret) {
+  if (!secret) {
+    return res.status(503).json({ error: "MC_CHAT_SECRET not configured" });
+  }
+  const suppliedSecret = Array.isArray(req.headers["x-mc-secret"])
+    ? req.headers["x-mc-secret"][0]
+    : req.headers["x-mc-secret"];
+  if (suppliedSecret !== secret) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
@@ -40,4 +45,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(200).json(pack);
 }
 
-export default withErrorHandler(handler);
+export default withErrorHandler(contextPackHandler);

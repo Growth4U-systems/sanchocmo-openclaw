@@ -33,6 +33,7 @@ jobs:
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Deploy via SSH
+        id: deploy
         env:
           # ── Deploy infra ──────────────────────────────────────────────
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -129,6 +130,7 @@ jobs:
           # ── Variables (non-sensitive config) ─────────────────────────
           BASE_URL: ${{ vars.BASE_URL }}
           NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
+          NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED: ${{ vars.NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED || '0' }}
           NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
           OD_WEB_URL: ${{ vars.OD_WEB_URL }}
           OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
@@ -188,7 +190,7 @@ jobs:
               "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
               "CLOUDFLARE_ACCOUNT_ID", "APIFY_TOKEN",
               # Variables (non-sensitive config)
-              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
@@ -244,7 +246,7 @@ jobs:
             git fetch origin main --prune
 
             # Backup `workspace-sancho/brand/<slug>/` folders before checkout.
-            # Historically these were committed to git; the staging branch is
+            # Historically these were committed to git; the main trunk is
             # transitioning them to untracked-runtime via `git rm --cached`.
             # On the first deploy after that transition, `git checkout <SHA>`
             # would delete the on-disk files (they're in old HEAD but not new
@@ -331,6 +333,18 @@ jobs:
             [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
             echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
             docker compose $COMPOSE_ARGS build --pull
+            SANCHOCMO_RESOLVED_IMAGE="$(docker compose $COMPOSE_ARGS config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["services"]["sanchocmo"]["image"])')"
+            export SANCHOCMO_IMAGE_DIGEST="$(docker image inspect "$SANCHOCMO_RESOLVED_IMAGE" --format '{{.Id}}')"
+            if [ -z "$SANCHOCMO_IMAGE_DIGEST" ]; then
+              echo "::error::Could not resolve the built sanchocmo image ID."
+              exit 1
+            fi
+            echo "▶ Runtime image digest: $SANCHOCMO_IMAGE_DIGEST"
+            # Agent-run storage selects Postgres whenever DATABASE_URL exists.
+            # Apply its additive/idempotent schema unconditionally before the
+            # replacement application container is allowed to start.
+            echo "▶ Ensuring durable agent-run schema…"
+            docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:agent-runs" < /dev/null
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
               echo "▶ Running DB migrations…"
               # The repo's historical SQL migrations are not a safe input for
@@ -392,25 +406,37 @@ jobs:
             docker compose $COMPOSE_ARGS ps
           EOF
 
+
+          COMPOSE_FILES="-f docker-compose.yml"
+          [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.od.yml"
+          [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.yalc.yml"
+          RUNNING_IMAGE_ID="$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && cid=\$(docker compose $COMPOSE_FILES ps -q sanchocmo) && [ -n \"\$cid\" ] && docker inspect \"\$cid\" --format '{{.Image}}'" | tr -d '[:space:]')"
+          if [ -z "$RUNNING_IMAGE_ID" ]; then
+            echo "::error::Could not inspect the running sanchocmo image after deploy."
+            exit 1
+          fi
+          echo "image_id=$RUNNING_IMAGE_ID" >> "$GITHUB_OUTPUT"
+
       - name: Health check
         env:
           HEALTH_URL: ${{ vars.HEALTH_URL }}
           EXPECTED_COMMIT: ${{ github.sha }}
+          EXPECTED_IMAGE_ID: ${{ steps.deploy.outputs.image_id }}
         run: |
           if [ -z "$HEALTH_URL" ]; then
-            echo "::warning::HEALTH_URL variable not set on staging environment; skipping health check"
-            exit 0
+            echo "::error::HEALTH_URL variable not set on staging environment; deploy identity cannot be verified"
+            exit 1
           fi
           echo "▶ Polling $HEALTH_URL (up to 60s)…"
           for i in {1..30}; do
             body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
             if [ -n "$body" ]; then
-              commit="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit", ""))' <<<"$body" 2>/dev/null || true)"
-              if [ "$commit" = "$EXPECTED_COMMIT" ]; then
-                echo "✓ Health check passed at commit $commit"
+              read -r ok commit image_digest < <(python3 -c 'import json,sys; d=json.load(sys.stdin); print(str(bool(d.get("ok"))).lower(), d.get("commit") or "", d.get("imageDigest") or "")' <<<"$body" 2>/dev/null || true)
+              if [ "$ok" = "true" ] && [ "$commit" = "$EXPECTED_COMMIT" ] && [ "$image_digest" = "$EXPECTED_IMAGE_ID" ]; then
+                echo "✓ Health check passed at commit $commit ($image_digest)"
                 exit 0
               fi
-              echo "▶ Health responded with commit '${commit:-missing}', expected '$EXPECTED_COMMIT'"
+              echo "▶ Health responded ok='${ok:-missing}' commit='${commit:-missing}' image='${image_digest:-missing}', expected commit '$EXPECTED_COMMIT' image '$EXPECTED_IMAGE_ID'"
             fi
             sleep 2
           done

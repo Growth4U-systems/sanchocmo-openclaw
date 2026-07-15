@@ -139,19 +139,36 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
+          ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
         run: |
-          # Prefer the exact tag (prod is normally detached at one); fall back to
-          # the raw SHA, which still rolls the tree back — the image pin just
-          # can't apply, and the rollback falls back to building.
-          CUR=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && (git describe --tags --exact-match 2>/dev/null || git rev-parse HEAD)" | tr -d '[:space:]')
+          # The checkout and the running container can diverge after a partial
+          # deploy. Prefer the commit actually served by health, with a strict
+          # SHA shape, and retain the checkout only as a compatibility fallback.
+          HEALTH_COMMIT=""
+          if [ -n "$HEALTH_URL" ]; then
+            body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
+            HEALTH_COMMIT="$(python3 -c 'import json,re,sys; d=json.load(sys.stdin); c=d.get("commit", ""); print(c if d.get("ok") is True and re.fullmatch(r"[0-9a-fA-F]{40}", c) else "")' <<<"$body" 2>/dev/null || true)"
+          fi
+          CHECKOUT_COMMIT=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && git rev-parse HEAD" | tr -d '[:space:]')
+          CUR_COMMIT="${HEALTH_COMMIT:-$CHECKOUT_COMMIT}"
+          CUR=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && (git describe --tags --exact-match '$CUR_COMMIT' 2>/dev/null || printf '%s' '$CUR_COMMIT')" | tr -d '[:space:]')
           if [ -z "$CUR" ]; then
             echo "::warning::Could not read the currently-deployed ref; rollback will be unavailable."
           else
             echo "✓ Prod is currently running: $CUR"
           fi
+          COMPOSE_FILES="-f docker-compose.yml"
+          [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.od.yml"
+          [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.yalc.yml"
+          CUR_IMAGE_ID="$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && cid=\$(docker compose $COMPOSE_FILES ps -q sanchocmo) && [ -n \"\$cid\" ] && docker inspect \"\$cid\" --format '{{.Image}}'" | tr -d '[:space:]')"
           echo "ref=$CUR" >> "$GITHUB_OUTPUT"
+          echo "commit=$CUR_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "image_id=$CUR_IMAGE_ID" >> "$GITHUB_OUTPUT"
 
       - name: Deploy via SSH
+        id: deploy
         env:
           # ── Deploy infra ──────────────────────────────────────────────
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -255,6 +272,7 @@ jobs:
           # ── Variables (non-sensitive config) ─────────────────────────
           BASE_URL: ${{ vars.BASE_URL }}
           NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
+          NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED: ${{ vars.NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED || '0' }}
           NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
           OD_WEB_URL: ${{ vars.OD_WEB_URL }}
           OD_ALLOWED_ORIGINS: ${{ vars.OD_ALLOWED_ORIGINS }}
@@ -322,7 +340,7 @@ jobs:
               "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
               "CLOUDFLARE_ACCOUNT_ID", "APIFY_TOKEN",
               # Variables (non-sensitive config)
-              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXTAUTH_URL",
+              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
               # SAN-455: only set in DEPLOY_FROM_IMAGE mode. Persisting the pin in
               # `.env` keeps a manual `docker compose up -d` on the box on the same
@@ -513,6 +531,19 @@ jobs:
               echo "▶ Building and starting containers (GIT_COMMIT=$GIT_COMMIT)…"
               docker compose $COMPOSE_ARGS build --pull
             fi
+            SANCHOCMO_RESOLVED_IMAGE="$(docker compose $COMPOSE_ARGS config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["services"]["sanchocmo"]["image"])')"
+            export SANCHOCMO_IMAGE_DIGEST="$(docker image inspect "$SANCHOCMO_RESOLVED_IMAGE" --format '{{.Id}}')"
+            if [ -z "$SANCHOCMO_IMAGE_DIGEST" ]; then
+              echo "::error::Could not resolve the deployed sanchocmo image ID."
+              exit 1
+            fi
+            echo "▶ Runtime image digest: $SANCHOCMO_IMAGE_DIGEST"
+            # Required by the runtime selected whenever DATABASE_URL is present.
+            # This additive migration is idempotent and intentionally independent
+            # of the legacy opt-in bundle below, so new code never starts against
+            # an old schema.
+            echo "▶ Ensuring durable agent-run schema…"
+            docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:agent-runs" < /dev/null
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
               echo "▶ Running DB migrations…"
               # Apply only the curated additive deploy migrations via the
@@ -549,19 +580,36 @@ jobs:
             docker compose $COMPOSE_ARGS ps
           EOF
 
+          COMPOSE_FILES="-f docker-compose.yml"
+          [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.od.yml"
+          [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.yalc.yml"
+          RUNNING_IMAGE_ID="$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && cid=\$(docker compose $COMPOSE_FILES ps -q sanchocmo) && [ -n \"\$cid\" ] && docker inspect \"\$cid\" --format '{{.Image}}'" | tr -d '[:space:]')"
+          if [ -z "$RUNNING_IMAGE_ID" ]; then
+            echo "::error::Could not inspect the running sanchocmo image after deploy."
+            exit 1
+          fi
+          echo "image_id=$RUNNING_IMAGE_ID" >> "$GITHUB_OUTPUT"
+
       - name: Health check
         env:
           HEALTH_URL: ${{ vars.HEALTH_URL }}
+          EXPECTED_COMMIT: ${{ steps.tag.outputs.commit }}
+          EXPECTED_IMAGE_ID: ${{ steps.deploy.outputs.image_id }}
         run: |
           if [ -z "$HEALTH_URL" ]; then
-            echo "::warning::HEALTH_URL variable not set on production environment; skipping health check"
-            exit 0
+            echo "::error::HEALTH_URL variable not set on production environment; deploy identity cannot be verified"
+            exit 1
           fi
           echo "▶ Polling $HEALTH_URL (up to 60s)…"
           for i in {1..30}; do
-            if curl -fsS --max-time 5 "$HEALTH_URL" > /dev/null; then
-              echo "✓ Health check passed"
-              exit 0
+            body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
+            if [ -n "$body" ]; then
+              read -r ok commit image_digest < <(python3 -c 'import json,sys; d=json.load(sys.stdin); print(str(bool(d.get("ok"))).lower(), d.get("commit") or "", d.get("imageDigest") or "")' <<<"$body" 2>/dev/null || true)
+              if [ "$ok" = "true" ] && [ "$commit" = "$EXPECTED_COMMIT" ] && [ "$image_digest" = "$EXPECTED_IMAGE_ID" ]; then
+                echo "✓ Health check passed at commit $commit ($image_digest)"
+                exit 0
+              fi
+              echo "  … health ok='${ok:-missing}' commit='${commit:-missing}' image='${image_digest:-missing}', expected commit '$EXPECTED_COMMIT' image '$EXPECTED_IMAGE_ID'"
             fi
             sleep 2
           done
@@ -615,6 +663,9 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/.openclaw' }}
           FAILED_TAG: ${{ steps.tag.outputs.tag }}
           PREV: ${{ steps.current.outputs.ref }}
+          PREV_COMMIT: ${{ steps.current.outputs.commit }}
+          PREV_IMAGE_ID: ${{ steps.current.outputs.image_id }}
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
           # Passed explicitly: the remote script reads `${ENABLE_*:-1}`, so without
           # these a rollback would compose a different overlay set than the deploy
           # it is undoing (harmless today — production has ENABLE_YALC_SERVICE=1,
@@ -627,7 +678,7 @@ jobs:
             exit 0
           fi
           echo "::warning::Deploy of $FAILED_TAG failed. Rolling back to $PREV (the version prod was running)…"
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH FAILED_TAG=$FAILED_TAG PREV=$PREV ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE ENABLE_OD_SERVICE=$ENABLE_OD_SERVICE bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH FAILED_TAG=$FAILED_TAG PREV=$PREV PREV_COMMIT=$PREV_COMMIT PREV_IMAGE_ID=$PREV_IMAGE_ID ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE ENABLE_OD_SERVICE=$ENABLE_OD_SERVICE bash -s" <<'EOF'
             set -euo pipefail
             cd "$DEPLOY_PATH"
 
@@ -674,8 +725,9 @@ jobs:
             #  • `.env` is deliberately NOT reverted: the deploy may have upserted
             #    new values before failing, and those are usually the correct ones
             #    (e.g. a rotated secret). Old code ignores keys it doesn't read.
-            #  • No schema skew: RUN_DB_MIGRATIONS is unset in both Environments,
-            #    so a deploy never migrates — old code can't meet a newer schema.
+            #  • Schema compatibility: the mandatory agent-run migration is
+            #    additive/idempotent. The legacy migration bundle remains opt-in,
+            #    so rolling application code back does not require a down migration.
             CHECKOUT_BLOCKER="plugins/mc-chat/src/attachments.js"
             if [ -e "$CHECKOUT_BLOCKER" ] && ! git ls-files --error-unmatch "$CHECKOUT_BLOCKER" >/dev/null 2>&1; then
               echo "▶ Stashing untracked $CHECKOUT_BLOCKER before rollback checkout..."
@@ -688,18 +740,22 @@ jobs:
             [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
 
-            # Pin the app to $PREV's own image instead of whatever `:latest` points
-            # at locally — after a failed deploy that's the build we're undoing.
-            # Compose interpolates this from the shell env, which wins over `.env`.
-            export SANCHOCMO_IMAGE="ghcr.io/growth4u-systems/sanchocmo:$PREV"
+            # Prefer the exact immutable image that was running before deploy.
+            # Tagging it locally gives Compose a stable, valid image reference.
+            if [ -n "${PREV_IMAGE_ID:-}" ] && docker image inspect "$PREV_IMAGE_ID" >/dev/null 2>&1; then
+              ROLLBACK_TAG="sanchocmo-rollback:${PREV_COMMIT:-previous}"
+              docker image tag "$PREV_IMAGE_ID" "$ROLLBACK_TAG"
+              export SANCHOCMO_IMAGE="$ROLLBACK_TAG"
+              ROLLED_BACK_VIA="captured image $PREV_IMAGE_ID"
+            else
+              # Compatibility fallback for hosts where the prior image was
+              # pruned or could not be inspected before deploy.
+              export SANCHOCMO_IMAGE="ghcr.io/growth4u-systems/sanchocmo:$PREV"
+              ROLLED_BACK_VIA="image $SANCHOCMO_IMAGE"
+            fi
 
-            # This pull MUST name the service. The `pull --ignore-buildable` below
-            # skips `sanchocmo` by design (it has a `build:`, so a build host never
-            # pulls a foreign image) — and prod builds from source, so $PREV's image
-            # is not in the local cache either. Without an explicit pull there'd be
-            # nothing to roll back TO.
-            ROLLED_BACK_VIA="image $SANCHOCMO_IMAGE"
-            if ! docker compose $COMPOSE_ARGS pull sanchocmo; then
+            if ! docker image inspect "$SANCHOCMO_IMAGE" >/dev/null 2>&1 \
+              && ! docker compose $COMPOSE_ARGS pull sanchocmo; then
               # No published image for $PREV — e.g. prod sits on a pre-image-era
               # tag, on a raw SHA, or the package was pruned. Rebuild from the
               # tree we just checked out: slow, but a rollback that gives up is
@@ -708,13 +764,55 @@ jobs:
               docker compose $COMPOSE_ARGS build sanchocmo
               ROLLED_BACK_VIA="source build at $PREV"
             fi
+            SANCHOCMO_RESOLVED_IMAGE="$(docker compose $COMPOSE_ARGS config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["services"]["sanchocmo"]["image"])')"
+            export SANCHOCMO_IMAGE_DIGEST="$(docker image inspect "$SANCHOCMO_RESOLVED_IMAGE" --format '{{.Id}}')"
+            if [ -z "$SANCHOCMO_IMAGE_DIGEST" ]; then
+              echo "Could not resolve the rollback image ID"
+              exit 1
+            fi
             docker compose $COMPOSE_ARGS pull --ignore-buildable || true
 
             # --force-recreate is the whole point: same image NAME as the running
             # container is not the same image. Without it Compose sees no config
             # change and leaves the failed container up.
-            docker compose $COMPOSE_ARGS up -d --force-recreate --no-deps sanchocmo
-            docker compose $COMPOSE_ARGS up -d
+            docker compose $COMPOSE_ARGS up -d --force-recreate --no-deps --wait --wait-timeout 180 sanchocmo
+            docker compose $COMPOSE_ARGS up -d --wait --wait-timeout 180
             echo "▶ Rolled back to $PREV via $ROLLED_BACK_VIA"
             docker compose $COMPOSE_ARGS ps
           EOF
+
+          if [ -z "$HEALTH_URL" ] || [ -z "$PREV_COMMIT" ]; then
+            echo "::error::Rollback completed but cannot be verified: HEALTH_URL or previous commit is missing."
+            exit 1
+          fi
+
+          COMPOSE_FILES="-f docker-compose.yml"
+          [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.od.yml"
+          [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.yalc.yml"
+          ROLLBACK_IMAGE_ID="$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && cid=\$(docker compose $COMPOSE_FILES ps -q sanchocmo) && [ -n \"\$cid\" ] && docker inspect \"\$cid\" --format '{{.Image}}'" | tr -d '[:space:]')"
+          if [ -z "$ROLLBACK_IMAGE_ID" ]; then
+            echo "::error::Rollback container is running but its image identity could not be inspected."
+            exit 1
+          fi
+
+          echo "▶ Verifying rollback serves commit $PREV_COMMIT…"
+          for i in $(seq 1 30); do
+            body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
+            if [ -n "$body" ]; then
+              read -r ok commit image_digest < <(python3 -c 'import json,sys; d=json.load(sys.stdin); print(str(bool(d.get("ok"))).lower(), d.get("commit") or "", d.get("imageDigest") or "")' <<<"$body" 2>/dev/null || true)
+              if [ "$ok" = "true" ] && [ "$commit" = "$PREV_COMMIT" ]; then
+                if [ -z "$image_digest" ]; then
+                  echo "::warning::Rollback target predates image identity health metadata; commit $commit is healthy."
+                  exit 0
+                elif [ "$image_digest" = "$ROLLBACK_IMAGE_ID" ]; then
+                  echo "✓ Rollback verified at commit $commit ($image_digest)"
+                  exit 0
+                fi
+                echo "  … rollback commit matches but image '$image_digest' is not running image '$ROLLBACK_IMAGE_ID'"
+              fi
+              echo "  … rollback health ok='${ok:-missing}' commit='${commit:-missing}' image='${image_digest:-missing}', expected '$PREV_COMMIT'"
+            fi
+            sleep 2
+          done
+          echo "::error::Rollback did not restore a healthy service at commit $PREV_COMMIT."
+          exit 1

@@ -16,7 +16,7 @@ import {
 
 interface DocsAssistantDependencies {
   dispatch(input: DocsAssistantQuestion): Promise<DocsAssistantDispatch>;
-  readRun(runId: string): DocsAssistantRunState;
+  readRun(runId: string): Promise<DocsAssistantRunState> | DocsAssistantRunState;
 }
 
 const defaultDependencies: DocsAssistantDependencies = {
@@ -75,7 +75,7 @@ export async function docsAssistantHandler(
   if (req.method === "GET") {
     const verified = verifyDocsAssistantReceipt(first(req.query.receipt));
     if (!verified) return res.status(400).json({ error: "Invalid or expired receipt" });
-    const state = dependencies.readRun(verified.runId);
+    const state = await dependencies.readRun(verified.runId);
     if (state.status === "pending") {
       return res.status(202).json({ ok: true, status: "pending", retryAfterMs: 1_000 });
     }

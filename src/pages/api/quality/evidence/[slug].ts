@@ -5,7 +5,7 @@ import {
   assertMcpClientAccess,
   authenticateMcpRequest,
 } from "@/lib/mcp/auth";
-import { readAgentRunsSnapshot } from "@/lib/data/agent-runs";
+import { readAgentRunsSnapshotAsync } from "@/lib/data/agent-runs";
 import {
   QUALITY_EVIDENCE_LIMITATIONS,
   QUALITY_EVIDENCE_REDACTION_VERSION,
@@ -85,7 +85,7 @@ export async function qualityEvidenceHandler(
     throw error;
   }
 
-  const snapshot = readAgentRunsSnapshot();
+  const snapshot = await readAgentRunsSnapshotAsync();
   // Defense in depth: do not even pass another tenant's ledger rows into the
   // pure exporter, despite its own tenant filter.
   const tenantRuns = snapshot.runs.filter(

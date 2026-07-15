@@ -1,5 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { withErrorHandler } from "@/lib/api-middleware";
+import {
+  canAccessSlug,
+  compose,
+  withAuth,
+  withErrorHandler,
+} from "@/lib/api-middleware";
 import { readJSON } from "@/lib/data/json-io";
 import { chatConfigFile } from "@/lib/data/paths";
 
@@ -24,12 +29,18 @@ interface ChatConfigSection {
  *
  * Returns { quickActions, skill, skills } resolved from chat-config.json
  */
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function quickActionsHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-  const slug = req.query.slug as string;
-  const type = req.query.type as string;
+  const slug = typeof req.query.slug === "string" ? req.query.slug.trim() : "";
+  const type = typeof req.query.type === "string" ? req.query.type.trim() : "";
   if (!slug || !type) return res.status(400).json({ error: "Missing slug or type" });
+  if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug)) {
+    return res.status(400).json({ error: "Invalid slug" });
+  }
+  if (!canAccessSlug(req.ctx, slug)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
 
   const config = readJSON<Record<string, unknown>>(chatConfigFile(slug), {});
   if (!config || Object.keys(config).length === 0) {
@@ -93,4 +104,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   });
 }
 
-export default withErrorHandler(handler);
+export default compose(withErrorHandler, withAuth)(quickActionsHandler);

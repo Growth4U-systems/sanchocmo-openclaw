@@ -1,14 +1,15 @@
 import crypto from "node:crypto";
 import { z } from "zod";
 import {
-  createAgentRun,
-  getAgentRunById,
-  markAgentRunCompleted,
-  markAgentRunDispatched,
-  markAgentRunFailed,
+  createAgentRunAsync,
+  getAgentRunByIdAsync,
+  markAgentRunCompletedAsync,
+  markAgentRunDispatchedAsync,
+  markAgentRunFailedAsync,
 } from "@/lib/data/agent-runs";
 import { assembleContextPack, type ContextPack } from "@/lib/data/context-pack";
 import { getRuntime } from "@/lib/runtime";
+import { getTraceContext, tracePropagationHeaders } from "@/lib/trace-context";
 
 const RECEIPT_TTL_MS = 10 * 60 * 1000;
 const DOCS_THREAD_PREFIX = "growth4u:docs-";
@@ -206,11 +207,13 @@ export async function requestDirectDocsAssistantAnswer(
   const apiKey = options.apiKey || process.env.NAN_API_KEY;
   if (!apiKey) throw new Error("NAN_API_KEY not configured");
   const brainContext = options.brainContext ?? currentDocsBrainContext();
+  const traceContext = getTraceContext();
   const response = await (options.fetcher || fetch)(DIRECT_PROVIDER_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...(traceContext ? tracePropagationHeaders(traceContext) : {}),
     },
     body: JSON.stringify({
       model: options.model || directModel(),
@@ -259,11 +262,13 @@ async function dispatchDocsAssistantQuestionViaRuntime(
   const createdAt = options.now ?? Date.now();
   const requestId = crypto.randomUUID();
   const threadId = threadIdForConversation(input.conversationId);
+  const traceContext = getTraceContext();
   const response = await (options.fetcher || fetch)(internalChatUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-MC-Secret": sharedSecret,
+      ...(traceContext ? tracePropagationHeaders(traceContext) : {}),
     },
     body: JSON.stringify({
       slug: "growth4u",
@@ -315,7 +320,7 @@ export async function dispatchDocsAssistantQuestion(
   const createdAt = options.now ?? Date.now();
   const threadId = threadIdForConversation(input.conversationId);
   const model = directModel();
-  const run = createAgentRun({
+  const run = await createAgentRunAsync({
     threadId,
     runtime: "growie-direct",
     agent: "growie",
@@ -331,18 +336,21 @@ export async function dispatchDocsAssistantQuestion(
     },
     now: new Date(createdAt),
   });
-  markAgentRunDispatched(run.id, threadId, { provider: "nan", model });
+  await markAgentRunDispatchedAsync(run.id, threadId, { provider: "nan", model });
 
-  void requestDirectDocsAssistantAnswer(input, {
-    apiKey: directApiKey,
-    fetcher: options.fetcher,
-    model,
-  }).then((answer) => {
-    markAgentRunCompleted(run.id, threadId, { text: answer, agent: "growie", model });
-  }).catch((error) => {
-    console.error("[docs-assistant] Direct completion failed:", error instanceof Error ? error.message : error);
-    markAgentRunFailed(run.id, threadId, "Growie direct completion failed");
-  });
+  void (async () => {
+    try {
+      const answer = await requestDirectDocsAssistantAnswer(input, {
+        apiKey: directApiKey,
+        fetcher: options.fetcher,
+        model,
+      });
+      await markAgentRunCompletedAsync(run.id, threadId, { text: answer, agent: "growie", model });
+    } catch (error) {
+      console.error("[docs-assistant] Direct completion failed:", error instanceof Error ? error.message : error);
+      await markAgentRunFailedAsync(run.id, threadId, "Growie direct completion failed");
+    }
+  })();
 
   return {
     runId: run.id,
@@ -394,8 +402,8 @@ export function verifyDocsAssistantReceipt(receipt: string, now = Date.now()): R
   }
 }
 
-export function readDocsAssistantRun(runId: string): DocsAssistantRunState {
-  const run = getAgentRunById(runId);
+export async function readDocsAssistantRun(runId: string): Promise<DocsAssistantRunState> {
+  const run = await getAgentRunByIdAsync(runId);
   if (!run || run.status === "queued" || run.status === "running") return { status: "pending" };
   if (run.status === "completed") {
     const output = run.output && typeof run.output === "object"

@@ -1,0 +1,471 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-15T00:00:00Z",
+  "capabilities": [
+    {
+      "id": "mission-control.chat.run",
+      "name": "Ejecutar una petición desde el chat de Mission Control",
+      "summary": "Una persona envía una petición a un hilo del cliente, Sancho la despacha al runtime autorizado y mantiene visibles el progreso, el resultado y los errores de esa ejecución.",
+      "owner": "product-platform",
+      "lifecycle": "ga",
+      "definitionStatus": "partial",
+      "definitionGaps": [
+        {
+          "kind": "behavior",
+          "description": "Definir qué clases de agent-run pueden reintentarse automáticamente y cuáles requieren confirmación por sus efectos laterales.",
+          "requestedArtifact": "decision"
+        },
+        {
+          "kind": "copy",
+          "description": "Aprobar el copy visible para loading, progreso parcial, timeout, retry y error terminal.",
+          "requestedArtifact": "copy"
+        },
+        {
+          "kind": "visual",
+          "description": "Faltan capturas o mockups canónicos que muestren la jerarquía esperada de progreso, error y acciones de recuperación.",
+          "requestedArtifact": "screenshot"
+        }
+      ],
+      "routes": [
+        "/dashboard/:slug/**"
+      ],
+      "roles": [
+        "admin",
+        "team-member",
+        "portal-client"
+      ],
+      "tenantScoped": true,
+      "userJob": "Pedir a un agente que realice un trabajo para el cliente activo y entender si está avanzando, terminó o necesita intervención.",
+      "preconditions": [
+        "La persona tiene acceso al slug del cliente activo.",
+        "El hilo pertenece al mismo slug y la ruta de agente, skill y runtime se resuelve en servidor.",
+        "La petición contiene texto no vacío y no confía en privilegios declarados por el navegador."
+      ],
+      "happyPath": [
+        "El usuario envía una petición desde un hilo visible.",
+        "El servidor valida tenant, hilo y política de ejecución, crea un agent-run correlacionado y despacha el mensaje una sola vez.",
+        "La interfaz muestra recepción y progreso sin duplicar mensajes ni confundir progreso con resultado final.",
+        "La respuesta terminal queda asociada al mismo hilo y agent-run."
+      ],
+      "states": [
+        {
+          "id": "idle",
+          "expectedBehavior": "El compositor está disponible y no afirma que haya una ejecución activa."
+        },
+        {
+          "id": "loading",
+          "expectedBehavior": "Tras enviar, la interfaz confirma la recepción mientras el runtime acepta el trabajo; un segundo envío no duplica el mismo idempotency key."
+        },
+        {
+          "id": "partial",
+          "expectedBehavior": "El progreso parcial se identifica como progreso, permanece correlacionado al run y no se presenta como entregable terminado."
+        },
+        {
+          "id": "success",
+          "expectedBehavior": "La respuesta final aparece una vez, el run queda completado y el estado de ejecución activa desaparece."
+        },
+        {
+          "id": "error",
+          "expectedBehavior": "El usuario recibe un error accionable y sanitizado; el run conserva categoría y evidencia técnica sin exponer secretos."
+        },
+        {
+          "id": "disabled",
+          "expectedBehavior": "Si falta acceso, runtime o configuración obligatoria, la acción no se ejecuta y la interfaz explica el bloqueo sin simular éxito."
+        }
+      ],
+      "sideEffects": [
+        {
+          "kind": "local-write",
+          "description": "Persiste mensajes, routing resuelto, receipt y eventos del agent-run para el tenant autorizado.",
+          "reversible": false
+        },
+        {
+          "kind": "runtime-execution",
+          "description": "Despacha una petición al runtime de agentes; puede iniciar tools permitidas por la política del hilo.",
+          "reversible": false
+        }
+      ],
+      "services": [
+        "mission-control-web",
+        "agent-runtime"
+      ],
+      "repositories": [
+        {
+          "name": "Growth4U-systems/sanchocmo-openclaw",
+          "refPolicy": "deployed-sha"
+        }
+      ],
+      "sourceFiles": [
+        "src/components/chat/chat-sidebar.tsx",
+        "src/pages/api/chat/send.ts",
+        "src/pages/api/chat/thread/[threadId].ts",
+        "src/lib/data/agent-runs.ts"
+      ],
+      "featureFlags": [],
+      "acceptanceTests": [
+        {
+          "id": "dispatch-runtime-and-receipt",
+          "description": "El envío crea y correlaciona el run, respeta idempotencia y traduce correctamente respuestas y fallos del runtime.",
+          "sourcePath": "src/lib/__tests__/chat-send-runtime.test.mts"
+        },
+        {
+          "id": "agent-run-terminal-monotonicity",
+          "description": "Una respuesta tardía no puede reabrir ni sobrescribir un agent-run terminal.",
+          "sourcePath": "src/lib/data/__tests__/agent-runs.test.mts"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "inspect-agent-run",
+          "description": "Recuperar en modo read-only el receipt, los eventos y la versión desplegada relacionados con el caso.",
+          "automation": "read-only"
+        },
+        {
+          "id": "retry-safe-agent-run",
+          "description": "Reintentar una ejecución fallida sólo cuando la política de idempotencia y los efectos de la task permitan hacerlo.",
+          "automation": "not-implemented"
+        }
+      ],
+      "uxReferences": [
+        {
+          "kind": "implementation",
+          "path": "src/components/chat/chat-sidebar.tsx",
+          "description": "Compositor, progreso, respuestas y estados de error que ve el usuario.",
+          "requiredForDecision": true
+        },
+        {
+          "kind": "implementation",
+          "path": "src/components/chat/error-detail-modal.tsx",
+          "description": "Detalle técnico sanitizado y acciones disponibles ante un fallo.",
+          "requiredForDecision": true
+        }
+      ],
+      "version": 1,
+      "lastReviewedAt": "2026-07-15",
+      "reviewCadenceDays": 90
+    },
+    {
+      "id": "mission-control.task.agent-run-lifecycle",
+      "name": "Seguir el ciclo de una tarea y sus ejecuciones de agente",
+      "summary": "Una persona abre una tarea, inicia o continúa el trabajo permitido y puede distinguir el estado de la tarea del estado de cada intento de ejecución asociado.",
+      "owner": "product-platform",
+      "lifecycle": "ga",
+      "definitionStatus": "partial",
+      "definitionGaps": [
+        {
+          "kind": "behavior",
+          "description": "Cerrar el criterio que diferencia un agent-run completado de una task cuyo entregable ya fue verificado y puede marcarse completed.",
+          "requestedArtifact": "acceptance-criteria"
+        },
+        {
+          "kind": "flow",
+          "description": "Aprobar el flujo visible de continuar, reintentar y cancelar, incluidos callbacks tardíos y múltiples intentos de la misma task.",
+          "requestedArtifact": "flow"
+        },
+        {
+          "kind": "permission",
+          "description": "Validar la matriz final de acciones permitidas para admin, team member y portal client en cada estado de task/run.",
+          "requestedArtifact": "permissions"
+        },
+        {
+          "kind": "visual",
+          "description": "Faltan capturas o mockups canónicos para queued, running, partial, error, cancelled y task verificada.",
+          "requestedArtifact": "mockup"
+        }
+      ],
+      "routes": [
+        "/dashboard/:slug/tasks",
+        "/dashboard/:slug/tasks/:taskId",
+        "/dashboard/:slug/tasks/:taskId/**"
+      ],
+      "roles": [
+        "admin",
+        "team-member",
+        "portal-client"
+      ],
+      "tenantScoped": true,
+      "userJob": "Saber qué debe producir una tarea, ejecutar el siguiente paso y entender qué ocurrió en cada intento sin perder el estado de la tarea.",
+      "preconditions": [
+        "La persona tiene acceso al slug y a la tarea solicitada.",
+        "La tarea existe, está activa y su contrato de salida se resuelve en servidor.",
+        "Cada intento recibe un runId propio y queda vinculado al hilo y taskId correctos."
+      ],
+      "happyPath": [
+        "El usuario abre la tarea y ve objetivo, estado y entregables esperados.",
+        "Al ejecutar, Sancho crea un nuevo agent-run con snapshot del contrato de la tarea.",
+        "Los eventos avanzan de queued a running y luego a un estado terminal sin alterar intentos anteriores.",
+        "El resultado verificado actualiza la experiencia de la tarea; un fallo conserva evidencia y permite una recuperación segura."
+      ],
+      "states": [
+        {
+          "id": "loading",
+          "expectedBehavior": "Mientras se carga la tarea no se muestran datos de otra task ni de otro tenant y se mantiene una indicación visible de carga."
+        },
+        {
+          "id": "queued",
+          "expectedBehavior": "El intento ya tiene receipt y aparece en espera, pero todavía no se declara ejecutándose."
+        },
+        {
+          "id": "running",
+          "expectedBehavior": "El runtime confirmó despacho y los eventos posteriores conservan el mismo runId."
+        },
+        {
+          "id": "partial",
+          "expectedBehavior": "El progreso o artefacto provisional se marca como parcial y no completa por sí solo la tarea."
+        },
+        {
+          "id": "success",
+          "expectedBehavior": "El intento termina una sola vez y la UI distingue finalización del run de cumplimiento verificado de la tarea."
+        },
+        {
+          "id": "error",
+          "expectedBehavior": "El intento queda fallido con causa sanitizada; la task no pierde su historial ni se marca completada por error."
+        },
+        {
+          "id": "cancelled",
+          "expectedBehavior": "Cancelar detiene el intento activo de forma idempotente y no convierte callbacks tardíos en éxito."
+        },
+        {
+          "id": "disabled",
+          "expectedBehavior": "Una tarea inactiva, ambigua o no autorizada no se despacha y explica por qué no puede ejecutarse."
+        }
+      ],
+      "sideEffects": [
+        {
+          "kind": "local-write",
+          "description": "Registra el run, sus eventos, el snapshot del contrato y las transiciones terminales.",
+          "reversible": false
+        },
+        {
+          "kind": "runtime-execution",
+          "description": "Ejecuta el agente y skill resueltos para la task activa.",
+          "reversible": false
+        }
+      ],
+      "services": [
+        "mission-control-web",
+        "agent-runtime"
+      ],
+      "repositories": [
+        {
+          "name": "Growth4U-systems/sanchocmo-openclaw",
+          "refPolicy": "deployed-sha"
+        }
+      ],
+      "sourceFiles": [
+        "src/pages/dashboard/[slug]/tasks.tsx",
+        "src/pages/dashboard/[slug]/tasks/[taskId].tsx",
+        "src/lib/data/agent-runs.ts",
+        "src/pages/api/chat/cancel.ts"
+      ],
+      "featureFlags": [],
+      "acceptanceTests": [
+        {
+          "id": "agent-run-lifecycle-ledger",
+          "description": "El ledger conserva creación, despacho, progreso, terminalidad, cancelación e idempotencia por run.",
+          "sourcePath": "src/lib/data/__tests__/agent-runs.test.mts"
+        },
+        {
+          "id": "task-run-routing-contract",
+          "description": "El envío desde una task respeta su routing y snapshot de contrato antes de ejecutar.",
+          "sourcePath": "src/lib/__tests__/chat-send-runtime.test.mts"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "inspect-task-run-chain",
+          "description": "Reconstruir en modo read-only la task, su hilo, el contrato y todos los agent-runs relacionados.",
+          "automation": "read-only"
+        },
+        {
+          "id": "resume-or-retry-task-run",
+          "description": "Elegir entre continuar, reintentar o no actuar según terminalidad, idempotencia y efectos conocidos.",
+          "automation": "not-implemented"
+        }
+      ],
+      "uxReferences": [
+        {
+          "kind": "implementation",
+          "path": "src/pages/dashboard/[slug]/tasks/[taskId].tsx",
+          "description": "Detalle y acciones de la tarea visibles para el usuario.",
+          "requiredForDecision": true
+        },
+        {
+          "kind": "implementation",
+          "path": "src/components/shared/task-slideover.tsx",
+          "description": "Resumen contextual y entregables de task en superficies laterales.",
+          "requiredForDecision": true
+        }
+      ],
+      "version": 1,
+      "lastReviewedAt": "2026-07-15",
+      "reviewCadenceDays": 90
+    },
+    {
+      "id": "mission-control.comments.apply-skip",
+      "name": "Revisar comentarios con un plan Apply/Skip",
+      "summary": "El feedback sobre un entregable se trata como evidencia, el agente autor propone qué aplicar o descartar y espera confirmación humana antes de modificar el documento, salvo una instrucción explícita de aplicación directa.",
+      "owner": "product-platform",
+      "lifecycle": "ga",
+      "definitionStatus": "partial",
+      "definitionGaps": [
+        {
+          "kind": "flow",
+          "description": "Definir con precisión quién puede autorizar Apply, Skip o aplicación directa y cómo queda registrada esa excepción.",
+          "requestedArtifact": "decision"
+        },
+        {
+          "kind": "copy",
+          "description": "Aprobar el lenguaje visible del plan Apply/Skip, la petición de confirmación y las respuestas de cierre al comentarista.",
+          "requestedArtifact": "copy"
+        },
+        {
+          "kind": "visual",
+          "description": "Faltan capturas o mockups canónicos del plan, la aprobación, la aplicación, el descarte y el error recuperable.",
+          "requestedArtifact": "screenshot"
+        },
+        {
+          "kind": "acceptance-test",
+          "description": "Añadir criterios end-to-end que demuestren que ninguna edición ocurre antes de aprobación y que Apply/Skip cierra cada hilo con trazabilidad.",
+          "requestedArtifact": "test"
+        }
+      ],
+      "routes": [
+        "/share/:token",
+        "/dashboard/:slug/docs/**"
+      ],
+      "roles": [
+        "share-link-commenter",
+        "admin",
+        "team-member"
+      ],
+      "tenantScoped": true,
+      "userJob": "Dejar feedback contextual sobre un entregable y aprobar un plan claro de cambios antes de que el agente edite la fuente.",
+      "preconditions": [
+        "El share token sólo permite comentar el documento al que pertenece.",
+        "Los comentarios están anclados al documento original y se interpretan como input, nunca como órdenes del sistema.",
+        "El autor y el hilo de revisión se resuelven desde la procedencia del documento.",
+        "Editar requiere aprobación humana del plan Apply/Skip, salvo instrucción explícita de aplicar directo."
+      ],
+      "happyPath": [
+        "El revisor selecciona texto o deja feedback general en el documento compartido.",
+        "Sancho agrupa comentarios abiertos y avisa al agente autor sin exponer detalles técnicos en el chat.",
+        "El agente presenta un plan legible que separa Apply de Skip y espera la decisión humana.",
+        "Tras aprobación, edita siempre la fuente original, regenera derivados necesarios, responde y resuelve cada hilo aplicado o descartado."
+      ],
+      "states": [
+        {
+          "id": "loading",
+          "expectedBehavior": "El visor carga documento y comentarios del token correcto sin mezclar feedback de otros documentos."
+        },
+        {
+          "id": "open",
+          "expectedBehavior": "El comentario nuevo queda visible, abierto y vinculado a su ancla o al documento general."
+        },
+        {
+          "id": "partial",
+          "expectedBehavior": "Mientras se agrupa o analiza feedback, la interfaz no afirma que los cambios ya estén aplicados."
+        },
+        {
+          "id": "plan-ready",
+          "expectedBehavior": "El plan distingue Apply y Skip, explica el criterio y solicita una decisión humana inequívoca."
+        },
+        {
+          "id": "applying",
+          "expectedBehavior": "Sólo después de la aprobación se edita la fuente y se conserva trazabilidad entre plan, comentarios y cambios."
+        },
+        {
+          "id": "success",
+          "expectedBehavior": "La fuente y sus derivados están actualizados; los comentarios tratados incluyen respuesta y estado resuelto."
+        },
+        {
+          "id": "skipped",
+          "expectedBehavior": "Un comentario descartado recibe una explicación y queda resuelto sin introducir el cambio rechazado."
+        },
+        {
+          "id": "error",
+          "expectedBehavior": "Si falla el dispatch o la edición, el feedback permanece recuperable y no se marca resuelto de forma engañosa."
+        },
+        {
+          "id": "disabled",
+          "expectedBehavior": "Un token inválido, documento ausente o actor no autorizado no habilita lectura o escritura fuera de alcance."
+        }
+      ],
+      "sideEffects": [
+        {
+          "kind": "local-write",
+          "description": "Crea comentarios, respuestas y estados de resolución acotados al documento compartido.",
+          "reversible": true
+        },
+        {
+          "kind": "runtime-execution",
+          "description": "Despacha al agente autor la revisión agrupada de comentarios abiertos.",
+          "reversible": false
+        },
+        {
+          "kind": "local-write",
+          "description": "Después de aprobación, modifica la fuente original y regenera sus representaciones derivadas.",
+          "reversible": true
+        }
+      ],
+      "services": [
+        "mission-control-web",
+        "agent-runtime"
+      ],
+      "repositories": [
+        {
+          "name": "Growth4U-systems/sanchocmo-openclaw",
+          "refPolicy": "deployed-sha"
+        }
+      ],
+      "sourceFiles": [
+        "src/pages/share/[token].tsx",
+        "public/comments-embed.js",
+        "src/lib/data/review-comments-trigger.ts",
+        "skills/review-comments/SKILL.md"
+      ],
+      "featureFlags": [],
+      "acceptanceTests": [
+        {
+          "id": "comment-thread-and-resolution-contract",
+          "description": "Los comentarios conservan ancla, respuestas, tenant y reglas de resolución del hilo raíz.",
+          "sourcePath": "src/lib/__tests__/comments-v2.test.mts"
+        },
+        {
+          "id": "comment-client-sanitization",
+          "description": "El cliente normaliza contenido visible sin convertir feedback en HTML ejecutable.",
+          "sourcePath": "src/lib/__tests__/comments-client.test.mts"
+        }
+      ],
+      "runbooks": [
+        {
+          "id": "inspect-open-comment-family",
+          "description": "Listar en modo read-only comentarios abiertos de la familia markdown/HTML y su agente autor.",
+          "automation": "read-only"
+        },
+        {
+          "id": "redispatch-comment-review",
+          "description": "Volver a solicitar el plan cuando el feedback sigue abierto y no existe una ejecución activa equivalente.",
+          "automation": "not-implemented"
+        }
+      ],
+      "uxReferences": [
+        {
+          "kind": "implementation",
+          "path": "public/comments-embed.js",
+          "description": "Selección, formulario, hilos y feedback visible dentro del documento compartido.",
+          "requiredForDecision": true
+        },
+        {
+          "kind": "spec",
+          "path": "skills/review-comments/SKILL.md",
+          "description": "Contrato operativo de lectura, plan Apply/Skip, aprobación, edición y cierre.",
+          "requiredForDecision": true
+        }
+      ],
+      "version": 1,
+      "lastReviewedAt": "2026-07-15",
+      "reviewCadenceDays": 90
+    }
+  ]
+}

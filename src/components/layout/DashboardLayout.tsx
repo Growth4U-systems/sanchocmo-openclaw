@@ -1,10 +1,19 @@
 import { type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { useAppStore } from "@/stores/app";
 import { useChatStore } from "@/stores/chat";
 import { useClientUrlSync } from "@/hooks/useClientUrlSync";
 import { Sidebar } from "./Sidebar";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
 import { cn } from "@/lib/utils";
+
+const GrowieSupportSurface = process.env.NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED === "1"
+  ? dynamic(
+      () => import("@/components/support/growie-support-surface")
+        .then((module) => module.GrowieSupportSurface),
+      { ssr: false },
+    )
+  : () => null;
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -44,6 +53,7 @@ export function DashboardLayout({ children, fullBleed }: DashboardLayoutProps) {
         <main className={fullBleed ? "" : "p-8 pt-6"}>{children}</main>
       </div>
       <ChatSidebar />
+      <GrowieSupportSurface />
     </div>
   );
 }

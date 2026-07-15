@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 import { BASE, chatReadStateFile } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
-import { sanitizeShortId } from "../thread-id";
+import {
+  isValidTenantSlug,
+  parseThreadId,
+  sanitizeShortId,
+} from "../thread-id";
 import {
   normalizeThreadRouting,
   type ThreadRouting,
@@ -230,14 +234,21 @@ export interface ThreadData {
 
 function threadFile(threadId: string): string {
   const colonIdx = threadId.indexOf(":");
-  if (colonIdx < 0) return path.join(BASE, "brand", threadId, "chat", "general.json");
-  const slug = threadId.slice(0, colonIdx);
-  const shortId = threadId.slice(colonIdx + 1);
+  if (colonIdx < 0) {
+    if (!isValidTenantSlug(threadId)) throw new Error("Invalid chat tenant slug");
+    return path.join(BASE, "brand", threadId, "chat", "general.json");
+  }
+  const parsed = parseThreadId(threadId);
+  if (!parsed) throw new Error("Invalid chat thread id");
   // Sanitize shortId for filesystem — shared with the client via thread-id.ts
   // so the id the client registers matches the one we persist/list (SAN-193).
-  const safeId = sanitizeShortId(shortId);
-  const chatDir = path.join(BASE, "brand", slug, "chat");
-  return path.join(chatDir, `${safeId}.json`);
+  const safeId = sanitizeShortId(parsed.shortId);
+  const chatDir = path.resolve(BASE, "brand", parsed.slug, "chat");
+  const file = path.resolve(chatDir, `${safeId}.json`);
+  if (!file.startsWith(`${chatDir}${path.sep}`)) {
+    throw new Error("Invalid chat thread path");
+  }
+  return file;
 }
 
 export function getThread(threadId: string): ThreadData {
@@ -442,12 +453,15 @@ export function clearProgress(threadId: string) {
 type ReadStateMap = Record<string, { lastReadTs: number }>;
 
 export function getReadState(slug: string): ReadStateMap {
+  if (!isValidTenantSlug(slug)) throw new Error("Invalid chat tenant slug");
   return readJSON<ReadStateMap>(chatReadStateFile(slug), {});
 }
 
 export function markThreadRead(slug: string, shortId: string) {
+  const safeId = sanitizeShortId(shortId);
+  if (!safeId) throw new Error("Invalid chat thread id");
   const state = getReadState(slug);
-  state[shortId] = { lastReadTs: Date.now() };
+  state[safeId] = { lastReadTs: Date.now() };
   writeJSON(chatReadStateFile(slug), state);
 }
 
@@ -465,6 +479,7 @@ function getLastBotTs(messages: { role: string; ts: string | number }[]): number
 }
 
 export function listThreadsForSlug(slug: string) {
+  if (!isValidTenantSlug(slug)) throw new Error("Invalid chat tenant slug");
   const chatDir = path.join(BASE, "brand", slug, "chat");
   const threads: unknown[] = [];
   const readState = getReadState(slug);

@@ -87,6 +87,8 @@ COPY docker/runtimes/codex/bridge.mjs ./docker/runtimes/codex/bridge.mjs
 # NEXT_PUBLIC_* vars must be present at build time — they are inlined into the client bundle.
 ARG NEXT_PUBLIC_ENV_LABEL=""
 ENV NEXT_PUBLIC_ENV_LABEL=${NEXT_PUBLIC_ENV_LABEL}
+ARG NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED="0"
+ENV NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED=${NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED}
 # Build-time commit SHA, surfaced by /api/health for deploy verification.
 ARG GIT_COMMIT=""
 ENV GIT_COMMIT=${GIT_COMMIT}

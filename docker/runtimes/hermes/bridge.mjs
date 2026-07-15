@@ -251,7 +251,26 @@ export function buildHermesArgs(message, prompt) {
   if (skills.length > 0) args.push("-s", skills.join(","));
   if (process.env.HERMES_CLI_PROVIDER) args.push("--provider", process.env.HERMES_CLI_PROVIDER);
   if (process.env.HERMES_CLI_MODEL) args.push("--model", process.env.HERMES_CLI_MODEL);
-  if (process.env.HERMES_CLI_TOOLSETS) args.push("--toolsets", process.env.HERMES_CLI_TOOLSETS);
+  if (message.readOnly === true) {
+    // Restrict read-only turns at the CLI boundary. `web` and `vision` can
+    // inspect public evidence and screenshots; terminal, file, MCP, browser,
+    // messaging, cron and delegation remain unavailable regardless of prompt.
+    const allowedReadOnlyToolsets = new Set(["web", "vision"]);
+    const configuredReadOnlyToolsets = String(
+      process.env.HERMES_CLI_READ_ONLY_TOOLSETS || "web,vision",
+    )
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => allowedReadOnlyToolsets.has(item));
+    args.push(
+      "--toolsets",
+      configuredReadOnlyToolsets.length > 0
+        ? [...new Set(configuredReadOnlyToolsets)].join(",")
+        : "web,vision",
+    );
+  } else if (process.env.HERMES_CLI_TOOLSETS) {
+    args.push("--toolsets", process.env.HERMES_CLI_TOOLSETS);
+  }
   args.push("-q", prompt);
   return args;
 }

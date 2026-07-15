@@ -173,6 +173,48 @@
     "stop": "Stop",
     "send": "Send"
   },
+  "growieSupport": {
+    "open": "Open Growie support",
+    "launcher": "Something not working?",
+    "beta": "Staging beta",
+    "subtitle": "Real-time diagnosis, with no automatic changes",
+    "newCase": "New case",
+    "readOnly": "Diagnosis · read only",
+    "phases": {
+      "received": "Received",
+      "analysing": "Analysing",
+      "diagnosis": "Diagnosis"
+    },
+    "dropImage": "Drop the screenshot here",
+    "eyebrow": "Support inside Sancho",
+    "emptyTitle": "Show me what is not working.",
+    "emptyBody": "Tell me what you tried, what happened, and what you expected. I can inspect this screen and compare it with the product and code.",
+    "prompts": {
+      "broken": "Something that worked has stopped working",
+      "confusing": "I do not understand how to complete this task",
+      "missing": "I expected a feature that I cannot find"
+    },
+    "analysing": "Growie is reviewing the context…",
+    "attachedImages": "Attached screenshots",
+    "removeImage": "Remove {name}",
+    "messageLabelFirst": "What is happening?",
+    "messageLabelFollowup": "Add a detail",
+    "placeholder": "Describe the problem and what you expected to happen…",
+    "capture": "Capture screen",
+    "attach": "Attach",
+    "send": "Send",
+    "privacyNote": "Internal staging preview. Review screenshots before sending them and do not include keys or sensitive data.",
+    "screenshotOnly": "I have attached a screenshot of the problem.",
+    "errors": {
+      "load": "This conversation could not be loaded.",
+      "imageType": "You can only attach images.",
+      "imageSize": "Each image must be smaller than 8 MB.",
+      "captureUnsupported": "This browser does not support screen capture.",
+      "capture": "The screen could not be captured.",
+      "upload": "The screenshot could not be uploaded.",
+      "send": "The message could not be sent."
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "System configuration",

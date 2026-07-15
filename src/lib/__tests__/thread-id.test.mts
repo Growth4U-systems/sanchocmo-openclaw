@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-const { canonicalThreadId, sanitizeShortId } = await import("../thread-id");
+const {
+  canonicalThreadId,
+  isValidTenantSlug,
+  parseThreadId,
+  sanitizeShortId,
+} = await import("../thread-id");
 
 // The storage layer's sanitization, inlined here as the ground truth the util
 // must reproduce. If mc-chat.threadFile() ever changes, this battery is the
@@ -45,4 +50,17 @@ test("canonicalThreadId is idempotent and leaves the slug + first colon intact",
 test("ids without a colon are returned unchanged", () => {
   assert.equal(canonicalThreadId("general"), "general");
   assert.equal(canonicalThreadId(""), "");
+});
+
+test("tenant and thread parsing rejects traversal and empty storage ids", () => {
+  assert.equal(isValidTenantSlug("acme-2"), true);
+  assert.equal(isValidTenantSlug("../acme"), false);
+  assert.equal(isValidTenantSlug(`a${"b".repeat(120)}`), false);
+  assert.equal(parseThreadId("../acme:general"), null);
+  assert.equal(parseThreadId("acme:../../"), null);
+  assert.equal(parseThreadId("acme:"), null);
+  assert.deepEqual(parseThreadId("acme:task:p01"), {
+    slug: "acme",
+    shortId: "task:p01",
+  });
 });

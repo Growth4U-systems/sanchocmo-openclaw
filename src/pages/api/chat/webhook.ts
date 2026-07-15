@@ -2,7 +2,15 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createHash } from "node:crypto";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { getRuntime } from "@/lib/runtime";
-import { appendAgentRunEvent, claimAgentRunCallbackFingerprint, getAgentRunById, getLatestActiveRun, listAgentRunEvents, markAgentRunCompleted, markAgentRunFailed } from "@/lib/data/agent-runs";
+import {
+  appendAgentRunEventAsync,
+  claimAgentRunCallbackFingerprintAsync,
+  getAgentRunByIdAsync,
+  getLatestActiveRunAsync,
+  listAgentRunEventsAsync,
+  markAgentRunCompletedAsync,
+  markAgentRunFailedAsync,
+} from "@/lib/data/agent-runs";
 import { persistCausalArtifactReadbacks } from "@/lib/quality/artifact-readback";
 import {
   setStatusEntry,
@@ -20,6 +28,7 @@ import {
 } from "@/lib/data/mc-chat";
 import { dispatchRuntimeControlActions, type RuntimeControlTurnContext } from "@/lib/runtime/control-actions";
 import { parseRuntimeControlReply } from "@/lib/runtime/agent-contract/control-reply.mjs";
+import { parseThreadId } from "@/lib/thread-id";
 
 // How long after a successful bot reply we should treat a watchdog_abort on
 // the same thread as a stale runtime echo and drop it. Empirically the gap
@@ -58,7 +67,18 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { slug, threadId, missionControlRunId, text, agent, ts: _ts, role, event, from_agent, to_agent, errorDetail: rawErrorDetail } = req.body;
+  const { slug: rawSlug, threadId: rawThreadId, missionControlRunId, text, agent, ts: _ts, role, event, from_agent, to_agent, errorDetail: rawErrorDetail } = req.body ?? {};
+  const slug = typeof rawSlug === "string" ? rawSlug.trim() : "";
+  if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug)) {
+    return res.status(400).json({ error: "Invalid or missing slug" });
+  }
+  if (rawThreadId !== undefined && rawThreadId !== null && typeof rawThreadId !== "string") {
+    return res.status(400).json({ error: "Invalid threadId" });
+  }
+  const threadId = typeof rawThreadId === "string" ? rawThreadId.trim() : "";
+  if (threadId.length > 512) {
+    return res.status(400).json({ error: "Invalid threadId" });
+  }
   // Compose canonical "<slug>:<shortId>" thread key.
   // Outbound callers may post threadId as either the full "<slug>:<shortId>"
   // (e.g. from src/pages/api/chat/send.ts and plugin index.js deliver) or just
@@ -67,10 +87,16 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
   // separately). Without this normalization, threadFile() in lib/data/mc-chat.ts
   // splits on ":" and writes to brand/<shortId>/chat/general.json — i.e. the
   // wrong client. Always re-attach the slug when missing.
-  const slugPrefix = slug ? `${slug}:` : "";
-  const tid = threadId ? (slug && !threadId.startsWith(slugPrefix) ? `${slugPrefix}${threadId}` : threadId) : `${slug || "default"}:general`;
+  const slugPrefix = `${slug}:`;
+  const tid = threadId
+    ? (threadId.startsWith(slugPrefix) ? threadId : `${slugPrefix}${threadId}`)
+    : `${slug}:general`;
+  const parsedThread = parseThreadId(tid);
+  if (!parsedThread || parsedThread.slug !== slug) {
+    return res.status(400).json({ error: "Invalid threadId" });
+  }
   const claimedRunId = typeof missionControlRunId === "string" && missionControlRunId.trim() ? missionControlRunId.trim() : undefined;
-  const exactRun = claimedRunId ? getAgentRunById(claimedRunId) : null;
+  const exactRun = claimedRunId ? await getAgentRunByIdAsync(claimedRunId) : null;
   if (claimedRunId && (!exactRun || exactRun.threadId !== tid)) {
     return res.status(409).json({ error: "Runtime callback run does not match this thread" });
   }
@@ -113,8 +139,8 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
       )
       .digest("hex");
     const claimKey = `${exactRun.id}:${callbackFingerprint}`;
-    const newlyClaimed = claimAgentRunCallbackFingerprint(exactRun.id, callbackFingerprint);
-    const currentRun = getAgentRunById(exactRun.id);
+    const newlyClaimed = await claimAgentRunCallbackFingerprintAsync(exactRun.id, callbackFingerprint);
+    const currentRun = await getAgentRunByIdAsync(exactRun.id);
     if (!newlyClaimed && (TERMINAL_CALLBACKS_IN_FLIGHT.has(claimKey) || !currentRun || ["completed", "failed", "cancelled"].includes(currentRun.status))) {
       return res.status(200).json({ ok: true, duplicate: true, runId: exactRun.id });
     }
@@ -131,7 +157,7 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
     // run id there is no causal basis for mutating any ledger run—even when one
     // run happens to be active on the thread.
     const callbackRun = exactRun;
-    const latestActiveRun = getLatestActiveRun(tid);
+    const latestActiveRun = await getLatestActiveRunAsync(tid);
     const callbackRunWasActive = callbackRun?.status === "queued" || callbackRun?.status === "running";
     const ownsLiveThreadState = Boolean(callbackRunWasActive && latestActiveRun && callbackRun?.id === latestActiveRun.id);
 
@@ -179,7 +205,7 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
       };
       if (ownsLiveThreadState || !claimedRunId) appendProgress(tid, evt);
       if (callbackRunWasActive && callbackRun) {
-        appendAgentRunEvent({
+        await appendAgentRunEventAsync({
           runId: callbackRun.id,
           threadId: tid,
           type: "progress",
@@ -261,7 +287,11 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
       let artifactReadbackCount = 0;
       if (!errorDetail) {
         try {
-          const readbacks = await persistCausalArtifactReadbacks(callbackRun, tid.slice(0, tid.indexOf(":")), listAgentRunEvents(callbackRun.id));
+          const readbacks = await persistCausalArtifactReadbacks(
+            callbackRun,
+            tid.slice(0, tid.indexOf(":")),
+            await listAgentRunEventsAsync(callbackRun.id),
+          );
           artifactReadbackCount = readbacks.length;
         } catch (error) {
           // A failed quality readback must fail closed (unverified) without
@@ -283,9 +313,9 @@ export async function webhookHandler(req: NextApiRequest, res: NextApiResponse) 
     addMessage(tid, "bot", botText, agent, undefined, sealed, undefined, undefined, errorDetail, terminalCallbackClaim);
     if (callbackRunWasActive && callbackRun && terminalRunOutput) {
       if (errorDetail) {
-        markAgentRunFailed(callbackRun.id, tid, errorDetail.category, "failed", terminalRunOutput);
+        await markAgentRunFailedAsync(callbackRun.id, tid, errorDetail.category, "failed", terminalRunOutput);
       } else {
-        markAgentRunCompleted(callbackRun.id, tid, terminalRunOutput);
+        await markAgentRunCompletedAsync(callbackRun.id, tid, terminalRunOutput);
       }
     }
     if (parsedControl && controlContext) {

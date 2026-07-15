@@ -1,20 +1,43 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
-import { R2ConfigError, uploadToR2, resolveUploadMime } from "@/lib/upload-r2";
+import {
+  ALLOWED_EXTENSIONS,
+  hasAllowedUploadSignature,
+  R2ConfigError,
+  uploadToR2,
+  resolveUploadMime,
+} from "@/lib/upload-r2";
+import { canAccessSlug, compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
+import { isValidTenantSlug } from "@/lib/thread-id";
 
 export const config = {
   api: { bodyParser: false },
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function uploadFileHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const slug = typeof req.query.slug === "string" ? req.query.slug.trim() : "";
+  if (!slug) return res.status(400).json({ error: "Missing slug" });
+  if (!isValidTenantSlug(slug)) {
+    return res.status(400).json({ error: "Invalid slug" });
+  }
+  if (!canAccessSlug(req.ctx, slug)) return res.status(403).json({ error: "Forbidden" });
+
+  const tempFiles: File[] = [];
   try {
-    const form = new IncomingForm({ maxFileSize: 20 * 1024 * 1024 }); // 20MB
+    const form = new IncomingForm({
+      maxFileSize: 20 * 1024 * 1024,
+      maxFiles: 1,
+      maxFields: 0,
+      allowEmptyFiles: false,
+      minFileSize: 1,
+    });
+    form.on("file", (_name, file) => tempFiles.push(file));
 
     const { files } = await new Promise<{
       fields: Record<string, unknown>;
@@ -44,9 +67,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const buffer = fs.readFileSync(file.filepath);
+    if (!hasAllowedUploadSignature(buffer, mimeType)) {
+      return res.status(400).json({ error: "File contents do not match the allowed type" });
+    }
     const originalName = file.originalFilename || "file";
-    const ext = originalName.split(".").pop() || "bin";
-    const key = `chat/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const ext =
+      Object.entries(ALLOWED_EXTENSIONS).find(([, allowedMime]) => allowedMime === mimeType)?.[0] ||
+      "bin";
+    const key = `chat/${encodeURIComponent(slug)}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     let url: string;
     try {
@@ -70,8 +98,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     console.error("[upload-file] Error:", error);
     return res.status(500).json({ error: "Failed to upload file" });
+  } finally {
+    for (const file of tempFiles) cleanupTempFile(file);
   }
 }
+
+export default compose(withErrorHandler, withAuth)(uploadFileHandler);
 
 function cleanupTempFile(file: File): void {
   try {
