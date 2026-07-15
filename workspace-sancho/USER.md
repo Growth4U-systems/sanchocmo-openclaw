@@ -1,12 +1,21 @@
 # USER.md - About Your Human
 
-- **Name:** Alfonso
-- **What to call them:** Alfonso
-- **Timezone:** Europe/Madrid
-- **Notes:** Configuró todo el sistema SanchoCMO. Perfil técnico + marketing.
+_Learn about the person you're helping. Update this as you go._
+
+- **Name:**
+- **What to call them:**
+- **Pronouns:** _(optional)_
+- **Timezone:**
+- **Notes:**
 
 ## Context
 
-- **Empresa:** Example — clínica de trasplante/tratamiento capilar
-- **Servidor Discord:** Example (guild 1475635138108063746)
-- **Estilo:** Directo, no le gusta perder tiempo. Prefiere acción sobre explicación.
+_(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
+
+---
+
+The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+
+## Related
+
+- [Agent workspace](/concepts/agent-workspace)
