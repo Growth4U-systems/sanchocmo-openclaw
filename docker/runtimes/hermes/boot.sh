@@ -7,7 +7,7 @@ SANCHO_HOME="${SANCHO_HOME:-/root/.openclaw}"
 NEXT_PORT="${PORT:-3000}"
 HERMES_GATEWAY_COMMAND="${HERMES_GATEWAY_COMMAND:-}"
 HERMES_BRIDGE_ENABLED="${HERMES_BRIDGE_ENABLED:-0}"
-HERMES_BRIDGE_PORT="${HERMES_BRIDGE_PORT:-18791}"
+HERMES_BRIDGE_PORT="${HERMES_BRIDGE_PORT:-18795}"
 
 if [ -x /opt/sancho-seed/docker/init-home.sh ]; then
   bash /opt/sancho-seed/docker/init-home.sh "$SANCHO_HOME"

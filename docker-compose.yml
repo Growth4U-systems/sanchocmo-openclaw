@@ -79,7 +79,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          'case "$${SANCHO_RUNTIME:-openclaw}" in openclaw) curl -sf http://localhost:18789/healthz >/dev/null ;; hermes) curl -sf "http://localhost:$${PORT:-3000}/api/health" >/dev/null && { [ "$${HERMES_BRIDGE_ENABLED:-0}" != "1" ] || curl -sf "http://localhost:$${HERMES_BRIDGE_PORT:-18791}/healthz" >/dev/null; } ;; external-http|hermes-external) curl -sf "http://localhost:$${PORT:-3000}/api/health" >/dev/null ;; *) exit 1 ;; esac',
+          'case "$${SANCHO_RUNTIME:-openclaw}" in openclaw) curl -sf http://localhost:18789/healthz >/dev/null ;; hermes) curl -sf "http://localhost:$${PORT:-3000}/api/health" >/dev/null && { [ "$${HERMES_BRIDGE_ENABLED:-0}" != "1" ] || curl -sf "http://localhost:$${HERMES_BRIDGE_PORT:-18795}/healthz" >/dev/null; } ;; external-http|hermes-external) curl -sf "http://localhost:$${PORT:-3000}/api/health" >/dev/null ;; *) exit 1 ;; esac',
         ]
       # Tight interval + generous start_period so `docker compose up --wait`
       # in the deploy workflow marks the container healthy within ~10s of the

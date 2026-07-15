@@ -41,7 +41,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
     label: "Hermes",
     runtimeLocation: "server",
     serverStartSupported: true,
-    defaultPort: 18791,
+    // OpenClaw reserves 18791 for browser control inside the same container.
+    defaultPort: 18795,
     scriptPath: "docker/runtimes/hermes/bridge.mjs",
     bridgeSecretEnv: "HERMES_BRIDGE_SECRET",
     bridgePortEnv: "HERMES_BRIDGE_PORT",

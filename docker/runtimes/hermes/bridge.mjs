@@ -9,7 +9,8 @@ import {
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
-const DEFAULT_PORT = 18791;
+// OpenClaw reserves 18791 for browser control inside the Sancho container.
+const DEFAULT_PORT = 18795;
 const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
 const DEFAULT_CONTEXT_PACK_TIMEOUT_MS = 5000;
 const activeRuns = new Map();

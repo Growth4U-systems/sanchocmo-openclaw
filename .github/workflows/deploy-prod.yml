@@ -265,8 +265,8 @@ jobs:
           INSTALL_HERMES: "1"
           HERMES_AGENT_REF: v2026.7.7.2
           HERMES_CLI: hermes
-          HERMES_CLI_PROVIDER: ${{ vars.HERMES_CLI_PROVIDER || 'openrouter' }}
-          HERMES_CLI_MODEL: ${{ vars.HERMES_CLI_MODEL || 'openai/gpt-4o-mini' }}
+          HERMES_CLI_PROVIDER: ${{ vars.HERMES_CLI_PROVIDER || 'anthropic' }}
+          HERMES_CLI_MODEL: ${{ vars.HERMES_CLI_MODEL || 'claude-sonnet-4-6' }}
           HERMES_WORKDIR: /root/.openclaw
           # Force the Neon HTTP driver in G4U deploys (belt over the runtime's
           # *.neon.tech auto-detect) so prod can never fall back to the
