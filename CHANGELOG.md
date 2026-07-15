@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.2...v1.6.3) (2026-07-15)
+
+
+### Bug Fixes
+
+* **runtime:** avoid Hermes bridge port collision (SAN-50) ([#1308](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1308)) ([5303847](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5303847ee60b958ea959742bfd785fc4ba2451f3))
+
 ## [1.6.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.1...v1.6.2) (2026-07-15)
 
 
