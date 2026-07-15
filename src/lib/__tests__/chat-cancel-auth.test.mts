@@ -40,3 +40,15 @@ test("cancel rejects a cross-slug thread even when the caller owns the claimed s
   assert.equal(mocked.read().statusCode, 400);
   assert.match(String(mocked.read().payload.error), /belong/i);
 });
+
+test("cancel requires the exact active run id", async () => {
+  const mocked = response();
+  await cancelHandler({
+    method: "POST",
+    body: { slug: "demo", threadId: "demo:general" },
+    headers: {},
+    ctx: { isAdmin: false, clientSlug: "demo" },
+  } as unknown as NextApiRequest, mocked.res);
+  assert.equal(mocked.read().statusCode, 400);
+  assert.match(String(mocked.read().payload.error), /runId/i);
+});

@@ -45,6 +45,12 @@ export function assertR2Configured(options: { hydrate?: boolean } = {}): void {
   }
 }
 
+/** Public object base used to validate that agent-facing attachments are ours. */
+export function getR2PublicUrl(): string | null {
+  hydrateR2EnvFromLocalFiles();
+  return process.env.R2_PUBLIC_URL?.trim().replace(/\/+$/, "") || null;
+}
+
 let hydratedR2Env = false;
 
 function hydrateR2EnvFromLocalFiles(): void {
@@ -131,7 +137,6 @@ export const ALLOWED_MIME_TYPES = new Set([
   "image/png",
   "image/gif",
   "image/webp",
-  "image/svg+xml",
   // Documents
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // xlsx
@@ -156,7 +161,6 @@ export const ALLOWED_EXTENSIONS: Record<string, string> = {
   png: "image/png",
   gif: "image/gif",
   webp: "image/webp",
-  svg: "image/svg+xml",
   pdf: "application/pdf",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -186,6 +190,40 @@ export function resolveUploadMime(
   return ALLOWED_EXTENSIONS[ext] ?? null;
 }
 
+/** Cheap server-side signature check; malware scanning remains a separate gate. */
+export function hasAllowedUploadSignature(buffer: Buffer, mimeType: string): boolean {
+  if (buffer.length === 0) return false;
+  if (mimeType === "image/jpeg" || mimeType === "image/jpg") {
+    return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+  if (mimeType === "image/png") {
+    return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  }
+  if (mimeType === "image/gif") {
+    const header = buffer.subarray(0, 6).toString("ascii");
+    return header === "GIF87a" || header === "GIF89a";
+  }
+  if (mimeType === "image/webp") {
+    return buffer.subarray(0, 4).toString("ascii") === "RIFF"
+      && buffer.subarray(8, 12).toString("ascii") === "WEBP";
+  }
+  if (mimeType === "application/pdf") {
+    return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
+  }
+  if (
+    mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    || mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    if (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b) return false;
+    const signature = `${buffer[2]}:${buffer[3]}`;
+    return signature === "3:4" || signature === "5:6" || signature === "7:8";
+  }
+  if (["text/csv", "text/plain", "text/markdown"].includes(mimeType)) {
+    return !buffer.subarray(0, Math.min(buffer.length, 8_192)).includes(0);
+  }
+  return false;
+}
+
 /** Human-readable accept string for file inputs */
 export const ACCEPT_STRING =
-  "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf,.xlsx,.docx,.csv,.txt,.md";
+  "image/jpeg,image/png,image/gif,image/webp,application/pdf,.xlsx,.docx,.csv,.txt,.md";

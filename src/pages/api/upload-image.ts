@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { uploadImageAssets } from "@/lib/upload-image";
-import { R2ConfigError } from "@/lib/upload-r2";
+import { hasAllowedUploadSignature, R2ConfigError } from "@/lib/upload-r2";
 import { IncomingForm, type File } from "formidable";
 import fs from "fs";
+import { compose, withAuth, withErrorHandler } from "@/lib/api-middleware";
 
 export const config = {
   api: { bodyParser: false },
 };
 
-export default async function handler(
+export async function uploadImageHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -17,8 +18,16 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const tempFiles: File[] = [];
   try {
-    const form = new IncomingForm({ maxFileSize: 10 * 1024 * 1024 });
+    const form = new IncomingForm({
+      maxFileSize: 10 * 1024 * 1024,
+      maxFiles: 1,
+      maxFields: 0,
+      allowEmptyFiles: false,
+      minFileSize: 1,
+    });
+    form.on("file", (_name, file) => tempFiles.push(file));
 
     const { files } = await new Promise<{
       fields: Record<string, unknown>;
@@ -42,7 +51,6 @@ export default async function handler(
       "image/png",
       "image/gif",
       "image/webp",
-      "image/svg+xml",
     ];
 
     if (!file.mimetype || !allowedMimeTypes.includes(file.mimetype)) {
@@ -53,6 +61,9 @@ export default async function handler(
     }
 
     const buffer = fs.readFileSync(file.filepath);
+    if (!hasAllowedUploadSignature(buffer, file.mimetype)) {
+      return res.status(400).json({ error: "Image contents do not match the allowed type" });
+    }
     const ext = file.originalFilename?.split(".").pop() || "png";
     const filename = `upload-${Date.now()}.${ext}`;
 
@@ -73,8 +84,12 @@ export default async function handler(
     }
     console.error("Upload error:", error);
     return res.status(500).json({ error: "Failed to process upload" });
+  } finally {
+    for (const file of tempFiles) cleanupTempFile(file);
   }
 }
+
+export default compose(withErrorHandler, withAuth)(uploadImageHandler);
 
 function cleanupTempFile(file: File): void {
   try {

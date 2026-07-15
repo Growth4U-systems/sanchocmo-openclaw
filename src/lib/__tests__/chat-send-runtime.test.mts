@@ -11,6 +11,9 @@ process.env.MC_WORKSPACE = tmp;
 process.env.MC_TASKS_BACKEND = "json";
 process.env.SANCHO_RUNTIME = "external-http";
 process.env.SANCHO_EXTERNAL_SECRET = "runtime-secret";
+process.env.GIT_COMMIT = "deployed-support-sha";
+process.env.SANCHOCMO_IMAGE_DIGEST = "sha256:support-image";
+process.env.NEXT_PUBLIC_ENV_LABEL = "Staging";
 
 function listen(server: http.Server): Promise<{ port: number }> {
   return new Promise((resolve) => {
@@ -41,7 +44,11 @@ function mockResponse() {
 function runtimeRequest(body: Record<string, unknown>): NextApiRequest {
   return {
     method: "POST",
-    headers: { "x-mc-secret": "runtime-secret" },
+    headers: {
+      "x-mc-secret": "runtime-secret",
+      "x-request-id": "trace-chat-send-1",
+      traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    },
     body,
     query: {},
   } as unknown as NextApiRequest;
@@ -49,12 +56,14 @@ function runtimeRequest(body: Record<string, unknown>): NextApiRequest {
 
 test("trusted send retries reuse one ledger run and a client cannot claim mc-admin", async () => {
   const received: Array<Record<string, unknown>> = [];
+  const receivedHeaders: http.IncomingHttpHeaders[] = [];
   const runtime = http.createServer((req, res) => {
     let raw = "";
     req.setEncoding("utf8");
     req.on("data", (chunk) => { raw += chunk; });
     req.on("end", () => {
       received.push(JSON.parse(raw));
+      receivedHeaders.push(req.headers);
       res.writeHead(202, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true, runId: "external-1" }));
     });
@@ -89,6 +98,11 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.equal(received[0].userId, "mc-client-demo");
     assert.equal(received[0].controlDepth, 1);
     assert.equal(typeof received[0].missionControlRunId, "string");
+    assert.equal(received[0].traceId, "trace-chat-send-1");
+    assert.match(String(received[0].traceparent), /^00-4bf92f3577b34da6a3ce929d0e0e4736-/);
+    assert.equal(receivedHeaders[0]["x-request-id"], "trace-chat-send-1");
+    assert.match(String(receivedHeaders[0].traceparent), /^00-4bf92f3577b34da6a3ce929d0e0e4736-/);
+    assert.equal(first.read().payload.traceId, "trace-chat-send-1");
 
     const retry = mockResponse();
     await sendHandler(runtimeRequest(body), retry.res);
@@ -122,6 +136,67 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.equal(received[1].userId, "mc-client-demo");
     assert.equal(received[1].controlDepth, 0);
 
+    const supportBody = {
+      ...body,
+      threadId: "demo:support-growie-case-1",
+      text: "La pantalla no avanza",
+      agent: "rocinante",
+      scope: "skill",
+      skill: "yalc-operator",
+      readOnly: false,
+      _source: "spoofed-browser-source",
+      idempotencyKey: "growie-support-turn-1",
+    };
+    const supportNonAdmin = mockResponse();
+    await sendHandler({
+      method: "POST",
+      headers: {
+        referer: "https://staging.sanchocmo.ai/dashboard/demo/content?token=do-not-forward",
+      },
+      body: supportBody,
+      query: {},
+      ctx: {
+        isAdmin: false,
+        clientSlug: "demo",
+        allowedSlugs: null,
+        adminToken: null,
+        portalClient: { slug: "demo", name: "Demo" },
+      },
+    } as unknown as NextApiRequest, supportNonAdmin.res);
+    assert.equal(supportNonAdmin.read().statusCode, 403);
+    assert.equal(received.length, 2);
+
+    const support = mockResponse();
+    await sendHandler({
+      method: "POST",
+      headers: {
+        referer: "https://staging.sanchocmo.ai/dashboard/demo/content?token=do-not-forward",
+      },
+      body: supportBody,
+      query: {},
+      ctx: {
+        isAdmin: true,
+        clientSlug: null,
+        allowedSlugs: null,
+        adminToken: null,
+        portalClient: null,
+      },
+    } as unknown as NextApiRequest, support.res);
+    assert.equal(support.read().statusCode, 200);
+    assert.equal(received.length, 3);
+    assert.equal(received[2].agent, "sancho");
+    assert.equal(received[2].readOnly, true);
+    assert.equal(received[2].channelMode, "support-diagnostic");
+    assert.equal(received[2]._source, "growie-support");
+    assert.equal(received[2].threadName, "Growie · Soporte");
+    assert.equal(received[2].linkedTo, "support/growie");
+    assert.deepEqual(received[2].supportContext, {
+      pagePath: "/dashboard/demo/content",
+      deployedCommit: "deployed-support-sha",
+      imageDigest: "sha256:support-image",
+      environment: "Staging",
+    });
+
     const crossTenant = mockResponse();
     await sendHandler(runtimeRequest({
       ...body,
@@ -132,7 +207,7 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     }), crossTenant.res);
     assert.equal(crossTenant.read().statusCode, 400);
     assert.equal(crossTenant.read().payload.error, "Thread does not belong to slug");
-    assert.equal(received.length, 2);
+    assert.equal(received.length, 3);
   } finally {
     await close(runtime);
   }

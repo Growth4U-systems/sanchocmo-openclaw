@@ -13,6 +13,10 @@ export interface InboundMessage {
   threadId: string;
   /** Mission Control ledger id echoed by every async runtime callback. */
   missionControlRunId?: string;
+  /** Request-facing correlation id, also forwarded as X-Request-Id. */
+  traceId?: string;
+  /** W3C propagation header for runtimes with tracing support. */
+  traceparent?: string;
   /** Authenticated control-plane hop count. Control actions stop at depth 1. */
   controlDepth?: 0 | 1;
   threadName?: string;
@@ -70,6 +74,15 @@ export interface InboundMessage {
   senderRole?: "admin" | "client";
   /** A trusted channel may force a turn to analysis-only behavior. */
   readOnly?: boolean;
+  /** Server-derived read-only experience. Browsers cannot select this mode. */
+  channelMode?: "docs-review" | "support-diagnostic";
+  /** Bounded deployment/page evidence attached by the trusted Sancho server. */
+  supportContext?: {
+    pagePath?: string;
+    deployedCommit?: string;
+    imageDigest?: string;
+    environment?: string;
+  };
   _source?: string;
   agentId?: string;
   agent?: string;

@@ -13,6 +13,7 @@ const {
   R2ConfigError,
   assertR2Configured,
   getMissingR2Env,
+  hasAllowedUploadSignature,
   resolveUploadMime,
 } = (mod as unknown as { default: typeof mod }).default ?? mod;
 
@@ -45,7 +46,35 @@ test("a generic declared MIME with an allowed extension normalizes to that exten
 test("rejects disallowed types (returns null)", () => {
   assert.equal(resolveUploadMime("application/zip", "archive.zip"), null);
   assert.equal(resolveUploadMime("application/octet-stream", "malware.exe"), null);
+  assert.equal(resolveUploadMime("image/svg+xml", "active.svg"), null);
   assert.equal(resolveUploadMime(null, "noextension"), null);
+});
+
+test("validates file signatures instead of trusting browser MIME metadata", () => {
+  assert.equal(
+    hasAllowedUploadSignature(Buffer.from("%PDF-1.7\n"), "application/pdf"),
+    true,
+  );
+  assert.equal(
+    hasAllowedUploadSignature(Buffer.from("MZ executable"), "application/pdf"),
+    false,
+  );
+  assert.equal(
+    hasAllowedUploadSignature(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      "image/png",
+    ),
+    true,
+  );
+  assert.equal(
+    hasAllowedUploadSignature(Buffer.from([0x50, 0x4b, 0x03, 0x04]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    true,
+  );
+  assert.equal(
+    hasAllowedUploadSignature(Buffer.from([0x50, 0x4b, 0x03, 0x06]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    false,
+  );
+  assert.equal(hasAllowedUploadSignature(Buffer.from([0x41, 0x00, 0x42]), "text/plain"), false);
 });
 
 test("R2 configuration checks report missing env vars without constructing a client", () => {

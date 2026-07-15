@@ -1,4 +1,5 @@
 import {
+  bigserial,
   boolean,
   foreignKey,
   index,
@@ -10,6 +11,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ============================================================
 // User & Auth tables (compatible with BetterAuth schema)
@@ -507,6 +509,59 @@ export const mcpAuditEvents = pgTable("mcp_audit_events", {
   index("mcp_audit_events_tool_idx").on(table.toolName),
   index("mcp_audit_events_client_idx").on(table.clientSlug),
   index("mcp_audit_events_ok_idx").on(table.ok),
+]);
+
+// ============================================================
+// Durable agent-run ledger (SAN-469)
+// ============================================================
+
+export const agentRuns = pgTable("agent_runs", {
+  id: text("id").primaryKey(),
+  idempotencyKey: text("idempotency_key"),
+  threadId: text("thread_id").notNull(),
+  traceId: text("trace_id"),
+  runtime: text("runtime").notNull(),
+  agent: text("agent"),
+  skill: text("skill"),
+  skills: jsonb("skills").$type<string[]>(),
+  skillMode: text("skill_mode"),
+  taskId: text("task_id"),
+  taskContract: jsonb("task_contract").$type<Record<string, unknown>>(),
+  status: text("status").notNull().default("queued"),
+  input: jsonb("input").$type<unknown>(),
+  output: jsonb("output").$type<unknown>(),
+  error: text("error"),
+  callbackFingerprints: jsonb("callback_fingerprints").$type<string[]>().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  startedAt: timestamp("started_at"),
+  finishedAt: timestamp("finished_at"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("agent_runs_thread_idempotency_idx")
+    .on(table.threadId, table.idempotencyKey)
+    .where(sql`${table.idempotencyKey} IS NOT NULL AND ${table.status} IN ('queued', 'running', 'completed')`),
+  index("agent_runs_thread_created_idx").on(table.threadId, table.createdAt),
+  index("agent_runs_thread_status_idx").on(table.threadId, table.status, table.createdAt),
+  index("agent_runs_trace_idx").on(table.traceId),
+  index("agent_runs_task_idx").on(table.taskId),
+]);
+
+export const agentRunEvents = pgTable("agent_run_events", {
+  sequence: bigserial("sequence", { mode: "number" }).notNull(),
+  id: text("id").primaryKey(),
+  runId: text("run_id")
+    .notNull()
+    .references(() => agentRuns.id, { onDelete: "cascade" }),
+  threadId: text("thread_id").notNull(),
+  traceId: text("trace_id"),
+  type: text("type").notNull(),
+  ts: timestamp("ts").notNull().defaultNow(),
+  data: jsonb("data").$type<unknown>(),
+}, (table) => [
+  index("agent_run_events_run_sequence_idx").on(table.runId, table.sequence),
+  index("agent_run_events_thread_sequence_idx").on(table.threadId, table.sequence),
+  index("agent_run_events_trace_idx").on(table.traceId),
+  index("agent_run_events_ts_idx").on(table.ts),
 ]);
 
 // ============================================================

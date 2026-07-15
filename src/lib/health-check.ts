@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
 import { apiHealthFile, BASE } from "@/lib/data/paths";
 import { buildBrandRuntimeEnv } from "@/lib/brand-env";
@@ -58,6 +58,18 @@ function saveApiHealth(data: { lastCheck: string | null; services: Record<string
 // ── Individual service checks ────────────────────────────────
 
 const TIMEOUT_MS = 15_000;
+
+function runDiagnosticBinary(
+  executable: string,
+  args: string[],
+  timeout: number,
+): string {
+  return execFileSync(executable, args, {
+    timeout,
+    encoding: "utf-8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+}
 
 async function httpCheck(url: string, headers: Record<string, string>, acceptCodes = [200]): Promise<{ ok: boolean; httpCode: number }> {
   const controller = new AbortController();
@@ -321,7 +333,11 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
       }
       case "remotion": {
         try {
-          const raw = execSync("npx remotion --version 2>&1 || echo \"not-found\"", { timeout: 15000, encoding: "utf-8" }).trim();
+          const raw = runDiagnosticBinary(
+            path.join(process.cwd(), "node_modules", ".bin", "remotion"),
+            ["--version"],
+            15_000,
+          );
           const notFound = /not.found|command not found|ERR/i.test(raw);
           return notFound
             ? { status: "not-configured", lastCheck: now, details: { note: "Not installed locally" } }
@@ -349,7 +365,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
       // ── Local tools ──
       case "gog": {
         try {
-          const raw = execSync("gog gmail list \"is:unread\" 2>&1", { timeout: 20000, encoding: "utf-8" });
+          const raw = runDiagnosticBinary("gog", ["gmail", "list", "is:unread"], 20_000);
           const hasError = /error|unauthorized|invalid/i.test(raw) && !/subject/i.test(raw);
           return hasError
             ? error(raw.slice(0, 150))
@@ -360,7 +376,7 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
       }
       case "openclaw": {
         try {
-          const raw = execSync("openclaw status 2>&1", { timeout: TIMEOUT_MS, encoding: "utf-8" });
+          const raw = runDiagnosticBinary("openclaw", ["status"], TIMEOUT_MS);
           const running = /running/i.test(raw);
           const version = raw.match(/app\s+([\d.]+)/)?.[1] || "";
           const latest = raw.match(/npm latest\s+([\d.]+)/)?.[1] || "";
@@ -382,14 +398,21 @@ async function checkService(serviceId: string, envVars: Record<string, string>):
 
 // ── Run checks ───────────────────────────────────────────────
 
-const ALL_SERVICES = [
+export const HEALTH_SERVICE_IDS = [
   "anthropic", "openrouter", "fireworks", "openai", "gemini", "xai", "minimax",
   "brave", "apify", "scrapecreators", "firecrawl", "serper", "dataforseo",
   "notion", "slack", "discord",
   "fal", "wavespeed", "dumpling", "nanobanana", "remotion",
   "instantly", "metricool",
   "gog", "openclaw",
-];
+] as const;
+
+export type HealthServiceId = (typeof HEALTH_SERVICE_IDS)[number];
+export type HealthServiceFilter = HealthServiceId | "all";
+
+export function isHealthServiceFilter(value: string): value is HealthServiceFilter {
+  return value === "all" || (HEALTH_SERVICE_IDS as readonly string[]).includes(value);
+}
 
 // ── Credential presence (defense-in-depth for the cached health file) ───────
 //
@@ -454,8 +477,8 @@ export function isServiceCredentialPresent(
 export async function runHealthChecks(serviceFilter: string, slug?: string): Promise<HealthResult> {
   const health = loadApiHealth();
   const toCheck = serviceFilter === "all"
-    ? ALL_SERVICES
-    : ALL_SERVICES.includes(serviceFilter) ? [serviceFilter] : [];
+    ? [...HEALTH_SERVICE_IDS]
+    : isHealthServiceFilter(serviceFilter) ? [serviceFilter] : [];
 
   if (toCheck.length === 0) {
     return { checked: [], results: {}, lastCheck: health.lastCheck || "", error: `Unknown service: ${serviceFilter}` };

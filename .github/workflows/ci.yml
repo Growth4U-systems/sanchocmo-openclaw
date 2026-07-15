@@ -17,6 +17,20 @@ jobs:
   verify:
     name: Typecheck + Build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: growie_ci
+          POSTGRES_PASSWORD: growie_ci
+          POSTGRES_DB: growie_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U growie_ci -d growie_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v7
 
@@ -31,12 +45,28 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Validate required agent-run migration
+        run: npm run db:migrate:agent-runs:check
+
       # Gates the src/lib unit tests (tsx --test) so tool-registry goldens and
       # other lib invariants can't silently rot (SAN-285). Runs before Build for
       # fast feedback. Kept in this job (not renamed) so the required-check name
       # "Typecheck + Build" stays valid for branch protection.
       - name: Lib tests
+        env:
+          AGENT_RUNS_TEST_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/growie_ci
         run: npm run test:lib
+
+      # The Mission Control bridge is part of the same user-visible execution
+      # path as Growie. Keep its contract tests in the required check instead
+      # of allowing the plugin to drift outside CI.
+      - name: Mission Control plugin tests
+        run: npm run test:plugins
+
+      # Product definitions are executable governance: missing source/tests,
+      # ambiguous routes or an overdue approved definition must fail closed.
+      - name: Product capability drift
+        run: npm run check:product-capabilities
 
       - name: Build
         env:
@@ -46,6 +76,20 @@ jobs:
           NEXTAUTH_URL: http://localhost:3000
           NEXT_PUBLIC_ENV_LABEL: ci
         run: npm run build
+
+      # A production build can succeed while auth redirects or the top-level
+      # dashboard fail at runtime. Exercise the compiled app before allowing a
+      # support/observability change onto the trunk.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        env:
+          DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+          NEXTAUTH_SECRET: stub-secret-for-ci-e2e-only
+          NEXTAUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_ENV_LABEL: ci
+        run: npm run test:e2e
 
   # NOTE: lint runs as a local pre-push hook (.husky/pre-push) to save CI
   # Actions minutes. It was already `continue-on-error` here (non-blocking),

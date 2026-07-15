@@ -183,6 +183,42 @@ test("buildHermesArgs skips generic Sancho chat skill aliases", () => {
   assert.deepEqual(args, ["chat", "-Q", "-s", "seo-content", "-q", "hello"]);
 });
 
+test("buildHermesArgs restricts read-only turns to non-mutating toolsets", () => {
+  const previousToolsets = process.env.HERMES_CLI_TOOLSETS;
+  const previousReadOnlyToolsets = process.env.HERMES_CLI_READ_ONLY_TOOLSETS;
+  process.env.HERMES_CLI_TOOLSETS = "web,terminal,file,messaging";
+  delete process.env.HERMES_CLI_READ_ONLY_TOOLSETS;
+
+  try {
+    const args = buildHermesArgs({ readOnly: true }, "diagnose");
+    assert.deepEqual(args, [
+      "chat",
+      "-Q",
+      "--toolsets",
+      "web,vision",
+      "-q",
+      "diagnose",
+    ]);
+    assert.equal(args.includes("terminal"), false);
+    assert.equal(args.includes("file"), false);
+    assert.equal(args.includes("messaging"), false);
+
+    process.env.HERMES_CLI_READ_ONLY_TOOLSETS = "vision,terminal,file,messaging";
+    const configuredArgs = buildHermesArgs({ readOnly: true }, "inspect image");
+    assert.deepEqual(configuredArgs.slice(-4), [
+      "--toolsets",
+      "vision",
+      "-q",
+      "inspect image",
+    ]);
+  } finally {
+    if (previousToolsets === undefined) delete process.env.HERMES_CLI_TOOLSETS;
+    else process.env.HERMES_CLI_TOOLSETS = previousToolsets;
+    if (previousReadOnlyToolsets === undefined) delete process.env.HERMES_CLI_READ_ONLY_TOOLSETS;
+    else process.env.HERMES_CLI_READ_ONLY_TOOLSETS = previousReadOnlyToolsets;
+  }
+});
+
 test("buildHermesArgs never preloads a hinted skill in auto mode", () => {
   const args = buildHermesArgs(
     {

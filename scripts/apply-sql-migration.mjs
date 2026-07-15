@@ -47,16 +47,13 @@ async function applyMigration(file) {
     return;
   }
 
-  await sql.query("begin");
-  try {
-    for (const statement of statements) {
-      await sql.query(statement);
-    }
-    await sql.query("commit");
-  } catch (err) {
-    await sql.query("rollback").catch(() => undefined);
-    throw err;
-  }
+  // `neon()` uses stateless HTTP. Separate BEGIN/query/COMMIT calls do not
+  // share a session, so they never formed a real transaction. Submit the
+  // trusted, pre-validated statements through the driver's non-interactive
+  // transaction API as one atomic request instead.
+  await sql.transaction((transaction) =>
+    statements.map((statement) => transaction.query(statement)),
+  );
 
   console.log(`${file}: applied ${statements.length} statement(s)`);
 }

@@ -22,8 +22,8 @@ const FOLLOW_UP_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_STRING_LENGTH = 12_000;
 
 export const QUALITY_EVIDENCE_LIMITATIONS = Object.freeze([
-  "Shadow evidence surface over a bounded JSON ledger; it is not an append-only audit log.",
-  "Only the latest 2,000 runs and 10,000 run events are retained.",
+  "Evidence is derived from the operational agent-run ledger; it is not an authorization or compliance audit log.",
+  "Evidence snapshots expose at most the latest 2,000 runs and 10,000 events even when Postgres retains older history.",
   "Follow-ups are inferred only from the next run in the bounded ledger; messages without a subsequent run are unavailable.",
   "Run status completed means a reply was delivered; it does not prove the user task succeeded.",
   "Only a tenant-scoped readback causally bound to a file_write event can verify an expected output.",

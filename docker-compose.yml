@@ -14,6 +14,7 @@ services:
       context: .
       args:
         NEXT_PUBLIC_ENV_LABEL: ${NEXT_PUBLIC_ENV_LABEL:-}
+        NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED: ${NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED:-0}
         GIT_COMMIT: ${GIT_COMMIT:-}
         INSTALL_HERMES: ${INSTALL_HERMES:-1}
         HERMES_AGENT_REF: ${HERMES_AGENT_REF:-v2026.7.7.2}
@@ -33,6 +34,10 @@ services:
     environment:
       - OPENCLAW_HOME=/root/.openclaw
       - MC_BIND_ADDRESS=0.0.0.0
+      # Runtime identity used by /api/health and incident correlation. Deploy
+      # workflows set this to the immutable local image ID / registry digest
+      # after build or pull and before the container starts.
+      - SANCHOCMO_IMAGE_DIGEST=${SANCHOCMO_IMAGE_DIGEST:-}
       - MC_WORKSPACE=/root/.openclaw/workspace-sancho
       - LEGACY_PORT=18790
       # Anthropic auth: pass ANTHROPIC_API_KEY through so `api_key` mode works

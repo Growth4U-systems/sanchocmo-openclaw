@@ -195,6 +195,8 @@ function bridgePrompt(message: InboundMessage): string {
     temporaryAgent: message.temporaryAgent,
     controlDepth: message.controlDepth,
     readOnly: message.readOnly,
+    channelMode: message.channelMode,
+    supportContext: message.supportContext,
     taskRouteProposal: message.taskRouteProposal,
   });
 

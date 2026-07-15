@@ -197,3 +197,31 @@ test("docs review turns are read-only and receive no action protocols", () => {
   assert.equal(block.includes(":::delegate\n"), false);
   assert.equal(block.includes(":::task-route\n"), false);
 });
+
+test("Growie support turns are evidence-led, read-only, and deployment-grounded", () => {
+  const block = buildMcChatContextBlock({
+    slug: "acme",
+    threadId: "acme:support-growie-case-1",
+    requestedAgent: "sancho",
+    readOnly: true,
+    channelMode: "support-diagnostic",
+    supportContext: {
+      pagePath: "/dashboard/acme/content",
+      deployedCommit: "abc123",
+      imageDigest: "sha256:def456",
+      environment: "Staging",
+    },
+  });
+
+  assert.ok(block.includes("channel_mode: support-diagnostic"));
+  assert.ok(block.includes("visible_identity: Growie"));
+  assert.ok(block.includes("support_page: /dashboard/acme/content"));
+  assert.ok(block.includes("deployed_commit: abc123"));
+  assert.ok(block.includes("No afirmes causa raíz sin evidencia"));
+  assert.ok(block.includes("config/product-capability-manifest.json"));
+  assert.ok(block.includes("execution_mode: diagnostic"));
+  assert.equal(block.includes("Eres Sancho"), false);
+  assert.equal(block.includes("private docs.growth4u.io"), false);
+  assert.equal(block.includes(":::ask\n"), false);
+  assert.equal(block.includes(":::delegate\n"), false);
+});

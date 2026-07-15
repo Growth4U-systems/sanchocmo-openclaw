@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 // `default` namespace — mirror the interop dance used in mc-chat.test.mts.
 import * as mw from "../api-middleware";
 import type { RequestContext } from "../api-middleware";
-const { canAccessSlug } = (mw as unknown as { default: typeof mw }).default ?? mw;
+const { canAccessSlug, withErrorHandler } = (mw as unknown as { default: typeof mw }).default ?? mw;
 
 function ctx(partial: Partial<RequestContext>): RequestContext {
   return {
@@ -46,4 +46,72 @@ test("allowedSlugs takes precedence over clientSlug when both set", () => {
 test("no auth context denies everything", () => {
   assert.equal(canAccessSlug(ctx({}), "a"), false);
   assert.equal(canAccessSlug(undefined, "a"), false);
+});
+
+test("withErrorHandler propagates a safe request trace through the handler", async () => {
+  const headers = new Map<string, string>();
+  let payload: unknown;
+  const req = {
+    method: "GET",
+    url: "/api/test",
+    headers: { "x-request-id": "support-case-123" },
+  } as never;
+  const res = {
+    headersSent: false,
+    setHeader(name: string, value: string) {
+      headers.set(name.toLowerCase(), value);
+    },
+    status() {
+      return this;
+    },
+    json(value: unknown) {
+      payload = value;
+      return this;
+    },
+  } as never;
+
+  await withErrorHandler(async (request) => {
+    assert.equal(request.traceContext?.traceId, "support-case-123");
+  })(req, res);
+
+  assert.equal(headers.get("x-request-id"), "support-case-123");
+  assert.match(headers.get("traceparent") ?? "", /^00-[a-f0-9]{32}-[a-f0-9]{16}-01$/);
+  assert.equal(payload, undefined);
+});
+
+test("withErrorHandler returns the correlation id with a sanitized 500", async () => {
+  let statusCode = 0;
+  let payload: unknown;
+  const req = {
+    method: "POST",
+    url: "/api/test",
+    headers: { "x-request-id": "invalid id with spaces" },
+  } as never;
+  const res = {
+    headersSent: false,
+    setHeader() {},
+    status(value: number) {
+      statusCode = value;
+      return this;
+    },
+    json(value: unknown) {
+      payload = value;
+      return this;
+    },
+  } as never;
+
+  const originalError = console.error;
+  console.error = () => undefined;
+  try {
+    await withErrorHandler(async () => {
+      throw new Error("boom");
+    })(req, res);
+  } finally {
+    console.error = originalError;
+  }
+
+  assert.equal(statusCode, 500);
+  assert.equal(typeof (payload as { traceId?: unknown }).traceId, "string");
+  assert.notEqual((payload as { traceId?: unknown }).traceId, "invalid id with spaces");
+  assert.equal((payload as { error?: unknown }).error, "Internal server error");
 });

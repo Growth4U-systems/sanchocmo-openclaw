@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  appendAgentRunEvent,
+  appendAgentRunEventAsync,
   type AgentRun,
   type AgentRunEvent,
   type AgentRunExpectedOutput,
@@ -199,7 +199,7 @@ export async function persistCausalArtifactReadbacks(
         observedAt,
         ...readback,
       };
-      appendAgentRunEvent({
+      await appendAgentRunEventAsync({
         runId: run.id,
         threadId: run.threadId,
         type: "artifact_readback",

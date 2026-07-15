@@ -267,6 +267,8 @@ export default defineChannelPluginEntry({
           isAdmin,
           senderRole,
           readOnly,
+          channelMode,
+          supportContext,
           temporaryAgent,
           controlDepth,
           taskRouteProposal,
@@ -333,9 +335,11 @@ export default defineChannelPluginEntry({
           requestedAgent,
           canDelegate: !isTemporarySancho && !isControlFollowup,
           temporaryAgent: isTemporarySancho,
-          controlDepth: isControlFollowup ? 1 : 0,
+          controlDepth: controlDepth === 1 ? 1 : 0,
           taskRouteProposal,
           readOnly: isReadOnly,
+          channelMode,
+          supportContext,
         });
 
         // ─── Bounded grounding (SAN-246/SAN-382 follow-up) ───
@@ -383,11 +387,14 @@ export default defineChannelPluginEntry({
         // This maps to toolsBySender keys in openclaw.json:
         //   "id:mc-admin" → alsoAllow: [gateway, exec, cron]
         //   clients get default deny
+        // Read-only channels must never inherit the privileged mc-admin tool
+        // grant. The client principal is the programmatic deny boundary; the
+        // prompt is an additional behavioural instruction, not the sandbox.
         const resolvedSenderId = resolveChatUserId({
           trustedRuntimeRequest: true,
-          isAdmin: isAdmin === true,
+          isAdmin: !isReadOnly && isAdmin === true,
           slug,
-          claimedUserId: userId,
+          claimedUserId: isReadOnly ? undefined : userId,
         });
         const resolvedSenderName = userName || (isAdmin ? "Admin" : `${slug} (client)`);
 
@@ -760,7 +767,10 @@ export default defineChannelPluginEntry({
                 // Check if thread is linked to Discord
                 let discordLink = null;
                 try {
-                  const threadRes = await fetch(`${threadLinkUrlBase}/${encodeURIComponent(chatId)}`);
+                  const threadRes = await fetch(
+                    `${threadLinkUrlBase}/${encodeURIComponent(chatId)}`,
+                    { headers: secret ? { "X-MC-Secret": secret } : {} },
+                  );
                   if (threadRes.ok) {
                     const threadData = await threadRes.json();
                     if (threadData.discordThreadId && threadData.discordChannelId) {
@@ -1237,9 +1247,13 @@ export default defineChannelPluginEntry({
         // Check if this Discord thread is linked to an MC thread.
         // Routes migrated to Next.js (/api/chat/*) — single writer for chats.
         const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+        const secret = channelCfg?.sharedSecret;
         let mcThreadId = null;
         try {
-          const searchRes = await fetch(`${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`);
+          const searchRes = await fetch(
+            `${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`,
+            { headers: secret ? { "X-MC-Secret": secret } : {} },
+          );
           if (searchRes.ok) {
             const searchData = await searchRes.json();
             if (searchData.ok && searchData.threadId) {
@@ -1260,7 +1274,10 @@ export default defineChannelPluginEntry({
         try {
           await fetch(`${mcUrl}/api/chat/send`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(secret ? { "X-MC-Secret": secret } : {}),
+            },
             body: JSON.stringify({
               slug,
               threadId: mcThreadId,

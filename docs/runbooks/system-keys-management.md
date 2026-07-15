@@ -22,7 +22,7 @@ The mechanism: `scripts/upsert-env.py` (TDD'd) is `scp`'d to the VPS, then invok
 3. **Add to GitHub**:
    - For a single value: GitHub repo → Settings → Environments → `staging` → New secret (or variable).
    - For bulk from a local `.env`: `scripts/load-secrets-from-env.sh --env staging --from <path> --include <NAME> --confirm`.
-4. **Push to `staging`** → deploy runs → key applied. For prod, do the same on the `production` Environment + create a release tag.
+4. **Push/merge to `main`** → the staging/QA deploy runs → key applied. For prod, do the same on the `production` Environment + create a release tag.
 
 If the key is also a system API key (LLM/tools/social, with a health check), also add it to `SERVICE_ENV_MAP` in `src/pages/api/env/index.ts` so it surfaces in the APIs admin panel.
 
@@ -31,7 +31,7 @@ If the key is also a system API key (LLM/tools/social, with a health check), als
 1. GitHub Environment → edit the secret/variable → save the new value.
 2. Trigger the deploy:
    ```bash
-   gh workflow run "Deploy to Staging" --ref staging
+   gh workflow run "Deploy to Staging" --ref main
    ```
    (or `--ref <prev-sha>` to rotate without rolling code forward.)
 3. The upsert detects the `.env` content sha256 changed and force-recreates the `sanchocmo` container so it picks up the new value.
