@@ -51,6 +51,8 @@ export interface PartnershipLead {
   dealTerms?: Record<string, unknown> | null;
   qualityScore?: number | null;
   qualityComponents?: Partial<QualityComponentsMap> | null;
+  /** Merge fields literales persistidos por discovery/Yalc. */
+  customVariables?: Record<string, string> | null;
   discardNote?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;

@@ -52,7 +52,7 @@ curl -s "http://localhost:3000/api/partnerships/searches?slug={slug}&status=queu
   -H "x-admin-token: $MC_ADMIN_TOKEN"
 ```
 
-Cada búsqueda trae su `plan` (sectores, redes, tiers, audiencia, volumen,
+Cada búsqueda trae su `plan` (sectores, hashtags, redes, tiers, audiencia, volumen,
 señales con `competitorBrands`, notas) y su `campaignId` de Yalc.
 
 ### 2. Scrapea candidatos por red (tools mcp__scrapecreators__*)
@@ -61,7 +61,8 @@ Objetivo: `plan.targetVolume` candidatos (default ~40) repartidos entre
 `plan.networks`, dentro de los `plan.tiers` (followers según config: Nano <25K
 · Micro 25–100K · Mid 100–250K · Macro >250K).
 
-Por red, el patrón es: BUSCAR perfiles por keywords de `plan.sectors` → traer
+Por red, el patrón es: BUSCAR perfiles por keywords de `plan.sectors` y los
+hashtags literales de `plan.hashtags` → traer
 MÉTRICAS del perfil → derivar señales de los últimos posts.
 
 - **instagram**: `v1_instagram_search_profiles` (keywords del sector) →
@@ -120,6 +121,15 @@ MÉTRICAS del perfil → derivar señales de los últimos posts.
 Solo `handle` y `network` son obligatorios; señal que no tengas, NO la pongas
 (ausente → neutro 50 + flag, mejor que un invento). El normalizador tolera
 alias (`er`, `net`, snake_case) y deduplica por red+handle.
+
+Si el proveedor devuelve campos literales del catálogo de Plantillas, pásalos
+en `customVariables` sin resumirlos ni interpretarlos: `categoria`
+(`category_name`), `biografia` (`biography`), `enlace_bio` (`external_url`),
+`email_publico` (`business_email`), `ultimo_post_texto`
+(`items[0].caption.text`), `ultimo_post_url` (`items[0].url`),
+`nombre_perfil` (`full_name`) y `sector_plan` (sectores literales del plan).
+No crees
+`anchor_*` ni otros campos personalizados.
 
 ### 5. Ingesta (el endpoint hace qualify-enrich + Yalc)
 

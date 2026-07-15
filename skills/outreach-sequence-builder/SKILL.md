@@ -362,8 +362,9 @@ Log feedback to `./brand/{slug}/operational/learnings.md`:
 
 Para campañas de **creators (Outreach·Partnerships)** las secuencias y briefs viven como
 **plantillas-asset** en `brand/{slug}/outreach/templates/*.md` (frontmatter + pasos
-`## Paso N · Título (espera Xd)` con `**Asunto:**`). Variables soportadas: `{{handle}}`,
-`{{quality_score}}`, `{{precio}}` — el motor de envío las rellena por creator.
+`## Paso N · Título (espera Xd)` con `**Asunto:**`). El catálogo de variables
+NO se hardcodea en el prompt: se lee de `GET /api/partnerships/templates?slug={slug}`
+(campo `variables`). Cada entrada declara `token`, `sourcePath` y `example`.
 
 Acciones disponibles (paridad UI = chat = MCP — usa SIEMPRE estos endpoints, no toques los .md a mano):
 
@@ -378,5 +379,8 @@ Acciones disponibles (paridad UI = chat = MCP — usa SIEMPRE estos endpoints, n
 
 Reglas:
 - La biblioteca guarda **originales**; cada búsqueda congela **copias** (instancias). Editar el original NO cambia búsquedas ya asignadas.
+- Usa únicamente tokens presentes en `variables`. Nunca inventes placeholders (`anchor_topic`, `anchor_specific`, etc.) ni derives su valor mediante LLM/scraping. Si falta el campo, reescribe el copy sin esa variable.
+- Antes de guardar, confirma que cada `{{variable}}` aparece en el catálogo. La API rechazará cualquier variable desconocida.
+- Usa solo la forma exacta `{{variable}}`; fallbacks y sintaxis alternativa no son compatibles con el renderer de envío.
 - El plan de discovery puede traer la fila `templates: [nombres]` — `createDiscoverySearch` las asigna solo si existen en la biblioteca; ofrece crear las que falten.
 - El envío SIEMPRE pasa por el gate humano (dry-run por defecto: jamás un email real sin `dryRun:false` explícito y proveedor configurado). No apruebes gates sin instrucción del usuario.

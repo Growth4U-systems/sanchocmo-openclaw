@@ -108,6 +108,7 @@ test("parseDiscoveryPlan normaliza redes/tiers y aplica defaults hybrid/40", () 
   const plan = lib.parseDiscoveryPlan({
     title: "Finanzas personales ES · IG+TikTok",
     sectors: ["Finanzas Personales", "ahorro", ""],
+    hashtags: ["FinanzasPersonales", "#Ahorro", "#ahorro", ""],
     networks: ["IG", "TikTok", "instagram"],
     tiers: ["Micro", "MID", "galactic"],
     targetVolume: 40,
@@ -117,6 +118,7 @@ test("parseDiscoveryPlan normaliza redes/tiers y aplica defaults hybrid/40", () 
   });
   assert.equal(plan.title, "Finanzas personales ES · IG+TikTok");
   assert.deepEqual(plan.sectors, ["finanzas personales", "ahorro"]);
+  assert.deepEqual(plan.hashtags, ["#finanzaspersonales", "#ahorro"]);
   assert.deepEqual(plan.networks, ["instagram", "tiktok"]);
   assert.deepEqual(plan.tiers, ["micro", "mid"]);
   assert.equal(plan.qualificationMode, "hybrid");
@@ -138,6 +140,14 @@ test("parseDiscoveryPlan rechaza planes sin título/sectores/redes", () => {
   assert.throws(
     () => lib.parseDiscoveryPlan({ title: "x", sectors: ["y"], networks: ["ig"], disqualifyThreshold: 140 }),
     /disqualifyThreshold/,
+  );
+  assert.throws(
+    () => lib.parseDiscoveryPlan({ title: "x", sectors: ["y"], networks: ["ig"], audienceEsMinPct: 101 }),
+    /audienceEsMinPct/,
+  );
+  assert.throws(
+    () => lib.parseDiscoveryPlan({ title: "x", sectors: ["y"], networks: ["ig"], targetVolume: 2.5 }),
+    /targetVolume/,
   );
 });
 
@@ -217,6 +227,26 @@ test("normalizeCandidates acepta señales con snake_case y promos de competidore
   assert.equal(signals.postsPerWeek, 5);
 });
 
+test("applyDiscoveryPlanGates excluye red/tier ajenos y followers desconocidos", () => {
+  const result = lib.applyDiscoveryPlanGates(
+    [
+      { handle: "@ok", network: "instagram", followers: 50_000 },
+      { handle: "@otra_red", network: "tiktok", followers: 50_000 },
+      { handle: "@macro", network: "instagram", followers: 500_000 },
+      { handle: "@sin_followers", network: "instagram" },
+    ],
+    {
+      title: "Micro Instagram",
+      sectors: ["salud capilar"],
+      networks: ["instagram"],
+      tiers: ["micro"],
+      targetVolume: 10,
+    },
+  );
+  assert.deepEqual(result.candidates.map((candidate) => candidate.handle), ["@ok"]);
+  assert.equal(result.filtered, 3);
+});
+
 // ── qualify-enrich con fixtures (scores deterministas del mockup) ───────────
 
 const EXPECTED_FIXTURE_SCORES: Record<string, number> = {
@@ -269,10 +299,10 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   const created = await lib.createDiscoverySearch({
     slug: "monzo",
     plan: {
-      title: "Finanzas personales ES · IG+TikTok",
+      title: "Finanzas personales ES · IG+TikTok+YouTube",
       sectors: ["finanzas personales", "ahorro"],
-      networks: ["instagram", "tiktok"],
-      tiers: ["micro", "mid"],
+      networks: ["instagram", "tiktok", "youtube"],
+      tiers: ["nano", "micro", "mid", "macro"],
       targetVolume: 40,
       signals: { competitorBrands: ["N26", "Revolut"] },
       templates: ["Primer contacto creators fintech"],
@@ -320,6 +350,7 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   // Runner en modo fixtures: 9 creators fake, sin ScrapeCreators.
   const run = await lib.runDiscoverySearch({ slug: "monzo", searchId: created.search.id, fixtures: true });
   assert.equal(run.stats.candidates, 9);
+  assert.equal(run.stats.filtered, 0);
   assert.equal(run.stats.inserted, 9);
   assert.equal(run.stats.disqualified, 1); // @pelotazo_cripto (31 < 40)
   assert.equal(run.stats.sourced, 8);
@@ -343,7 +374,7 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
 
   // El registro guarda plan + campaignId + estado del runner.
   const record = lib.getSearch("monzo", created.search.id)!;
-  assert.equal(record.plan.title, "Finanzas personales ES · IG+TikTok");
+  assert.equal(record.plan.title, "Finanzas personales ES · IG+TikTok+YouTube");
   assert.equal(record.campaignId, "camp-monzo-1");
   assert.equal(record.runner.stats?.avgQuality, 71);
 
@@ -448,4 +479,49 @@ test("runDiscoverySearch sin candidatos explica el camino agentic y marca error"
   const record = lib.getSearch("monzo", created.search.id)!;
   assert.equal(record.runner.status, "error");
   assert.match(String(record.runner.error), /No candidates/);
+});
+
+test("runDiscoverySearch aplica audienceEsMinPct antes de insertar (CET no sustituye audiencia)", async () => {
+  const created = await lib.createDiscoverySearch({
+    slug: "monzo",
+    plan: {
+      title: "Gate audiencia ES",
+      sectors: ["salud capilar"],
+      networks: ["instagram"],
+      audienceEsMinPct: 70,
+      targetVolume: 10,
+    },
+  });
+  const callsBeforeRun = yalcCalls.length;
+  const run = await lib.runDiscoverySearch({
+    slug: "monzo",
+    searchId: created.search.id,
+    candidates: [
+      {
+        handle: "@audiencia_es",
+        network: "instagram",
+        followers: 50_000,
+        signals: { spanishAudiencePct: 80, cetAlignmentPct: 20 },
+      },
+      {
+        handle: "@solo_cet",
+        network: "instagram",
+        followers: 50_000,
+        signals: { spanishAudiencePct: 20, cetAlignmentPct: 90 },
+      },
+      {
+        handle: "@sin_dato",
+        network: "instagram",
+        followers: 50_000,
+      },
+    ],
+  });
+  assert.equal(run.stats.candidates, 1);
+  assert.equal(run.stats.filtered, 2);
+  const assignCall = yalcCalls
+    .slice(callsBeforeRun)
+    .find((call) => call.url.includes("/leads/assign"));
+  assert.ok(assignCall);
+  const leads = (assignCall!.body as { leads: Array<{ handle: string }> }).leads;
+  assert.deepEqual(leads.map((lead) => lead.handle), ["@audiencia_es"]);
 });

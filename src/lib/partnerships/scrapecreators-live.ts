@@ -1,11 +1,27 @@
 import type { DiscoveryPlan, RawDiscoveryCandidate } from "./discovery-types";
 
 const SCRAPECREATORS_BASE = "https://api.scrapecreators.com";
-const DEFAULT_POST_COUNT = 12;
-const DEFAULT_MAX_CANDIDATES = 10;
-const DEFAULT_TIMEOUT_MS = 15_000;
+const DEFAULT_TARGET_CANDIDATES = 40;
+const MAX_TARGET_CANDIDATES = 500;
+const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_CONCURRENCY = 5;
+const MAX_SEARCH_PAGES_PER_QUERY = 5;
+const SEARCH_POOL_MULTIPLIER = 3;
 
 type JsonRecord = Record<string, unknown>;
+
+class ScrapeCreatorsRequestError extends Error {
+  retryable: boolean;
+  retryAfterMs: number;
+
+  constructor(message: string, retryable = false, retryAfterMs = 0) {
+    super(message);
+    this.name = "ScrapeCreatorsRequestError";
+    this.retryable = retryable;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
 
 interface SearchProfile {
   username?: string;
@@ -17,26 +33,32 @@ interface InstagramProfileUser {
   username?: string;
   full_name?: string;
   biography?: string;
-  is_business_account?: boolean;
   is_private?: boolean;
-  is_verified?: boolean;
   category_name?: string;
   external_url?: string;
+  business_email?: string;
   edge_followed_by?: { count?: number };
-  edge_owner_to_timeline_media?: { count?: number };
-  media_count?: number;
 }
 
 interface InstagramPost {
   like_count?: number;
   comment_count?: number;
-  taken_at?: number;
-  taken_at_timestamp?: number;
+  taken_at?: number | string;
+  taken_at_timestamp?: number | string;
   caption?: { text?: string } | string | null;
+  code?: string;
+  url?: string;
+}
+
+export interface LiveDiscoveryQueries {
+  profileQueries: string[];
+  hashtags: string[];
 }
 
 function asRecord(value: unknown): JsonRecord {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonRecord : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as JsonRecord)
+    : {};
 }
 
 function asArray(value: unknown): unknown[] {
@@ -44,11 +66,67 @@ function asArray(value: unknown): unknown[] {
 }
 
 function asNumber(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
 }
 
 function asString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function cursorFromResponse(body: unknown): string | undefined {
+  const root = asRecord(body);
+  const data = asRecord(root.data);
+  const cursor = root.cursor ?? data.cursor;
+  if (typeof cursor === "number" && Number.isFinite(cursor))
+    return String(cursor);
+  return asString(cursor);
+}
+
+function profileListFromResponse(body: unknown): SearchProfile[] {
+  const root = asRecord(body);
+  const data = asRecord(root.data);
+  const profiles = asArray(root.profiles).length
+    ? asArray(root.profiles)
+    : asArray(data.profiles || data.users || root.users);
+  return profiles.map((item) => asRecord(item) as SearchProfile);
+}
+
+function hashtagProfilesFromResponse(body: unknown): SearchProfile[] {
+  const root = asRecord(body);
+  const data = asRecord(root.data);
+  const posts = asArray(root.posts).length
+    ? asArray(root.posts)
+    : asArray(data.posts || data.items);
+  return posts
+    .map((post) => asRecord(asRecord(post).owner))
+    .filter((owner) => asString(owner.username))
+    .map((owner) => ({
+      username: asString(owner.username),
+      full_name: asString(owner.full_name),
+      follower_count: asNumber(owner.follower_count),
+    }));
+}
+
+function profileFromResponse(body: unknown): InstagramProfileUser {
+  const root = asRecord(body);
+  const data = asRecord(root.data);
+  return asRecord(
+    data.user || root.user || root.profile,
+  ) as InstagramProfileUser;
+}
+
+function postsFromResponse(body: unknown): InstagramPost[] {
+  const root = asRecord(body);
+  const data = asRecord(root.data);
+  const items = asArray(root.items).length
+    ? asArray(root.items)
+    : asArray(data.items || data.posts || root.posts);
+  return items.map((item) => asRecord(item) as InstagramPost);
 }
 
 function tierForFollowers(followers: number | undefined): string | null {
@@ -59,30 +137,44 @@ function tierForFollowers(followers: number | undefined): string | null {
   return "macro";
 }
 
-function captionText(post: InstagramPost): string {
-  if (typeof post.caption === "string") return post.caption;
-  if (post.caption && typeof post.caption === "object") return post.caption.text || "";
-  return "";
+function matchesWantedTier(
+  followers: number | undefined,
+  wantedTiers: Set<string>,
+  allowUnknown = true,
+): boolean {
+  if (wantedTiers.size === 0) return true;
+  const tier = tierForFollowers(followers);
+  // Keep unknown follower counts in the search pool: the profile detail call
+  // normally fills them and the definitive check happens after enrichment.
+  return tier === null ? allowUnknown : wantedTiers.has(tier);
 }
 
-function profileFromResponse(body: unknown): InstagramProfileUser {
-  const root = asRecord(body);
-  const data = asRecord(root.data);
-  return asRecord(data.user || root.user || root.profile) as InstagramProfileUser;
+function normalizeHashtagTerm(value: string): string {
+  return value
+    .trim()
+    .replace(/^#+/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9_]+/gi, "")
+    .toLowerCase();
 }
 
-function postsFromResponse(body: unknown): InstagramPost[] {
-  const root = asRecord(body);
-  const data = asRecord(root.data);
-  const items = asArray(root.items).length ? asArray(root.items) : asArray(data.items || data.posts || root.posts);
-  return items.map((item) => asRecord(item) as InstagramPost);
-}
-
-function profileListFromResponse(body: unknown): SearchProfile[] {
-  const root = asRecord(body);
-  const data = asRecord(root.data);
-  const profiles = asArray(root.profiles).length ? asArray(root.profiles) : asArray(data.profiles || data.users || root.users);
-  return profiles.map((item) => asRecord(item) as SearchProfile);
+export function buildLiveDiscoveryQueries(
+  plan: DiscoveryPlan,
+): LiveDiscoveryQueries {
+  const profileQueries = Array.from(
+    new Set(plan.sectors.map((sector) => sector.trim()).filter(Boolean)),
+  );
+  const explicitHashtags = plan.hashtags ?? [];
+  const derivedHashtags = plan.sectors.map(normalizeHashtagTerm);
+  const hashtags = Array.from(
+    new Set(
+      [...explicitHashtags, ...derivedHashtags]
+        .map(normalizeHashtagTerm)
+        .filter(Boolean),
+    ),
+  );
+  return { profileQueries, hashtags };
 }
 
 function sectorTokens(plan: DiscoveryPlan): string[] {
@@ -91,24 +183,53 @@ function sectorTokens(plan: DiscoveryPlan): string[] {
     .filter((token) => token.length >= 3);
 }
 
-function spanishScore(text: string): number {
-  const lower = text.toLowerCase();
-  const hits = [" que ", " para ", " con ", " una ", " los ", " las ", " del ", " empresa", " negocio", " tecnología", " inteligencia"].filter((word) =>
-    lower.includes(word),
-  ).length;
-  return Math.min(95, 55 + hits * 8 + (/[áéíóúñü]/i.test(text) ? 12 : 0));
+function captionText(post: InstagramPost): string {
+  if (typeof post.caption === "string") return post.caption;
+  if (post.caption && typeof post.caption === "object")
+    return post.caption.text || "";
+  return "";
 }
 
-function computePostsPerWeek(posts: InstagramPost[]): { postsPerWeek?: number; longGapsLast6Months?: number } {
+function postTimestampMs(post: InstagramPost): number | undefined {
+  const raw = post.taken_at ?? post.taken_at_timestamp;
+  if (typeof raw === "string" && raw.trim() && !Number.isFinite(Number(raw))) {
+    const parsed = Date.parse(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  const numeric = asNumber(raw);
+  if (numeric === undefined) return undefined;
+  return numeric < 100_000_000_000 ? numeric * 1000 : numeric;
+}
+
+function computeCetAlignmentPct(posts: InstagramPost[]): number | undefined {
+  const hourFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    hourCycle: "h23",
+  });
+  const hours = posts
+    .map(postTimestampMs)
+    .filter((value): value is number => value !== undefined)
+    .map((value) => Number(hourFormatter.format(new Date(value))))
+    .filter(Number.isFinite);
+  if (hours.length === 0) return undefined;
+  const aligned = hours.filter((hour) => hour >= 7 && hour <= 23).length;
+  return Math.round((aligned / hours.length) * 100);
+}
+
+function computePostsPerWeek(posts: InstagramPost[]): {
+  postsPerWeek?: number;
+  longGapsLast6Months?: number;
+} {
   const times = posts
-    .map((post) => asNumber(post.taken_at ?? post.taken_at_timestamp))
+    .map(postTimestampMs)
     .filter((value): value is number => value !== undefined)
     .sort((a, b) => a - b);
   if (times.length < 2) return {};
-  const days = Math.max(1, (times[times.length - 1] - times[0]) / 86_400);
+  const days = Math.max(1, (times[times.length - 1] - times[0]) / 86_400_000);
   let longGaps = 0;
   for (let i = 1; i < times.length; i += 1) {
-    if ((times[i] - times[i - 1]) / 86_400 > 14) longGaps += 1;
+    if ((times[i] - times[i - 1]) / 86_400_000 > 14) longGaps += 1;
   }
   return {
     postsPerWeek: Number(((times.length / days) * 7).toFixed(2)),
@@ -125,126 +246,398 @@ function computeCandidate(
   const username = profile.username || detail.username;
   if (!username) return null;
   const followers = detail.edge_followed_by?.count ?? profile.follower_count;
-  const totalEngagement = posts.reduce((sum, post) => sum + (post.like_count || 0) + (post.comment_count || 0), 0);
+  const totalEngagement = posts.reduce(
+    (sum, post) => sum + (post.like_count || 0) + (post.comment_count || 0),
+    0,
+  );
   const avgEngagement = posts.length > 0 ? totalEngagement / posts.length : 0;
-  const engagementRatePct = followers && followers > 0 ? Number(((avgEngagement / followers) * 100).toFixed(2)) : undefined;
-  const text = [detail.biography, detail.category_name, ...posts.map(captionText)].filter(Boolean).join("\n");
+  const engagementRatePct =
+    followers && followers > 0
+      ? Number(((avgEngagement / followers) * 100).toFixed(2))
+      : undefined;
+  const text = [
+    detail.biography,
+    detail.category_name,
+    ...posts.map(captionText),
+  ]
+    .filter(Boolean)
+    .join("\n");
   const tokens = sectorTokens(plan);
-  const matchedTokens = tokens.filter((token) => text.toLowerCase().includes(token)).length;
-  const verticalMatchShare = tokens.length > 0 ? Math.min(1, matchedTokens / tokens.length) : undefined;
+  const matchedTokens = tokens.filter((token) =>
+    text.toLowerCase().includes(token),
+  ).length;
+  const verticalMatchShare =
+    tokens.length > 0 ? Math.min(1, matchedTokens / tokens.length) : undefined;
   const { postsPerWeek, longGapsLast6Months } = computePostsPerWeek(posts);
+  const normalizedUsername = username.replace(/^@/, "");
+  const cetAlignmentPct = computeCetAlignmentPct(posts);
+  const latestPost = posts[0];
+  const customVariables = Object.fromEntries(
+    Object.entries({
+      nombre_perfil: asString(detail.full_name || profile.full_name),
+      categoria: asString(detail.category_name),
+      biografia: asString(detail.biography),
+      enlace_bio: asString(detail.external_url),
+      email_publico: asString(detail.business_email),
+      ultimo_post_texto: latestPost
+        ? asString(captionText(latestPost))
+        : undefined,
+      ultimo_post_url: latestPost ? asString(latestPost.url) : undefined,
+      sector_plan:
+        plan.sectors
+          .map((sector) => sector.trim())
+          .filter(Boolean)
+          .join(" · ") || undefined,
+    }).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
 
   return {
-    handle: `@${username.replace(/^@/, "")}`,
+    handle: `@${normalizedUsername}`,
     network: "instagram",
-    name: detail.full_name || profile.full_name || username,
-    profileUrl: `https://www.instagram.com/${username.replace(/^@/, "")}/`,
+    name: detail.full_name || profile.full_name || normalizedUsername,
+    profileUrl: `https://www.instagram.com/${normalizedUsername}/`,
+    ...(detail.business_email ? { email: detail.business_email } : {}),
     ...(followers !== undefined ? { followers } : {}),
     ...(engagementRatePct !== undefined ? { engagementRatePct } : {}),
+    ...(Object.keys(customVariables).length > 0 ? { customVariables } : {}),
     signals: {
-      fakeFollowersPct: detail.is_private ? 20 : 5,
-      suspiciousGrowthSpikes: false,
       ...(verticalMatchShare !== undefined ? { verticalMatchShare } : {}),
       adLibraryChecked: false,
-      spanishAudiencePct: spanishScore(text),
-      cetAlignmentPct: username.endsWith(".es") || /\.es\b/i.test(detail.external_url || "") ? 90 : 75,
+      ...(cetAlignmentPct !== undefined ? { cetAlignmentPct } : {}),
       ...(postsPerWeek !== undefined ? { postsPerWeek } : {}),
       ...(longGapsLast6Months !== undefined ? { longGapsLast6Months } : {}),
     },
   };
 }
 
-async function scrapeCreatorsJson(path: string, apiKey: string): Promise<unknown> {
-  const timeoutMs = Number(process.env.SCRAPECREATORS_TIMEOUT_MS || "") || DEFAULT_TIMEOUT_MS;
+function positiveIntFromEnv(name: string, fallback: number): number {
+  const value = Number(process.env[name] || "");
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+}
+
+function targetCandidates(plan: DiscoveryPlan): number {
+  const envCap = positiveIntFromEnv(
+    "PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES",
+    MAX_TARGET_CANDIDATES,
+  );
+  const requested = Number.isFinite(plan.targetVolume)
+    ? Math.floor(plan.targetVolume as number)
+    : DEFAULT_TARGET_CANDIDATES;
+  return Math.max(1, Math.min(requested, envCap, MAX_TARGET_CANDIDATES));
+}
+
+function liveDiscoveryDeadline(): number {
+  const timeoutMs = positiveIntFromEnv(
+    "PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS",
+    DEFAULT_TIMEOUT_MS,
+  );
+  return Date.now() + timeoutMs;
+}
+
+async function scrapeCreatorsJson(
+  path: string,
+  apiKey: string,
+  deadline: number,
+): Promise<unknown> {
+  const requestTimeoutMs = positiveIntFromEnv(
+    "SCRAPECREATORS_TIMEOUT_MS",
+    DEFAULT_REQUEST_TIMEOUT_MS,
+  );
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
+      throw new Error("Discovery live superó el límite global de 5 minutos");
+    }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(
+      () => controller.abort(),
+      Math.min(requestTimeoutMs, remainingMs),
+    );
     try {
       const res = await fetch(`${SCRAPECREATORS_BASE}${path}`, {
         headers: { "x-api-key": apiKey },
         signal: controller.signal,
       });
-      clearTimeout(timer);
       const body = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) {
-        throw new Error("ScrapeCreators clave inválida o sin permisos");
+        throw new ScrapeCreatorsRequestError(
+          "ScrapeCreators clave inválida o sin permisos",
+        );
       }
-      if (res.status === 402) {
-        throw new Error("ScrapeCreators sin créditos");
-      }
+      if (res.status === 402)
+        throw new ScrapeCreatorsRequestError("ScrapeCreators sin créditos");
       if (!res.ok) {
-        const message = asString(asRecord(body).message) || `HTTP ${res.status}`;
-        lastError = new Error(`ScrapeCreators ${message}`);
-        if (res.status >= 500 && attempt < 2) continue;
+        const message =
+          asString(asRecord(body).message) || `HTTP ${res.status}`;
+        const retryAfterSeconds = Number(res.headers.get("retry-after") || "0");
+        lastError = new ScrapeCreatorsRequestError(
+          `ScrapeCreators ${message}`,
+          res.status === 429 || res.status >= 500,
+          Number.isFinite(retryAfterSeconds)
+            ? Math.max(0, retryAfterSeconds * 1000)
+            : 0,
+        );
         throw lastError;
+      }
+      if (!body || typeof body !== "object") {
+        throw new ScrapeCreatorsRequestError(
+          "ScrapeCreators devolvió JSON inválido",
+          true,
+        );
       }
       const record = asRecord(body);
       if (record.success === false) {
-        lastError = new Error(`ScrapeCreators ${asString(record.message) || "respuesta no exitosa"}`);
-        if (attempt < 2) continue;
+        lastError = new ScrapeCreatorsRequestError(
+          `ScrapeCreators ${asString(record.message) || "respuesta no exitosa"}`,
+        );
         throw lastError;
       }
       return body;
     } catch (err) {
-      clearTimeout(timer);
       lastError = err instanceof Error ? err : new Error(String(err));
-      if (attempt < 2) continue;
+      const retryable =
+        lastError instanceof ScrapeCreatorsRequestError
+          ? lastError.retryable
+          : lastError.name === "AbortError" || lastError instanceof TypeError;
+      if (!retryable || attempt >= 2) throw lastError;
+      const retryAfterMs =
+        lastError instanceof ScrapeCreatorsRequestError
+          ? lastError.retryAfterMs
+          : 0;
+      const delayMs = Math.min(
+        Math.max(retryAfterMs, 250 * attempt),
+        Math.max(0, deadline - Date.now()),
+      );
+      if (delayMs > 0)
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+    } finally {
+      clearTimeout(timer);
     }
   }
   throw lastError || new Error("ScrapeCreators no respondió");
 }
 
-function maxCandidatesFromEnv(): number {
-  const value = Number(process.env.PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES || "");
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : DEFAULT_MAX_CANDIDATES;
+function addProfiles(
+  destination: Map<string, SearchProfile>,
+  profiles: SearchProfile[],
+  wantedTiers: Set<string>,
+  poolLimit: number,
+): void {
+  for (const profile of profiles) {
+    const username = asString(profile.username)?.replace(/^@/, "");
+    if (!username || !matchesWantedTier(profile.follower_count, wantedTiers))
+      continue;
+    const key = username.toLowerCase();
+    if (!destination.has(key)) destination.set(key, { ...profile, username });
+    if (destination.size >= poolLimit) return;
+  }
 }
 
-export async function scrapeLiveDiscoveryCandidates(plan: DiscoveryPlan): Promise<RawDiscoveryCandidate[]> {
-  const apiKey = process.env.SCRAPECREATORS_API_KEY || "";
-  if (!apiKey) throw new Error("SCRAPECREATORS_API_KEY no está configurada");
-  if (!plan.networks.includes("instagram")) {
-    throw new Error("Discovery live server-side solo soporta Instagram por ahora");
-  }
-
-  const target = Math.max(1, Math.min(plan.targetVolume || DEFAULT_MAX_CANDIDATES, maxCandidatesFromEnv()));
+async function collectSearchProfiles(
+  plan: DiscoveryPlan,
+  apiKey: string,
+  target: number,
+  deadline: number,
+): Promise<{ profiles: SearchProfile[]; lastError: Error | null }> {
+  const queries = buildLiveDiscoveryQueries(plan);
   const wantedTiers = new Set<string>(plan.tiers || []);
-  const queries = Array.from(new Set([
-    plan.sectors.join(" "),
-    ...plan.sectors,
-    "inteligencia artificial empresas",
-    "tecnologia empresas",
-    "consultoria tecnologica",
-  ].map((query) => query.trim()).filter(Boolean)));
-  let profiles: SearchProfile[] = [];
-  let lastSearchError: Error | null = null;
-  for (const rawQuery of queries) {
-    try {
-      const query = encodeURIComponent(rawQuery);
-      const searchBody = await scrapeCreatorsJson(`/v1/instagram/search/profiles?query=${query}&page=1`, apiKey);
-      profiles = profileListFromResponse(searchBody);
-      if (profiles.length > 0) break;
-    } catch (err) {
-      lastSearchError = err instanceof Error ? err : new Error(String(err));
+  const poolLimit = Math.min(
+    MAX_TARGET_CANDIDATES * SEARCH_POOL_MULTIPLIER,
+    Math.max(target + 25, target * SEARCH_POOL_MULTIPLIER),
+  );
+  const coverageLimit = Math.min(
+    MAX_TARGET_CANDIDATES * SEARCH_POOL_MULTIPLIER,
+    poolLimit + (queries.profileQueries.length + queries.hashtags.length) * 2,
+  );
+  const profiles = new Map<string, SearchProfile>();
+  let lastError: Error | null = null;
+
+  for (const rawQuery of queries.profileQueries) {
+    let cursor: string | undefined;
+    const seenCursors = new Set<string>();
+    for (
+      let page = 0;
+      page < MAX_SEARCH_PAGES_PER_QUERY &&
+      (page === 0 || profiles.size < poolLimit);
+      page += 1
+    ) {
+      const params = new URLSearchParams({ query: rawQuery });
+      if (cursor) params.set("cursor", cursor);
+      try {
+        const body = await scrapeCreatorsJson(
+          `/v1/instagram/search/profiles?${params}`,
+          apiKey,
+          deadline,
+        );
+        addProfiles(
+          profiles,
+          profileListFromResponse(body),
+          wantedTiers,
+          page === 0 ? coverageLimit : poolLimit,
+        );
+        const nextCursor = cursorFromResponse(body);
+        if (!nextCursor || seenCursors.has(nextCursor)) break;
+        seenCursors.add(nextCursor);
+        cursor = nextCursor;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        break;
+      }
     }
   }
-  if (profiles.length === 0 && lastSearchError) throw lastSearchError;
-  const selected = profiles.filter((profile) => {
-    const tier = tierForFollowers(profile.follower_count);
-    return !wantedTiers.size || (tier !== null && wantedTiers.has(tier));
-  }).slice(0, target);
 
-  const candidates: RawDiscoveryCandidate[] = [];
-  for (const profile of selected) {
-    const username = profile.username;
-    if (!username) continue;
-    const handle = encodeURIComponent(username.replace(/^@/, ""));
-    const [detailBody, postsBody] = await Promise.all([
-      scrapeCreatorsJson(`/v1/instagram/profile?handle=${handle}`, apiKey),
-      scrapeCreatorsJson(`/v2/instagram/user/posts?handle=${handle}&count=${DEFAULT_POST_COUNT}`, apiKey),
-    ]);
-    const candidate = computeCandidate(profile, profileFromResponse(detailBody), postsFromResponse(postsBody), plan);
-    if (candidate) candidates.push(candidate);
+  for (const hashtag of queries.hashtags) {
+    let cursor: string | undefined;
+    const seenCursors = new Set<string>();
+    for (
+      let page = 0;
+      page < MAX_SEARCH_PAGES_PER_QUERY &&
+      (page === 0 || profiles.size < poolLimit);
+      page += 1
+    ) {
+      const params = new URLSearchParams({ hashtag, media_type: "all" });
+      if (cursor) params.set("cursor", cursor);
+      try {
+        const body = await scrapeCreatorsJson(
+          `/v1/instagram/search/hashtag?${params}`,
+          apiKey,
+          deadline,
+        );
+        addProfiles(
+          profiles,
+          hashtagProfilesFromResponse(body),
+          wantedTiers,
+          page === 0 ? coverageLimit : poolLimit,
+        );
+        const nextCursor = cursorFromResponse(body);
+        if (!nextCursor || seenCursors.has(nextCursor)) break;
+        seenCursors.add(nextCursor);
+        cursor = nextCursor;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        break;
+      }
+    }
   }
-  return candidates;
+
+  return { profiles: [...profiles.values()], lastError };
+}
+
+function passesLiveAudienceGate(
+  candidate: RawDiscoveryCandidate,
+  plan: DiscoveryPlan,
+): boolean {
+  if (plan.audienceEsMinPct === undefined) return true;
+  // El endpoint de Instagram no entrega geografía de audiencia. El requisito
+  // operativo existente define este hard gate con la señal concreta de
+  // alineación horaria CET calculada a partir de `items[].taken_at`; no se
+  // fabrica un porcentaje de audiencia española desde bio/captions.
+  const cetAlignmentPct = candidate.signals?.cetAlignmentPct;
+  return (
+    typeof cetAlignmentPct === "number" &&
+    Number.isFinite(cetAlignmentPct) &&
+    cetAlignmentPct >= plan.audienceEsMinPct
+  );
+}
+
+export function unsupportedLiveDiscoveryNetworks(
+  plan: DiscoveryPlan,
+): string[] {
+  return Array.from(
+    new Set(plan.networks.filter((network) => network !== "instagram")),
+  );
+}
+
+export function supportsLiveDiscovery(plan: DiscoveryPlan): boolean {
+  return (
+    plan.networks.length > 0 &&
+    unsupportedLiveDiscoveryNetworks(plan).length === 0
+  );
+}
+
+export async function scrapeLiveDiscoveryCandidates(
+  plan: DiscoveryPlan,
+): Promise<RawDiscoveryCandidate[]> {
+  const apiKey = process.env.SCRAPECREATORS_API_KEY || "";
+  if (!apiKey) throw new Error("SCRAPECREATORS_API_KEY no está configurada");
+  const unsupported = unsupportedLiveDiscoveryNetworks(plan);
+  if (unsupported.length > 0 || !plan.networks.includes("instagram")) {
+    throw new Error(
+      `Discovery live server-side solo soporta Instagram; redes no soportadas: ${unsupported.join(", ") || plan.networks.join(", ")}`,
+    );
+  }
+
+  const target = targetCandidates(plan);
+  const deadline = liveDiscoveryDeadline();
+  const wantedTiers = new Set<string>(plan.tiers || []);
+  const { profiles, lastError: searchError } = await collectSearchProfiles(
+    plan,
+    apiKey,
+    target,
+    deadline,
+  );
+  if (profiles.length === 0 && searchError) throw searchError;
+
+  const concurrency = Math.min(
+    20,
+    positiveIntFromEnv(
+      "PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY",
+      DEFAULT_CONCURRENCY,
+    ),
+  );
+  const candidates: RawDiscoveryCandidate[] = [];
+  let lastEnrichmentError: Error | null = null;
+
+  for (
+    let index = 0;
+    index < profiles.length && candidates.length < target;
+    index += concurrency
+  ) {
+    const batch = profiles.slice(index, index + concurrency);
+    const enriched = await Promise.all(
+      batch.map(async (profile) => {
+        const username = profile.username;
+        if (!username) return null;
+        const handle = encodeURIComponent(username.replace(/^@/, ""));
+        try {
+          const [detailBody, postsBody] = await Promise.all([
+            scrapeCreatorsJson(
+              `/v1/instagram/profile?handle=${handle}`,
+              apiKey,
+              deadline,
+            ),
+            scrapeCreatorsJson(
+              `/v2/instagram/user/posts?handle=${handle}`,
+              apiKey,
+              deadline,
+            ),
+          ]);
+          return computeCandidate(
+            profile,
+            profileFromResponse(detailBody),
+            postsFromResponse(postsBody),
+            plan,
+          );
+        } catch (err) {
+          lastEnrichmentError =
+            err instanceof Error ? err : new Error(String(err));
+          return null;
+        }
+      }),
+    );
+
+    for (const candidate of enriched) {
+      if (!candidate) continue;
+      if (!matchesWantedTier(candidate.followers, wantedTiers, false)) continue;
+      if (!passesLiveAudienceGate(candidate, plan)) continue;
+      candidates.push(candidate);
+      if (candidates.length >= target) break;
+    }
+  }
+
+  if (candidates.length === 0 && lastEnrichmentError) throw lastEnrichmentError;
+  return candidates.slice(0, target);
 }

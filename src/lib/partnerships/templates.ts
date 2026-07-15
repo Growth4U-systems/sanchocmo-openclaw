@@ -26,10 +26,9 @@
  *   ## Paso 2 · Follow-up (espera 3 días)
  *   …
  *
- * Variables soportadas: {{nombre}} · {{handle}} · {{plataforma}} · {{seguidores}} · {{sector}} · {{precio}} —
- * el render de preview/envío las sustituye; el motor de envío real es
- * `renderPartnerVariables` en Yalc (mismas claves). ({{quality_score}} sigue
- * siendo una clave de render válida pero interna, no se ofrece como chip.)
+ * Las variables soportadas viven en `TEMPLATE_VARIABLE_OPTIONS`; cada una
+ * declara la ruta exacta de su campo fuente. El editor, la API y el preflight
+ * de contacto usan ese mismo catálogo y rechazan placeholders inventados.
  *
  * CLIENT-SAFE: sin Node — lo importan componentes y tests (`tsx --test`).
  */
@@ -80,65 +79,306 @@ export interface AssignedTemplate extends PartnershipTemplate {
   assignedAt: string;
 }
 
+export type TemplateVariableSource =
+  | "scrapecreators"
+  | "discovery-plan"
+  | "yalc";
+
+/**
+ * Contrato canónico de variables de Outreach.
+ *
+ * Cada token apunta a un campo literal que ya existe en ScrapeCreators, en
+ * el plan de discovery o en el Lead de Yalc. No se admiten variables que el
+ * sistema tenga que inventar o inferir (por ejemplo `anchor_topic`).
+ */
 export interface TemplateVariableOption {
   key: string;
   token: string;
   label: string;
   description: string;
   source: "system" | "custom";
+  sourceKind: TemplateVariableSource;
+  /** Ruta exacta del campo de origen que se persiste en el lead. */
+  sourcePath: string;
+  example: string;
   aliases?: string[];
+  campaignTypes?: TemplateCampaignType[];
 }
 
 export const TEMPLATE_VARIABLE_OPTIONS: TemplateVariableOption[] = [
   {
-    key: "nombre",
+    key: "nombre_perfil",
     token: "{{nombre}}",
-    label: "Nombre visible",
-    description: "Nombre, handle o identificador visible del creator.",
-    source: "system",
-    aliases: ["name"],
+    label: "Nombre",
+    description:
+      "Nombre público literal del perfil; si falta, el envío queda bloqueado.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "data.user.full_name → campaign_leads.custom_variables.nombre_perfil",
+    example: "Lucía Martínez",
+    aliases: ["nombre", "name"],
   },
   {
     key: "handle",
     token: "{{handle}}",
     label: "Handle",
-    description: "Usuario social del creator.",
+    description: "Usuario público de la cuenta social.",
     source: "system",
+    sourceKind: "scrapecreators",
+    sourcePath: "data.user.username → campaign_leads.handle",
+    example: "@luciamartinez",
   },
   {
     key: "plataforma",
     token: "{{plataforma}}",
     label: "Plataforma",
-    description: "Red social del creator.",
+    description: "Red de la que procede el perfil.",
     source: "system",
+    sourceKind: "discovery-plan",
+    sourcePath: "DiscoveryPlan.networks → campaign_leads.network",
+    example: "Instagram",
     aliases: ["network"],
   },
   {
     key: "seguidores",
     token: "{{seguidores}}",
     label: "Seguidores",
-    description: "Número de seguidores formateado.",
+    description: "Número de seguidores del perfil, formateado para el mensaje.",
     source: "system",
+    sourceKind: "scrapecreators",
+    sourcePath: "data.user.edge_followed_by.count → campaign_leads.followers",
+    example: "84K",
     aliases: ["followers"],
   },
   {
-    key: "sector",
+    key: "categoria",
+    token: "{{categoria}}",
+    label: "Categoría de Instagram",
+    description: "Categoría pública declarada por la cuenta; no se infiere.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "data.user.category_name → campaign_leads.custom_variables.categoria",
+    example: "Health/Beauty",
+  },
+  {
+    key: "biografia",
+    token: "{{biografia}}",
+    label: "Biografía",
+    description: "Biografía pública completa del perfil.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "data.user.biography → campaign_leads.custom_variables.biografia",
+    example: "Divulgación sobre salud y bienestar capilar.",
+  },
+  {
+    key: "enlace_bio",
+    token: "{{enlace_bio}}",
+    label: "Enlace de la bio",
+    description: "URL externa declarada en el perfil.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "data.user.external_url → campaign_leads.custom_variables.enlace_bio",
+    example: "https://example.com",
+  },
+  {
+    key: "email_publico",
+    token: "{{email_publico}}",
+    label: "Email público",
+    description: "Email de negocio publicado por la cuenta, cuando existe.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "data.user.business_email → campaign_leads.custom_variables.email_publico",
+    example: "hola@creator.es",
+  },
+  {
+    key: "ultimo_post_texto",
+    token: "{{ultimo_post_texto}}",
+    label: "Texto del último post",
+    description:
+      "Caption literal del primer post devuelto por la API; no se resume ni interpreta.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "items[0].caption.text → campaign_leads.custom_variables.ultimo_post_texto",
+    example: "Tres hábitos sencillos para cuidar tu salud capilar.",
+  },
+  {
+    key: "ultimo_post_url",
+    token: "{{ultimo_post_url}}",
+    label: "URL del último post",
+    description: "URL literal del primer post devuelto por la API.",
+    source: "custom",
+    sourceKind: "scrapecreators",
+    sourcePath:
+      "items[0].url → campaign_leads.custom_variables.ultimo_post_url",
+    example: "https://www.instagram.com/p/ABC123/",
+  },
+  {
+    key: "sector_plan",
     token: "{{sector}}",
-    label: "Sector",
-    description: "Temática o vertical del contenido del creator.",
+    label: "Sectores de la búsqueda",
+    description:
+      "Sectores escritos explícitamente en el plan; es igual para los leads de esa búsqueda.",
+    source: "custom",
+    sourceKind: "discovery-plan",
+    sourcePath:
+      "DiscoveryPlan.sectors → campaign_leads.custom_variables.sector_plan",
+    example: "salud capilar · divulgación",
+    aliases: ["sector"],
+  },
+  {
+    key: "quality_score",
+    token: "{{quality_score}}",
+    label: "Quality score",
+    description: "Puntuación 0–100 ya calculada y persistida por Sancho.",
     source: "system",
-    aliases: ["vertical", "category", "niche", "topic"],
+    sourceKind: "yalc",
+    sourcePath: "campaign_leads.quality_score",
+    example: "87",
   },
   {
     key: "precio",
     token: "{{precio}}",
-    label: "Precio",
-    description: "Precio ofertado/negociado en EUR si existe.",
+    label: "Precio acordado",
+    description: "Precio ofertado o negociado; puede faltar antes de negociar.",
     source: "system",
+    sourceKind: "yalc",
+    sourcePath: "campaign_leads.offered_price",
+    example: "1.500 €",
+  },
+  {
+    key: "first_name",
+    token: "{{first_name}}",
+    label: "Nombre (campo Yalc)",
+    description: "Nombre persistido del contacto.",
+    source: "system",
+    sourceKind: "yalc",
+    sourcePath: "campaign_leads.first_name",
+    example: "Lucía",
+  },
+  {
+    key: "last_name",
+    token: "{{last_name}}",
+    label: "Apellido (campo Yalc)",
+    description: "Apellido persistido del contacto, cuando existe.",
+    source: "system",
+    sourceKind: "yalc",
+    sourcePath: "campaign_leads.last_name",
+    example: "Martínez",
+  },
+  {
+    key: "company",
+    token: "{{company}}",
+    label: "Empresa",
+    description: "Empresa persistida en el lead, cuando existe.",
+    source: "system",
+    sourceKind: "yalc",
+    sourcePath: "campaign_leads.company",
+    example: "Estudio Lucía",
   },
 ];
 
-export const TEMPLATE_VARIABLES = TEMPLATE_VARIABLE_OPTIONS.map((item) => item.token);
+export const TEMPLATE_VARIABLES = TEMPLATE_VARIABLE_OPTIONS.map(
+  (item) => item.token,
+);
+
+const TEMPLATE_TOKEN_RE =
+  /\{\{\s*([a-z][a-z0-9_]*)\s*(?:\|\s*"[^"]*"\s*)?\}\}/gi;
+
+export function extractTemplateVariableKeys(text: string): string[] {
+  const keys = new Set<string>();
+  for (const match of text.matchAll(TEMPLATE_TOKEN_RE))
+    keys.add(match[1].toLowerCase());
+  return [...keys];
+}
+
+export function supportedTemplateVariableKeys(): Set<string> {
+  const keys = new Set<string>();
+  for (const variable of TEMPLATE_VARIABLE_OPTIONS) {
+    for (const publicKey of extractTemplateVariableKeys(variable.token))
+      keys.add(publicKey);
+    for (const alias of variable.aliases || []) keys.add(alias.toLowerCase());
+  }
+  return keys;
+}
+
+export function findUnsupportedTemplateVariables(
+  steps: readonly { subject?: string | null; body: string }[],
+): string[] {
+  const supported = supportedTemplateVariableKeys();
+  const found = new Set<string>();
+  for (const step of steps) {
+    for (const text of [step.subject, step.body]) {
+      if (!text) continue;
+      for (const key of extractTemplateVariableKeys(text)) {
+        if (!supported.has(key)) found.add(key);
+      }
+    }
+  }
+  return [...found].sort();
+}
+
+/** Toda expresión moustache que no tenga la gramática exacta soportada. */
+export function findInvalidTemplateExpressions(
+  steps: readonly { subject?: string | null; body: string }[],
+): string[] {
+  const invalid = new Set<string>();
+  const expression = /\{\{([\s\S]*?)\}\}/g;
+  const simple = /^\s*[a-z][a-z0-9_]*\s*$/i;
+  const supportedFallback = /^\s*[a-z][a-z0-9_]*\s*\|\s*"[^"]*"\s*$/i;
+
+  for (const step of steps) {
+    for (const text of [step.subject, step.body]) {
+      if (!text) continue;
+      let match: RegExpExecArray | null;
+      const covered: Array<[number, number]> = [];
+      while ((match = expression.exec(text)) !== null) {
+        covered.push([match.index, expression.lastIndex]);
+        if (!simple.test(match[1]) && !supportedFallback.test(match[1])) {
+          invalid.add(`{{${match[1]}}}`);
+        }
+      }
+
+      // También rechaza delimitadores incompletos; nunca deben viajar como copy.
+      const remainder = [...text]
+        .map((char, index) =>
+          covered.some(([start, end]) => index >= start && index < end)
+            ? " "
+            : char,
+        )
+        .join("");
+      if (remainder.includes("{{") || remainder.includes("}}")) {
+        invalid.add("delimitador {{…}} incompleto");
+      }
+    }
+  }
+  return [...invalid].sort();
+}
+
+/**
+ * Yalc renderiza tokens simples (`{{campo}}`), pero no la sintaxis local
+ * histórica de fallback (`{{campo | "texto"}}`). Detectarla antes de guardar
+ * evita que el preview local prometa un valor que el envío real dejaría crudo.
+ */
+export function findUnsupportedTemplateFallbacks(
+  steps: readonly { subject?: string | null; body: string }[],
+): string[] {
+  const found = new Set<string>();
+  const fallbackToken = /\{\{\s*([a-z][a-z0-9_]*)\s*\|\s*"[^"]*"\s*\}\}/gi;
+  for (const step of steps) {
+    for (const text of [step.subject, step.body]) {
+      if (!text) continue;
+      for (const match of text.matchAll(fallbackToken))
+        found.add(match[1].toLowerCase());
+    }
+  }
+  return [...found].sort();
+}
 
 export function templateRelativePath(id: string): string {
   return `outreach/templates/${id}.md`;
@@ -176,7 +416,9 @@ export function serializeTemplate(template: PartnershipTemplate): string {
       index > 0 && step.delayDays > 0
         ? ` (espera ${step.delayDays} ${step.delayDays === 1 ? "día" : "días"})`
         : "";
-    lines.push(`## Paso ${index + 1} · ${step.title.replace(/\n/g, " ")}${delay}`);
+    lines.push(
+      `## Paso ${index + 1} · ${step.title.replace(/\n/g, " ")}${delay}`,
+    );
     lines.push("");
     if (step.subject) {
       lines.push(`**Asunto:** ${step.subject.replace(/\n/g, " ")}`);
@@ -217,7 +459,8 @@ export function parseTemplate(markdown: string): PartnershipTemplate | null {
   }
   if (!meta.id || !meta.name) return null;
   const kind: TemplateKind = meta.kind === "brief" ? "brief" : "sequence";
-  const type: TemplateCampaignType = meta.type === "b2b" ? "b2b" : "partnerships";
+  const type: TemplateCampaignType =
+    meta.type === "b2b" ? "b2b" : "partnerships";
 
   const body = text.slice(end + "\n---".length).replace(/^\n+/, "");
   const steps: TemplateStep[] = [];
@@ -246,7 +489,11 @@ export function parseTemplate(markdown: string): PartnershipTemplate | null {
     }
     if (!current) continue; // prosa antes del primer paso → se ignora
     const subject = line.match(/^\*\*Asunto:\*\*\s*(.*)$/);
-    if (subject && current.subject === null && bodyLines.join("").trim() === "") {
+    if (
+      subject &&
+      current.subject === null &&
+      bodyLines.join("").trim() === ""
+    ) {
       current.subject = subject[1].trim();
       continue;
     }
@@ -267,7 +514,9 @@ export function parseTemplate(markdown: string): PartnershipTemplate | null {
   };
 }
 
-export function templateSummary(template: PartnershipTemplate): TemplateSummary {
+export function templateSummary(
+  template: PartnershipTemplate,
+): TemplateSummary {
   return {
     id: template.id,
     name: template.name,
@@ -284,6 +533,9 @@ export function templateSummary(template: PartnershipTemplate): TemplateSummary 
 
 export interface TemplateRenderContext {
   name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  company?: string | null;
   handle?: string | null;
   /** Red social: "Instagram" | "TikTok" | "YouTube"… */
   network?: string | null;
@@ -293,6 +545,8 @@ export interface TemplateRenderContext {
   qualityScore?: number | null;
   /** Precio ya formateado ("3.500 €") o número (se formatea es-ES). */
   precio?: string | number | null;
+  /** Campos literales persistidos en `campaign_leads.custom_variables`. */
+  customVariables?: Record<string, string | null | undefined> | null;
 }
 
 function fmtIntEs(value: number): string {
@@ -311,29 +565,49 @@ function fmtIntEs(value: number): string {
 function fmtFollowers(value: number): string {
   if (!Number.isFinite(value)) return "";
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (abs >= 1_000_000)
+    return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
   if (abs >= 1_000) return `${Math.round(value / 1_000)}K`;
   return String(Math.round(value));
 }
 
-export function renderTemplateText(text: string, context: TemplateRenderContext): string {
+export function renderTemplateText(
+  text: string,
+  context: TemplateRenderContext,
+): string {
+  const customValues = Object.fromEntries(
+    Object.entries(context.customVariables || {}).map(([key, value]) => [
+      key.trim().toLowerCase(),
+      typeof value === "string" && value.trim() ? value.trim() : null,
+    ]),
+  ) as Record<string, string | null>;
+  const exactProfileName = customValues.nombre_perfil || null;
   const values: Record<string, string | null> = {
-    name: context.name?.trim() || null,
-    nombre: context.name?.trim() || null,
+    ...customValues,
+    name: exactProfileName,
+    nombre: exactProfileName,
+    nombre_perfil: exactProfileName,
+    first_name: context.firstName?.trim() || null,
+    last_name: context.lastName?.trim() || null,
+    company: context.company?.trim() || null,
     handle: context.handle?.trim() || null,
     network: context.network?.trim() || null,
     plataforma: context.network?.trim() || null,
     followers:
-      typeof context.followers === "number" && Number.isFinite(context.followers)
+      typeof context.followers === "number" &&
+      Number.isFinite(context.followers)
         ? fmtFollowers(context.followers)
         : null,
     seguidores:
-      typeof context.followers === "number" && Number.isFinite(context.followers)
+      typeof context.followers === "number" &&
+      Number.isFinite(context.followers)
         ? fmtFollowers(context.followers)
         : null,
-    sector: context.sector?.trim() || null,
+    sector: customValues.sector_plan || null,
+    sector_plan: customValues.sector_plan || null,
     quality_score:
-      typeof context.qualityScore === "number" && Number.isFinite(context.qualityScore)
+      typeof context.qualityScore === "number" &&
+      Number.isFinite(context.qualityScore)
         ? String(Math.round(context.qualityScore))
         : null,
     precio:
@@ -369,14 +643,28 @@ export function instantiateTemplate(
 }
 
 /** Pasos de la instancia → shape del motor de envío de Yalc (partner-contact). */
-export function toYalcSequence(template: Pick<PartnershipTemplate, "steps">): Array<{
+export function toYalcSequence(
+  template: Pick<PartnershipTemplate, "steps">,
+): Array<{
   subject: string | null;
   body: string;
   delayDays: number;
 }> {
   return template.steps.map((step) => ({
-    subject: step.subject,
-    body: step.body,
+    subject: step.subject ? toYalcTemplateText(step.subject) : null,
+    body: toYalcTemplateText(step.body),
     delayDays: step.delayDays,
   }));
+}
+
+/**
+ * Evita los fallbacks internos de Yalc (`nombre`→handle y
+ * `sector`→"tu temática") usando merge-fields literales propios.
+ */
+export function toYalcTemplateText(text: string): string {
+  return text.replace(
+    /\{\{\s*(nombre|name|sector)\s*\}\}/gi,
+    (_raw, key: string) =>
+      key.toLowerCase() === "sector" ? "{{sector_plan}}" : "{{nombre_perfil}}",
+  );
 }

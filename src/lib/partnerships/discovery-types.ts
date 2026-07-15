@@ -27,6 +27,8 @@ export interface DiscoveryPlan {
   title: string;
   /** Fila "Sectores": finanzas personales · ahorro · inversión básica. */
   sectors: string[];
+  /** Hashtags de nicho usados como queries de discovery (normalizados con #). */
+  hashtags?: string[];
   /** Fila "Redes": instagram | tiktok | youtube (normalizadas en minúscula). */
   networks: string[];
   /** Fila "Tiers": claves de tier objetivo (nano/micro/mid/macro). */
@@ -65,6 +67,11 @@ export interface RawDiscoveryCandidate {
   followers?: number;
   /** Engagement rate en % (4.8 = 4.8%). */
   engagementRatePct?: number;
+  /**
+   * Campos literales del proveedor/plan que Yalc persiste como merge fields.
+   * No contiene observaciones generadas o inferidas por el sistema.
+   */
+  customVariables?: Record<string, string>;
   /** Señales para el quality score (calc-creator-core `CreatorSignals`). */
   signals?: CreatorSignals;
 }
@@ -89,6 +96,7 @@ export interface DiscoveryLeadPayload {
   engagementRate?: number;
   tier?: string;
   email?: string;
+  customVariables?: Record<string, string>;
   qualityScore: number;
   qualityComponents: LeadQualityComponents;
   scoreProvenance?: Record<string, unknown>;
@@ -116,6 +124,8 @@ export interface DiscoveryRunnerStats {
   candidates: number;
   /** Candidatos descartados por el normalizador (sin handle/red). */
   invalid: number;
+  /** Candidatos válidos excluidos por hard gates del plan o por volumen objetivo. */
+  filtered: number;
   /** Leads insertados en Yalc. */
   inserted: number;
   /** Insertados como Sourced (o Qualified en modo auto). */

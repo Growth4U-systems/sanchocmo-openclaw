@@ -18,11 +18,17 @@ import { assertCampaignKind } from "@/lib/yalc/campaign-guards";
 import {
   contactDraftPreviewsFromResponse,
   contactGateDraftsFromResponse,
+  unresolvedVariablesFromDrafts,
   type ContactDraftPreview,
   type ContactGateDraft,
 } from "./contact-preview";
 import { findSearchByCampaign, findSearchSequence } from "./template-store";
-import { toYalcSequence } from "./templates";
+import {
+  findInvalidTemplateExpressions,
+  findUnsupportedTemplateFallbacks,
+  findUnsupportedTemplateVariables,
+  toYalcTemplateText,
+} from "./templates";
 import type { PartnershipLead } from "./types";
 
 export class PartnerContactError extends Error {
@@ -45,6 +51,8 @@ export interface ContactGateResult {
   draftCount: number;
   previews: ContactDraftPreview[];
   drafts: ContactGateDraft[];
+  unresolvedVariables: string[];
+  canApprove: boolean;
 }
 
 interface YalcPartnerContactResponse {
@@ -66,7 +74,11 @@ export interface ContactLeadsInput {
    * Secuencia explícita (Inbox: la respuesta del borrador como paso único).
    * Sin ella se usa la plantilla de secuencia instanciada en la búsqueda.
    */
-  sequence?: Array<{ subject?: string | null; body: string; delayDays?: number }>;
+  sequence?: Array<{
+    subject?: string | null;
+    body: string;
+    delayDays?: number;
+  }>;
   sequenceName?: string;
   /** dry-run obligatorio salvo `false` explícito (se reenvía a Yalc tal cual). */
   dryRun?: boolean;
@@ -76,10 +88,15 @@ export interface ContactLeadsInput {
  * Lanza el contacto. Devuelve un gate POR CAMPAÑA (lo normal es 1).
  * Falla con mensaje accionable si una búsqueda no tiene secuencia asignada.
  */
-export async function contactPartnerLeads(input: ContactLeadsInput): Promise<ContactGateResult[]> {
+export async function contactPartnerLeads(
+  input: ContactLeadsInput,
+): Promise<ContactGateResult[]> {
   const { slug } = input;
-  const leads = (input.leads || []).filter((lead) => lead?.id && lead?.campaignId);
-  if (leads.length === 0) throw new PartnerContactError("Ningún lead válido para contactar.");
+  const leads = (input.leads || []).filter(
+    (lead) => lead?.id && lead?.campaignId,
+  );
+  if (leads.length === 0)
+    throw new PartnerContactError("Ningún lead válido para contactar.");
 
   const byCampaign = new Map<string, string[]>();
   for (const lead of leads) {
@@ -107,9 +124,49 @@ export async function contactPartnerLeads(input: ContactLeadsInput): Promise<Con
           409,
         );
       }
-      sequence = toYalcSequence(instance);
+      // Valida primero los tokens públicos de la plantilla. Los merge-fields
+      // internos (`nombre_perfil`/`sector_plan`) se introducen solo después.
+      sequence = instance.steps.map((step) => ({
+        subject: step.subject,
+        body: step.body,
+        delayDays: step.delayDays,
+      }));
       sequenceName = sequenceName || instance.name;
     }
+
+    const invalidExpressions = findInvalidTemplateExpressions(sequence);
+    if (invalidExpressions.length > 0) {
+      throw new PartnerContactError(
+        `La secuencia contiene sintaxis de variable no válida: ${invalidExpressions.join(", ")}. ` +
+          "Usa exactamente {{campo}} desde el catálogo.",
+        409,
+      );
+    }
+    const unsupported = findUnsupportedTemplateVariables(sequence);
+    if (unsupported.length > 0) {
+      throw new PartnerContactError(
+        `La secuencia usa variables que no existen: ${unsupported.map((key) => `{{${key}}}`).join(", ")}. ` +
+          "Edítala desde Plantillas y usa únicamente campos del catálogo.",
+        409,
+      );
+    }
+    const unsupportedFallbacks = findUnsupportedTemplateFallbacks(sequence);
+    if (unsupportedFallbacks.length > 0) {
+      throw new PartnerContactError(
+        `La secuencia usa fallbacks que el envío no puede renderizar: ` +
+          unsupportedFallbacks.map((key) => `{{${key} | "…"}}`).join(", ") +
+          ". Usa variables simples del catálogo y revisa el preview por lead.",
+        409,
+      );
+    }
+
+    // Los tokens públicos nombre/sector se traducen a merge-fields literales
+    // para evitar fallbacks inventados por el renderer actual de Yalc.
+    sequence = sequence.map((step) => ({
+      ...step,
+      subject: step.subject ? toYalcTemplateText(step.subject) : step.subject,
+      body: toYalcTemplateText(step.body),
+    }));
 
     const response = await yalcFetch<YalcPartnerContactResponse>(
       config,
@@ -126,7 +183,27 @@ export async function contactPartnerLeads(input: ContactLeadsInput): Promise<Con
       },
     );
     if (!response?.ok || !response.runId) {
-      throw new PartnerContactError(response?.error || "Yalc no devolvió el gate del contacto.", 502);
+      throw new PartnerContactError(
+        response?.error || "Yalc no devolvió el gate del contacto.",
+        502,
+      );
+    }
+    const drafts = contactGateDraftsFromResponse(response.drafts);
+    const unresolvedVariables = unresolvedVariablesFromDrafts(drafts);
+    const returnedLeadIds = new Set(
+      drafts
+        .map((draft) => draft.leadId)
+        .filter((leadId): leadId is string => Boolean(leadId)),
+    );
+    const hasPreviewForEveryLead =
+      drafts.length === leadIds.length &&
+      leadIds.every((leadId) => returnedLeadIds.has(leadId));
+    if (
+      !hasPreviewForEveryLead &&
+      !unresolvedVariables.includes("preview_incompleto")
+    ) {
+      unresolvedVariables.push("preview_incompleto");
+      unresolvedVariables.sort();
     }
     results.push({
       campaignId,
@@ -136,9 +213,13 @@ export async function contactPartnerLeads(input: ContactLeadsInput): Promise<Con
       queuedLeads: response.queuedLeads ?? leadIds.length,
       dryRun: response.dryRun !== false,
       sequenceName: sequenceName || "Secuencia de partners",
-      draftCount: Array.isArray(response.drafts) ? response.drafts.length : leadIds.length,
-      previews: contactDraftPreviewsFromResponse(response.drafts).slice(0, 3),
-      drafts: contactGateDraftsFromResponse(response.drafts),
+      draftCount: Array.isArray(response.drafts)
+        ? response.drafts.length
+        : leadIds.length,
+      previews: contactDraftPreviewsFromResponse(response.drafts),
+      drafts,
+      unresolvedVariables,
+      canApprove: hasPreviewForEveryLead && unresolvedVariables.length === 0,
     });
   }
 

@@ -66,6 +66,7 @@ export function qualifyCandidate(
     ...(candidate.engagementRatePct !== undefined ? { engagementRate: candidate.engagementRatePct } : {}),
     ...(score.tier ? { tier: score.tier } : {}),
     ...(candidate.email ? { email: candidate.email } : {}),
+    ...(candidate.customVariables ? { customVariables: candidate.customVariables } : {}),
     qualityScore: score.total,
     qualityComponents: toQualityComponents(score),
     source: "discovery",
