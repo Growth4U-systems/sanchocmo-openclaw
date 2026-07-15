@@ -30,7 +30,7 @@ import {
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
-import { buildDocsReviewReplyOptions, resolveTurnModelOverride } from "./model-routing.js";
+import { buildTurnReplyOptions, resolveTurnModelOverride } from "./model-routing.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
 import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js";
 import { mcChatCostGuard } from "./cost-guard.js";
@@ -295,6 +295,8 @@ export default defineChannelPluginEntry({
           source: _source,
           slug,
           userId,
+          threadId,
+          channelMode,
         });
 
         logger.info(`[mc-chat] Inbound from ${userName || userId || "unknown"} → ${slug}/${threadId} agent=${requestedAgent}: ${text.slice(0, 80)}`);
@@ -505,7 +507,7 @@ export default defineChannelPluginEntry({
           : null;
         try {
           if (turnModelOverride) {
-            logger.info(`[mc-chat] skipping global thinking-history scan for isolated read-only docs session=${sessionKey}`);
+            logger.info(`[mc-chat] skipping global thinking-history scan for isolated model override session=${sessionKey}`);
           } else {
             try {
               const result = sanitizeAgentThinkingHistory(requestedAgent, { home: process.env.OPENCLAW_HOME });
@@ -602,7 +604,7 @@ export default defineChannelPluginEntry({
               sourceReplyDeliveryMode: "automatic",
               runId: guardRunId,
               abortSignal: abortController.signal,
-              ...buildDocsReviewReplyOptions(turnModelOverride),
+              ...buildTurnReplyOptions({ modelOverride: turnModelOverride, source: _source }),
               timeoutOverrideSeconds: guardLimits.enabled
                 ? Math.ceil(guardLimits.maxWallClockMs / 1000)
                 : undefined,
