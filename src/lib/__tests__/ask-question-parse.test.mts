@@ -2,9 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 // Same CJS/namespace interop pattern as strip-markdown-frontmatter.test.mts:
 // the component file also exports React components, but we only touch the pure
-// helpers (parseMessageSegments, initialQuestionState).
+// helpers (parseMessageSegments, initialQuestionState, storage/render keys).
 import * as mod from "../../components/chat/ask-question";
-const { parseMessageSegments, initialQuestionState } =
+const {
+  askMessageIdentity,
+  initialQuestionState,
+  parseMessageSegments,
+  questionGroupRenderKey,
+  questionStorageKey,
+} =
   (mod as unknown as { default: typeof mod }).default ?? mod;
 
 test("parseMessageSegments: accepts mode:text WITHOUT options", () => {
@@ -132,4 +138,103 @@ test("initialQuestionState: text mode starts empty", () => {
   const state = initialQuestionState({ id: "q_t", prompt: "Handle", mode: "text" });
   assert.equal(state.selected.size, 0);
   assert.equal(state.otherText, "");
+});
+
+test("questionStorageKey: does not restore stale answers when a reused id has new options", () => {
+  const previous = questionStorageKey("hospital:discovery", "message-1", {
+    id: "q_frentes",
+    prompt: "¿Por qué frentes empezamos?",
+    mode: "multi",
+    options: [
+      { id: "f1", label: "Alopecia masculina joven", recommended: true },
+      { id: "other", label: "Otro (lo escribo)" },
+    ],
+  });
+  const current = questionStorageKey("hospital:discovery", "message-1", {
+    id: "q_frentes",
+    prompt: "¿Por qué frentes empezamos?",
+    mode: "multi",
+    options: [
+      { id: "f1", label: "Caída capilar femenina", recommended: true },
+      { id: "other", label: "Otro (lo escribo)" },
+    ],
+  });
+
+  assert.notEqual(previous, current);
+  assert.match(current, /^ask:v2:hospital:discovery:message-1:q_frentes:/);
+});
+
+test("questionStorageKey: treats an identical repeated question as a new interaction", () => {
+  const question = {
+    id: "q_path",
+    prompt: "¿Cómo lo montamos?",
+    mode: "single" as const,
+    options: [
+      { id: "propose", label: "Propónmelo tú a partir del contexto del cliente" },
+      { id: "other", label: "Otro (lo escribo)" },
+    ],
+  };
+
+  assert.notEqual(
+    questionStorageKey("hospital:discovery", "message-1", question),
+    questionStorageKey("hospital:discovery", "message-2", question),
+  );
+});
+
+test("questionStorageKey: remains stable for the exact same question", () => {
+  const question = {
+    id: "q_redes",
+    prompt: "¿En qué redes buscamos?",
+    mode: "multi" as const,
+    options: [
+      { id: "instagram", label: "Instagram", recommended: true },
+      { id: "other", label: "Otro (lo escribo)" },
+    ],
+  };
+
+  assert.equal(
+    questionStorageKey("hospital:discovery", "message-1", question),
+    questionStorageKey("hospital:discovery", "message-1", structuredClone(question)),
+  );
+});
+
+test("askMessageIdentity: legacy identity is independent of the message array position", () => {
+  const persistedMessage = {
+    role: "bot",
+    agent: "rocinante",
+    ts: 1_725_000_000_000,
+    text: "¿Cómo lo montamos?",
+  };
+
+  assert.equal(
+    askMessageIdentity(persistedMessage),
+    askMessageIdentity(structuredClone(persistedMessage)),
+  );
+  assert.notEqual(
+    askMessageIdentity(persistedMessage),
+    askMessageIdentity({ ...persistedMessage, ts: persistedMessage.ts + 1 }),
+  );
+});
+
+test("questionGroupRenderKey: remounts state for a new message or revised question", () => {
+  const previous = parseMessageSegments(`:::ask
+{"id":"q_path","prompt":"¿Cómo lo montamos?","mode":"single","options":[{"id":"propose","label":"Propónmelo tú"}]}
+:::`);
+  const revised = parseMessageSegments(`:::ask
+{"id":"q_path","prompt":"¿Cómo lo montamos?","mode":"single","options":[{"id":"manual","label":"Lo defino yo"}]}
+:::`);
+
+  const previousKey = questionGroupRenderKey("hospital:discovery", "delivery:one", previous);
+  assert.notEqual(
+    previousKey,
+    questionGroupRenderKey("hospital:discovery", "delivery:two", previous),
+  );
+  assert.notEqual(
+    previousKey,
+    questionGroupRenderKey("hospital:discovery", "delivery:one", revised),
+  );
+  assert.notEqual(
+    previousKey,
+    questionGroupRenderKey("another:thread", "delivery:one", previous),
+  );
 });

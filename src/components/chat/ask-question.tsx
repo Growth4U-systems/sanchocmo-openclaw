@@ -33,8 +33,79 @@ interface AskQuestionProps {
   onChange: (next: QuestionState) => void;
 }
 
-function storageKey(threadId: string, questionId: string) {
-  return `ask:${threadId}:${questionId}`;
+function compactCacheHash(serialized: string): string {
+  // FNV-1a keeps localStorage and React keys compact while remaining
+  // deterministic. These identities are caches, not security boundaries.
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function questionRevision(question: AskQuestionData): string {
+  return compactCacheHash(JSON.stringify({
+    id: question.id,
+    prompt: question.prompt,
+    mode: question.mode,
+    placeholder: question.placeholder ?? null,
+    optional: question.optional === true,
+    options: (question.options ?? []).map((option) => ({
+      id: option.id,
+      label: option.label,
+      description: option.description ?? null,
+      recommended: option.recommended === true,
+      workflowIntent: option.workflowIntent ?? null,
+    })),
+  }));
+}
+
+export function questionStorageKey(
+  threadId: string,
+  messageKey: string,
+  question: AskQuestionData,
+) {
+  return `ask:v2:${threadId}:${messageKey}:${question.id}:${questionRevision(question)}`;
+}
+
+interface AskMessageIdentityInput {
+  deliveryKey?: unknown;
+  ts?: unknown;
+  role?: unknown;
+  agent?: unknown;
+  text?: unknown;
+}
+
+/**
+ * Prefer the persisted transport identity. Legacy messages predate that field,
+ * so their fallback uses persisted content instead of the current array index;
+ * trimming the 200-message history therefore cannot re-key every old answer.
+ */
+export function askMessageIdentity(message: AskMessageIdentityInput): string {
+  if (typeof message.deliveryKey === "string" && message.deliveryKey.trim()) {
+    return `delivery:${message.deliveryKey.trim()}`;
+  }
+  const timestamp = typeof message.ts === "number" && Number.isFinite(message.ts)
+    ? String(message.ts)
+    : "undated";
+  const fingerprint = compactCacheHash(JSON.stringify({
+    role: typeof message.role === "string" ? message.role : null,
+    agent: typeof message.agent === "string" ? message.agent : null,
+    text: typeof message.text === "string" ? message.text : "",
+  }));
+  return `legacy:${timestamp}:${fingerprint}`;
+}
+
+export function questionGroupRenderKey(
+  threadId: string,
+  messageKey: string,
+  segments: MessageSegment[],
+): string {
+  const revisions = segments.flatMap((segment) =>
+    segment.type === "ask" ? [questionRevision(segment.question)] : []
+  );
+  return `ask-group:${threadId}:${messageKey}:${revisions.join(".")}`;
 }
 
 /**
@@ -192,6 +263,8 @@ function AskQuestion({ question, state, submittedLabels, onChange }: AskQuestion
 interface AskQuestionGroupProps {
   segments: MessageSegment[];
   threadId: string;
+  /** Stable identity of the bot message that owns these questions. */
+  messageKey: string;
   /** Renders inline text segments — the parent passes a `ChatMarkdown` renderer. */
   renderText: (text: string, key: number) => React.ReactNode;
   onSubmit: (canonicalText: string) => void;
@@ -206,9 +279,10 @@ interface AskQuestionGroupProps {
  * asks N questions in a single turn, the user answers all N before the
  * assistant proceeds.
  */
-export function AskQuestionGroup({
+function StatefulAskQuestionGroup({
   segments,
   threadId,
+  messageKey,
   renderText,
   onSubmit,
 }: AskQuestionGroupProps) {
@@ -252,7 +326,7 @@ export function AskQuestionGroup({
     try {
       const restored: Record<string, string[]> = {};
       for (const q of questions) {
-        const raw = localStorage.getItem(storageKey(threadId, q.id));
+        const raw = localStorage.getItem(questionStorageKey(threadId, messageKey, q));
         if (!raw) return;
         const parsed = JSON.parse(raw) as { labels?: string[] };
         if (!Array.isArray(parsed?.labels)) return;
@@ -264,7 +338,7 @@ export function AskQuestionGroup({
     } catch {
       // ignore
     }
-  }, [threadId, questions]);
+  }, [threadId, messageKey, questions]);
 
   const allAnswered =
     questions.length > 0 &&
@@ -290,7 +364,7 @@ export function AskQuestionGroup({
     try {
       for (const q of questions) {
         localStorage.setItem(
-          storageKey(threadId, q.id),
+          questionStorageKey(threadId, messageKey, q),
           JSON.stringify({ labels: labelsByQ[q.id] }),
         );
       }
@@ -350,6 +424,20 @@ export function AskQuestionGroup({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * The keyed state owner guarantees that switching thread/message, or replacing
+ * a streamed question with a revised definition, cannot carry selected or
+ * submitted state into the next interaction.
+ */
+export function AskQuestionGroup(props: AskQuestionGroupProps) {
+  return (
+    <StatefulAskQuestionGroup
+      key={questionGroupRenderKey(props.threadId, props.messageKey, props.segments)}
+      {...props}
+    />
   );
 }
 

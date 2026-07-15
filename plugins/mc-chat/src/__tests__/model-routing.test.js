@@ -84,10 +84,13 @@ test("docs reviews disable runtime overhead without sending an empty tools array
   assert.deepEqual(buildDocsReviewReplyOptions(null), {});
 });
 
-test("Growie gets only the model override, not docs-only fast-mode restrictions", () => {
+test("Growie gets a strict model override, not docs-only fast-mode restrictions", () => {
   assert.deepEqual(
     buildTurnReplyOptions({ modelOverride: DEFAULT_GROWIE_SUPPORT_MODEL, source: "growie-support" }),
-    { modelOverride: DEFAULT_GROWIE_SUPPORT_MODEL },
+    {
+      modelOverride: DEFAULT_GROWIE_SUPPORT_MODEL,
+      modelOverrideFallbacks: [],
+    },
   );
   assert.deepEqual(
     buildTurnReplyOptions({ modelOverride: DEFAULT_DOCS_ASSISTANT_MODEL, source: "docs" }),

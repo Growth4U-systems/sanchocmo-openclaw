@@ -38,6 +38,14 @@ export function resolveTurnModelOverride(
 export function buildTurnReplyOptions({ modelOverride, source }) {
   if (!modelOverride) return {};
   if (source === "docs") return buildDocsReviewReplyOptions(modelOverride);
+  if (source === "growie-support") {
+    return {
+      modelOverride,
+      // Growie is a named GLM 5.2 surface. Do not silently inherit Sancho's
+      // Qwen/Anthropic fallback chain when its provider is unavailable.
+      modelOverrideFallbacks: [],
+    };
+  }
   return { modelOverride };
 }
 

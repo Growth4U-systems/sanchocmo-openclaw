@@ -27,7 +27,11 @@ import {
 import { useQuickActions } from "@/hooks/useChat";
 import { useRetriggerWriter } from "@/hooks/useContentTasks";
 import { ThreadListPanel } from "./thread-list-panel";
-import { AskQuestionGroup, parseMessageSegments } from "./ask-question";
+import {
+  AskQuestionGroup,
+  askMessageIdentity,
+  parseMessageSegments,
+} from "./ask-question";
 import { ProgressTimeline } from "./progress-timeline";
 import { ChatMarkdown } from "./chat-markdown";
 import {
@@ -1757,6 +1761,7 @@ export function ChatSidebar() {
 
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
+          const askMessageKey = askMessageIdentity(msg);
 
           if (!isUser && msg.errorDetail) {
             const copy = executionErrorCopy(msg.errorDetail.category);
@@ -1817,6 +1822,7 @@ export function ChatSidebar() {
                       : stripOutboundWorkflowDebugDetails(msg.text)
                   )}
                   threadId={activeThreadId ?? ""}
+                  messageKey={askMessageKey}
                   renderText={(text, key) => (
                     <ChatMarkdown key={key} text={text} />
                   )}

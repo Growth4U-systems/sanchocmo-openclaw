@@ -65,6 +65,7 @@ import {
   buildGrowieSupportContext,
   GROWIE_SUPPORT_SOURCE,
   isGrowieSupportThreadId,
+  snapshotGrowieThreadHistory,
 } from "@/lib/support/growie";
 
 function normalizedIdempotencyKey(value: unknown): string | undefined {
@@ -191,6 +192,12 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         imageDigest: process.env.SANCHOCMO_IMAGE_DIGEST,
         environment: process.env.NEXT_PUBLIC_ENV_LABEL || process.env.NODE_ENV,
       })
+    : undefined;
+  // Snapshot before any async routing work or current-message persistence. The
+  // signed gateway payload can then bootstrap a newly isolated model session
+  // without racing a later user turn or trusting browser-supplied history.
+  const priorThreadMessages = isGrowieSupport
+    ? snapshotGrowieThreadHistory(getThread(tid).messages)
     : undefined;
   const persistedRoute = getThreadRouting(tid);
   const namespaceRoute = resolveNamespaceThreadConfig(slug, tid);
@@ -590,6 +597,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     readOnly,
     channelMode: isGrowieSupport ? "support-diagnostic" : undefined,
     supportContext,
+    priorThreadMessages,
     _source: effectiveSource,
     // Force routing: when the thread carries an `agent` field, the gateway
     // dispatches to that agent (e.g. dulcinea for content tasks, maese-pedro
