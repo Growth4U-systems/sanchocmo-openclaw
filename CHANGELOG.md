@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.4](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.3...v1.6.4) (2026-07-15)
+
+
+### Bug Fixes
+
+* **runtime:** isolate Hermes Anthropic credentials ([#1313](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1313)) ([71bb8c4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/71bb8c4690c8ac4a8a233c9d20521b5219f66b97))
+
 ## [1.6.3](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.2...v1.6.3) (2026-07-15)
 
 
