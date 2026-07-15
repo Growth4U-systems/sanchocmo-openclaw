@@ -29,9 +29,9 @@ import {
   openclawRuntimeFile,
 } from "./state";
 import {
+  checkOpenclawChatHealth,
   createOpenclawChannelThread,
   getChatSecret,
-  getGatewayUrl,
   sendOpenclawInbound,
 } from "./messaging";
 import type {
@@ -115,13 +115,16 @@ export class OpenclawAdapter implements RuntimeAdapter {
   };
 
   readonly lifecycle = {
-    healthcheck: async (): Promise<{ ok: boolean; details?: Record<string, unknown> }> => ({
-      ok: true,
-      details: {
-        gatewayUrl: getGatewayUrl(),
-        home: this.state.home(),
-      },
-    }),
+    healthcheck: async (): Promise<{ ok: boolean; details?: Record<string, unknown> }> => {
+      const health = await checkOpenclawChatHealth();
+      return {
+        ...health,
+        details: {
+          ...health.details,
+          home: this.state.home(),
+        },
+      };
+    },
     restart: async (): Promise<unknown> => restartGateway(),
   };
 }

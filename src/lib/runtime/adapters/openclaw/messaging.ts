@@ -16,6 +16,45 @@ export function getChatSecret(): string | undefined {
   return process.env.MC_CHAT_SECRET || process.env.OPENCLAW_GATEWAY_TOKEN;
 }
 
+export async function checkOpenclawChatHealth(): Promise<{
+  ok: boolean;
+  details: Record<string, unknown>;
+}> {
+  const gatewayUrl = getGatewayUrl();
+  const secret = getChatSecret();
+  try {
+    const res = await fetch(`${gatewayUrl}/mc-chat/health`, {
+      headers: secret ? { "X-MC-Secret": secret } : undefined,
+      signal: AbortSignal.timeout(5_000),
+    });
+    const raw = await res.text();
+    let body: { ok?: unknown; channel?: unknown } = {};
+    try {
+      body = raw ? JSON.parse(raw) as { ok?: unknown; channel?: unknown } : {};
+    } catch {
+      // A non-JSON response is an unhealthy plugin response, reported below.
+    }
+    const ok = res.ok && body.ok === true && body.channel === "mc-chat";
+    return {
+      ok,
+      details: {
+        gatewayUrl,
+        status: res.status,
+        channel: typeof body.channel === "string" ? body.channel : undefined,
+        ...(ok ? {} : { error: raw.slice(0, 500) || `HTTP ${res.status}` }),
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      details: {
+        gatewayUrl,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
+}
+
 export function textWithActiveOutboundWorkflow(message: InboundMessage): string {
   const workflow = message.activeOutboundWorkflow;
   const isOutboundOperator = message.skill === "yalc-operator"
