@@ -64,10 +64,6 @@ openclaw.json.pre-migration
 exec-approvals.json
 agents/*/agent/auth.json
 agents/*/agent/auth-profiles.json
-# Live auth state, tracked by mistake until SAN-464: the container rewrites these
-# on every boot, so a git-checkout home was permanently dirty and every deploy had
-# to stash first.
-agents/*/agent/auth-state.json
 
 # === Session logs (large, contain secrets) ===
 agents/*/sessions/
