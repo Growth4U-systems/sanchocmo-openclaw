@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.6](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.5...v1.6.6) (2026-07-15)
+
+
+### Bug Fixes
+
+* **runtime:** complete managed and local bridge environments ([#1317](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1317)) ([5903ea1](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/5903ea1100f829ca019ceb7fa869955f2a290ab5))
+
 ## [1.6.5](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.4...v1.6.5) (2026-07-15)
 
 
