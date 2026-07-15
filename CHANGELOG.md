@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.0...v1.7.1) (2026-07-15)
+
+
+### Bug Fixes
+
+* **runtime:** restore OpenClaw plugin loading (SAN-50) ([#1325](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1325)) ([2cdc8cb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2cdc8cb271e14dfafbcea777e250517bda8f9512))
+* **support:** keep Growie visible beside Sancho chat (SAN-472) ([#1323](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1323)) ([62325e4](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/62325e4d9fd9ae2ec39995bb95567dc6352f3e8b))
+
 ## [1.7.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.6...v1.7.0) (2026-07-15)
 
 
