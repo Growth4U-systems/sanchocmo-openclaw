@@ -25,10 +25,10 @@ const MIGRATIONS_FOLDER = path.resolve(__dirname, "../src/db/migrations-local");
 // Execution-control is also deployed to managed Postgres through the curated
 // migration runner. Apply that same idempotent SQL locally so both driver paths
 // expose the shadow Ledger without maintaining a second hand-copied schema.
-const EXECUTION_CONTROL_MIGRATION = path.resolve(
-  __dirname,
-  "../src/db/migrations/0019_execution_control.sql",
-);
+const EXECUTION_CONTROL_MIGRATIONS = [
+  "0019_execution_control.sql",
+  "0020_execution_tenant_scope.sql",
+].map((file) => path.resolve(__dirname, "../src/db/migrations", file));
 
 const log = (msg) => console.log(`[migrate-local] ${msg}`);
 
@@ -82,8 +82,10 @@ async function main() {
     const db = drizzle(sql);
     log(`Applying migrations from ${MIGRATIONS_FOLDER} …`);
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-    log("Applying additive execution-control migration …");
-    await sql.file(EXECUTION_CONTROL_MIGRATION);
+    log("Applying additive execution-control migrations …");
+    for (const migration of EXECUTION_CONTROL_MIGRATIONS) {
+      await sql.file(migration);
+    }
     log("Migrations applied (schema up to date).");
   } catch (err) {
     log(`Migration failed (non-fatal, DB features may be degraded): ${err.message}`);

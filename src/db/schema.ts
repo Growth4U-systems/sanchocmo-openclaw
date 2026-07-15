@@ -941,6 +941,10 @@ export const metricStageRollups = pgTable("metric_stage_rollups", {
 
 export const executionRuns = pgTable("execution_runs", {
   id: text("id").primaryKey(),
+  // Nullable only during SAN-480's expand/contract rollback window. Every
+  // current application writer requires it; the contract migration will add
+  // the database NOT NULL constraint after staging validation.
+  tenantKey: text("tenant_key"),
   idempotencyKey: text("idempotency_key").notNull(),
   aggregateType: text("aggregate_type").notNull(),
   aggregateId: text("aggregate_id").notNull(),
@@ -976,12 +980,43 @@ export const executionRuns = pgTable("execution_runs", {
     table.operation,
     table.idempotencyKey,
   ),
+  uniqueIndex("execution_runs_tenant_aggregate_idempotency_idx").on(
+    table.tenantKey,
+    table.aggregateType,
+    table.aggregateId,
+    table.operation,
+    table.idempotencyKey,
+  ),
   index("execution_runs_aggregate_created_idx").on(
     table.aggregateType,
     table.aggregateId,
     table.createdAt,
   ),
   index("execution_runs_status_updated_idx").on(table.status, table.updatedAt),
+  index("execution_runs_tenant_created_idx").on(
+    table.tenantKey,
+    table.createdAt,
+    table.id,
+  ),
+  index("execution_runs_tenant_status_created_idx").on(
+    table.tenantKey,
+    table.status,
+    table.createdAt,
+    table.id,
+  ),
+  index("execution_runs_tenant_operation_status_created_idx").on(
+    table.tenantKey,
+    table.operation,
+    table.status,
+    table.createdAt,
+    table.id,
+  ),
+  index("execution_runs_tenant_operation_created_idx").on(
+    table.tenantKey,
+    table.operation,
+    table.createdAt,
+    table.id,
+  ),
   index("execution_runs_trace_idx").on(table.traceId),
 ]);
 

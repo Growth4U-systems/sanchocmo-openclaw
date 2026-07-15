@@ -263,6 +263,13 @@ export function Sidebar() {
         {isAdmin && !activeSlug && (
           <>
             <NavLink
+              href="/dashboard/admin/executions"
+              icon="/nav/activity.webp"
+              label="Ejecuciones"
+              active={isActive("/dashboard/admin/executions")}
+              collapsed={!sidebarOpen}
+            />
+            <NavLink
               href="/dashboard/admin/clients"
               icon="/nav/clients.webp"
               label="Clientes"

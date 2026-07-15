@@ -223,6 +223,7 @@ async function ensureObservedRun(
   repository = repositoryFor(dependencies),
 ): Promise<{ run: ExecutionRun; created: boolean }> {
   const receipt = await repository.createRun({
+    tenantKey: search.slug,
     aggregateType: DISCOVERY_EXECUTION_AGGREGATE,
     aggregateId: discoveryExecutionAggregateId(search.slug, search.id),
     operation: DISCOVERY_EXECUTION_OPERATION,

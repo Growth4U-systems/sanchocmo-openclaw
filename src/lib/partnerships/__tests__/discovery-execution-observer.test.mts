@@ -55,6 +55,7 @@ class FakeRepository implements ExecutionControlRepository {
   }> = [];
   run: ExecutionRun = {
     id: "xrun-1",
+    tenantKey: "hospital-capilar",
     idempotencyKey: "key",
     aggregateType: "partnerships.search",
     aggregateId: "hospital-capilar:ds-1",
@@ -134,6 +135,7 @@ test("shadow create is idempotent and persists a sanitized frozen command", asyn
     repository.creates[0].idempotencyKey,
     "partnerships.discovery:hospital-capilar:ds-1:attempt:1:v1",
   );
+  assert.equal(repository.creates[0].tenantKey, "hospital-capilar");
   assert.doesNotMatch(
     JSON.stringify(repository.creates[0].input),
     /private-chat-thread/,

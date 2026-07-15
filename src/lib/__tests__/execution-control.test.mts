@@ -24,16 +24,42 @@ test("execution-control migration is additive, ordered and idempotency-safe", ()
     sql,
     /CREATE UNIQUE INDEX IF NOT EXISTS "execution_runs_aggregate_idempotency_idx"[\s\S]*"aggregate_type", "aggregate_id", "operation", "idempotency_key"/,
   );
+  assert.match(
+    sql,
+    /CREATE UNIQUE INDEX IF NOT EXISTS "execution_runs_tenant_aggregate_idempotency_idx"[\s\S]*"tenant_key", "aggregate_type", "aggregate_id", "operation", "idempotency_key"/,
+  );
   assert.match(sql, /'completed', 'partial', 'failed'/);
   // Event names stay open so product-specific adapters need no schema change.
   assert.doesNotMatch(sql, /execution_events_type_check/);
+
+  const tenantSql = fs.readFileSync(
+    path.join(
+      process.cwd(),
+      "src/db/migrations/0020_execution_tenant_scope.sql",
+    ),
+    "utf8",
+  );
+  assert.match(tenantSql, /ADD COLUMN IF NOT EXISTS "tenant_key" text/);
+  assert.doesNotMatch(tenantSql, /ALTER COLUMN "tenant_key" SET NOT NULL/);
+  assert.doesNotMatch(tenantSql, /DROP INDEX/);
+  assert.match(
+    tenantSql,
+    /execution_runs_tenant_aggregate_idempotency_idx[\s\S]*"tenant_key", "aggregate_type", "aggregate_id", "operation", "idempotency_key"/,
+  );
+  assert.match(tenantSql, /execution_runs_tenant_created_idx/);
+  assert.match(tenantSql, /execution_runs_tenant_operation_created_idx/);
 
   const localMigrator = fs.readFileSync(
     path.join(process.cwd(), "scripts/migrate-local.mjs"),
     "utf8",
   );
   assert.match(localMigrator, /0019_execution_control\.sql/);
-  assert.match(localMigrator, /sql\.file\(EXECUTION_CONTROL_MIGRATION\)/);
+  assert.match(localMigrator, /0020_execution_tenant_scope\.sql/);
+  assert.match(
+    localMigrator,
+    /for \(const migration of EXECUTION_CONTROL_MIGRATIONS\)/,
+  );
+  assert.match(localMigrator, /sql\.file\(migration\)/);
 });
 
 test("repository uses atomic CTE receipts for create and transition", () => {
@@ -49,9 +75,19 @@ test("repository uses atomic CTE receipts for create and transition", () => {
   assert.match(source, /'run\.created'/);
   assert.match(
     source,
+    /both the legacy and tenant-aware unique indexes coexist/,
+  );
+  assert.match(source, /ON CONFLICT DO NOTHING/);
+  assert.match(
+    source,
     /WITH transitioned_run AS \([\s\S]*UPDATE "execution_runs"[\s\S]*INSERT INTO "execution_events"/,
   );
   assert.match(source, /input\.expectedStatus/);
+  assert.match(source, /claimLegacyIdempotencyWinner/);
+  assert.match(
+    source,
+    /UPDATE "execution_runs"[\s\S]*"tenant_key" IS NULL[\s\S]*input"->>'slug'[\s\S]*metadata"->>'slug'/,
+  );
   assert.doesNotMatch(source, /\.transaction\(/);
 });
 
@@ -60,6 +96,7 @@ test("database rows map to stable execution-control contracts", () => {
   const updatedAt = new Date("2026-07-15T10:01:00.000Z");
   const run = executionRunFromDatabaseRow({
     id: "xrun_1",
+    tenantKey: "hospital-capilar",
     idempotencyKey: "hospital-capilar:ds-1:shadow:v1",
     aggregateType: "partnership_search",
     aggregateId: "ds-1",
@@ -80,6 +117,7 @@ test("database rows map to stable execution-control contracts", () => {
 
   assert.deepEqual(run, {
     id: "xrun_1",
+    tenantKey: "hospital-capilar",
     idempotencyKey: "hospital-capilar:ds-1:shadow:v1",
     aggregateType: "partnership_search",
     aggregateId: "ds-1",
