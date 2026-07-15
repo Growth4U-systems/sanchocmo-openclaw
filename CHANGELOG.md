@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.6...v1.7.0) (2026-07-15)
+
+
+### Features
+
+* **support:** add Growie diagnostic preview (SAN-468) ([#1319](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1319)) ([8975f53](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8975f53ca473edc30e00c84ad9f3d9380f550919))
+
+
+### Bug Fixes
+
+* **runtime:** keep Sancho skills portable across bridges ([#1322](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1322)) ([da99e55](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/da99e552e13268fa8e78f97d43df0d484181eb6f))
+
 ## [1.6.6](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.5...v1.6.6) (2026-07-15)
 
 
