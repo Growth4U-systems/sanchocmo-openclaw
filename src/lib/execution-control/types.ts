@@ -19,6 +19,7 @@ export type ExecutionStepStatus =
   | "skipped";
 
 export interface ExecutionAggregateRef {
+  tenantKey: string;
   aggregateType: string;
   aggregateId: string;
   operation?: string;
@@ -26,6 +27,8 @@ export interface ExecutionAggregateRef {
 
 export interface ExecutionRun {
   id: string;
+  /** Explicit product tenant boundary. Use `system` for global executions. */
+  tenantKey: string;
   idempotencyKey: string;
   aggregateType: string;
   aggregateId: string;
@@ -73,6 +76,8 @@ export interface ExecutionEvent {
 }
 
 export interface CreateExecutionRunInput {
+  /** Explicit product tenant boundary. Never infer authorization from payloads. */
+  tenantKey: string;
   /**
    * Stable within aggregate + operation. Callers should include tenant slug and
    * aggregate id, and must never embed credentials or other secrets.
@@ -114,6 +119,50 @@ export interface TransitionExecutionRunInput {
   now?: Date;
 }
 
+export interface ExecutionRunCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface ListExecutionRunsInput {
+  /** Required authorization and query boundary. */
+  tenantKey: string;
+  aggregateType?: string;
+  operation?: string;
+  status?: ExecutionRunStatus;
+  mode?: ExecutionRunMode;
+  before?: ExecutionRunCursor;
+  limit: number;
+}
+
+export interface ExecutionRunPage {
+  runs: ExecutionRun[];
+  nextBefore?: ExecutionRunCursor;
+}
+
+export interface ListExecutionStepsPageInput {
+  tenantKey: string;
+  runId: string;
+  limit: number;
+}
+
+export interface ExecutionStepPage {
+  steps: ExecutionStep[];
+  truncated: boolean;
+}
+
+export interface ListExecutionEventsPageInput {
+  tenantKey: string;
+  runId: string;
+  afterSequence?: number;
+  limit: number;
+}
+
+export interface ExecutionEventPage {
+  events: ExecutionEvent[];
+  nextAfterSequence?: number;
+}
+
 export interface ExecutionControlRepository {
   createRun(input: CreateExecutionRunInput): Promise<CreateExecutionRunReceipt>;
   appendEvent(input: AppendExecutionEventInput): Promise<ExecutionEvent>;
@@ -126,4 +175,20 @@ export interface ExecutionControlRepository {
   getRunById(runId: string): Promise<ExecutionRun | null>;
   getRunByAggregate(input: ExecutionAggregateRef): Promise<ExecutionRun | null>;
   listEvents(runId: string): Promise<ExecutionEvent[]>;
+}
+
+/**
+ * Bounded, tenant-scoped reads for inspectors and future machine evidence APIs.
+ * Kept separate so command-path adapters only depend on mutation primitives.
+ */
+export interface ExecutionControlReadRepository {
+  listRuns(input: ListExecutionRunsInput): Promise<ExecutionRunPage>;
+  getRunByIdForTenant(
+    tenantKey: string,
+    runId: string,
+  ): Promise<ExecutionRun | null>;
+  listStepsPage(input: ListExecutionStepsPageInput): Promise<ExecutionStepPage>;
+  listEventsPage(
+    input: ListExecutionEventsPageInput,
+  ): Promise<ExecutionEventPage>;
 }

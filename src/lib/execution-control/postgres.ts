@@ -1,5 +1,15 @@
 import crypto from "node:crypto";
-import { and, asc, desc, eq, sql as drizzleSql, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  lt,
+  or,
+  sql as drizzleSql,
+  type SQL,
+} from "drizzle-orm";
 import { db, type Db } from "@/db/drizzle";
 import {
   executionEvents as eventsTable,
@@ -17,10 +27,17 @@ import type {
   CreateExecutionRunReceipt,
   ExecutionAggregateRef,
   ExecutionControlRepository,
+  ExecutionControlReadRepository,
   ExecutionEvent,
+  ExecutionEventPage,
   ExecutionRun,
+  ExecutionRunPage,
   ExecutionRunStatus,
   ExecutionStep,
+  ExecutionStepPage,
+  ListExecutionEventsPageInput,
+  ListExecutionRunsInput,
+  ListExecutionStepsPageInput,
   TransitionExecutionRunInput,
 } from "./types";
 
@@ -64,6 +81,28 @@ function requiredText(value: string, field: string): string {
   return normalized;
 }
 
+function optionalText(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  return normalized || undefined;
+}
+
+function boundedReadLimit(value: number): number {
+  if (!Number.isInteger(value) || value < 1 || value > 100) {
+    throw new Error(
+      "execution_control: read limit must be an integer from 1 to 100",
+    );
+  }
+  return value;
+}
+
+function cursorTimestamp(value: string): Date {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) {
+    throw new Error("execution_control: invalid run cursor timestamp");
+  }
+  return date;
+}
+
 function runTraceId(value: unknown): string {
   return (
     normalizeTraceId(value) ?? getTraceId() ?? createTraceContext().traceId
@@ -76,8 +115,13 @@ function eventTraceId(value: unknown): string | undefined {
 
 /** Exported for contract tests and explicit migration/backfill tooling. */
 export function executionRunFromDatabaseRow(row: RunRow): ExecutionRun {
+  const tenantKey = row.tenantKey?.trim();
+  if (!tenantKey) {
+    throw new Error(`execution_control: run ${row.id} has no tenant scope`);
+  }
   return {
     id: row.id,
+    tenantKey,
     idempotencyKey: row.idempotencyKey,
     aggregateType: row.aggregateType,
     aggregateId: row.aggregateId,
@@ -150,7 +194,9 @@ export function canTransitionExecutionRun(
  * transactions: neon-http cannot hold an interactive transaction, while both
  * supported drivers execute a statement atomically.
  */
-export class PostgresExecutionControlRepository implements ExecutionControlRepository {
+export class PostgresExecutionControlRepository
+  implements ExecutionControlRepository, ExecutionControlReadRepository
+{
   constructor(private readonly database: Db = db) {}
 
   async createRun(
@@ -159,6 +205,7 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
     const aggregateType = requiredText(input.aggregateType, "aggregateType");
     const aggregateId = requiredText(input.aggregateId, "aggregateId");
     const operation = requiredText(input.operation, "operation");
+    const tenantKey = requiredText(input.tenantKey, "tenantKey").toLowerCase();
     const idempotencyKey = requiredText(input.idempotencyKey, "idempotencyKey");
     const now = input.now ?? new Date();
     const runId = id("xrun");
@@ -170,17 +217,17 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
     await this.database.execute(drizzleSql`
       WITH inserted_run AS (
         INSERT INTO "execution_runs" (
-          "id", "idempotency_key", "aggregate_type", "aggregate_id",
+          "id", "tenant_key", "idempotency_key", "aggregate_type", "aggregate_id",
           "operation", "mode", "status", "trace_id", "input", "metadata",
           "created_at", "updated_at"
         ) VALUES (
-          ${runId}, ${idempotencyKey}, ${aggregateType}, ${aggregateId},
+          ${runId}, ${tenantKey}, ${idempotencyKey}, ${aggregateType}, ${aggregateId},
           ${operation}, ${mode}, 'queued', ${traceId}, ${jsonValue(input.input)},
           ${jsonValue(metadata)}, ${timestampValue(now)}, ${timestampValue(now)}
         )
-        ON CONFLICT (
-          "aggregate_type", "aggregate_id", "operation", "idempotency_key"
-        ) DO NOTHING
+        -- Targetless conflict handling is deliberate during expand/contract:
+        -- both the legacy and tenant-aware unique indexes coexist.
+        ON CONFLICT DO NOTHING
         RETURNING "id", "aggregate_type", "aggregate_id", "trace_id"
       )
       INSERT INTO "execution_events" (
@@ -195,12 +242,22 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
     const created = await this.getRunById(runId);
     if (created) return { run: created, created: true };
 
-    const winner = await this.getIdempotencyWinner({
+    const idempotencyRef = {
+      tenantKey,
       aggregateType,
       aggregateId,
       operation,
       idempotencyKey,
-    });
+    };
+    let winner = await this.getIdempotencyWinner(idempotencyRef);
+    if (winner) return { run: winner, created: false };
+
+    // During the expand/contract deploy, the previous container can still
+    // insert a row after migration 0020's backfill. Adopt only a NULL-scoped
+    // row whose legacy data independently resolves to this tenant; this keeps
+    // retries idempotent without allowing one tenant to claim another's run.
+    await this.claimLegacyIdempotencyWinner(idempotencyRef);
+    winner = await this.getIdempotencyWinner(idempotencyRef);
     if (winner) return { run: winner, created: false };
 
     // Never fabricate an in-memory run or silently downgrade to another store.
@@ -320,15 +377,17 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
   async getRunByAggregate(
     input: ExecutionAggregateRef,
   ): Promise<ExecutionRun | null> {
+    const tenantKey = input.tenantKey.trim().toLowerCase();
     const aggregateType = input.aggregateType.trim();
     const aggregateId = input.aggregateId.trim();
-    if (!aggregateType || !aggregateId) return null;
+    if (!tenantKey || !aggregateType || !aggregateId) return null;
     const operation = input.operation?.trim();
     const [row] = await this.database
       .select()
       .from(runsTable)
       .where(
         and(
+          eq(runsTable.tenantKey, tenantKey),
           eq(runsTable.aggregateType, aggregateType),
           eq(runsTable.aggregateId, aggregateId),
           operation ? eq(runsTable.operation, operation) : undefined,
@@ -350,6 +409,121 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
     return rows.map(executionEventFromDatabaseRow);
   }
 
+  async listRuns(input: ListExecutionRunsInput): Promise<ExecutionRunPage> {
+    const tenantKey = requiredText(input.tenantKey, "tenantKey").toLowerCase();
+    const aggregateType = optionalText(input.aggregateType);
+    const operation = optionalText(input.operation);
+    const limit = boundedReadLimit(input.limit);
+    const beforeDate = input.before
+      ? cursorTimestamp(input.before.createdAt)
+      : undefined;
+    const beforeId = input.before
+      ? requiredText(input.before.id, "cursor id")
+      : undefined;
+
+    const rows = await this.database
+      .select()
+      .from(runsTable)
+      .where(
+        and(
+          eq(runsTable.tenantKey, tenantKey),
+          aggregateType
+            ? eq(runsTable.aggregateType, aggregateType)
+            : undefined,
+          operation ? eq(runsTable.operation, operation) : undefined,
+          input.status ? eq(runsTable.status, input.status) : undefined,
+          input.mode ? eq(runsTable.mode, input.mode) : undefined,
+          beforeDate && beforeId
+            ? or(
+                lt(runsTable.createdAt, beforeDate),
+                and(
+                  eq(runsTable.createdAt, beforeDate),
+                  lt(runsTable.id, beforeId),
+                ),
+              )
+            : undefined,
+        ),
+      )
+      .orderBy(desc(runsTable.createdAt), desc(runsTable.id))
+      .limit(limit + 1);
+
+    const pageRows = rows.slice(0, limit);
+    const runs = pageRows.map(executionRunFromDatabaseRow);
+    const last = runs[runs.length - 1];
+    return {
+      runs,
+      ...(rows.length > limit && last
+        ? { nextBefore: { createdAt: last.createdAt, id: last.id } }
+        : {}),
+    };
+  }
+
+  async getRunByIdForTenant(
+    tenantKeyValue: string,
+    runIdValue: string,
+  ): Promise<ExecutionRun | null> {
+    const tenantKey = requiredText(tenantKeyValue, "tenantKey").toLowerCase();
+    const runId = runIdValue.trim();
+    if (!runId) return null;
+    const [row] = await this.database
+      .select()
+      .from(runsTable)
+      .where(and(eq(runsTable.tenantKey, tenantKey), eq(runsTable.id, runId)))
+      .limit(1);
+    return row ? executionRunFromDatabaseRow(row) : null;
+  }
+
+  async listStepsPage(
+    input: ListExecutionStepsPageInput,
+  ): Promise<ExecutionStepPage> {
+    const run = await this.getRunByIdForTenant(input.tenantKey, input.runId);
+    if (!run) return { steps: [], truncated: false };
+    const limit = boundedReadLimit(input.limit);
+    const rows = await this.database
+      .select()
+      .from(stepsTable)
+      .where(eq(stepsTable.runId, run.id))
+      .orderBy(asc(stepsTable.createdAt), asc(stepsTable.id))
+      .limit(limit + 1);
+    return {
+      steps: rows.slice(0, limit).map(executionStepFromDatabaseRow),
+      truncated: rows.length > limit,
+    };
+  }
+
+  async listEventsPage(
+    input: ListExecutionEventsPageInput,
+  ): Promise<ExecutionEventPage> {
+    const run = await this.getRunByIdForTenant(input.tenantKey, input.runId);
+    if (!run) return { events: [] };
+    const limit = boundedReadLimit(input.limit);
+    const afterSequence = input.afterSequence ?? 0;
+    if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) {
+      throw new Error(
+        "execution_control: event cursor must be a non-negative integer",
+      );
+    }
+    const rows = await this.database
+      .select()
+      .from(eventsTable)
+      .where(
+        and(
+          eq(eventsTable.runId, run.id),
+          gt(eventsTable.sequence, afterSequence),
+        ),
+      )
+      .orderBy(asc(eventsTable.sequence))
+      .limit(limit + 1);
+    const events = rows.slice(0, limit).map(executionEventFromDatabaseRow);
+    const last = events[events.length - 1];
+    return {
+      events,
+      ...(rows.length > limit && last
+        ? { nextAfterSequence: last.sequence }
+        : {}),
+    };
+  }
+
   private async getEventById(eventId: string): Promise<ExecutionEvent | null> {
     const [row] = await this.database
       .select()
@@ -360,6 +534,7 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
   }
 
   private async getIdempotencyWinner(input: {
+    tenantKey: string;
     aggregateType: string;
     aggregateId: string;
     operation: string;
@@ -370,6 +545,7 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
       .from(runsTable)
       .where(
         and(
+          eq(runsTable.tenantKey, input.tenantKey),
           eq(runsTable.aggregateType, input.aggregateType),
           eq(runsTable.aggregateId, input.aggregateId),
           eq(runsTable.operation, input.operation),
@@ -378,5 +554,33 @@ export class PostgresExecutionControlRepository implements ExecutionControlRepos
       )
       .limit(1);
     return row ? executionRunFromDatabaseRow(row) : null;
+  }
+
+  private async claimLegacyIdempotencyWinner(input: {
+    tenantKey: string;
+    aggregateType: string;
+    aggregateId: string;
+    operation: string;
+    idempotencyKey: string;
+  }): Promise<void> {
+    await this.database.execute(drizzleSql`
+      UPDATE "execution_runs"
+      SET "tenant_key" = ${input.tenantKey}
+      WHERE ("tenant_key" IS NULL OR btrim("tenant_key") = '')
+        AND "aggregate_type" = ${input.aggregateType}
+        AND "aggregate_id" = ${input.aggregateId}
+        AND "operation" = ${input.operation}
+        AND "idempotency_key" = ${input.idempotencyKey}
+        AND COALESCE(
+          NULLIF(lower(btrim("input"->>'slug')), ''),
+          NULLIF(lower(btrim("metadata"->>'slug')), ''),
+          CASE
+            WHEN "aggregate_type" = 'partnerships.search'
+              AND strpos("aggregate_id", ':') > 1
+              THEN lower(split_part("aggregate_id", ':', 1))
+            ELSE 'system'
+          END
+        ) = ${input.tenantKey}
+    `);
   }
 }

@@ -3,6 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS "execution_runs" (
   "id" text PRIMARY KEY NOT NULL,
+  "tenant_key" text,
   "idempotency_key" text NOT NULL,
   "aggregate_type" text NOT NULL,
   "aggregate_id" text NOT NULL,
@@ -29,9 +30,21 @@ CREATE TABLE IF NOT EXISTS "execution_runs" (
     CHECK (jsonb_typeof("metadata") = 'object')
 );
 
+-- `0019` is intentionally re-runnable by the curated deploy script. Add the
+-- nullable column here too so an installation created by the original 0019 can
+-- safely reach the tenant-aware index before 0020 backfills it. A later
+-- contract migration will enforce the non-null invariant.
+ALTER TABLE "execution_runs"
+  ADD COLUMN IF NOT EXISTS "tenant_key" text;
+
 CREATE UNIQUE INDEX IF NOT EXISTS "execution_runs_aggregate_idempotency_idx"
   ON "execution_runs" (
     "aggregate_type", "aggregate_id", "operation", "idempotency_key"
+  );
+
+CREATE UNIQUE INDEX IF NOT EXISTS "execution_runs_tenant_aggregate_idempotency_idx"
+  ON "execution_runs" (
+    "tenant_key", "aggregate_type", "aggregate_id", "operation", "idempotency_key"
   );
 CREATE INDEX IF NOT EXISTS "execution_runs_aggregate_created_idx"
   ON "execution_runs" ("aggregate_type", "aggregate_id", "created_at");
