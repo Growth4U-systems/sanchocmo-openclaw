@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.0...v1.6.1) (2026-07-15)
+
+
+### Bug Fixes
+
+* **outreach:** stop leaking internal engine names to users (SAN-465) ([#1301](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1301)) ([53d8001](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/53d8001a448e50084895e33f42a531277ce34b2f))
+
 ## [1.6.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.5.0...v1.6.0) (2026-07-14)
 
 
