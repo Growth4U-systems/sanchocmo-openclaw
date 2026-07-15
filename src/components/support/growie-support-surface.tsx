@@ -21,9 +21,9 @@ import {
   Plus,
   Send,
   ShieldCheck,
-  Sprout,
 } from "lucide-react";
 import { ChatMarkdown } from "@/components/chat/chat-markdown";
+import { GrowieAvatar } from "@/components/support/growie-avatar";
 import {
   Sheet,
   SheetContent,
@@ -337,9 +337,7 @@ export function GrowieSupportSurface() {
         )}
         aria-label={t("open")}
       >
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--sc-sage-500)] text-[var(--sc-white)]" aria-hidden="true">
-          <Sprout size={17} strokeWidth={2.5} />
-        </span>
+        <GrowieAvatar className="size-8" fallbackIconSize={17} />
         <span className="hidden lg:block">
           <span className="block text-[10px] font-bold uppercase tracking-[0.13em] text-[var(--sc-fg-muted)]">Growie</span>
           <span className="block text-sm font-bold leading-tight">{t("launcher")}</span>
@@ -353,9 +351,10 @@ export function GrowieSupportSurface() {
         >
           <SheetHeader className="border-b border-[var(--chat-border-strong)] bg-[var(--chat-surface)] px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] pr-14">
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-[var(--sc-ink)] bg-[var(--sc-sun-100)] text-[var(--sc-sage-500)] shadow-[2px_2px_0_var(--sc-ink)]" aria-hidden="true">
-                <Sprout size={22} strokeWidth={2.5} />
-              </span>
+              <GrowieAvatar
+                className="size-11 border-2 border-[var(--sc-ink)] shadow-[2px_2px_0_var(--sc-ink)]"
+                fallbackIconSize={22}
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <SheetTitle className="text-xl font-bold text-[var(--chat-text)]">Growie</SheetTitle>
@@ -447,7 +446,7 @@ export function GrowieSupportSurface() {
                       )}>
                         {!isUser && (
                           <div className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--sc-sage-500)]">
-                            <Sprout size={12} aria-hidden="true" /> Growie
+                            <GrowieAvatar className="size-3.5" fallbackIconSize={10} /> Growie
                           </div>
                         )}
                         {isUser ? message.text : <ChatMarkdown text={message.text} className="text-sm" />}
