@@ -278,15 +278,27 @@ export function cleanHermesStdout(value) {
     .trim();
 }
 
-export function buildHermesChildEnv(message, runId) {
-  return {
-    ...process.env,
+export function buildHermesChildEnv(message, runId, baseEnv = process.env) {
+  const env = {
+    ...baseEnv,
     HERMES_SANCHO_RUN_ID: runId,
     SANCHO_CHAT_SLUG: message.slug || "",
     SANCHO_CHAT_THREAD_ID: message.threadId || "",
     SANCHO_CHAT_AGENT: message.agent || message.agentId || "hermes",
     SANCHO_CHAT_REQUEST: message.text || "",
   };
+
+  // Claude Code OAuth belongs to the local Claude runtime. If Hermes has an
+  // explicit Anthropic API key, letting that OAuth leak into the child makes
+  // Hermes prefer the unrelated subscription credential instead.
+  if (
+    baseEnv.HERMES_CLI_PROVIDER === "anthropic" &&
+    baseEnv.ANTHROPIC_API_KEY
+  ) {
+    delete env.CLAUDE_CODE_OAUTH_TOKEN;
+  }
+
+  return env;
 }
 
 async function postProgress(message, runId, label, detail) {
