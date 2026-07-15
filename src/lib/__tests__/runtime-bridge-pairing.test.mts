@@ -10,6 +10,7 @@ const {
   externalRuntimeVarsForCliBridge,
   gatewayListenHost,
   gatewayPortOrDefault,
+  resolveServerCliAvailability,
 } = cliRuntimeBridge;
 
 test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", () => {
@@ -29,10 +30,28 @@ test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", (
 test("CLI bridge metadata separates server runtimes from user-device runtimes", () => {
   assert.equal(cliBridgeProvider("hermes").runtimeLocation, "server");
   assert.equal(cliBridgeProvider("hermes").serverStartSupported, true);
+  assert.equal(cliBridgeProvider("hermes").cliCommandEnv, "HERMES_CLI");
+  assert.equal(cliBridgeProvider("hermes").defaultCliCommand, "hermes");
   assert.equal(cliBridgeProvider("claude-code").runtimeLocation, "user-device");
   assert.equal(cliBridgeProvider("claude-code").serverStartSupported, false);
   assert.equal(cliBridgeProvider("codex").runtimeLocation, "user-device");
   assert.equal(cliBridgeProvider("codex").serverStartSupported, false);
+});
+
+test("server CLI availability reports installed and missing Hermes executables", () => {
+  const installed = resolveServerCliAvailability("hermes", {
+    PATH: "",
+    HERMES_CLI: process.execPath,
+  });
+  assert.equal(installed.available, true);
+  assert.equal(installed.executablePath, process.execPath);
+
+  const missing = resolveServerCliAvailability("hermes", {
+    PATH: "",
+    HERMES_CLI: "definitely-not-installed-hermes",
+  });
+  assert.equal(missing.available, false);
+  assert.match(missing.reason ?? "", /no está incluido en este despliegue/);
 });
 
 test("buildCliBridgeCommand emits a single runnable Hermes command", () => {

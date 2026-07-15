@@ -15,8 +15,8 @@ services:
       args:
         NEXT_PUBLIC_ENV_LABEL: ${NEXT_PUBLIC_ENV_LABEL:-}
         GIT_COMMIT: ${GIT_COMMIT:-}
-        INSTALL_HERMES: ${INSTALL_HERMES:-0}
-        HERMES_AGENT_REF: ${HERMES_AGENT_REF:-main}
+        INSTALL_HERMES: ${INSTALL_HERMES:-1}
+        HERMES_AGENT_REF: ${HERMES_AGENT_REF:-v2026.7.7.2}
     container_name: sanchocmo
     restart: unless-stopped
     ports:
@@ -79,7 +79,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "case \"$${SANCHO_RUNTIME:-openclaw}\" in openclaw) curl -sf http://localhost:18789/healthz >/dev/null ;; hermes) curl -sf \"http://localhost:$${PORT:-3000}/api/health\" >/dev/null && { [ \"$${HERMES_BRIDGE_ENABLED:-0}\" != \"1\" ] || curl -sf \"http://localhost:$${HERMES_BRIDGE_PORT:-18791}/healthz\" >/dev/null; } ;; external-http|hermes-external) curl -sf \"http://localhost:$${PORT:-3000}/api/health\" >/dev/null ;; *) exit 1 ;; esac",
+          'case "$${SANCHO_RUNTIME:-openclaw}" in openclaw) curl -sf http://localhost:18789/healthz >/dev/null ;; hermes) curl -sf "http://localhost:$${PORT:-3000}/api/health" >/dev/null && { [ "$${HERMES_BRIDGE_ENABLED:-0}" != "1" ] || curl -sf "http://localhost:$${HERMES_BRIDGE_PORT:-18791}/healthz" >/dev/null; } ;; external-http|hermes-external) curl -sf "http://localhost:$${PORT:-3000}/api/health" >/dev/null ;; *) exit 1 ;; esac',
         ]
       # Tight interval + generous start_period so `docker compose up --wait`
       # in the deploy workflow marks the container healthy within ~10s of the
@@ -115,7 +115,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sancho} -d ${POSTGRES_DB:-sancho}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-sancho} -d ${POSTGRES_DB:-sancho}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to deploy (e.g. v1.2.3). Leave EMPTY to ship the latest published Release.'
+        description: "Release tag to deploy (e.g. v1.2.3). Leave EMPTY to ship the latest published Release."
         required: false
 
 concurrency:
@@ -260,6 +260,14 @@ jobs:
           OPENAI_AUTH_MODE: ${{ vars.OPENAI_AUTH_MODE }}
           ADMIN_EMAIL_DOMAIN: ${{ vars.ADMIN_EMAIL_DOMAIN }}
           ADMIN_IDENTITY_EMAIL: ${{ vars.ADMIN_IDENTITY_EMAIL }}
+          # Managed Hermes runtime. Official images include this pinned CLI;
+          # these values also make source builds and first activation deterministic.
+          INSTALL_HERMES: "1"
+          HERMES_AGENT_REF: v2026.7.7.2
+          HERMES_CLI: hermes
+          HERMES_CLI_PROVIDER: ${{ vars.HERMES_CLI_PROVIDER || 'openrouter' }}
+          HERMES_CLI_MODEL: ${{ vars.HERMES_CLI_MODEL || 'openai/gpt-4o-mini' }}
+          HERMES_WORKDIR: /root/.openclaw
           # Force the Neon HTTP driver in G4U deploys (belt over the runtime's
           # *.neon.tech auto-detect) so prod can never fall back to the
           # vanilla-Postgres driver used by the bundled local-db.
@@ -318,6 +326,8 @@ jobs:
               "MC_CHAT_GATEWAY", "SLACK_REDIRECT_URI",
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
+              "INSTALL_HERMES", "HERMES_AGENT_REF", "HERMES_CLI",
+              "HERMES_CLI_PROVIDER", "HERMES_CLI_MODEL", "HERMES_WORKDIR",
               "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
               "SANCHO_MCP_AUDIT_FILE",
               "YALC_BASE_URL", "SANCHO_REPLY_WEBHOOK_URL",

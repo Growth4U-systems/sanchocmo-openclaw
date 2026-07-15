@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 export type CliBridgeProviderId = "hermes" | "claude-code" | "codex";
 
 export interface CliBridgeProviderMeta {
@@ -11,6 +14,8 @@ export interface CliBridgeProviderMeta {
   bridgePortEnv: string;
   bridgeHostEnv: string;
   runtimeTimeoutEnv: string;
+  cliCommandEnv: string;
+  defaultCliCommand: string;
   runtimeModelEnv?: string;
   defaultModel?: string;
 }
@@ -21,6 +26,13 @@ export interface CliBridgeCommandOptions {
   host?: string;
   port?: number;
   model?: string;
+}
+
+export interface ServerCliAvailability {
+  available: boolean;
+  command: string;
+  executablePath?: string;
+  reason?: string;
 }
 
 export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
@@ -35,6 +47,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
     bridgePortEnv: "HERMES_BRIDGE_PORT",
     bridgeHostEnv: "HERMES_BRIDGE_HOST",
     runtimeTimeoutEnv: "HERMES_RUN_TIMEOUT_MS",
+    cliCommandEnv: "HERMES_CLI",
+    defaultCliCommand: "hermes",
   },
   {
     id: "claude-code",
@@ -47,6 +61,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
     bridgePortEnv: "CLAUDE_CODE_BRIDGE_PORT",
     bridgeHostEnv: "CLAUDE_CODE_BRIDGE_HOST",
     runtimeTimeoutEnv: "CLAUDE_CODE_RUNTIME_TIMEOUT_MS",
+    cliCommandEnv: "CLAUDE_CODE_CLI",
+    defaultCliCommand: "claude",
     runtimeModelEnv: "CLAUDE_CODE_RUNTIME_MODEL",
     defaultModel: "haiku",
   },
@@ -61,6 +77,8 @@ export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
     bridgePortEnv: "CODEX_BRIDGE_PORT",
     bridgeHostEnv: "CODEX_BRIDGE_HOST",
     runtimeTimeoutEnv: "CODEX_RUNTIME_TIMEOUT_MS",
+    cliCommandEnv: "CODEX_CLI",
+    defaultCliCommand: "codex",
   },
 ];
 
@@ -72,6 +90,33 @@ export function cliBridgeProvider(id: CliBridgeProviderId): CliBridgeProviderMet
   const provider = CLI_BRIDGE_PROVIDERS.find((item) => item.id === id);
   if (!provider) throw new Error(`Unknown CLI bridge provider: ${id}`);
   return provider;
+}
+
+export function resolveServerCliAvailability(
+  providerId: CliBridgeProviderId,
+  env: NodeJS.ProcessEnv = process.env,
+): ServerCliAvailability {
+  const provider = cliBridgeProvider(providerId);
+  const command = env[provider.cliCommandEnv]?.trim() || provider.defaultCliCommand;
+  const pathValue = env.PATH || "";
+  const candidates = command.includes(path.sep)
+    ? [command]
+    : pathValue.split(path.delimiter).filter(Boolean).map((directory) => path.join(directory, command));
+
+  for (const candidate of candidates) {
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return { available: true, command, executablePath: candidate };
+    } catch {
+      // Keep looking through PATH.
+    }
+  }
+
+  return {
+    available: false,
+    command,
+    reason: `${provider.label} no está incluido en este despliegue de Sancho. Actualiza Sancho a una imagen que incluya ${command}.`,
+  };
 }
 
 export function normalizeBaseUrl(value: string): string {
@@ -185,6 +230,7 @@ const cliRuntimeBridge = {
   gatewayPortOrDefault,
   isCliBridgeProviderId,
   normalizeBaseUrl,
+  resolveServerCliAvailability,
 };
 
 export default cliRuntimeBridge;

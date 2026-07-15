@@ -19,7 +19,7 @@ NEXTAUTH_URL=https://staging-hermes.sanchocmo.ai
 NEXT_PUBLIC_ENV_LABEL=STAGING-HERMES
 SANCHO_RUNTIME=hermes
 INSTALL_HERMES=1
-HERMES_AGENT_REF=main
+HERMES_AGENT_REF=v2026.7.7.2
 SANCHOCMO_MC_PORT=13000
 SANCHOCMO_GATEWAY_PORT=18793
 SANCHOCMO_LEGACY_PORT=18794
@@ -81,8 +81,8 @@ docker compose -f docker-compose.yml -f docker-compose.hermes.yml up -d sanchocm
 docker compose -f docker-compose.yml -f docker-compose.hermes.yml logs -f sanchocmo
 ```
 
-`INSTALL_HERMES=1` bakes the Hermes CLI into the Sancho image. Leave it unset
-for OpenClaw-only deploys.
+Official Sancho images include the pinned Hermes CLI. Set `INSTALL_HERMES=0`
+only when intentionally building a custom OpenClaw-only image from source.
 
 The container healthcheck is runtime-aware:
 

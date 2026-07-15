@@ -69,6 +69,8 @@ interface RuntimeBridgeProvider {
   label: string;
   runtimeLocation: "server" | "user-device";
   serverStartSupported: boolean;
+  serverAvailable: boolean | null;
+  serverIssue?: string | null;
   defaultPort: number;
   defaultGatewayUrl: string;
 }
@@ -519,6 +521,8 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
   const externalHttpRuntime = runtimeOptionsById.get("external-http");
   const activeRuntimeOption = runtimeOptionsById.get(runtimeStatus?.active || "");
   const configuredBridgeKind = runtimeBridgeStatus?.configuredKind ?? null;
+  const hermesBridgeProvider = runtimeBridgeStatus?.providers.find((provider) => provider.id === "hermes");
+  const hermesServerAvailable = hermesBridgeProvider?.serverAvailable === true;
   const activeRuntimeLabel = runtimeFriendlyLabel(runtimeStatus?.active, configuredBridgeKind, activeRuntimeOption);
   const externalSavedUrl = externalRuntimeMasked(
     externalRuntimeEnv,
@@ -894,15 +898,17 @@ export function RuntimeMotorSection({ onOpenSystemKey }: RuntimeMotorSectionProp
                 title="Hermes"
                 subtitle="Runtime gestionado"
                 description="Sancho intenta conectarlo desde el servidor. Es el camino más simple cuando Hermes está disponible en el despliegue."
-                status={hermesActive ? "activo" : runtimeReady(hermesRuntime) ? "listo" : "conectar"}
-                tone={hermesActive ? "active" : "ready"}
+                status={hermesActive ? "activo" : !hermesServerAvailable ? "no disponible" : runtimeReady(hermesRuntime) ? "listo" : "conectar"}
+                tone={hermesActive ? "active" : !hermesServerAvailable ? "blocked" : "ready"}
                 detail={
-                  runtimeReady(hermesRuntime)
+                  !hermesServerAvailable
+                    ? hermesBridgeProvider?.serverIssue || "Hermes no está incluido en este despliegue."
+                    : runtimeReady(hermesRuntime)
                     ? "Ya responde health OK."
-                    : "Si el bridge de Hermes está instalado en el servidor, Sancho lo prepara y lo activa."
+                    : "Sancho prepara Hermes en el servidor y lo activa."
                 }
-                actionLabel={hermesActive ? "Activo" : runtimeReady(hermesRuntime) ? "Usar Hermes" : "Conectar Hermes"}
-                actionDisabled={hermesActive || !!runtimePending || !!bridgePending}
+                actionLabel={hermesActive ? "Activo" : !hermesServerAvailable ? "No disponible" : runtimeReady(hermesRuntime) ? "Usar Hermes" : "Conectar Hermes"}
+                actionDisabled={hermesActive || !hermesServerAvailable || !!runtimePending || !!bridgePending}
                 actionBusy={bridgePending === "hermes" || runtimePending === "hermes"}
                 onAction={() => {
                   if (runtimeReady(hermesRuntime) && hermesRuntime) {
