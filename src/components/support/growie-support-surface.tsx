@@ -84,6 +84,8 @@ export function GrowieSupportSurface() {
   const router = useRouter();
   const { data: session } = useSession();
   const selectedClient = useAppStore((state) => state.selectedClient);
+  const chatOpen = useChatStore((state) => state.sidebarOpen);
+  const chatFullscreen = useChatStore((state) => state.isFullscreen);
   const routeSlug = typeof router.query.slug === "string" ? router.query.slug : null;
   const slug = routeSlug || selectedClient;
   const isAdmin = (session?.user as { role?: string } | undefined)?.role === "admin";
@@ -327,13 +329,18 @@ export function GrowieSupportSurface() {
       <button
         type="button"
         onClick={() => onOpenChange(true)}
-        className="group fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 z-[70] flex min-h-12 items-center gap-2.5 rounded-full border-2 border-[var(--sc-ink)] bg-[var(--sc-sun-100)] px-4 py-2 text-left text-[var(--sc-ink)] shadow-[3px_3px_0_var(--sc-ink)] transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-[4px_5px_0_var(--sc-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust focus-visible:ring-offset-2 active:translate-y-0 active:shadow-[2px_2px_0_var(--sc-ink)] motion-reduce:transform-none"
+        className={cn(
+          "group fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 z-[70] flex min-h-12 items-center gap-2.5 rounded-full border-2 border-[var(--sc-ink)] bg-[var(--sc-sun-100)] px-4 py-2 text-left text-[var(--sc-ink)] shadow-[3px_3px_0_var(--sc-ink)] transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-[4px_5px_0_var(--sc-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rust focus-visible:ring-offset-2 active:translate-y-0 active:shadow-[2px_2px_0_var(--sc-ink)] motion-reduce:transform-none",
+          chatOpen && "z-[410] max-md:bottom-24",
+          chatFullscreen && "bottom-24",
+          chatOpen && !chatFullscreen && "md:right-[400px] md:z-[70]",
+        )}
         aria-label={t("open")}
       >
         <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--sc-sage-500)] text-[var(--sc-white)]" aria-hidden="true">
           <Sprout size={17} strokeWidth={2.5} />
         </span>
-        <span className="hidden sm:block">
+        <span className="hidden lg:block">
           <span className="block text-[10px] font-bold uppercase tracking-[0.13em] text-[var(--sc-fg-muted)]">Growie</span>
           <span className="block text-sm font-bold leading-tight">{t("launcher")}</span>
         </span>
