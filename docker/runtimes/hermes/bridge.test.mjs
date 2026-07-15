@@ -28,6 +28,34 @@ test("buildHermesChildEnv exposes chat context to deterministic CLI wrappers", (
   assert.equal(env.SANCHO_CHAT_REQUEST, "Crea una base real");
 });
 
+test("buildHermesChildEnv isolates Anthropic API auth from Claude Code OAuth", () => {
+  const env = buildHermesChildEnv(
+    { threadId: "growth4u:general", text: "Hola" },
+    "run-2",
+    {
+      HERMES_CLI_PROVIDER: "anthropic",
+      ANTHROPIC_API_KEY: "anthropic-api-key",
+      CLAUDE_CODE_OAUTH_TOKEN: "claude-code-oauth",
+    },
+  );
+
+  assert.equal(env.ANTHROPIC_API_KEY, "anthropic-api-key");
+  assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, undefined);
+});
+
+test("buildHermesChildEnv preserves Claude OAuth when Hermes has no API key", () => {
+  const env = buildHermesChildEnv(
+    { threadId: "growth4u:general", text: "Hola" },
+    "run-3",
+    {
+      HERMES_CLI_PROVIDER: "anthropic",
+      CLAUDE_CODE_OAUTH_TOKEN: "claude-code-oauth",
+    },
+  );
+
+  assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, "claude-code-oauth");
+});
+
 test("buildHermesPrompt preserves Sancho routing metadata", () => {
   const prompt = buildHermesPrompt({
     slug: "acme",
