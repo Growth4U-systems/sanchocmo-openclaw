@@ -151,9 +151,18 @@ jobs:
             body="$(curl -fsS --max-time 5 "$HEALTH_URL" || true)"
             HEALTH_COMMIT="$(python3 -c 'import json,re,sys; d=json.load(sys.stdin); c=d.get("commit", ""); print(c if d.get("ok") is True and re.fullmatch(r"[0-9a-fA-F]{40}", c) else "")' <<<"$body" 2>/dev/null || true)"
           fi
-          CHECKOUT_COMMIT=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && git rev-parse HEAD" | tr -d '[:space:]')
+          CHECKOUT_COMMIT=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && git rev-parse HEAD 2>/dev/null" | tr -d '[:space:]')
           CUR_COMMIT="${HEALTH_COMMIT:-$CHECKOUT_COMMIT}"
           CUR=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && (git describe --tags --exact-match '$CUR_COMMIT' 2>/dev/null || printf '%s' '$CUR_COMMIT')" | tr -d '[:space:]')
+          # SAN-464: a seed-managed home has no .git, so `git describe` yields
+          # nothing and the rollback target would be silently lost — on prod, the
+          # deploy that most needs a way back. In image mode the running version is
+          # pinned in .env as SANCHOCMO_IMAGE=…:vX.Y.Z, which is the same tag the
+          # rollback would check out. Read it from there.
+          if [ -z "$CUR" ]; then
+            CUR=$(ssh "$VPS_USER@$VPS_HOST" "cd $DEPLOY_PATH && sed -n 's|^SANCHOCMO_IMAGE=.*:||p' .env 2>/dev/null | head -1" | tr -d '[:space:]')
+            [ -n "$CUR" ] && echo "✓ No git ref available — rollback target read from .env's pinned image: $CUR"
+          fi
           if [ -z "$CUR" ]; then
             echo "::warning::Could not read the currently-deployed ref; rollback will be unavailable."
           else
@@ -395,6 +404,26 @@ jobs:
               return 0
             }
 
+            # SAN-464: a home without .git takes its framework from the image seed
+            # (docker/init-home.sh unpacks /opt/sancho-seed at every boot), so there
+            # is nothing here for git to do — and every git call below would abort
+            # the deploy under `set -e` with "not a git repository". This is the
+            # product's own path; prod joined it once its .git was removed.
+            HAS_GIT=0
+            [ -d .git ] && HAS_GIT=1
+
+            # Declared out here because the restore block below reads it after the
+            # guard closes, and `set -u` turns an unset var into an aborted deploy.
+            # Empty means "no backup was taken" — the only state on a seed-managed
+            # home, where no checkout ever threatens brand/.
+            BRAND_BACKUP_DIR=""
+
+            if [ "$HAS_GIT" = "0" ] && [ "${DEPLOY_FROM_IMAGE:-0}" != "1" ]; then
+              echo "::error::$DEPLOY_PATH has no .git and DEPLOY_FROM_IMAGE != 1 — there is no way to get $TAG's code onto this host. Set DEPLOY_FROM_IMAGE=1 on the Environment, or restore a git checkout."
+              exit 1
+            fi
+
+            if [ "$HAS_GIT" = "1" ]; then
             echo "▶ Fetching tags…"
             git fetch --tags --prune
 
@@ -429,7 +458,11 @@ jobs:
               git stash push --include-untracked -m "deploy-prod-untracked-$(date -u +%Y%m%dT%H%M%SZ)" -- "$CHECKOUT_BLOCKER" || true
             fi
 
+            fi   # end HAS_GIT guard (fetch/brand-backup/stash)
+
             # Apply GitHub `production` Environment to ~/.openclaw/.env.
+            # NOT inside the HAS_GIT guard: .env is per-host config that both a
+            # git checkout and a seed-managed home need on every deploy.
             # When unpopulated (current state), this is a no-op — empty
             # secrets/vars are filtered out by the payload builder.
             # ENV_CHANGED drives a `--force-recreate` of EVERY service, so it has to
@@ -454,6 +487,7 @@ jobs:
             fi
             rm -f /tmp/upsert-env.py
 
+            if [ "$HAS_GIT" = "1" ]; then
             echo "▶ Checking out $TAG…"
             # Self-heal: discard tracked files that are regenerated or locally
             # edited on the VPS and would abort the tag checkout. Runtime data
@@ -479,6 +513,19 @@ jobs:
             clear_checkout_collisions "$TAG"
             git checkout "$TAG"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+            else
+              # No .git: the image seed owns the framework. Nothing to fetch, stash,
+              # check out or un-collide — and no brand/ backup either, since the
+              # ~700 MB copy above only existed to survive `git checkout` deleting
+              # tracked client files. init-home.sh never touches brand/: it isn't in
+              # the seed (SAN-464).
+              #
+              # GIT_COMMIT is echoed further down and `set -u` is on, so it must be
+              # defined. .sancho-seed-version is the honest answer: init-home.sh
+              # writes the commit the running seed was built from.
+              export GIT_COMMIT="$(cat .sancho-seed-version 2>/dev/null || echo unknown)"
+              echo "▶ No .git — framework comes from the image seed (GIT_COMMIT=$GIT_COMMIT); skipping fetch/stash/checkout."
+            fi
 
             # Restore brand/<slug>/ files that the checkout removed.
             # `cp -a -n` merges any backup file that isn't already in target,
@@ -728,6 +775,12 @@ jobs:
             #  • Schema compatibility: the mandatory agent-run migration is
             #    additive/idempotent. The legacy migration bundle remains opt-in,
             #    so rolling application code back does not require a down migration.
+            # SAN-464: same as the deploy step — on a seed-managed home there is no
+            # .git, so rolling the framework back is a no-op here. The rollback that
+            # matters still happens below: Compose swaps back to the previous image,
+            # and the framework inside it goes with it. Without this guard the
+            # rollback path would abort under `set -e` exactly when it is needed.
+            if [ -d .git ]; then
             CHECKOUT_BLOCKER="plugins/mc-chat/src/attachments.js"
             if [ -e "$CHECKOUT_BLOCKER" ] && ! git ls-files --error-unmatch "$CHECKOUT_BLOCKER" >/dev/null 2>&1; then
               echo "▶ Stashing untracked $CHECKOUT_BLOCKER before rollback checkout..."
@@ -736,6 +789,10 @@ jobs:
             clear_checkout_collisions "$PREV"
             git checkout "$PREV"
             export GIT_COMMIT="$(git rev-parse HEAD)"
+            else
+              export GIT_COMMIT="$(cat .sancho-seed-version 2>/dev/null || echo unknown)"
+              echo "▶ No .git — the previous image carries its own framework; skipping rollback checkout."
+            fi
             COMPOSE_ARGS="-f docker-compose.yml"
             [ "${ENABLE_OD_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.od.yml"
             [ "${ENABLE_YALC_SERVICE:-1}" != "0" ] && COMPOSE_ARGS="$COMPOSE_ARGS -f docker-compose.yalc.yml"
