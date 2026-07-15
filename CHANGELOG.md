@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.3](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.2...v1.7.3) (2026-07-15)
+
+
+### Bug Fixes
+
+* **init-home:** let the image update the framework inside workspace-* (SAN-464) ([#1337](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1337)) ([0068795](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/0068795ac8c7a6aeb989f51c3ce8002691df668f))
+
 ## [1.7.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.1...v1.7.2) (2026-07-15)
 
 
