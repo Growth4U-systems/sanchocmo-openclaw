@@ -11,28 +11,12 @@ import {
   getThread,
   listThreadsForSlug,
 } from "@/lib/data/mc-chat";
-import {
-  loadClient,
-  loadClients,
-  loadClientsData,
-  writeClientsFile,
-} from "@/lib/data/clients";
+import { loadClient, loadClients, loadClientsData, writeClientsFile } from "@/lib/data/clients";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
 import type { AgentRichEntry } from "@/lib/runtime/adapters/openclaw/control";
-import {
-  getModelCatalog,
-  invalidateCatalogCache,
-  isModelAvailable,
-} from "@/lib/data/models-catalog";
-import {
-  loadRecurringTasks,
-  saveRecurringTasks,
-} from "@/lib/data/recurring-tasks";
-import {
-  enrichCrons,
-  humanizeSchedule,
-  type EnrichedCron,
-} from "@/lib/data/openclaw-crons";
+import { getModelCatalog, invalidateCatalogCache, isModelAvailable } from "@/lib/data/models-catalog";
+import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
+import { enrichCrons, humanizeSchedule, type EnrichedCron } from "@/lib/data/openclaw-crons";
 import {
   applyMeetingRecommendationAction,
   getMeetingIntelligenceConfig,
@@ -47,13 +31,7 @@ import {
   type IntelligenceItem,
   type ProposalEntry,
 } from "@/lib/data/meeting-intelligence-db";
-import {
-  findMetricoolPostByUrl,
-  getMetricsTimeSeries,
-  getNorthStar,
-  getSurfaceSummary,
-  getTrend,
-} from "@/lib/data/metrics";
+import { findMetricoolPostByUrl, getMetricsTimeSeries, getNorthStar, getSurfaceSummary, getTrend } from "@/lib/data/metrics";
 import {
   addCustomMetric,
   applyDashboardTemplate,
@@ -61,18 +39,10 @@ import {
   revertDashboardDefinition,
   saveDashboardDefinition,
 } from "@/lib/data/metric-dashboard";
-import {
-  getMeetingIntelligenceCronStatus,
-  syncMeetingIntelligenceCron,
-} from "@/lib/data/meeting-intelligence-cron";
+import { getMeetingIntelligenceCronStatus, syncMeetingIntelligenceCron } from "@/lib/data/meeting-intelligence-cron";
 import { runMeetingIntelligenceSync } from "@/lib/data/meeting-intelligence-runner";
 import { getInternalClientStatus } from "@/lib/sancho-internal-api";
-import {
-  createTask,
-  getTask,
-  listUnifiedTaskRowsAsync,
-  updateTask,
-} from "@/lib/data/tasks";
+import { createTask, getTask, listUnifiedTaskRowsAsync, updateTask } from "@/lib/data/tasks";
 import {
   canonicalTaskRouteThreadId,
   resolveSameGroupTaskRoute,
@@ -86,15 +56,8 @@ import { normalizeAgentSlug } from "@/lib/data/task-execution-contract";
 import { canonicalThreadId } from "@/lib/thread-id";
 import { brandDir, EXEC_PATH } from "@/lib/data/paths";
 import { isSafeFormula } from "@/lib/metrics/dashboard-schema";
-import {
-  getContentConfig,
-  updateContentConfig,
-  type ContentConfig,
-} from "@/lib/data/content-config";
-import {
-  approveContentIdea,
-  previewContentIdeaApproval,
-} from "@/lib/data/content-approval";
+import { getContentConfig, updateContentConfig, type ContentConfig } from "@/lib/data/content-config";
+import { approveContentIdea, previewContentIdeaApproval } from "@/lib/data/content-approval";
 import { loadIdeas } from "@/lib/data/ideas";
 import {
   loadDraft,
@@ -148,19 +111,11 @@ import {
   publishIntegrationMessage,
   testIntegrationConnection,
 } from "@/lib/integrations/actions";
-import {
-  resolveYalcConfig,
-  yalcFetch,
-  countYalcRows,
-  publicYalcConfig,
-} from "@/lib/yalc/client";
+import { resolveYalcConfig, yalcFetch, countYalcRows, publicYalcConfig } from "@/lib/yalc/client";
 import { dispatchOutboundCommand } from "@/lib/yalc/outbound-command";
 import { getAvailableProviders } from "@/lib/publishing/registry";
 import { fetchAccountInfo } from "@/lib/publishing/providers/metricool";
-import {
-  getCronPublishConfig,
-  setCronPublishConfig,
-} from "@/lib/publish/cron-publish-config";
+import { getCronPublishConfig, setCronPublishConfig } from "@/lib/publish/cron-publish-config";
 import { registeredTransports } from "@/lib/publish/registry";
 import {
   cancelScheduledPost,
@@ -288,28 +243,12 @@ const CONTENT_BODY_MAX_CHARS_DEFAULT = 4_000;
 const CONTENT_BODY_MAX_CHARS_MAX = 50_000;
 const CONTENT_SIGNAL_DAYS_DEFAULT = 1;
 const CONTENT_SIGNAL_DAYS_MAX = 90;
-const PUBLISHING_CHANNELS = [
-  "linkedin",
-  "twitter",
-  "x",
-  "instagram",
-  "blog",
-  "email",
-  "youtube",
-  "tiktok",
-] as const;
+const PUBLISHING_CHANNELS = ["linkedin", "twitter", "x", "instagram", "blog", "email", "youtube", "tiktok"] as const;
 const OD_PROJECT_FILE_LIMIT_DEFAULT = 200;
 const OD_PROJECT_FILE_LIMIT_MAX = 1000;
 const OD_PROJECT_FILE_MAX_CHARS_DEFAULT = 60_000;
 const OD_PROJECT_FILE_MAX_CHARS_MAX = 200_000;
-const OD_EXPORT_FORMAT_VALUES = [
-  "html",
-  "pdf",
-  "pptx",
-  "zip",
-  "mp4",
-  "md",
-] as const;
+const OD_EXPORT_FORMAT_VALUES = ["html", "pdf", "pptx", "zip", "mp4", "md"] as const;
 const MCP_RECURRING_STATUS_VALUES = ["active", "paused"] as const;
 const MCP_RECURRING_SOURCE_VALUES = ["openclaw-cron", "local"] as const;
 const MCP_CONTENT_TASK_STATUS_VALUES = [
@@ -341,11 +280,7 @@ const MCP_CONTENT_TASK_ACTION_VALUES = [
   "discard",
   "defer",
 ] as const;
-const CONTENT_DRAFT_CLARIFY_STATUS_VALUES = [
-  "pending",
-  "answered",
-  "skipped",
-] as const;
+const CONTENT_DRAFT_CLARIFY_STATUS_VALUES = ["pending", "answered", "skipped"] as const;
 const AGENT_SLUG_RE = /^[a-z0-9-]+$/;
 // Keep this in sync with docker/setup-agents.sh. sancho is the orchestrator,
 // not a delegate target; escudero is retired there and must stay rejected here.
@@ -366,9 +301,7 @@ const askQuestionSchema = z.object({
   id: z.string().min(1),
   prompt: z.string().min(1),
   mode: z.enum(["single", "multi"]),
-  options: z
-    .array(z.object({ id: z.string().min(1), label: z.string().min(1) }))
-    .min(1),
+  options: z.array(z.object({ id: z.string().min(1), label: z.string().min(1) })).min(1),
 });
 
 type AskQuestion = z.infer<typeof askQuestionSchema>;
@@ -406,8 +339,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_mcp_status",
     {
       title: "Sancho MCP status",
-      description:
-        "Checks Sancho MCP connectivity and returns the authenticated token profile.",
+      description: "Checks Sancho MCP connectivity and returns the authenticated token profile.",
       inputSchema: {},
     },
     async () =>
@@ -431,8 +363,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_list_clients",
     {
       title: "List Sancho clients",
-      description:
-        "Lists clients allowed by the MCP token. Requires clients:read or legacy sancho:read.",
+      description: "Lists clients allowed by the MCP token. Requires clients:read or legacy sancho:read.",
       inputSchema: {},
     },
     async () =>
@@ -456,8 +387,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_get_client_context",
     {
       title: "Get Sancho client context",
-      description:
-        "Returns status, active work, blockers and recent outputs for one client. Requires clients:read or legacy sancho:read.",
+      description: "Returns status, active work, blockers and recent outputs for one client. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -466,11 +396,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "sancho_get_client_context", clientSlug, async () => {
         assertClientReadScope(context, clientSlug);
         const status = await getInternalClientStatus(clientSlug);
-        if (!status)
-          throw new McpAuthError(
-            404,
-            `Client context not found: ${clientSlug}`,
-          );
+        if (!status) throw new McpAuthError(404, `Client context not found: ${clientSlug}`);
         return jsonResult(status);
       }),
   );
@@ -479,8 +405,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_get_client",
     {
       title: "Get Sancho client",
-      description:
-        "Returns sanitized client configuration for one allowed client. Requires clients:read.",
+      description: "Returns sanitized client configuration for one allowed client. Requires clients:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -489,8 +414,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "sancho_get_client", clientSlug, async () => {
         assertClientScope(context, "clients:read", clientSlug);
         const client = loadClient(clientSlug);
-        if (!client)
-          throw new McpAuthError(404, `Client not found: ${clientSlug}`);
+        if (!client) throw new McpAuthError(404, `Client not found: ${clientSlug}`);
         return jsonResult({ ok: true, client: sanitizeClientForMcp(client) });
       }),
   );
@@ -514,22 +438,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             enabledFeatures: z.array(z.string().min(1)).optional(),
           })
           .describe("Safe client fields to update."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the update operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
     async ({ clientSlug, updates, dryRun = true, confirm = false }) =>
       runTool(context, "sancho_update_client", clientSlug, async () => {
         assertClientScope(context, "clients:write", clientSlug);
-        const preview = updateClientMetadata(clientSlug, updates, {
-          dryRun: true,
-        });
+        const preview = updateClientMetadata(clientSlug, updates, { dryRun: true });
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ...preview,
@@ -538,9 +454,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             message: "Set dryRun=false and confirm=true to update this client.",
           });
         }
-        const result = updateClientMetadata(clientSlug, updates, {
-          dryRun: false,
-        });
+        const result = updateClientMetadata(clientSlug, updates, { dryRun: false });
         return jsonResult({ ...result, dryRun: false });
       }),
   );
@@ -549,8 +463,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_list_agents",
     {
       title: "List Sancho agents",
-      description:
-        "Lists OpenClaw/Sancho agents, model overrides and recommendations. Requires agents:read.",
+      description: "Lists OpenClaw/Sancho agents, model overrides and recommendations. Requires agents:read.",
       inputSchema: {},
     },
     async () =>
@@ -565,13 +478,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_get_agent",
     {
       title: "Get Sancho agent",
-      description:
-        "Returns one OpenClaw/Sancho agent profile. Requires agents:read.",
+      description: "Returns one OpenClaw/Sancho agent profile. Requires agents:read.",
       inputSchema: {
-        agentId: z
-          .string()
-          .min(1)
-          .describe("Agent id, e.g. sancho, hamete, dulcinea."),
+        agentId: z.string().min(1).describe("Agent id, e.g. sancho, hamete, dulcinea."),
       },
     },
     async ({ agentId }) =>
@@ -590,23 +499,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description:
         "Sets or clears an agent model override. Requires agents:write. Defaults to dry-run and requires confirm=true to write.",
       inputSchema: {
-        agentId: z
-          .string()
-          .min(1)
-          .describe("Agent id, e.g. sancho, hamete, dulcinea."),
-        model: z
-          .string()
-          .min(1)
-          .nullable()
-          .describe("Model id to set, or null to inherit the default model."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the model change."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+        agentId: z.string().min(1).describe("Agent id, e.g. sancho, hamete, dulcinea."),
+        model: z.string().min(1).nullable().describe("Model id to set, or null to inherit the default model."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the model change."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
     async ({ agentId, model, dryRun = true, confirm = false }) =>
@@ -628,29 +524,23 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ...preview,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to update this agent model override.",
+            message: "Set dryRun=false and confirm=true to update this agent model override.",
           });
         }
         await getRuntime().control.setAgentModel(agentId, requestedModel);
-        const restart = (await getRuntime().lifecycle.restart()) as {
+        const restart = await getRuntime().lifecycle.restart() as {
           ok: boolean;
           method?: string;
           error?: string;
         };
         invalidateCatalogCache();
-        const updated = (await getMcpAgent(agentId)) || {
-          ...before,
-          overrideModel: requestedModel,
-        };
+        const updated = (await getMcpAgent(agentId)) || { ...before, overrideModel: requestedModel };
         const warning = [
           modelCheck.warning,
           restart.ok
             ? null
             : `Modelo guardado, pero no se pudo reiniciar el gateway (${restart.error || "timeout"}). Puede requerir restart/deploy para aplicarse al runtime.`,
-        ]
-          .filter(Boolean)
-          .join(" ");
+        ].filter(Boolean).join(" ");
         return jsonResult({
           ok: true,
           agentId,
@@ -670,18 +560,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description:
         "Lists Alarife MCP instances registered for the allowed Sancho client. Requires clients:read or legacy sancho:read.",
       inputSchema: {
-        clientSlug: z
-          .string()
-          .optional()
-          .describe("Optional Sancho client slug."),
+        clientSlug: z.string().optional().describe("Optional Sancho client slug."),
       },
     },
     async ({ clientSlug }) =>
       runTool(context, "alarife_list_instances", clientSlug, async () => {
         assertMcpAnyScope(context.principal, ["clients:read", "sancho:read"]);
         const requestedClient = clientSlug?.trim();
-        if (requestedClient)
-          assertMcpClientAccess(context.principal, requestedClient);
+        if (requestedClient) assertMcpClientAccess(context.principal, requestedClient);
 
         const instances = listAlarifeMcpInstances(requestedClient)
           .filter(
@@ -691,11 +577,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           )
           .map(publicAlarifeMcpInstance);
 
-        return jsonResult({
-          instances,
-          count: instances.length,
-          traceId: context.traceId,
-        });
+        return jsonResult({ instances, count: instances.length, traceId: context.traceId });
       }),
   );
 
@@ -707,10 +589,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Returns safe MCP install metadata for one Alarife instance. It never returns bearer tokens. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        alarifeSlug: z
-          .string()
-          .min(1)
-          .describe("Alarife slug inside the client, e.g. web or sancho-web."),
+        alarifeSlug: z.string().min(1).describe("Alarife slug inside the client, e.g. web or sancho-web."),
       },
     },
     async ({ clientSlug, alarifeSlug }) =>
@@ -734,28 +613,16 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Performs a live validation call against an Alarife MCP instance using Sancho's stored token. Requires clients:read or legacy sancho:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        alarifeSlug: z
-          .string()
-          .min(1)
-          .describe("Alarife slug inside the client, e.g. web or sancho-web."),
+        alarifeSlug: z.string().min(1).describe("Alarife slug inside the client, e.g. web or sancho-web."),
       },
     },
     async ({ clientSlug, alarifeSlug }) =>
-      runTool(
-        context,
-        "alarife_validate_mcp_connection",
-        clientSlug,
-        async () => {
-          assertClientReadScope(context, clientSlug);
-          const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
-          const validation = await validateAlarifeMcpConnection(instance);
-          return jsonResult({
-            ...publicAlarifeMcpInstance(instance),
-            validation,
-            traceId: context.traceId,
-          });
-        },
-      ),
+      runTool(context, "alarife_validate_mcp_connection", clientSlug, async () => {
+        assertClientReadScope(context, clientSlug);
+        const instance = getAlarifeMcpInstance(clientSlug, alarifeSlug);
+        const validation = await validateAlarifeMcpConnection(instance);
+        return jsonResult({ ...publicAlarifeMcpInstance(instance), validation, traceId: context.traceId });
+      }),
   );
 
   server.registerTool(
@@ -765,49 +632,24 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description:
         "Lists Brand Brain/Foundation documents for an allowed brand. Requires docs:read and brand access.",
       inputSchema: {
-        brandSlug: z
-          .string()
-          .min(1)
-          .describe("Brand slug, e.g. growth4u or xhype."),
+        brandSlug: z.string().min(1).describe("Brand slug, e.g. growth4u or xhype."),
         pathPrefix: z
           .string()
           .optional()
-          .describe(
-            "Optional brand-relative or full brand/... path prefix to filter by.",
-          ),
-        query: z
-          .string()
-          .optional()
-          .describe("Optional case-insensitive search over path/title."),
+          .describe("Optional brand-relative or full brand/... path prefix to filter by."),
+        query: z.string().optional().describe("Optional case-insensitive search over path/title."),
         extensions: z
           .array(z.enum(["md", "html"]))
           .optional()
-          .describe(
-            "Document extensions to include. Defaults to ['md', 'html'].",
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(DOCUMENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum docs to return."),
+          .describe("Document extensions to include. Defaults to ['md', 'html']."),
+        limit: z.number().int().min(1).max(DOCUMENT_LIMIT_MAX).optional().describe("Maximum docs to return."),
       },
     },
     async ({ brandSlug, pathPrefix, query, extensions, limit }) =>
       runTool(context, "sancho_list_documents", brandSlug, async () => {
         assertBrandScope(context, brandSlug);
-        const max = clampLimit(
-          limit,
-          DOCUMENT_LIMIT_DEFAULT,
-          DOCUMENT_LIMIT_MAX,
-        );
-        const result = listMcpDocuments(brandSlug, {
-          pathPrefix,
-          query,
-          extensions,
-          limit: max,
-        });
+        const max = clampLimit(limit, DOCUMENT_LIMIT_DEFAULT, DOCUMENT_LIMIT_MAX);
+        const result = listMcpDocuments(brandSlug, { pathPrefix, query, extensions, limit: max });
         return jsonResult({ ...result, brandSlug, traceId: context.traceId });
       }),
   );
@@ -819,16 +661,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description:
         "Reads one Brand Brain/Foundation .md or .html document by path. Requires docs:read and brand access.",
       inputSchema: {
-        brandSlug: z
-          .string()
-          .min(1)
-          .describe("Brand slug, e.g. growth4u or xhype."),
+        brandSlug: z.string().min(1).describe("Brand slug, e.g. growth4u or xhype."),
         docPath: z
           .string()
           .min(1)
-          .describe(
-            "Full brand/<slug>/... path or brand-relative path, e.g. market-and-us/market/current.md.",
-          ),
+          .describe("Full brand/<slug>/... path or brand-relative path, e.g. market-and-us/market/current.md."),
         maxChars: z
           .number()
           .int()
@@ -841,18 +678,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ brandSlug, docPath, maxChars }) =>
       runTool(context, "sancho_get_document", brandSlug, async () => {
         assertBrandScope(context, brandSlug);
-        const max = clampLimit(
-          maxChars,
-          DOCUMENT_MAX_CHARS_DEFAULT,
-          DOCUMENT_MAX_CHARS_MAX,
-        );
+        const max = clampLimit(maxChars, DOCUMENT_MAX_CHARS_DEFAULT, DOCUMENT_MAX_CHARS_MAX);
         const document = getMcpDocument(brandSlug, docPath, { maxChars: max });
-        return jsonResult({
-          ...document,
-          brandSlug,
-          maxChars: max,
-          traceId: context.traceId,
-        });
+        return jsonResult({ ...document, brandSlug, maxChars: max, traceId: context.traceId });
       }),
   );
 
@@ -863,61 +691,32 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description:
         "Replaces one Brand Brain/Foundation .md or .html document by path. Requires docs:write and brand access; dry-run by default.",
       inputSchema: {
-        brandSlug: z
-          .string()
-          .min(1)
-          .describe("Brand slug, e.g. growth4u or xhype."),
+        brandSlug: z.string().min(1).describe("Brand slug, e.g. growth4u or xhype."),
         docPath: z
           .string()
           .min(1)
-          .describe(
-            "Full brand/<slug>/... path or brand-relative path, e.g. market-and-us/market/current.md.",
-          ),
-        content: z
-          .string()
-          .max(500_000)
-          .describe("Full replacement document content."),
-        createIfMissing: z
-          .boolean()
-          .default(false)
-          .describe(
-            "Allow creating the document when the path does not exist.",
-          ),
+          .describe("Full brand/<slug>/... path or brand-relative path, e.g. market-and-us/market/current.md."),
+        content: z.string().max(500_000).describe("Full replacement document content."),
+        createIfMissing: z.boolean().default(false).describe("Allow creating the document when the path does not exist."),
         expectedSha256: z
           .string()
           .regex(/^[a-f0-9]{64}$/i)
           .optional()
-          .describe(
-            "Optional current document sha256 guard from sancho_get_document/update preview.",
-          ),
+          .describe("Optional current document sha256 guard from sancho_get_document/update preview."),
         dryRun: z.boolean().default(true).describe("Preview without writing."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to write."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to write."),
       },
     },
-    async ({
-      brandSlug,
-      docPath,
-      content,
-      createIfMissing = false,
-      expectedSha256,
-      dryRun = true,
-      confirm = false,
-    }) =>
+    async ({ brandSlug, docPath, content, createIfMissing = false, expectedSha256, dryRun = true, confirm = false }) =>
       runTool(context, "sancho_update_document", brandSlug, async () => {
         assertBrandWriteScope(context, brandSlug);
-        const preview = previewUpdateMcpDocument(brandSlug, docPath, content, {
-          createIfMissing,
-        });
+        const preview = previewUpdateMcpDocument(brandSlug, docPath, content, { createIfMissing });
         if (dryRun || !confirm) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to replace this document.",
+            message: "Set dryRun=false and confirm=true to replace this document.",
             preview,
           });
         }
@@ -937,13 +736,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Lists Meeting Intelligence meetings for a client, plus totals and last sync/run metadata. Requires intelligence:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(MEETING_LIMIT_MAX)
-          .optional()
-          .describe("Maximum meetings to return."),
+        limit: z.number().int().min(1).max(MEETING_LIMIT_MAX).optional().describe("Maximum meetings to return."),
       },
     },
     async ({ clientSlug, limit }) =>
@@ -979,28 +772,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Returns full Meeting Intelligence detail for one meeting: artifact, insights, decisions, impacts and recommendations. Requires intelligence:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        meetingId: z
-          .string()
-          .min(1)
-          .describe("Meeting Intelligence meeting id."),
+        meetingId: z.string().min(1).describe("Meeting Intelligence meeting id."),
       },
     },
     async ({ clientSlug, meetingId }) =>
       runTool(context, "sancho_get_meeting", clientSlug, async () => {
         assertClientScope(context, "intelligence:read", clientSlug);
-        const result = await getMeetingIntelligenceMeeting(
-          clientSlug,
-          meetingId,
-          {
-            prepareStorage: false,
-            backfillLegacy: false,
-          },
-        );
+        const result = await getMeetingIntelligenceMeeting(clientSlug, meetingId, {
+          prepareStorage: false,
+          backfillLegacy: false,
+        });
         if (result.storage.configured === true && !result.detail) {
-          throw new McpAuthError(
-            404,
-            result.error || `Meeting not found: ${meetingId}`,
-          );
+          throw new McpAuthError(404, result.error || `Meeting not found: ${meetingId}`);
         }
         return jsonResult({ clientSlug, meetingId, ...result });
       }),
@@ -1018,11 +801,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           .enum(["Decision", "Action", "Insight", "Quote", "Risk", "Run"])
           .optional()
           .describe("Optional intelligence item kind filter."),
-        status: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional case-insensitive status filter."),
+        status: z.string().min(1).optional().describe("Optional case-insensitive status filter."),
       },
     },
     async ({ clientSlug, kind, status }) =>
@@ -1032,11 +811,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           prepareStorage: false,
           backfillLegacy: false,
         });
-        const intelligence = filterIntelligenceItems(
-          state.intelligence,
-          kind,
-          status,
-        );
+        const intelligence = filterIntelligenceItems(state.intelligence, kind, status);
         const decisions = filterDecisionItems(state.decisions, kind, status);
         const documents = filterDocumentItems(state.documents, kind, status);
         const proposals = filterProposalItems(state.proposals, kind, status);
@@ -1074,22 +849,12 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       },
     },
     async ({ clientSlug }) =>
-      runTool(
-        context,
-        "sancho_get_meeting_intelligence_config",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "intelligence:read", clientSlug);
-          const result = await getMeetingIntelligenceConfig(clientSlug);
-          const cron = result.config
-            ? getMeetingIntelligenceCronStatus(
-                clientSlug,
-                result.config.sync?.cronJobId,
-              )
-            : null;
-          return jsonResult({ clientSlug, ...result, cron });
-        },
-      ),
+      runTool(context, "sancho_get_meeting_intelligence_config", clientSlug, async () => {
+        assertClientScope(context, "intelligence:read", clientSlug);
+        const result = await getMeetingIntelligenceConfig(clientSlug);
+        const cron = result.config ? getMeetingIntelligenceCronStatus(clientSlug, result.config.sync?.cronJobId) : null;
+        return jsonResult({ clientSlug, ...result, cron });
+      }),
   );
 
   server.registerTool(
@@ -1102,59 +867,38 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         config: z
           .record(z.string(), z.unknown())
-          .describe(
-            "Meeting Intelligence config object, same shape as /api/meeting-intelligence/config.",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview normalized config without writing."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe(
-            "Must be true with dryRun=false to save config and sync cron.",
-          ),
+          .describe("Meeting Intelligence config object, same shape as /api/meeting-intelligence/config."),
+        dryRun: z.boolean().default(true).describe("Preview normalized config without writing."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to save config and sync cron."),
       },
     },
     async ({ clientSlug, config, dryRun = true, confirm = false }) =>
-      runTool(
-        context,
-        "sancho_update_meeting_intelligence_config",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "intelligence:write", clientSlug);
-          const normalized = normalizeMeetingIntelligenceConfig(
-            clientSlug,
-            config as Partial<MeetingIntelligenceConfig> &
-              Record<string, unknown>,
-          );
-          if (dryRun || !confirm) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to save this Meeting Intelligence config and sync cron.",
-              preview: {
-                clientSlug,
-                config: normalized,
-                cronWillSync: true,
-              },
-            });
-          }
-          const result = await saveMeetingIntelligenceConfig(
-            clientSlug,
-            config as Partial<MeetingIntelligenceConfig> &
-              Record<string, unknown>,
-          );
-          const cron =
-            result.ok && result.config
-              ? syncMeetingIntelligenceCron(result.config)
-              : null;
-          return jsonResult({ ...result, cron });
-        },
-      ),
+      runTool(context, "sancho_update_meeting_intelligence_config", clientSlug, async () => {
+        assertClientScope(context, "intelligence:write", clientSlug);
+        const normalized = normalizeMeetingIntelligenceConfig(
+          clientSlug,
+          config as Partial<MeetingIntelligenceConfig> & Record<string, unknown>,
+        );
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to save this Meeting Intelligence config and sync cron.",
+            preview: {
+              clientSlug,
+              config: normalized,
+              cronWillSync: true,
+            },
+          });
+        }
+        const result = await saveMeetingIntelligenceConfig(
+          clientSlug,
+          config as Partial<MeetingIntelligenceConfig> & Record<string, unknown>,
+        );
+        const cron = result.ok && result.config ? syncMeetingIntelligenceCron(result.config) : null;
+        return jsonResult({ ...result, cron });
+      }),
   );
 
   server.registerTool(
@@ -1165,55 +909,29 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Runs a Meeting Intelligence sync for one client, pulling configured sources and writing meetings/insights/recommendations. Requires intelligence:write; dry-run by default.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        trigger: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Run trigger label. Defaults to mcp."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(60)
-          .optional()
-          .describe("Max source items per source. Defaults to 30, max 60."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without running source fetch/analysis."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to run sync."),
+        trigger: z.string().min(1).optional().describe("Run trigger label. Defaults to mcp."),
+        limit: z.number().int().min(1).max(60).optional().describe("Max source items per source. Defaults to 30, max 60."),
+        dryRun: z.boolean().default(true).describe("Preview without running source fetch/analysis."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to run sync."),
       },
     },
     async ({ clientSlug, trigger, limit, dryRun = true, confirm = false }) =>
-      runTool(
-        context,
-        "sancho_run_meeting_intelligence_sync",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "intelligence:write", clientSlug);
-          const max = clampLimit(limit, 30, 60);
-          const runRequest = {
-            slug: clientSlug,
-            trigger: trigger || "mcp",
-            limit: max,
-          };
-          if (dryRun || !confirm) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to run Meeting Intelligence sync.",
-              preview: runRequest,
-            });
-          }
-          const result = await runMeetingIntelligenceSync(runRequest);
-          return jsonResult(result);
-        },
-      ),
+      runTool(context, "sancho_run_meeting_intelligence_sync", clientSlug, async () => {
+        assertClientScope(context, "intelligence:write", clientSlug);
+        const max = clampLimit(limit, 30, 60);
+        const runRequest = { slug: clientSlug, trigger: trigger || "mcp", limit: max };
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to run Meeting Intelligence sync.",
+            preview: runRequest,
+          });
+        }
+        const result = await runMeetingIntelligenceSync(runRequest);
+        return jsonResult(result);
+      }),
   );
 
   server.registerTool(
@@ -1224,86 +942,43 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Approves, rejects or converts one Meeting Intelligence recommendation. Does not edit target documents directly. Requires intelligence:write; dry-run by default.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        recommendationId: z
-          .string()
-          .min(1)
-          .describe("Meeting Intelligence recommendation id."),
-        action: z
-          .enum(["approve", "reject", "convert"])
-          .describe("Recommendation action to apply."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without changing recommendation status."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to apply the action."),
+        recommendationId: z.string().min(1).describe("Meeting Intelligence recommendation id."),
+        action: z.enum(["approve", "reject", "convert"]).describe("Recommendation action to apply."),
+        dryRun: z.boolean().default(true).describe("Preview without changing recommendation status."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to apply the action."),
       },
     },
-    async ({
-      clientSlug,
-      recommendationId,
-      action,
-      dryRun = true,
-      confirm = false,
-    }) =>
-      runTool(
-        context,
-        "sancho_apply_meeting_recommendation",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "intelligence:write", clientSlug);
-          const request = { clientSlug, recommendationId, action };
-          if (dryRun || !confirm) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to apply this recommendation action.",
-              preview: request,
-            });
-          }
-          const result = await applyMeetingRecommendationAction(
-            clientSlug,
-            recommendationId,
-            action as RecommendationAction,
-          );
-          if (result.storage.configured === true && !result.recommendation) {
-            throw new McpAuthError(
-              404,
-              `Meeting recommendation not found: ${recommendationId}`,
-            );
-          }
-          return jsonResult(result);
-        },
-      ),
+    async ({ clientSlug, recommendationId, action, dryRun = true, confirm = false }) =>
+      runTool(context, "sancho_apply_meeting_recommendation", clientSlug, async () => {
+        assertClientScope(context, "intelligence:write", clientSlug);
+        const request = { clientSlug, recommendationId, action };
+        if (dryRun || !confirm) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to apply this recommendation action.",
+            preview: request,
+          });
+        }
+        const result = await applyMeetingRecommendationAction(clientSlug, recommendationId, action as RecommendationAction);
+        if (result.storage.configured === true && !result.recommendation) {
+          throw new McpAuthError(404, `Meeting recommendation not found: ${recommendationId}`);
+        }
+        return jsonResult(result);
+      }),
   );
 
   server.registerTool(
     "sancho_list_tasks",
     {
       title: "List Sancho tasks",
-      description:
-        "Lists tasks for a client with optional status/type filters. Requires tasks:read.",
+      description: "Lists tasks for a client with optional status/type filters. Requires tasks:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        status: z
-          .string()
-          .optional()
-          .describe("Optional exact task status filter."),
-        type: z
-          .string()
-          .optional()
-          .describe("Optional exact task type filter."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(TASK_LIMIT_MAX)
-          .optional()
-          .describe("Maximum tasks to return."),
+        status: z.string().optional().describe("Optional exact task status filter."),
+        type: z.string().optional().describe("Optional exact task type filter."),
+        limit: z.number().int().min(1).max(TASK_LIMIT_MAX).optional().describe("Maximum tasks to return."),
       },
     },
     async ({ clientSlug, status, type, limit }) =>
@@ -1347,50 +1022,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         name: z.string().min(1).describe("Task name."),
         description: z.string().optional().describe("Task description/brief."),
-        status: z
-          .string()
-          .optional()
-          .describe("Initial status (default todo)."),
-        type: z
-          .string()
-          .optional()
-          .describe("Task type, e.g. project or execution."),
-        parentId: z
-          .string()
-          .optional()
-          .describe("Parent task id to create a child task."),
+        status: z.string().optional().describe("Initial status (default todo)."),
+        type: z.string().optional().describe("Task type, e.g. project or execution."),
+        parentId: z.string().optional().describe("Parent task id to create a child task."),
         owner: z.string().optional().describe("Task owner (default Sancho)."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the create operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to create."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
       },
     },
-    async ({
-      clientSlug,
-      name,
-      description,
-      status,
-      type,
-      parentId,
-      owner,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, name, description, status, type, parentId, owner, dryRun, confirm }) =>
       runTool(context, "sancho_create_task", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
-        const input = pickDefined({
-          name,
-          description,
-          status,
-          type,
-          parent_id: parentId,
-          owner,
-        });
+        const input = pickDefined({ name, description, status, type, parent_id: parentId, owner });
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
@@ -1400,10 +1043,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             input: { clientSlug, ...input },
           });
         }
-        const task = await createTask(
-          clientSlug,
-          input as Parameters<typeof createTask>[1],
-        );
+        const task = await createTask(clientSlug, input as Parameters<typeof createTask>[1]);
         return jsonResult({ ok: true, task });
       }),
   );
@@ -1421,43 +1061,16 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         status: z.string().optional().describe("New status."),
         description: z.string().optional().describe("New description."),
         brief: z.string().optional().describe("New brief."),
-        completion: z
-          .string()
-          .optional()
-          .describe("New completion/done criteria."),
+        completion: z.string().optional().describe("New completion/done criteria."),
         owner: z.string().optional().describe("New owner."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the update operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
-    async ({
-      clientSlug,
-      taskId,
-      name,
-      status,
-      description,
-      brief,
-      completion,
-      owner,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, taskId, name, status, description, brief, completion, owner, dryRun, confirm }) =>
       runTool(context, "sancho_update_task", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
-        const patch = pickDefined({
-          name,
-          status,
-          description,
-          brief,
-          completion,
-          owner,
-        });
+        const patch = pickDefined({ name, status, description, brief, completion, owner });
         if (Object.keys(patch).length === 0) {
           throw new McpAuthError(
             400,
@@ -1492,120 +1105,36 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Use this for real work owned by a specialist instead of asking Sancho to answer inline.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        agent: z
-          .string()
-          .min(1)
-          .describe(
-            `Active delegate agent id. Allowed: ${DELEGATE_AGENT_LIST}.`,
-          ),
+        agent: z.string().min(1).describe(`Active delegate agent id. Allowed: ${DELEGATE_AGENT_LIST}.`),
         name: z.string().min(1).describe("Task name shown in Mission Control."),
-        brief: z
-          .string()
-          .min(1)
-          .describe("Brief to dispatch to the specialist thread."),
-        sourceThreadId: z
-          .string()
-          .optional()
-          .describe(
-            "Current MC chat thread. Used to derive the same project/group safely.",
-          ),
-        sourceTaskId: z
-          .string()
-          .optional()
-          .describe(
-            "Current task id. Used to derive the same project/group safely.",
-          ),
-        targetTaskId: z
-          .string()
-          .optional()
-          .describe("Existing destination task selected by the user."),
-        threadId: z
-          .string()
-          .optional()
-          .describe(
-            "Existing destination MC chat thread selected by the user (legacy explicit target).",
-          ),
-        threadName: z
-          .string()
-          .optional()
-          .describe("Optional thread display name. Defaults to the task name."),
-        parentId: z
-          .string()
-          .optional()
-          .describe(
-            "Project/group id. New tasks are only suggested/created inside this group.",
-          ),
-        owner: z
-          .string()
-          .optional()
-          .describe(
-            "Legacy compatibility field. It cannot override an existing task owner and MCP does not create the proposed task.",
-          ),
-        skill: z
-          .string()
-          .optional()
-          .describe("Skill that should run the task, when known."),
-        skills: z
-          .array(z.string())
-          .optional()
-          .describe("Skill pipeline for the task, when known."),
-        status: z
-          .string()
-          .optional()
-          .describe(
-            "Legacy compatibility field. Existing task status is authoritative and MCP does not create the proposed task.",
-          ),
-        proposalId: z
-          .string()
-          .optional()
-          .describe(
-            "Pending same-thread creation proposal id. MCP still cannot complete creation without a human MC Chat confirmation.",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the create+dispatch operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe(
-            "Must be true with dryRun=false to dispatch an existing task. It never proves human consent for task creation.",
-          ),
+        brief: z.string().min(1).describe("Brief to dispatch to the specialist thread."),
+        sourceThreadId: z.string().optional().describe("Current MC chat thread. Used to derive the same project/group safely."),
+        sourceTaskId: z.string().optional().describe("Current task id. Used to derive the same project/group safely."),
+        targetTaskId: z.string().optional().describe("Existing destination task selected by the user."),
+        threadId: z.string().optional().describe("Existing destination MC chat thread selected by the user (legacy explicit target)."),
+        threadName: z.string().optional().describe("Optional thread display name. Defaults to the task name."),
+        parentId: z.string().optional().describe("Project/group id. New tasks are only suggested/created inside this group."),
+        owner: z.string().optional().describe("Legacy compatibility field. It cannot override an existing task owner and MCP does not create the proposed task."),
+        skill: z.string().optional().describe("Skill that should run the task, when known."),
+        skills: z.array(z.string()).optional().describe("Skill pipeline for the task, when known."),
+        status: z.string().optional().describe("Legacy compatibility field. Existing task status is authoritative and MCP does not create the proposed task."),
+        proposalId: z.string().optional().describe("Pending same-thread creation proposal id. MCP still cannot complete creation without a human MC Chat confirmation."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create+dispatch operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to dispatch an existing task. It never proves human consent for task creation."),
       },
     },
-    async ({
-      clientSlug,
-      agent,
-      name,
-      brief,
-      sourceThreadId,
-      sourceTaskId,
-      targetTaskId,
-      threadId,
-      threadName,
-      parentId,
-      skill,
-      skills,
-      proposalId,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, agent, name, brief, sourceThreadId, sourceTaskId, targetTaskId, threadId, threadName, parentId, skill, skills, proposalId, dryRun, confirm }) =>
       runTool(context, "sancho_delegate", clientSlug, async () => {
         assertClientScope(context, "tasks:write", clientSlug);
         assertClientScope(context, "chat:write", clientSlug);
         const agentSlug = normalizeDelegateAgent(agent);
-        if (
-          ![sourceThreadId, sourceTaskId, parentId].some(
-            (value) => typeof value === "string" && value.trim(),
-          )
-        ) {
+        if (![sourceThreadId, sourceTaskId, parentId].some((value) => typeof value === "string" && value.trim())) {
           return jsonResult({
             ok: true,
             dispatched: false,
             action: "group_required",
             requiresGroupSelection: true,
-            message:
-              "sancho_delegate requires sourceThreadId, sourceTaskId or parentId so it can enforce the current project/group boundary.",
+            message: "sancho_delegate requires sourceThreadId, sourceTaskId or parentId so it can enforce the current project/group boundary.",
           });
         }
         const resolution = await resolveSameGroupTaskRoute({
@@ -1626,8 +1155,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dispatched: false,
             requiresGroupSelection: true,
             resolution,
-            message:
-              "Choose the current project/group before delegating; no standalone task or thread was created.",
+            message: "Choose the current project/group before delegating; no standalone task or thread was created.",
           });
         }
         if (resolution.kind === "ambiguous") {
@@ -1636,8 +1164,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dispatched: false,
             requiresTaskSelection: true,
             resolution,
-            message:
-              "Select targetTaskId from the compatible tasks, or explicitly confirm creation after choosing a new task.",
+            message: "Select targetTaskId from the compatible tasks, or explicitly confirm creation after choosing a new task.",
           });
         }
         if (resolution.kind === "no_change") {
@@ -1648,8 +1175,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             resolution,
             taskId: resolution.source.taskId,
             threadId: resolution.source.targetThreadId,
-            message:
-              "The resolver selected the current source task. No new turn was dispatched.",
+            message: "The resolver selected the current source task. No new turn was dispatched.",
           });
         }
 
@@ -1666,8 +1192,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
               action: "source_thread_required",
               requiresSourceThread: true,
               resolution,
-              message:
-                "No task was created. MCP creation proposals must be bound to a real source chat thread so a later human MC Chat message can confirm them.",
+              message: "No task was created. MCP creation proposals must be bound to a real source chat thread so a later human MC Chat message can confirm them.",
             });
           }
 
@@ -1681,30 +1206,24 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             name: name.trim(),
             brief: brief.trim(),
           };
-          const suppliedProposalId =
-            typeof proposalId === "string" && proposalId.trim()
-              ? proposalId.trim()
-              : undefined;
-          let proposal = suppliedProposalId
-            ? await getPendingTaskRouteProposal(
-                clientSlug,
-                proposalSourceThreadId,
-              )
+          const suppliedProposalId = typeof proposalId === "string" && proposalId.trim()
+            ? proposalId.trim()
             : undefined;
-          if (
-            suppliedProposalId &&
-            (!proposal ||
-              proposal.id !== suppliedProposalId ||
-              !proposalMatches(proposal, proposalInput))
-          ) {
+          let proposal = suppliedProposalId
+            ? await getPendingTaskRouteProposal(clientSlug, proposalSourceThreadId)
+            : undefined;
+          if (suppliedProposalId && (
+            !proposal
+            || proposal.id !== suppliedProposalId
+            || !proposalMatches(proposal, proposalInput)
+          )) {
             return jsonResult({
               ok: true,
               dispatched: false,
               action: "confirmation_required",
               requiresHumanConfirmation: true,
               resolution,
-              message:
-                "No task was created. proposalId is missing, stale or does not match the exact source, group, agent, skills, name and brief.",
+              message: "No task was created. proposalId is missing, stale or does not match the exact source, group, agent, skills, name and brief.",
             });
           }
           proposal ??= await issueTaskRouteProposal(proposalInput);
@@ -1732,15 +1251,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         }
 
         const tid = resolution.target.targetThreadId;
-        if (
-          isMcpDelegateSelfRoute({
-            clientSlug,
-            sourceThreadId,
-            sourceTaskId,
-            targetTaskId: resolution.target.taskId,
-            targetThreadId: tid,
-          })
-        ) {
+        if (isMcpDelegateSelfRoute({
+          clientSlug,
+          sourceThreadId,
+          sourceTaskId,
+          targetTaskId: resolution.target.taskId,
+          targetThreadId: tid,
+        })) {
           return jsonResult({
             ok: true,
             dispatched: false,
@@ -1748,8 +1265,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             resolution,
             taskId: resolution.target.taskId,
             threadId: tid,
-            message:
-              "The resolved destination is the current source task/thread. No new turn was dispatched.",
+            message: "The resolved destination is the current source task/thread. No new turn was dispatched.",
           });
         }
 
@@ -1761,16 +1277,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             action: "target_inactive",
             resolution,
             taskId: resolution.target.taskId,
-            message:
-              "The resolved target disappeared or became inactive before dispatch. Nothing was sent.",
+            message: "The resolved target disappeared or became inactive before dispatch. Nothing was sent.",
           });
         }
         const targetAgent = normalizeAgentSlug(
           isRecord(task) && typeof task.agent === "string" && task.agent.trim()
             ? task.agent
-            : isRecord(task) &&
-                typeof task.owner === "string" &&
-                task.owner.trim()
+            : isRecord(task) && typeof task.owner === "string" && task.owner.trim()
               ? task.owner
               : resolution.target.agent,
         );
@@ -1783,15 +1296,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             taskId: resolution.target.taskId,
             expectedAgent: targetAgent,
             requestedAgent: agentSlug,
-            message:
-              "The selected task belongs to another agent (or has no authoritative owner). Nothing was dispatched.",
+            message: "The selected task belongs to another agent (or has no authoritative owner). Nothing was dispatched.",
           });
         }
         if (
-          !resolution.groupId ||
-          !resolution.target.groupId ||
-          normalizedMcpRouteKey(resolution.groupId) !==
-            normalizedMcpRouteKey(resolution.target.groupId)
+          !resolution.groupId
+          || !resolution.target.groupId
+          || normalizedMcpRouteKey(resolution.groupId) !== normalizedMcpRouteKey(resolution.target.groupId)
         ) {
           return jsonResult({
             ok: true,
@@ -1799,8 +1310,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             action: "group_mismatch",
             resolution,
             taskId: resolution.target.taskId,
-            message:
-              "The selected task is not verifiably inside the resolved source group. Nothing was dispatched.",
+            message: "The selected task is not verifiably inside the resolved source group. Nothing was dispatched.",
           });
         }
 
@@ -1825,8 +1335,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             requiresConfirmation: true,
             action: "reuse",
             resolution,
-            message:
-              "Set dryRun=false and confirm=true to dispatch through the authoritative /api/chat/send task harness.",
+            message: "Set dryRun=false and confirm=true to dispatch through the authoritative /api/chat/send task harness.",
             threadId: tid,
             task,
             payload,
@@ -1834,10 +1343,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         }
 
         try {
-          const dispatch = await dispatchMcChatThroughControlPlane(
-            context,
-            payload,
-          );
+          const dispatch = await dispatchMcChatThroughControlPlane(context, payload);
           return jsonResult({
             ok: true,
             action: "reuse",
@@ -1848,10 +1354,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dispatch,
           });
         } catch (err) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "Unknown gateway dispatch error";
+          const message = err instanceof Error ? err.message : "Unknown gateway dispatch error";
           throw new Error(
             `Resolved task ${resolution.target.taskId} for ${agentSlug} at thread ${tid}, but the specialist was NOT dispatched through the task harness: ${message}`,
           );
@@ -1867,27 +1370,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Lists recurring tasks and OpenClaw cron jobs for one client, with status/source filters. Requires recurring:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        status: z
-          .enum(MCP_RECURRING_STATUS_VALUES)
-          .optional()
-          .describe("Optional status filter."),
-        source: z
-          .enum(MCP_RECURRING_SOURCE_VALUES)
-          .optional()
-          .describe("Optional source filter."),
-        query: z
-          .string()
-          .optional()
-          .describe(
-            "Optional case-insensitive search over name/description/prompt.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(RECURRING_LIMIT_MAX)
-          .optional()
-          .describe("Maximum tasks to return."),
+        status: z.enum(MCP_RECURRING_STATUS_VALUES).optional().describe("Optional status filter."),
+        source: z.enum(MCP_RECURRING_SOURCE_VALUES).optional().describe("Optional source filter."),
+        query: z.string().optional().describe("Optional case-insensitive search over name/description/prompt."),
+        limit: z.number().int().min(1).max(RECURRING_LIMIT_MAX).optional().describe("Maximum tasks to return."),
         maxPromptChars: z
           .number()
           .int()
@@ -1900,11 +1386,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug, status, source, query, limit, maxPromptChars }) =>
       runTool(context, "recurring_list_tasks", clientSlug, async () => {
         assertClientScope(context, "recurring:read", clientSlug);
-        const max = clampLimit(
-          limit,
-          RECURRING_LIMIT_DEFAULT,
-          RECURRING_LIMIT_MAX,
-        );
+        const max = clampLimit(limit, RECURRING_LIMIT_DEFAULT, RECURRING_LIMIT_MAX);
         const promptMax = clampLimit(
           maxPromptChars,
           RECURRING_PROMPT_MAX_CHARS_DEFAULT,
@@ -1917,11 +1399,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           limit: max,
           maxPromptChars: promptMax,
         });
-        return jsonResult({
-          ...result,
-          clientSlug,
-          filters: pickDefined({ status, source, query }),
-        });
+        return jsonResult({ ...result, clientSlug, filters: pickDefined({ status, source, query }) });
       }),
   );
 
@@ -1933,35 +1411,17 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Pauses or activates one local recurring task or OpenClaw cron job by id. Requires recurring:write; dry-run by default.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        taskId: z
-          .string()
-          .min(1)
-          .describe("Recurring task or OpenClaw cron id."),
-        desiredStatus: z
-          .enum(MCP_RECURRING_STATUS_VALUES)
-          .describe("Target status."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without changing the task/cron."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update status."),
+        taskId: z.string().min(1).describe("Recurring task or OpenClaw cron id."),
+        desiredStatus: z.enum(MCP_RECURRING_STATUS_VALUES).describe("Target status."),
+        dryRun: z.boolean().default(true).describe("Preview without changing the task/cron."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update status."),
       },
     },
-    async ({
-      clientSlug,
-      taskId,
-      desiredStatus,
-      dryRun = true,
-      confirm = false,
-    }) =>
+    async ({ clientSlug, taskId, desiredStatus, dryRun = true, confirm = false }) =>
       runTool(context, "recurring_set_task_status", clientSlug, async () => {
         assertClientScope(context, "recurring:write", clientSlug);
         const target = findMcpRecurringTask(clientSlug, taskId);
-        if (!target)
-          throw new McpAuthError(404, `Recurring task not found: ${taskId}`);
+        if (!target) throw new McpAuthError(404, `Recurring task not found: ${taskId}`);
         const preview = {
           clientSlug,
           taskId,
@@ -1975,8 +1435,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to update this recurring task status.",
+            message: "Set dryRun=false and confirm=true to update this recurring task status.",
             preview,
           });
         }
@@ -1984,34 +1443,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           return jsonResult({ ok: true, ...preview });
         }
         if (target.source === "openclaw-cron") {
-          execFileSync(
-            "openclaw",
-            ["cron", desiredStatus === "active" ? "enable" : "disable", taskId],
-            {
-              timeout: 10_000,
-              encoding: "utf-8",
-              env: { ...process.env, PATH: EXEC_PATH },
-            },
-          );
+          execFileSync("openclaw", ["cron", desiredStatus === "active" ? "enable" : "disable", taskId], {
+            timeout: 10_000,
+            encoding: "utf-8",
+            env: { ...process.env, PATH: EXEC_PATH },
+          });
           return jsonResult({ ok: true, ...preview });
         }
         const tasks = loadRecurringTasks(clientSlug);
         const task = tasks.find((item) => item.id === taskId);
-        if (!task)
-          throw new McpAuthError(404, `Recurring task not found: ${taskId}`);
+        if (!task) throw new McpAuthError(404, `Recurring task not found: ${taskId}`);
         task.status = desiredStatus;
         task.active = desiredStatus === "active";
         task.updated_at = new Date().toISOString();
         saveRecurringTasks(clientSlug, tasks);
-        return jsonResult({
-          ok: true,
-          ...preview,
-          task: serializeLocalRecurringTask(
-            task,
-            clientSlug,
-            RECURRING_PROMPT_MAX_CHARS_DEFAULT,
-          ),
-        });
+        return jsonResult({ ok: true, ...preview, task: serializeLocalRecurringTask(task, clientSlug, RECURRING_PROMPT_MAX_CHARS_DEFAULT) });
       }),
   );
 
@@ -2025,30 +1471,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         text: z.string().min(1).describe("Message text."),
         threadId: z.string().optional().describe("Optional MC chat thread id."),
-        threadName: z
-          .string()
-          .optional()
-          .describe("Optional thread display name."),
+        threadName: z.string().optional().describe("Optional thread display name."),
         agent: z.string().optional().describe("Optional target agent id."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the send operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to send."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the send operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to send."),
       },
     },
-    async ({
-      clientSlug,
-      text,
-      threadId,
-      threadName,
-      agent,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, text, threadId, threadName, agent, dryRun, confirm }) =>
       runTool(context, "sancho_send_message", clientSlug, async () => {
         assertClientScope(context, "chat:write", clientSlug);
         const tid = threadId || `${clientSlug}:mcp`;
@@ -2071,8 +1500,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to send this chat message.",
+            message: "Set dryRun=false and confirm=true to send this chat message.",
             payload,
           });
         }
@@ -2084,15 +1512,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const data = parseGatewayBody(result.raw);
         if (!result.ok) {
           const detail = result.raw ? `: ${result.raw.slice(0, 500)}` : "";
-          throw new Error(
-            `Mission Control runtime rejected message: HTTP ${result.status}${detail}`,
-          );
+          throw new Error(`Mission Control runtime rejected message: HTTP ${result.status}${detail}`);
         }
-        return jsonResult({
-          ok: true,
-          chatId: result.chatId || extractChatId(data) || tid,
-          gateway: data,
-        });
+        return jsonResult({ ok: true, chatId: result.chatId || extractChatId(data) || tid, gateway: data });
       }),
   );
 
@@ -2100,8 +1522,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "sancho_list_chat_threads",
     {
       title: "List Sancho chat threads",
-      description:
-        "Lists Mission Control chat threads for a client. Requires chat:read (legacy sancho:chat still works).",
+      description: "Lists Mission Control chat threads for a client. Requires chat:read (legacy sancho:chat still works).",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         limit: z
@@ -2116,11 +1537,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug, limit }) =>
       runTool(context, "sancho_list_chat_threads", clientSlug, async () => {
         assertClientScope(context, "chat:read", clientSlug);
-        const max = clampLimit(
-          limit,
-          CHAT_THREAD_LIMIT_DEFAULT,
-          CHAT_THREAD_LIMIT_MAX,
-        );
+        const max = clampLimit(limit, CHAT_THREAD_LIMIT_DEFAULT, CHAT_THREAD_LIMIT_MAX);
         const threads = listThreadsForSlug(clientSlug).slice(0, max);
         return jsonResult({ threads, count: threads.length, limit: max });
       }),
@@ -2134,10 +1551,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Reads recent Mission Control chat messages for a client and extracts pending :::ask multiple-choice questions. Requires chat:read (legacy sancho:chat still works).",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        threadId: z
-          .string()
-          .min(1)
-          .describe("Thread id, either full '<client>:<thread>' or short id."),
+        threadId: z.string().min(1).describe("Thread id, either full '<client>:<thread>' or short id."),
         limit: z
           .number()
           .int()
@@ -2152,24 +1566,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "chat:read", clientSlug);
         const tid = normalizeChatThreadId(clientSlug, threadId);
         const thread = getThread(tid);
-        if (
-          !chatThreadExists(clientSlug, tid) &&
-          thread.messages.length === 0
-        ) {
+        if (!chatThreadExists(clientSlug, tid) && thread.messages.length === 0) {
           throw new McpAuthError(404, `Chat thread not found: ${tid}`);
         }
 
-        const max = clampLimit(
-          limit,
-          CHAT_MESSAGE_LIMIT_DEFAULT,
-          CHAT_MESSAGE_LIMIT_MAX,
-        );
+        const max = clampLimit(limit, CHAT_MESSAGE_LIMIT_DEFAULT, CHAT_MESSAGE_LIMIT_MAX);
         const startIndex = Math.max(0, thread.messages.length - max);
         const messages = thread.messages
           .slice(startIndex)
-          .map((message, offset) =>
-            sanitizeChatMessage(message, startIndex + offset),
-          );
+          .map((message, offset) => sanitizeChatMessage(message, startIndex + offset));
         const pendingQuestions = extractPendingQuestions(thread.messages);
 
         return jsonResult({
@@ -2236,8 +1641,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_get_config",
     {
       title: "Get Content Engine config",
-      description:
-        "Reads the Content Engine config for a client. Requires content:read.",
+      description: "Reads the Content Engine config for a client. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -2245,11 +1649,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "content_get_config", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          config: getContentConfig(clientSlug),
-        });
+        return jsonResult({ ok: true, clientSlug, config: getContentConfig(clientSlug) });
       }),
   );
 
@@ -2279,14 +1679,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           })
           .optional()
           .describe("Optional carousel config patch."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the config update."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the config update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
     async ({ clientSlug, imageGeneration, carousel, dryRun, confirm }) =>
@@ -2294,10 +1688,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "content:write", clientSlug);
         const patch = buildContentConfigPatch(imageGeneration, carousel);
         if (Object.keys(patch).length === 0) {
-          throw new McpAuthError(
-            400,
-            "No config fields to update; provide imageGeneration and/or carousel",
-          );
+          throw new McpAuthError(400, "No config fields to update; provide imageGeneration and/or carousel");
         }
         const current = getContentConfig(clientSlug);
         const preview = mergeContentConfig(current, patch);
@@ -2306,8 +1697,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to update the Content Engine config.",
+            message: "Set dryRun=false and confirm=true to update the Content Engine config.",
             current,
             patch,
             preview,
@@ -2326,54 +1716,20 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Creates one Content Engine idea in content/idea-queue.json. Requires content:write. Defaults to dry-run and requires confirm=true to write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        id: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional desired idea id. Collisions get a suffix."),
+        id: z.string().min(1).optional().describe("Optional desired idea id. Collisions get a suffix."),
         title: z.string().min(1).describe("Idea title/headline."),
         pillarId: z.string().optional().describe("Optional content pillar id."),
         contentType: z.string().optional().describe("Optional content type."),
-        targetChannel: z
-          .string()
-          .optional()
-          .describe("Optional target channel."),
+        targetChannel: z.string().optional().describe("Optional target channel."),
         angleDraft: z.string().optional().describe("Optional angle/POV draft."),
-        povConfidence: z
-          .number()
-          .min(0)
-          .max(1)
-          .optional()
-          .describe("Optional POV confidence from 0 to 1."),
-        signalSummary: z
-          .string()
-          .optional()
-          .describe("Optional source signal summary."),
-        signalSource: z
-          .string()
-          .optional()
-          .describe("Optional source signal name."),
-        signalUrl: z
-          .string()
-          .url()
-          .optional()
-          .describe("Optional source signal URL."),
-        signalDate: z
-          .string()
-          .optional()
-          .describe("Optional source signal date, defaults to today."),
-        sourceSignals: z
-          .array(z.string().min(1))
-          .optional()
-          .describe("Optional source signal ids/paths."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the create operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to create."),
+        povConfidence: z.number().min(0).max(1).optional().describe("Optional POV confidence from 0 to 1."),
+        signalSummary: z.string().optional().describe("Optional source signal summary."),
+        signalSource: z.string().optional().describe("Optional source signal name."),
+        signalUrl: z.string().url().optional().describe("Optional source signal URL."),
+        signalDate: z.string().optional().describe("Optional source signal date, defaults to today."),
+        sourceSignals: z.array(z.string().min(1)).optional().describe("Optional source signal ids/paths."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the create operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
       },
     },
     async ({
@@ -2416,19 +1772,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to create this Content Engine idea.",
+            message: "Set dryRun=false and confirm=true to create this Content Engine idea.",
             idea,
             existingCount: ideas.length,
           });
         }
         await saveContentIdeaQueue(clientSlug, [...ideas, idea]);
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          idea,
-          count: ideas.length + 1,
-        });
+        return jsonResult({ ok: true, clientSlug, idea, count: ideas.length + 1 });
       }),
   );
 
@@ -2444,62 +1794,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         status: z
           .enum(["New", "Discarded", "Deferred", "Published"])
           .optional()
-          .describe(
-            "Safe status update. Approved is intentionally excluded because it triggers generation.",
-          ),
-        angleDraft: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New angle/POV draft, or null to clear."),
-        pillarId: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New pillar id, or null to clear."),
-        targetChannel: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New target channel, or null to clear."),
-        contentType: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New content type, or null to clear."),
-        author: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New author/persona id, or null to clear."),
-        targetDate: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New target date, or null to clear."),
-        dispatchDate: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New dispatch date, or null to clear."),
-        dispatchSlot: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New dispatch slot, or null to clear."),
-        projectTaskId: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("New linked project task id, or null to clear."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the update operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+          .describe("Safe status update. Approved is intentionally excluded because it triggers generation."),
+        angleDraft: z.string().nullable().optional().describe("New angle/POV draft, or null to clear."),
+        pillarId: z.string().nullable().optional().describe("New pillar id, or null to clear."),
+        targetChannel: z.string().nullable().optional().describe("New target channel, or null to clear."),
+        contentType: z.string().nullable().optional().describe("New content type, or null to clear."),
+        author: z.string().nullable().optional().describe("New author/persona id, or null to clear."),
+        targetDate: z.string().nullable().optional().describe("New target date, or null to clear."),
+        dispatchDate: z.string().nullable().optional().describe("New dispatch date, or null to clear."),
+        dispatchSlot: z.string().nullable().optional().describe("New dispatch slot, or null to clear."),
+        projectTaskId: z.string().nullable().optional().describe("New linked project task id, or null to clear."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the update operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
     async ({
@@ -2522,11 +1828,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "content:write", clientSlug);
         const ideas = await loadContentIdeaQueue(clientSlug);
         const index = ideas.findIndex((idea) => idea.id === ideaId);
-        if (index < 0)
-          throw new McpAuthError(
-            404,
-            `Content Engine idea not found: ${ideaId}`,
-          );
+        if (index < 0) throw new McpAuthError(404, `Content Engine idea not found: ${ideaId}`);
         const patch = buildContentIdeaPatch({
           status,
           angleDraft,
@@ -2549,8 +1851,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to update this Content Engine idea.",
+            message: "Set dryRun=false and confirm=true to update this Content Engine idea.",
             ideaId,
             current,
             patch,
@@ -2573,56 +1874,27 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Content Engine idea id."),
-        approvedBy: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional operator/user id to stamp on the idea."),
-        approvedVia: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional approval source, defaults to mcp."),
+        approvedBy: z.string().min(1).optional().describe("Optional operator/user id to stamp on the idea."),
+        approvedVia: z.string().min(1).optional().describe("Optional approval source, defaults to mcp."),
         triggerWriter: z
           .boolean()
           .default(true)
-          .describe(
-            "When confirmed, best-effort trigger the writer skill through the ContentTask chat thread.",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe(
-            "When true, only previews the approval/provisioning operation.",
-          ),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to approve and provision."),
+          .describe("When confirmed, best-effort trigger the writer skill through the ContentTask chat thread."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the approval/provisioning operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to approve and provision."),
       },
     },
-    async ({
-      clientSlug,
-      ideaId,
-      approvedBy,
-      approvedVia,
-      triggerWriter,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, ideaId, approvedBy, approvedVia, triggerWriter, dryRun, confirm }) =>
       runTool(context, "content_approve_idea", clientSlug, async () => {
         assertClientScope(context, "content:write", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
-        const preview = previewContentIdeaApproval(clientSlug, ideaId, {
-          triggerWriter,
-        });
+        const preview = previewContentIdeaApproval(clientSlug, ideaId, { triggerWriter });
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to approve this idea and provision its ContentTask/drafts.",
+            message: "Set dryRun=false and confirm=true to approve this idea and provision its ContentTask/drafts.",
             preview,
           });
         }
@@ -2639,34 +1911,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_list_ideas",
     {
       title: "List Content Engine ideas",
-      description:
-        "Lists Content Engine ideas for a client with optional status/channel/query filters. Requires content:read.",
+      description: "Lists Content Engine ideas for a client with optional status/channel/query filters. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        status: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional case-insensitive idea status filter."),
-        channel: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional target channel filter."),
-        query: z
-          .string()
-          .min(1)
-          .optional()
-          .describe(
-            "Optional case-insensitive search over title/description/angle.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum ideas to return."),
+        status: z.string().min(1).optional().describe("Optional case-insensitive idea status filter."),
+        channel: z.string().min(1).optional().describe("Optional target channel filter."),
+        query: z.string().min(1).optional().describe("Optional case-insensitive search over title/description/angle."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum ideas to return."),
       },
     },
     async ({ clientSlug, status, channel, query, limit }) =>
@@ -2676,20 +1927,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const all = loadIdeas(clientSlug);
         const ideas = all
           .filter((idea) => matchesLooseStatus(idea.status, status))
-          .filter(
-            (idea) =>
-              !channel ||
-              idea.target_channel === channel ||
-              idea.channels?.includes(channel),
-          )
+          .filter((idea) => !channel || idea.target_channel === channel || idea.channels?.includes(channel))
           .filter((idea) =>
             matchesQuery(query, [
               idea.id,
               idea.title,
               idea.description,
-              String(
-                (idea as unknown as Record<string, unknown>).angle_draft || "",
-              ),
+              String((idea as unknown as Record<string, unknown>).angle_draft || ""),
             ]),
           )
           .slice(0, max);
@@ -2714,30 +1958,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Lists unified Content Engine tasks for a client with optional status/channel/query filters. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        status: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional case-insensitive ContentTask status filter."),
-        channel: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional target channel filter."),
-        query: z
-          .string()
-          .min(1)
-          .optional()
-          .describe(
-            "Optional case-insensitive search over id/name/title/angle.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum tasks to return."),
+        status: z.string().min(1).optional().describe("Optional case-insensitive ContentTask status filter."),
+        channel: z.string().min(1).optional().describe("Optional target channel filter."),
+        query: z.string().min(1).optional().describe("Optional case-insensitive search over id/name/title/angle."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum tasks to return."),
       },
     },
     async ({ clientSlug, status, channel, query, limit }) =>
@@ -2747,19 +1971,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const all = loadUnifiedContentTasks(clientSlug);
         const contentTasks = all
           .filter((task) => matchesLooseStatus(task.status, status))
-          .filter(
-            (task) =>
-              !channel ||
-              task.target_channel === channel ||
-              task.target_channels?.includes(channel),
-          )
+          .filter((task) => !channel || task.target_channel === channel || task.target_channels?.includes(channel))
           .filter((task) =>
-            matchesQuery(query, [
-              task.id,
-              task.name,
-              task.title,
-              task.angle_draft,
-            ]),
+            matchesQuery(query, [task.id, task.name, task.title, task.angle_draft]),
           )
           .slice(0, max);
         return jsonResult({
@@ -2779,8 +1993,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_get_task",
     {
       title: "Get Content Engine task",
-      description:
-        "Reads one unified Content Engine task by id. Requires content:read.",
+      description: "Reads one unified Content Engine task by id. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         contentTaskId: z.string().min(1).describe("ContentTask id."),
@@ -2789,14 +2002,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug, contentTaskId }) =>
       runTool(context, "content_get_task", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
-        const task = loadUnifiedContentTasks(clientSlug).find(
-          (item) => item.id === contentTaskId,
-        );
-        if (!task)
-          throw new McpAuthError(
-            404,
-            `Content task not found: ${contentTaskId}`,
-          );
+        const task = loadUnifiedContentTasks(clientSlug).find((item) => item.id === contentTaskId);
+        if (!task) throw new McpAuthError(404, `Content task not found: ${contentTaskId}`);
         return jsonResult({ ok: true, clientSlug, contentTask: task });
       }),
   );
@@ -2810,46 +2017,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         contentTaskId: z.string().min(1).describe("ContentTask id."),
-        name: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional ContentTask name."),
-        skill: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional writer skill id."),
-        targetChannels: z
-          .array(z.string().min(1))
-          .optional()
-          .describe("Optional replacement target channel list."),
+        name: z.string().min(1).optional().describe("Optional ContentTask name."),
+        skill: z.string().min(1).optional().describe("Optional writer skill id."),
+        targetChannels: z.array(z.string().min(1)).optional().describe("Optional replacement target channel list."),
         owner: z.string().min(1).optional().describe("Optional owner."),
-        scheduledFor: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional scheduling date/time metadata."),
-        clarifyStatus: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional clarify status metadata."),
+        scheduledFor: z.string().min(1).optional().describe("Optional scheduling date/time metadata."),
+        clarifyStatus: z.string().min(1).optional().describe("Optional clarify status metadata."),
         mediaPolicy: z
           .record(z.string(), z.enum(["required", "optional"]))
           .optional()
           .describe("Optional per-channel media policy map."),
-        author: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional author/persona id."),
-        status: z
-          .enum(MCP_CONTENT_TASK_STATUS_VALUES)
-          .optional()
-          .describe(
-            "Optional ContentTask status. Publishing is intentionally excluded.",
-          ),
+        author: z.string().min(1).optional().describe("Optional author/persona id."),
+        status: z.enum(MCP_CONTENT_TASK_STATUS_VALUES).optional().describe("Optional ContentTask status. Publishing is intentionally excluded."),
         pipelineState: z
           .enum(MCP_CONTENT_TASK_PIPELINE_STATE_VALUES)
           .nullable()
@@ -2858,17 +2037,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         channelPhases: z
           .record(z.string(), z.enum(MCP_CHANNEL_PHASE_VALUES))
           .optional()
-          .describe(
-            "Optional per-channel phase patch. The published phase is intentionally excluded.",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the task update."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+          .describe("Optional per-channel phase patch. The published phase is intentionally excluded."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the task update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
     async ({
@@ -2905,34 +2076,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           pipelineState,
           channelPhases,
         });
-        if (!plan.hasChanges)
-          throw new McpAuthError(400, "No ContentTask fields to update");
+        if (!plan.hasChanges) throw new McpAuthError(400, "No ContentTask fields to update");
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to update this ContentTask.",
+            message: "Set dryRun=false and confirm=true to update this ContentTask.",
             contentTaskId,
             parentTaskId: found.parentTaskId,
             current: found.ct,
             plan,
           });
         }
-        const updated = applyContentTaskUpdatePlan(
-          clientSlug,
-          found.parentTaskId,
-          contentTaskId,
-          found.ct,
-          plan,
-        );
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          parentTaskId: found.parentTaskId,
-          contentTask: updated,
-        });
+        const updated = applyContentTaskUpdatePlan(clientSlug, found.parentTaskId, contentTaskId, found.ct, plan);
+        return jsonResult({ ok: true, clientSlug, parentTaskId: found.parentTaskId, contentTask: updated });
       }),
   );
 
@@ -2945,17 +2103,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         contentTaskId: z.string().min(1).describe("ContentTask id."),
-        action: z
-          .enum(MCP_CONTENT_TASK_ACTION_VALUES)
-          .describe("Lifecycle action. Publishing is intentionally excluded."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the lifecycle transition."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to transition."),
+        action: z.enum(MCP_CONTENT_TASK_ACTION_VALUES).describe("Lifecycle action. Publishing is intentionally excluded."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the lifecycle transition."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to transition."),
       },
     },
     async ({ clientSlug, contentTaskId, action, dryRun, confirm }) =>
@@ -2963,18 +2113,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "content:write", clientSlug);
         assertContentPathSegment("contentTaskId", contentTaskId);
         const found = requireMcpContentTask(clientSlug, contentTaskId);
-        const transition = buildContentTaskTransition(
-          clientSlug,
-          found.ct,
-          action,
-        );
+        const transition = buildContentTaskTransition(clientSlug, found.ct, action);
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to run this ContentTask transition.",
+            message: "Set dryRun=false and confirm=true to run this ContentTask transition.",
             contentTaskId,
             parentTaskId: found.parentTaskId,
             current: found.ct,
@@ -2988,13 +2133,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           transition.status,
           transition.pipelineState,
         );
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          parentTaskId: found.parentTaskId,
-          contentTask: updated,
-          transition,
-        });
+        return jsonResult({ ok: true, clientSlug, parentTaskId: found.parentTaskId, contentTask: updated, transition });
       }),
   );
 
@@ -3006,20 +2145,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Lists Content Engine draft document summaries for one idea or all discovered draft folders. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        ideaId: z
-          .string()
-          .min(1)
-          .optional()
-          .describe(
-            "Optional idea id. When omitted, lists all discovered draft folders.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum draft summaries to return."),
+        ideaId: z.string().min(1).optional().describe("Optional idea id. When omitted, lists all discovered draft folders."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum draft summaries to return."),
       },
     },
     async ({ clientSlug, ideaId, limit }) =>
@@ -3027,14 +2154,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "content:read", clientSlug);
         if (ideaId) assertContentPathSegment("ideaId", ideaId);
         const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
-        const ideaIds = ideaId
-          ? [ideaId]
-          : await listContentDraftIdeaIds(clientSlug);
-        const drafts = ideaIds
-          .flatMap((id) =>
-            listDrafts(clientSlug, id).map(serializeContentDraftSummary),
-          )
-          .slice(0, max);
+        const ideaIds = ideaId ? [ideaId] : await listContentDraftIdeaIds(clientSlug);
+        const drafts = ideaIds.flatMap((id) => listDrafts(clientSlug, id).map(serializeContentDraftSummary)).slice(0, max);
         return jsonResult({
           ok: true,
           clientSlug,
@@ -3056,53 +2177,17 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Idea id."),
-        channel: z
-          .string()
-          .min(1)
-          .describe(
-            "Draft channel/file name without .md, e.g. linkedin, proposal or clarify.",
-          ),
-        body: z
-          .string()
-          .optional()
-          .describe("Optional replacement markdown body."),
-        clarifyStatus: z
-          .enum(CONTENT_DRAFT_CLARIFY_STATUS_VALUES)
-          .optional()
-          .describe("Optional clarify_status frontmatter."),
-        itemType: z
-          .enum(VALID_CONTENT_ITEM_TYPES)
-          .optional()
-          .describe("Optional content item type frontmatter."),
-        mediaPolicy: z
-          .enum(["required", "optional"])
-          .optional()
-          .describe("Optional media_policy frontmatter."),
-        model: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional model metadata."),
-        researchUsed: z
-          .boolean()
-          .optional()
-          .describe("Optional research_used metadata."),
-        selfQa: z
-          .enum(["PASS", "FAIL"])
-          .optional()
-          .describe("Optional self_qa verdict."),
-        selfQaNotes: z
-          .array(z.string())
-          .optional()
-          .describe("Optional self_qa_notes list."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the draft update."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+        channel: z.string().min(1).describe("Draft channel/file name without .md, e.g. linkedin, proposal or clarify."),
+        body: z.string().optional().describe("Optional replacement markdown body."),
+        clarifyStatus: z.enum(CONTENT_DRAFT_CLARIFY_STATUS_VALUES).optional().describe("Optional clarify_status frontmatter."),
+        itemType: z.enum(VALID_CONTENT_ITEM_TYPES).optional().describe("Optional content item type frontmatter."),
+        mediaPolicy: z.enum(["required", "optional"]).optional().describe("Optional media_policy frontmatter."),
+        model: z.string().min(1).optional().describe("Optional model metadata."),
+        researchUsed: z.boolean().optional().describe("Optional research_used metadata."),
+        selfQa: z.enum(["PASS", "FAIL"]).optional().describe("Optional self_qa verdict."),
+        selfQaNotes: z.array(z.string()).optional().describe("Optional self_qa_notes list."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the draft update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
     async ({
@@ -3125,11 +2210,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertContentPathSegment("ideaId", ideaId);
         assertContentPathSegment("channel", channel);
         const current = loadDraft(clientSlug, ideaId, channel);
-        if (!current)
-          throw new McpAuthError(
-            404,
-            `Content draft not found: ${ideaId}/${channel}`,
-          );
+        if (!current) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
         const patch = buildContentDraftPatch({
           body,
           clarifyStatus,
@@ -3163,11 +2244,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           meta: Object.keys(patch.meta).length > 0 ? patch.meta : undefined,
           body: patch.body,
         });
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          draft: serializeContentDraft(draft, CONTENT_DRAFT_MAX_CHARS_DEFAULT),
-        });
+        return jsonResult({ ok: true, clientSlug, draft: serializeContentDraft(draft, CONTENT_DRAFT_MAX_CHARS_DEFAULT) });
       }),
   );
 
@@ -3180,63 +2257,35 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Idea id."),
-        channel: z
-          .string()
-          .min(1)
-          .describe("Draft channel/file name without .md."),
-        instruction: z
-          .string()
-          .min(1)
-          .describe("Human iteration instruction for the writer."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the iteration request."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to request iteration."),
+        channel: z.string().min(1).describe("Draft channel/file name without .md."),
+        instruction: z.string().min(1).describe("Human iteration instruction for the writer."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the iteration request."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to request iteration."),
       },
     },
     async ({ clientSlug, ideaId, channel, instruction, dryRun, confirm }) =>
-      runTool(
-        context,
-        "content_request_draft_iteration",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "content:write", clientSlug);
-          assertContentPathSegment("ideaId", ideaId);
-          assertContentPathSegment("channel", channel);
-          const preview = previewDraftIteration(
-            clientSlug,
-            ideaId,
-            channel,
-            instruction,
-          );
-          if (dryRun !== false || confirm !== true) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to request this draft iteration.",
-              preview,
-            });
-          }
-          const result = requestDraftIteration(
-            clientSlug,
-            ideaId,
-            channel,
-            instruction,
-          );
+      runTool(context, "content_request_draft_iteration", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("ideaId", ideaId);
+        assertContentPathSegment("channel", channel);
+        const preview = previewDraftIteration(clientSlug, ideaId, channel, instruction);
+        if (dryRun !== false || confirm !== true) {
           return jsonResult({
-            ...result,
             ok: true,
-            clientSlug,
-            draft: serializeDraftIterationResult(result.draft),
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to request this draft iteration.",
+            preview,
           });
-        },
-      ),
+        }
+        const result = requestDraftIteration(clientSlug, ideaId, channel, instruction);
+        return jsonResult({
+          ...result,
+          ok: true,
+          clientSlug,
+          draft: serializeDraftIterationResult(result.draft),
+        });
+      }),
   );
 
   server.registerTool(
@@ -3248,57 +2297,28 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         contentTaskId: z.string().min(1).describe("ContentTask id."),
-        channel: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional channel scope for iteration."),
-        instruction: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional free-text iteration instruction."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the writer trigger."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to trigger writer."),
+        channel: z.string().min(1).optional().describe("Optional channel scope for iteration."),
+        instruction: z.string().min(1).optional().describe("Optional free-text iteration instruction."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the writer trigger."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to trigger writer."),
       },
     },
-    async ({
-      clientSlug,
-      contentTaskId,
-      channel,
-      instruction,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, contentTaskId, channel, instruction, dryRun, confirm }) =>
       runTool(context, "content_retrigger_writer", clientSlug, async () => {
         assertClientScope(context, "content:write", clientSlug);
         assertContentPathSegment("contentTaskId", contentTaskId);
         if (channel) assertContentPathSegment("channel", channel);
-        const preview = previewRetriggerContentWriter(
-          clientSlug,
-          contentTaskId,
-          { channel, instruction },
-        );
+        const preview = previewRetriggerContentWriter(clientSlug, contentTaskId, { channel, instruction });
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to re-trigger the Content Engine writer.",
+            message: "Set dryRun=false and confirm=true to re-trigger the Content Engine writer.",
             preview,
           });
         }
-        const result = await retriggerContentWriter(clientSlug, contentTaskId, {
-          channel,
-          instruction,
-        });
+        const result = await retriggerContentWriter(clientSlug, contentTaskId, { channel, instruction });
         return jsonResult({ ...result, ok: true, clientSlug });
       }),
   );
@@ -3317,11 +2337,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "content_get_reconcile_state", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
         const state = readReconcileState(clientSlug);
-        return jsonResult(
-          state
-            ? { ok: true, clientSlug, neverRan: false, state }
-            : { ok: true, clientSlug, neverRan: true },
-        );
+        return jsonResult(state ? { ok: true, clientSlug, neverRan: false, state } : { ok: true, clientSlug, neverRan: true });
       }),
   );
 
@@ -3333,14 +2349,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Runs the deterministic Content Engine reconciler for one client, promoting forward-only safe phases and persisting reconcile-state.json. Requires content:write. Defaults to dry-run and requires confirm=true to run.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews that reconcile would run."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to run the reconciler."),
+        dryRun: z.boolean().default(true).describe("When true, only previews that reconcile would run."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to run the reconciler."),
       },
     },
     async ({ clientSlug, dryRun, confirm }) =>
@@ -3352,8 +2362,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to run the Content Engine reconciler.",
+            message: "Set dryRun=false and confirm=true to run the Content Engine reconciler.",
             preview: { clientSlug, lastState },
           });
         }
@@ -3366,26 +2375,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_get_draft",
     {
       title: "Get Content Engine draft",
-      description:
-        "Reads one Content Engine draft body and metadata. Requires content:read.",
+      description: "Reads one Content Engine draft body and metadata. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Idea id."),
-        channel: z
-          .string()
-          .min(1)
-          .describe(
-            "Draft channel/file name without .md, e.g. linkedin or blog.",
-          ),
+        channel: z.string().min(1).describe("Draft channel/file name without .md, e.g. linkedin or blog."),
         maxChars: z
           .number()
           .int()
           .min(1)
           .max(CONTENT_DRAFT_MAX_CHARS_MAX)
           .optional()
-          .describe(
-            "Maximum draft body characters to return. Defaults to 60000.",
-          ),
+          .describe("Maximum draft body characters to return. Defaults to 60000."),
       },
     },
     async ({ clientSlug, ideaId, channel, maxChars }) =>
@@ -3393,23 +2394,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "content:read", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
         assertContentPathSegment("channel", channel);
-        const max = clampLimit(
-          maxChars,
-          CONTENT_DRAFT_MAX_CHARS_DEFAULT,
-          CONTENT_DRAFT_MAX_CHARS_MAX,
-        );
+        const max = clampLimit(maxChars, CONTENT_DRAFT_MAX_CHARS_DEFAULT, CONTENT_DRAFT_MAX_CHARS_MAX);
         const draft = loadDraft(clientSlug, ideaId, channel);
-        if (!draft)
-          throw new McpAuthError(
-            404,
-            `Content draft not found: ${ideaId}/${channel}`,
-          );
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          draft: serializeContentDraft(draft, max),
-          maxChars: max,
-        });
+        if (!draft) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+        return jsonResult({ ok: true, clientSlug, draft: serializeContentDraft(draft, max), maxChars: max });
       }),
   );
 
@@ -3417,17 +2405,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_list_activity",
     {
       title: "List Content Engine activity",
-      description:
-        "Lists recent Content Engine activity events for a client. Requires content:read.",
+      description: "Lists recent Content Engine activity events for a client. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum events to return."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum events to return."),
       },
     },
     async ({ clientSlug, limit }) =>
@@ -3435,13 +2416,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "content:read", clientSlug);
         const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
         const activity = readActivity(clientSlug, max);
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          activity,
-          count: activity.length,
-          limit: max,
-        });
+        return jsonResult({ ok: true, clientSlug, activity, count: activity.length, limit: max });
       }),
   );
 
@@ -3453,16 +2428,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Reads scheduled posts and Ready Queue drafts for the Content Engine posting calendar without running reconciliation. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        from: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional inclusive start date/ISO timestamp."),
-        to: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional inclusive end date/ISO timestamp."),
+        from: z.string().min(1).optional().describe("Optional inclusive start date/ISO timestamp."),
+        to: z.string().min(1).optional().describe("Optional inclusive end date/ISO timestamp."),
         maxBodyChars: z
           .number()
           .int()
@@ -3475,22 +2442,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug, from, to, maxBodyChars }) =>
       runTool(context, "content_get_calendar", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
-        const max = clampLimit(
-          maxBodyChars,
-          CONTENT_BODY_MAX_CHARS_DEFAULT,
-          CONTENT_BODY_MAX_CHARS_MAX,
-        );
-        const calendar = getContentCalendar(clientSlug, {
-          from,
-          to,
-          maxBodyChars: max,
-        });
-        return jsonResult({
-          ...calendar,
-          clientSlug,
-          filters: pickDefined({ from, to }),
-          maxBodyChars: max,
-        });
+        const max = clampLimit(maxBodyChars, CONTENT_BODY_MAX_CHARS_DEFAULT, CONTENT_BODY_MAX_CHARS_MAX);
+        const calendar = getContentCalendar(clientSlug, { from, to, maxBodyChars: max });
+        return jsonResult({ ...calendar, clientSlug, filters: pickDefined({ from, to }), maxBodyChars: max });
       }),
   );
 
@@ -3498,15 +2452,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_list_signals",
     {
       title: "List Content Engine research signals",
-      description:
-        "Lists Content Engine research signals from brand content/research-signals files. Requires content:read.",
+      description: "Lists Content Engine research signals from brand content/research-signals files. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        date: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional YYYY-MM-DD date filter."),
+        date: z.string().min(1).optional().describe("Optional YYYY-MM-DD date filter."),
         days: z
           .number()
           .int()
@@ -3514,35 +2463,16 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           .max(CONTENT_SIGNAL_DAYS_MAX)
           .optional()
           .describe("Number of recent days to include when date is omitted."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum signal files to scan."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum signal files to scan."),
       },
     },
     async ({ clientSlug, date, days, limit }) =>
       runTool(context, "content_list_signals", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
-        const maxDays = clampLimit(
-          days,
-          CONTENT_SIGNAL_DAYS_DEFAULT,
-          CONTENT_SIGNAL_DAYS_MAX,
-        );
+        const maxDays = clampLimit(days, CONTENT_SIGNAL_DAYS_DEFAULT, CONTENT_SIGNAL_DAYS_MAX);
         const max = clampLimit(limit, CONTENT_LIMIT_DEFAULT, CONTENT_LIMIT_MAX);
-        const payload = listContentSignals(clientSlug, {
-          date,
-          days: maxDays,
-          limit: max,
-        });
-        return jsonResult({
-          ...payload,
-          clientSlug,
-          filters: pickDefined({ date, days: maxDays }),
-          limit: max,
-        });
+        const payload = listContentSignals(clientSlug, { date, days: maxDays, limit: max });
+        return jsonResult({ ...payload, clientSlug, filters: pickDefined({ date, days: maxDays }), limit: max });
       }),
   );
 
@@ -3568,8 +2498,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_get_pillars",
     {
       title: "Get Content Engine pillars",
-      description:
-        "Reads brand content/content-pillars.md and parsed pillar summaries. Requires content:read.",
+      description: "Reads brand content/content-pillars.md and parsed pillar summaries. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -3603,8 +2532,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_get_dispatch_config",
     {
       title: "Get Content Engine dispatch config",
-      description:
-        "Reads the Editorial Dispatch transport/channel config from dispatch-channel.yml. Requires content:read.",
+      description: "Reads the Editorial Dispatch transport/channel config from dispatch-channel.yml. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -3612,10 +2540,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "content_get_dispatch_config", clientSlug, async () => {
         assertClientScope(context, "content:read", clientSlug);
-        return jsonResult({
-          clientSlug,
-          ...getContentDispatchConfig(clientSlug),
-        });
+        return jsonResult({ clientSlug, ...getContentDispatchConfig(clientSlug) });
       }),
   );
 
@@ -3623,40 +2548,25 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "content_list_carousel_templates",
     {
       title: "List Content Engine carousel templates",
-      description:
-        "Lists brand visual-identity carousel templates available to Content Engine. Requires content:read.",
+      description: "Lists brand visual-identity carousel templates available to Content Engine. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        channel: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional channel filter, e.g. linkedin."),
+        channel: z.string().min(1).optional().describe("Optional channel filter, e.g. linkedin."),
         includeDisabled: z
           .boolean()
           .default(false)
-          .describe(
-            "When true, includes templates disabled by Content Engine config.",
-          ),
+          .describe("When true, includes templates disabled by Content Engine config."),
       },
     },
     async ({ clientSlug, channel, includeDisabled }) =>
-      runTool(
-        context,
-        "content_list_carousel_templates",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "content:read", clientSlug);
-          return jsonResult({
-            clientSlug,
-            filters: pickDefined({ channel, includeDisabled }),
-            ...listContentCarouselTemplates(clientSlug, {
-              channel,
-              includeDisabled,
-            }),
-          });
-        },
-      ),
+      runTool(context, "content_list_carousel_templates", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        return jsonResult({
+          clientSlug,
+          filters: pickDefined({ channel, includeDisabled }),
+          ...listContentCarouselTemplates(clientSlug, { channel, includeDisabled }),
+        });
+      }),
   );
 
   server.registerTool(
@@ -3667,23 +2577,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Lists OpenClaw cron jobs scoped to Content Engine for one client, including schedule, run metadata and prompt preview. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        status: z
-          .enum(MCP_RECURRING_STATUS_VALUES)
-          .optional()
-          .describe("Optional active/paused filter."),
-        query: z
-          .string()
-          .optional()
-          .describe(
-            "Optional case-insensitive search over name/baseName/prompt.",
-          ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Maximum crons to return."),
+        status: z.enum(MCP_RECURRING_STATUS_VALUES).optional().describe("Optional active/paused filter."),
+        query: z.string().optional().describe("Optional case-insensitive search over name/baseName/prompt."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Maximum crons to return."),
         maxPromptChars: z
           .number()
           .int()
@@ -3702,18 +2598,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           RECURRING_PROMPT_MAX_CHARS_DEFAULT,
           RECURRING_PROMPT_MAX_CHARS_MAX,
         );
-        const payload = listMcpContentCrons(clientSlug, {
-          status,
-          query,
-          limit: max,
-          maxPromptChars: promptMax,
-        });
-        return jsonResult({
-          ...payload,
-          clientSlug,
-          filters: pickDefined({ status, query }),
-          limit: max,
-        });
+        const payload = listMcpContentCrons(clientSlug, { status, query, limit: max, maxPromptChars: promptMax });
+        return jsonResult({ ...payload, clientSlug, filters: pickDefined({ status, query }), limit: max });
       }),
   );
 
@@ -3725,28 +2611,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Reads the publish destination configured for one Content Engine/recurring cron key. Requires content:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        cronKey: z
-          .string()
-          .min(1)
-          .describe("Cron key under client-config.json crons.<cronKey>."),
+        cronKey: z.string().min(1).describe("Cron key under client-config.json crons.<cronKey>."),
       },
     },
     async ({ clientSlug, cronKey }) =>
-      runTool(
-        context,
-        "content_get_cron_publish_config",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "content:read", clientSlug);
-          assertContentPathSegment("cronKey", cronKey);
-          return jsonResult({
-            ok: true,
-            clientSlug,
-            cronKey,
-            config: getCronPublishConfig(clientSlug, cronKey),
-          });
-        },
-      ),
+      runTool(context, "content_get_cron_publish_config", clientSlug, async () => {
+        assertClientScope(context, "content:read", clientSlug);
+        assertContentPathSegment("cronKey", cronKey);
+        return jsonResult({ ok: true, clientSlug, cronKey, config: getCronPublishConfig(clientSlug, cronKey) });
+      }),
   );
 
   server.registerTool(
@@ -3757,75 +2630,39 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Updates the publish destination for one Content Engine/recurring cron key. Requires content:write and explicit confirmation.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        cronKey: z
-          .string()
-          .min(1)
-          .describe("Cron key under client-config.json crons.<cronKey>."),
-        transport: z
-          .string()
-          .min(1)
-          .describe("Registered publish transport, e.g. slack."),
+        cronKey: z.string().min(1).describe("Cron key under client-config.json crons.<cronKey>."),
+        transport: z.string().min(1).describe("Registered publish transport, e.g. slack."),
         channelId: z.string().min(1).describe("Transport channel id."),
-        channelName: z
-          .string()
-          .optional()
-          .describe("Optional human-readable channel name."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the config update."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to update."),
+        channelName: z.string().optional().describe("Optional human-readable channel name."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the config update."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to update."),
       },
     },
-    async ({
-      clientSlug,
-      cronKey,
-      transport,
-      channelId,
-      channelName,
-      dryRun,
-      confirm,
-    }) =>
-      runTool(
-        context,
-        "content_update_cron_publish_config",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "content:write", clientSlug);
-          assertContentPathSegment("cronKey", cronKey);
-          const transports = registeredTransports();
-          if (!transports.includes(transport)) {
-            throw new McpAuthError(
-              400,
-              `Invalid transport; registered: [${transports.join(", ")}]`,
-            );
-          }
-          const current = getCronPublishConfig(clientSlug, cronKey);
-          const next = {
-            transport,
-            channel_id: channelId,
-            channel_name: channelName,
-          };
-          if (dryRun !== false || confirm !== true) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to update this cron publish config.",
-              clientSlug,
-              cronKey,
-              current,
-              preview: next,
-            });
-          }
-          const config = setCronPublishConfig(clientSlug, cronKey, next);
-          return jsonResult({ ok: true, clientSlug, cronKey, config });
-        },
-      ),
+    async ({ clientSlug, cronKey, transport, channelId, channelName, dryRun, confirm }) =>
+      runTool(context, "content_update_cron_publish_config", clientSlug, async () => {
+        assertClientScope(context, "content:write", clientSlug);
+        assertContentPathSegment("cronKey", cronKey);
+        const transports = registeredTransports();
+        if (!transports.includes(transport)) {
+          throw new McpAuthError(400, `Invalid transport; registered: [${transports.join(", ")}]`);
+        }
+        const current = getCronPublishConfig(clientSlug, cronKey);
+        const next = { transport, channel_id: channelId, channel_name: channelName };
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to update this cron publish config.",
+            clientSlug,
+            cronKey,
+            current,
+            preview: next,
+          });
+        }
+        const config = setCronPublishConfig(clientSlug, cronKey, next);
+        return jsonResult({ ok: true, clientSlug, cronKey, config });
+      }),
   );
 
   server.registerTool(
@@ -3841,11 +2678,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "media_list_image_providers", clientSlug, async () => {
         assertClientScope(context, "media:read", clientSlug);
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          ...listImageGenerationProviders(clientSlug),
-        });
+        return jsonResult({ ok: true, clientSlug, ...listImageGenerationProviders(clientSlug) });
       }),
   );
 
@@ -3853,8 +2686,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "media_list_draft_assets",
     {
       title: "List draft media assets",
-      description:
-        "Lists media[] attached to one Content Engine draft. Requires media:read.",
+      description: "Lists media[] attached to one Content Engine draft. Requires media:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Content Engine idea id."),
@@ -3865,11 +2697,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "media_list_draft_assets", clientSlug, async () => {
         assertClientScope(context, "media:read", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          ...listDraftMedia(clientSlug, ideaId, channel),
-        });
+        return jsonResult({ ok: true, clientSlug, ...listDraftMedia(clientSlug, ideaId, channel) });
       }),
   );
 
@@ -3884,83 +2712,28 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         ideaId: z.string().min(1).describe("Content Engine idea id."),
         channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
         url: z.string().url().describe("Public media URL, usually an R2 URL."),
-        type: z
-          .string()
-          .min(1)
-          .describe("MIME type, e.g. image/png or application/pdf."),
-        source: z
-          .enum(["uploaded", "ai-generated"])
-          .default("uploaded")
-          .describe("Media source."),
-        prompt: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Optional generation prompt metadata."),
-        model: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Optional generation model metadata."),
-        aspectRatio: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Optional aspect ratio metadata."),
-        createdAt: z
-          .string()
-          .nullable()
-          .optional()
-          .describe("Optional ISO creation timestamp; defaults to now."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the attachment."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to attach."),
+        type: z.string().min(1).describe("MIME type, e.g. image/png or application/pdf."),
+        source: z.enum(["uploaded", "ai-generated"]).default("uploaded").describe("Media source."),
+        prompt: z.string().nullable().optional().describe("Optional generation prompt metadata."),
+        model: z.string().nullable().optional().describe("Optional generation model metadata."),
+        aspectRatio: z.string().nullable().optional().describe("Optional aspect ratio metadata."),
+        createdAt: z.string().nullable().optional().describe("Optional ISO creation timestamp; defaults to now."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the attachment."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to attach."),
       },
     },
-    async ({
-      clientSlug,
-      ideaId,
-      channel,
-      url,
-      type,
-      source,
-      prompt,
-      model,
-      aspectRatio,
-      createdAt,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, ideaId, channel, url, type, source, prompt, model, aspectRatio, createdAt, dryRun, confirm }) =>
       runTool(context, "media_attach_asset", clientSlug, async () => {
         assertClientScope(context, "media:write", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
-        const input = {
-          url,
-          type,
-          source,
-          prompt,
-          model,
-          aspectRatio,
-          createdAt,
-        };
-        const preview = previewAttachDraftMedia(
-          clientSlug,
-          ideaId,
-          channel,
-          input,
-        );
+        const input = { url, type, source, prompt, model, aspectRatio, createdAt };
+        const preview = previewAttachDraftMedia(clientSlug, ideaId, channel, input);
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to attach this media asset.",
+            message: "Set dryRun=false and confirm=true to attach this media asset.",
             preview,
           });
         }
@@ -3980,33 +2753,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         ideaId: z.string().min(1).describe("Content Engine idea id."),
         channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
         url: z.string().url().describe("Media URL to remove."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the removal."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to remove."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the removal."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to remove."),
       },
     },
     async ({ clientSlug, ideaId, channel, url, dryRun, confirm }) =>
       runTool(context, "media_remove_asset", clientSlug, async () => {
         assertClientScope(context, "media:write", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
-        const preview = previewRemoveDraftMedia(
-          clientSlug,
-          ideaId,
-          channel,
-          url,
-        );
+        const preview = previewRemoveDraftMedia(clientSlug, ideaId, channel, url);
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to remove this media asset.",
+            message: "Set dryRun=false and confirm=true to remove this media asset.",
             preview,
           });
         }
@@ -4026,33 +2787,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         ideaId: z.string().min(1).describe("Content Engine idea id."),
         channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
         url: z.string().url().describe("Media URL to promote."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the reorder."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to reorder."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the reorder."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to reorder."),
       },
     },
     async ({ clientSlug, ideaId, channel, url, dryRun, confirm }) =>
       runTool(context, "media_set_primary_asset", clientSlug, async () => {
         assertClientScope(context, "media:write", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
-        const preview = previewSetPrimaryDraftMedia(
-          clientSlug,
-          ideaId,
-          channel,
-          url,
-        );
+        const preview = previewSetPrimaryDraftMedia(clientSlug, ideaId, channel, url);
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to set this asset as primary.",
+            message: "Set dryRun=false and confirm=true to set this asset as primary.",
             preview,
           });
         }
@@ -4072,62 +2821,25 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         ideaId: z.string().min(1).describe("Content Engine idea id."),
         channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
         prompt: z.string().min(1).describe("Image generation prompt."),
-        aspectRatio: z
-          .string()
-          .optional()
-          .describe(
-            "Optional aspect ratio; unsupported values fall back to provider default.",
-          ),
-        providerId: z
-          .string()
-          .optional()
-          .describe(
-            "Optional image provider id. Defaults to brand config or first configured provider.",
-          ),
+        aspectRatio: z.string().optional().describe("Optional aspect ratio; unsupported values fall back to provider default."),
+        providerId: z.string().optional().describe("Optional image provider id. Defaults to brand config or first configured provider."),
         model: z.string().optional().describe("Optional provider model id."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe(
-            "When true, only previews provider/model/storage resolution.",
-          ),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to generate and attach."),
+        dryRun: z.boolean().default(true).describe("When true, only previews provider/model/storage resolution."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to generate and attach."),
       },
     },
-    async ({
-      clientSlug,
-      ideaId,
-      channel,
-      prompt,
-      aspectRatio,
-      providerId,
-      model,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, ideaId, channel, prompt, aspectRatio, providerId, model, dryRun, confirm }) =>
       runTool(context, "media_generate_image", clientSlug, async () => {
         assertClientScope(context, "media:write", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
-        const input = {
-          slug: clientSlug,
-          ideaId,
-          channel,
-          prompt,
-          aspectRatio,
-          providerId,
-          model,
-        };
+        const input = { slug: clientSlug, ideaId, channel, prompt, aspectRatio, providerId, model };
         const preview = previewGenerateDraftImage(input);
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to generate this image, upload it and attach it to the draft.",
+            message: "Set dryRun=false and confirm=true to generate this image, upload it and attach it to the draft.",
             preview,
           });
         }
@@ -4140,31 +2852,17 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "publishing_list_providers",
     {
       title: "List publishing providers",
-      description:
-        "Lists publishing providers and configuration status for a client. Requires publishing:read.",
+      description: "Lists publishing providers and configuration status for a client. Requires publishing:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        channel: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional channel filter, e.g. linkedin, blog or twitter."),
+        channel: z.string().min(1).optional().describe("Optional channel filter, e.g. linkedin, blog or twitter."),
       },
     },
     async ({ clientSlug, channel }) =>
       runTool(context, "publishing_list_providers", clientSlug, async () => {
         assertClientScope(context, "publishing:read", clientSlug);
-        const providers = getAvailableProviders(
-          clientSlug,
-          channel as Parameters<typeof getAvailableProviders>[1],
-        );
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          channel: channel || null,
-          providers,
-          count: providers.length,
-        });
+        const providers = getAvailableProviders(clientSlug, channel as Parameters<typeof getAvailableProviders>[1]);
+        return jsonResult({ ok: true, clientSlug, channel: channel || null, providers, count: providers.length });
       }),
   );
 
@@ -4172,38 +2870,19 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "publishing_get_account_info",
     {
       title: "Get publishing account info",
-      description:
-        "Reads connected publishing account/network info where available. Requires publishing:read.",
+      description: "Reads connected publishing account/network info where available. Requires publishing:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        provider: z
-          .enum(["metricool"])
-          .default("metricool")
-          .describe("Publishing provider. Currently metricool."),
+        provider: z.enum(["metricool"]).default("metricool").describe("Publishing provider. Currently metricool."),
       },
     },
     async ({ clientSlug, provider }) =>
       runTool(context, "publishing_get_account_info", clientSlug, async () => {
         assertClientScope(context, "publishing:read", clientSlug);
-        if (provider !== "metricool")
-          throw new McpAuthError(
-            400,
-            `Unsupported publishing provider: ${provider}`,
-          );
+        if (provider !== "metricool") throw new McpAuthError(400, `Unsupported publishing provider: ${provider}`);
         const result = await fetchAccountInfo(clientSlug);
-        if (!result.ok)
-          return jsonResult({
-            ok: false,
-            clientSlug,
-            provider,
-            error: result.error,
-          });
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          provider,
-          info: result.info,
-        });
+        if (!result.ok) return jsonResult({ ok: false, clientSlug, provider, error: result.error });
+        return jsonResult({ ok: true, clientSlug, provider, info: result.info });
       }),
   );
 
@@ -4211,16 +2890,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "publishing_get_post_metrics",
     {
       title: "Get publishing post metrics",
-      description:
-        "Reads the latest stored metrics snapshot for a published post URL. Requires publishing:read.",
+      description: "Reads the latest stored metrics snapshot for a published post URL. Requires publishing:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        externalUrl: z
-          .string()
-          .url()
-          .describe(
-            "Published post URL to look up in stored metrics snapshots.",
-          ),
+        externalUrl: z.string().url().describe("Published post URL to look up in stored metrics snapshots."),
       },
     },
     async ({ clientSlug, externalUrl }) =>
@@ -4240,39 +2913,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Content Engine idea id."),
-        channel: z
-          .enum(PUBLISHING_CHANNELS)
-          .describe("Draft channel to publish."),
-        providerId: z
-          .string()
-          .min(1)
-          .describe(
-            "Publishing provider id, e.g. metricool, wordpress or alarife-payload.",
-          ),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel to publish."),
+        providerId: z.string().min(1).describe("Publishing provider id, e.g. metricool, wordpress or alarife-payload."),
         publishAt: z
           .string()
           .min(1)
           .optional()
           .describe("Optional ISO timestamp to schedule. Omit to publish now."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the publish operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to publish/schedule."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the publish operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to publish/schedule."),
       },
     },
-    async ({
-      clientSlug,
-      ideaId,
-      channel,
-      providerId,
-      publishAt,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, ideaId, channel, providerId, publishAt, dryRun, confirm }) =>
       runTool(context, "publishing_publish_draft", clientSlug, async () => {
         assertClientScope(context, "publishing:write", clientSlug);
         assertContentPathSegment("ideaId", ideaId);
@@ -4289,8 +2941,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to publish or schedule this draft.",
+            message: "Set dryRun=false and confirm=true to publish or schedule this draft.",
             preview,
           });
         }
@@ -4308,17 +2959,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Content Engine idea id."),
-        channel: z
-          .enum(PUBLISHING_CHANNELS)
-          .describe("Draft channel to cancel."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the cancel operation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to cancel."),
+        channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel to cancel."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the cancel operation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to cancel."),
       },
     },
     async ({ clientSlug, ideaId, channel, dryRun, confirm }) =>
@@ -4331,8 +2974,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to cancel this scheduled post.",
+            message: "Set dryRun=false and confirm=true to cancel this scheduled post.",
             preview,
           });
         }
@@ -4351,10 +2993,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         ideaId: z.string().min(1).describe("Content Engine idea id."),
         channel: z.enum(PUBLISHING_CHANNELS).describe("Draft channel."),
-        refresh: z
-          .boolean()
-          .default(false)
-          .describe("When true, poll provider and persist any changed status."),
+        refresh: z.boolean().default(false).describe("When true, poll provider and persist any changed status."),
       },
     },
     async ({ clientSlug, ideaId, channel, refresh }) =>
@@ -4363,39 +3002,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertContentPathSegment("ideaId", ideaId);
         if (refresh) {
           assertClientScope(context, "publishing:write", clientSlug);
-          const result = await refreshPublishingStatus(
-            clientSlug,
-            ideaId,
-            channel,
-          );
-          if (!result.draft)
-            throw new McpAuthError(
-              404,
-              `Content draft not found: ${ideaId}/${channel}`,
-            );
-          return jsonResult({
-            ok: true,
-            clientSlug,
-            ideaId,
-            channel,
-            refreshed: true,
-            ...result,
-          });
+          const result = await refreshPublishingStatus(clientSlug, ideaId, channel);
+          if (!result.draft) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+          return jsonResult({ ok: true, clientSlug, ideaId, channel, refreshed: true, ...result });
         }
         const result = getStoredPublishingStatus(clientSlug, ideaId, channel);
-        if (!result.draft)
-          throw new McpAuthError(
-            404,
-            `Content draft not found: ${ideaId}/${channel}`,
-          );
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          ideaId,
-          channel,
-          refreshed: false,
-          publishing: result.publishing,
-        });
+        if (!result.draft) throw new McpAuthError(404, `Content draft not found: ${ideaId}/${channel}`);
+        return jsonResult({ ok: true, clientSlug, ideaId, channel, refreshed: false, publishing: result.publishing });
       }),
   );
 
@@ -4407,21 +3020,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Reconciles due scheduled posts for one client, refreshing local publishing state and metrics. Requires publishing:write. Defaults to dry-run and requires confirm=true to execute.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(CONTENT_LIMIT_MAX)
-          .optional()
-          .describe("Max due drafts to include in dry-run preview."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews due scheduled posts."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to reconcile."),
+        limit: z.number().int().min(1).max(CONTENT_LIMIT_MAX).optional().describe("Max due drafts to include in dry-run preview."),
+        dryRun: z.boolean().default(true).describe("When true, only previews due scheduled posts."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to reconcile."),
       },
     },
     async ({ clientSlug, limit, dryRun, confirm }) =>
@@ -4434,8 +3035,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to reconcile due scheduled posts for this client.",
+            message: "Set dryRun=false and confirm=true to reconcile due scheduled posts for this client.",
             preview,
           });
         }
@@ -4448,19 +3048,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "integrations_list_catalog",
     {
       title: "List integrations catalog",
-      description:
-        "Reads the available integrations catalog without returning secrets. Requires integrations:read.",
+      description: "Reads the available integrations catalog without returning secrets. Requires integrations:read.",
       inputSchema: {},
     },
     async () =>
       runTool(context, "integrations_list_catalog", undefined, async () => {
         assertMcpScope(context.principal, "integrations:read");
         const catalog = loadIntegrationCatalog();
-        return jsonResult({
-          ok: catalog.found,
-          found: catalog.found,
-          catalog: catalog.catalog,
-        });
+        return jsonResult({ ok: catalog.found, found: catalog.found, catalog: catalog.catalog });
       }),
   );
 
@@ -4477,11 +3072,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "integrations_get_status", clientSlug, async () => {
         assertClientScope(context, "integrations:read", clientSlug);
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          integrations: getSanitizedIntegrationStatus(clientSlug),
-        });
+        return jsonResult({ ok: true, clientSlug, integrations: getSanitizedIntegrationStatus(clientSlug) });
       }),
   );
 
@@ -4493,46 +3084,22 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Runs Sancho's integration connection test for one source or all configured sources. Requires integrations:write and explicit confirmation.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        source: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Integration source id to test."),
-        all: z
-          .boolean()
-          .default(false)
-          .describe("Test all configured sources for the client."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without running the connection test."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to execute."),
+        source: z.string().min(1).optional().describe("Integration source id to test."),
+        all: z.boolean().default(false).describe("Test all configured sources for the client."),
+        dryRun: z.boolean().default(true).describe("Preview without running the connection test."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to execute."),
       },
     },
-    async ({
-      clientSlug,
-      source,
-      all = false,
-      dryRun = true,
-      confirm = false,
-    }) =>
+    async ({ clientSlug, source, all = false, dryRun = true, confirm = false }) =>
       runTool(context, "integrations_test_connection", clientSlug, async () => {
         assertClientScope(context, "integrations:write", clientSlug);
-        const preview = previewTestIntegrationConnection({
-          clientSlug,
-          source,
-          all,
-        });
+        const preview = previewTestIntegrationConnection({ clientSlug, source, all });
         if (dryRun || !confirm) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to run integration connection tests.",
+            message: "Set dryRun=false and confirm=true to run integration connection tests.",
             preview,
           });
         }
@@ -4549,75 +3116,29 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Publishes one generic integration message through a configured transport or cron publish target. Requires integrations:write and explicit confirmation.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        cronKey: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Cron key whose publish target should be used."),
-        transport: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Explicit transport, for example slack."),
-        channel: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Explicit target channel id/name."),
+        cronKey: z.string().min(1).optional().describe("Cron key whose publish target should be used."),
+        transport: z.string().min(1).optional().describe("Explicit transport, for example slack."),
+        channel: z.string().min(1).optional().describe("Explicit target channel id/name."),
         title: z.string().min(1).max(2000).describe("Root message title."),
-        body: z
-          .string()
-          .min(1)
-          .max(20_000)
-          .describe("Message body/thread content."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without sending a message."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to publish."),
+        body: z.string().min(1).max(20_000).describe("Message body/thread content."),
+        dryRun: z.boolean().default(true).describe("Preview without sending a message."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to publish."),
       },
     },
-    async ({
-      clientSlug,
-      cronKey,
-      transport,
-      channel,
-      title,
-      body,
-      dryRun = true,
-      confirm = false,
-    }) =>
+    async ({ clientSlug, cronKey, transport, channel, title, body, dryRun = true, confirm = false }) =>
       runTool(context, "integrations_publish_message", clientSlug, async () => {
         assertClientScope(context, "integrations:write", clientSlug);
-        const preview = previewPublishIntegrationMessage({
-          clientSlug,
-          cronKey,
-          transport,
-          channel,
-          title,
-          body,
-        });
+        const preview = previewPublishIntegrationMessage({ clientSlug, cronKey, transport, channel, title, body });
         if (dryRun || !confirm) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to publish this integration message.",
+            message: "Set dryRun=false and confirm=true to publish this integration message.",
             preview,
           });
         }
-        const result = await publishIntegrationMessage({
-          clientSlug,
-          cronKey,
-          transport,
-          channel,
-          title,
-          body,
-        });
+        const result = await publishIntegrationMessage({ clientSlug, cronKey, transport, channel, title, body });
         return jsonResult({ ...result, ok: result.ok, clientSlug });
       }),
   );
@@ -4626,8 +3147,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_get_overview",
     {
       title: "Get YALC overview",
-      description:
-        "Returns read-only YALC health/count overview for a Sancho client. Requires yalc:read.",
+      description: "Returns read-only YALC health/count overview for a Sancho client. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -4639,30 +3159,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         const entries = await Promise.all(
           Object.entries(YALC_OVERVIEW_CHECKS).map(async ([name, endpoint]) => {
             try {
-              const data = await yalcFetch(config, endpoint, {
-                headers: traceHeaders(context),
-              });
-              return [
-                name,
-                { ok: true, count: countYalcRows(data), data },
-              ] as const;
+              const data = await yalcFetch(config, endpoint, { headers: traceHeaders(context) });
+              return [name, { ok: true, count: countYalcRows(data), data }] as const;
             } catch (err) {
               return [
                 name,
                 {
                   ok: false,
                   count: null,
-                  error:
-                    err instanceof Error ? err.message : "YALC request failed",
+                  error: err instanceof Error ? err.message : "YALC request failed",
                 },
               ] as const;
             }
           }),
         );
-        const checks = Object.fromEntries(entries) as Record<
-          string,
-          YalcOverviewCheck
-        >;
+        const checks = Object.fromEntries(entries) as Record<string, YalcOverviewCheck>;
         return jsonResult({
           ok: Object.values(checks).every((check) => check.ok),
           runtime: publicYalcConfig(config),
@@ -4675,8 +3186,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_list_campaigns",
     {
       title: "List YALC campaigns",
-      description:
-        "Lists read-only YALC campaigns for a Sancho client. Requires yalc:read.",
+      description: "Lists read-only YALC campaigns for a Sancho client. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -4684,13 +3194,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "yalc_list_campaigns", clientSlug, async () => {
         assertClientScope(context, "yalc:read", clientSlug);
-        const data = await yalcFetch(
-          resolveYalcConfig(clientSlug),
-          "/api/campaigns",
-          {
-            headers: traceHeaders(context),
-          },
-        );
+        const data = await yalcFetch(resolveYalcConfig(clientSlug), "/api/campaigns", {
+          headers: traceHeaders(context),
+        });
         return jsonResult(data);
       }),
   );
@@ -4699,8 +3205,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_get_campaign",
     {
       title: "Get YALC campaign",
-      description:
-        "Reads one YALC campaign detail by id for a Sancho client. Requires yalc:read.",
+      description: "Reads one YALC campaign detail by id for a Sancho client. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         campaignId: z.string().min(1).describe("YALC campaign id."),
@@ -4722,8 +3227,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_get_campaign_events",
     {
       title: "Get YALC campaign events",
-      description:
-        "Reads the event stream/history for one YALC campaign. Requires yalc:read.",
+      description: "Reads the event stream/history for one YALC campaign. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         campaignId: z.string().min(1).describe("YALC campaign id."),
@@ -4745,8 +3249,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_get_campaign_readiness",
     {
       title: "Get YALC campaign readiness",
-      description:
-        "Reads readiness checks for one YALC campaign before publish/live operations. Requires yalc:read.",
+      description: "Reads readiness checks for one YALC campaign before publish/live operations. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         campaignId: z.string().min(1).describe("YALC campaign id."),
@@ -4768,8 +3271,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_list_gates",
     {
       title: "List YALC approval gates",
-      description:
-        "Lists read-only YALC approval gates awaiting action. Requires yalc:read.",
+      description: "Lists read-only YALC approval gates awaiting action. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -4777,13 +3279,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug }) =>
       runTool(context, "yalc_list_gates", clientSlug, async () => {
         assertClientScope(context, "yalc:read", clientSlug);
-        const data = await yalcFetch(
-          resolveYalcConfig(clientSlug),
-          "/api/gates/awaiting",
-          {
-            headers: traceHeaders(context),
-          },
-        );
+        const data = await yalcFetch(resolveYalcConfig(clientSlug), "/api/gates/awaiting", {
+          headers: traceHeaders(context),
+        });
         return jsonResult(data);
       }),
   );
@@ -4794,13 +3292,10 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   // followers/ER vía `GET /api/leads` (SAN-77; hasta su deploy en Yalc,
   // pasar followers/engagementRatePct explícitos).
   registerYalcBreakevenTool(server, {
-    assertAccess: (clientSlug) =>
-      assertClientScope(context, "yalc:read", clientSlug),
-    run: (toolName, clientSlug, handler) =>
-      runTool(context, toolName, clientSlug, handler),
+    assertAccess: (clientSlug) => assertClientScope(context, "yalc:read", clientSlug),
+    run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
     jsonResult,
-    fetchLeadMetrics: (clientSlug, leadId) =>
-      fetchYalcLeadMetrics(context, clientSlug, leadId),
+    fetchLeadMetrics: (clientSlug, leadId) => fetchYalcLeadMetrics(context, clientSlug, leadId),
     // SAN-76: el break-even del MCP usa la config efectiva (Settings/Yalc).
     fetchModelConfig: async (clientSlug) => {
       const effective = await getEffectiveModelConfig(clientSlug);
@@ -4823,20 +3318,12 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           .describe(
             "lifecycleStatus filter, comma-separated (Sourced, Qualified, Disqualified, Queued, Replied, Negotiating, Deal_Created, Closed_Won, ...).",
           ),
-        campaignId: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Only leads in this YALC campaign."),
+        campaignId: z.string().min(1).optional().describe("Only leads in this YALC campaign."),
         type: z
           .enum(["B2B", "Partnerships"])
           .optional()
           .describe("Only leads in campaigns of this type."),
-        search: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Search by name, company, handle or email."),
+        search: z.string().min(1).optional().describe("Search by name, company, handle or email."),
       },
     },
     async ({ clientSlug, stage, campaignId, type, search }) =>
@@ -4864,10 +3351,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       description: "Reads one YALC campaign lead by id. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        campaignId: z
-          .string()
-          .min(1)
-          .describe("YALC campaign id that owns the lead."),
+        campaignId: z.string().min(1).describe("YALC campaign id that owns the lead."),
         leadId: z.string().min(1).describe("YALC lead id."),
       },
     },
@@ -4887,8 +3371,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "yalc_list_lead_messages",
     {
       title: "List YALC lead messages",
-      description:
-        "Reads the Inbox conversation/messages for one YALC lead. Requires yalc:read.",
+      description: "Reads the Inbox conversation/messages for one YALC lead. Requires yalc:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         leadId: z.string().min(1).describe("YALC lead id."),
@@ -4919,46 +3402,22 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   const linkedinAutopilotSharedSchema = {
     clientSlug: z.string().min(1).describe("Sancho client slug."),
     campaignId: z.string().min(1).describe("YALC B2B campaign id."),
-    leadIds: z
-      .array(z.string().min(1))
-      .optional()
-      .describe(
-        "Optional explicit lead ids to include in this autopilot batch.",
-      ),
-    limit: z
-      .number()
-      .int()
-      .min(1)
-      .optional()
-      .describe(
-        "Optional max number of leads to include when leadIds is omitted.",
-      ),
+    leadIds: z.array(z.string().min(1)).optional().describe("Optional explicit lead ids to include in this autopilot batch."),
+    limit: z.number().int().min(1).optional().describe("Optional max number of leads to include when leadIds is omitted."),
     accounts: z
       .array(linkedinAutopilotAccountSchema)
       .optional()
-      .describe(
-        "Optional Unipile LinkedIn accounts with accountId/id and dailyLimit.",
-      ),
+      .describe("Optional Unipile LinkedIn accounts with accountId/id and dailyLimit."),
     directMessageLeadIds: z
       .array(z.string().min(1))
       .optional()
-      .describe(
-        "Lead ids that should receive a direct DM because they are already connected.",
-      ),
+      .describe("Lead ids that should receive a direct DM because they are already connected."),
     connectionLeadIds: z
       .array(z.string().min(1))
       .optional()
       .describe("Lead ids that should receive a LinkedIn connection request."),
-    connectMessage: z
-      .string()
-      .min(1)
-      .optional()
-      .describe("Optional override for connection request copy."),
-    dmMessage: z
-      .string()
-      .min(1)
-      .optional()
-      .describe("Optional override for direct DM copy."),
+    connectMessage: z.string().min(1).optional().describe("Optional override for connection request copy."),
+    dmMessage: z.string().min(1).optional().describe("Optional override for direct DM copy."),
   };
 
   server.registerTool(
@@ -4982,21 +3441,18 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     }) =>
       runTool(context, "yalc_linkedin_autopilot_plan", clientSlug, async () => {
         assertClientScope(context, "yalc:read", clientSlug);
-        const result = await dispatchOutboundCommand(
-          resolveYalcConfig(clientSlug),
-          {
-            command: "outbound.linkedin_autopilot.plan",
-            campaignId,
-            leadIds,
-            limit,
-            accounts,
-            directMessageLeadIds,
-            connectionLeadIds,
-            connectMessage,
-            dmMessage,
-            source: "sancho.mcp",
-          },
-        );
+        const result = await dispatchOutboundCommand(resolveYalcConfig(clientSlug), {
+          command: "outbound.linkedin_autopilot.plan",
+          campaignId,
+          leadIds,
+          limit,
+          accounts,
+          directMessageLeadIds,
+          connectionLeadIds,
+          connectMessage,
+          dmMessage,
+          source: "sancho.mcp",
+        });
         return jsonResult(result);
       }),
   );
@@ -5009,16 +3465,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Executes the same B2B LinkedIn autopilot send path used by the Sancho UI. Defaults to dry-run. Live execution requires dryRun=false and confirm=true. Requires yalc:write.",
       inputSchema: {
         ...linkedinAutopilotSharedSchema,
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe(
-            "When true, returns the execution plan without contacting leads.",
-          ),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to send via Unipile."),
+        dryRun: z.boolean().default(true).describe("When true, returns the execution plan without contacting leads."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to send via Unipile."),
       },
     },
     async ({
@@ -5034,41 +3482,33 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       dryRun = true,
       confirm = false,
     }) =>
-      runTool(
-        context,
-        "yalc_linkedin_autopilot_execute",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "yalc:write", clientSlug);
-          const liveConfirmed = dryRun === false && confirm === true;
-          const result = await dispatchOutboundCommand(
-            resolveYalcConfig(clientSlug),
-            {
-              command: "outbound.linkedin_autopilot.execute",
-              campaignId,
-              leadIds,
-              limit,
-              accounts,
-              directMessageLeadIds,
-              connectionLeadIds,
-              connectMessage,
-              dmMessage,
-              dryRun: liveConfirmed ? false : true,
-              confirm: liveConfirmed,
-              confirmLinkedInSend: liveConfirmed,
-              source: "sancho.mcp",
-            },
-          );
-          return jsonResult({
-            ...result,
-            dryRun: !liveConfirmed,
-            requiresConfirmation: !liveConfirmed,
-            message: liveConfirmed
-              ? result.message
-              : "Set dryRun=false and confirm=true to execute LinkedIn autopilot via Unipile.",
-          });
-        },
-      ),
+      runTool(context, "yalc_linkedin_autopilot_execute", clientSlug, async () => {
+        assertClientScope(context, "yalc:write", clientSlug);
+        const liveConfirmed = dryRun === false && confirm === true;
+        const result = await dispatchOutboundCommand(resolveYalcConfig(clientSlug), {
+          command: "outbound.linkedin_autopilot.execute",
+          campaignId,
+          leadIds,
+          limit,
+          accounts,
+          directMessageLeadIds,
+          connectionLeadIds,
+          connectMessage,
+          dmMessage,
+          dryRun: liveConfirmed ? false : true,
+          confirm: liveConfirmed,
+          confirmLinkedInSend: liveConfirmed,
+          source: "sancho.mcp",
+        });
+        return jsonResult({
+          ...result,
+          dryRun: !liveConfirmed,
+          requiresConfirmation: !liveConfirmed,
+          message: liveConfirmed
+            ? result.message
+            : "Set dryRun=false and confirm=true to execute LinkedIn autopilot via Unipile.",
+        });
+      }),
   );
 
   server.registerTool(
@@ -5090,9 +3530,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           .string()
           .min(1)
           .optional()
-          .describe(
-            "Optional transition note — stored as the discard note when stage is 'Disqualified'.",
-          ),
+          .describe("Optional transition note — stored as the discard note when stage is 'Disqualified'."),
       },
     },
     async ({ clientSlug, leadId, stage, note }) =>
@@ -5103,9 +3541,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           `/api/leads/${encodeURIComponent(leadId)}/stage`,
           {
             method: "PATCH",
-            body: note
-              ? { lifecycleStatus: stage, note }
-              : { lifecycleStatus: stage },
+            body: note ? { lifecycleStatus: stage, note } : { lifecycleStatus: stage },
             headers: traceHeaders(context),
           },
         );
@@ -5121,81 +3557,36 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Creates a creator discovery search (Partnerships · SAN-79): a Partnerships campaign in YALC, a mother Outreach task in Sancho, and a queued discovery runner. Instagram-only plans run server-side; plans with TikTok or YouTube are dispatched to Rocinante's agentic runner. Same action as the discovery-plan-builder chat skill and the Encuentra UI. Optionally executes the runner inline with the 9 mockup fixture creators (no ScrapeCreators). Requires yalc:write. Defaults to dry-run and requires confirm=true to write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        title: z
-          .string()
-          .min(1)
-          .describe("Search title, e.g. 'Finanzas personales ES · IG+TikTok'."),
-        sectors: z
-          .array(z.string().min(1))
-          .min(1)
-          .describe(
-            "Target sectors/verticals (e.g. 'finanzas personales', 'ahorro').",
-          ),
+        title: z.string().min(1).describe("Search title, e.g. 'Finanzas personales ES · IG+TikTok'."),
+        sectors: z.array(z.string().min(1)).min(1).describe("Target sectors/verticals (e.g. 'finanzas personales', 'ahorro')."),
         hashtags: z
           .array(z.string().min(1))
           .optional()
-          .describe(
-            "Niche-specific discovery hashtags (e.g. '#trasplantecapilar', '#saludcapilar').",
-          ),
-        networks: z
-          .array(z.string().min(1))
-          .min(1)
-          .describe("Networks to scout: instagram, tiktok, youtube, ..."),
+          .describe("Niche-specific discovery hashtags (e.g. '#trasplantecapilar', '#saludcapilar')."),
+        networks: z.array(z.string().min(1)).min(1).describe("Networks to scout: instagram, tiktok, youtube, ..."),
         tiers: z
           .array(z.enum(["nano", "micro", "mid", "macro"]))
           .optional()
           .describe("Target creator tiers (default: all)."),
-        audienceEsMinPct: z
-          .number()
-          .min(0)
-          .max(100)
-          .optional()
-          .describe("Minimum Spanish-audience share (%)."),
-        targetVolume: z
-          .number()
-          .int()
-          .min(1)
-          .max(500)
-          .optional()
-          .describe("Target number of candidates (~40 default)."),
+        audienceEsMinPct: z.number().min(0).max(100).optional().describe("Minimum Spanish-audience share (%)."),
+        targetVolume: z.number().int().min(1).max(500).optional().describe("Target number of candidates (~40 default)."),
         competitorBrands: z
           .array(z.string().min(1))
           .optional()
-          .describe(
-            "Competitor brands to cross-check in ad-library for repeat-promo signal (e.g. N26, Revolut).",
-          ),
-        templates: z
-          .array(z.string().min(1))
-          .optional()
-          .describe("Template names to instantiate for this search (SAN-80)."),
+          .describe("Competitor brands to cross-check in ad-library for repeat-promo signal (e.g. N26, Revolut)."),
+        templates: z.array(z.string().min(1)).optional().describe("Template names to instantiate for this search (SAN-80)."),
         qualificationMode: z
           .enum(["auto", "manual", "hybrid"])
           .optional()
           .describe("YALC campaign qualification mode (default hybrid)."),
-        disqualifyThreshold: z
-          .number()
-          .min(0)
-          .max(100)
-          .optional()
-          .describe("Auto-disqualify threshold (default 40)."),
-        notes: z
-          .string()
-          .optional()
-          .describe("Free-form plan notes for the runner agent."),
+        disqualifyThreshold: z.number().min(0).max(100).optional().describe("Auto-disqualify threshold (default 40)."),
+        notes: z.string().optional().describe("Free-form plan notes for the runner agent."),
         runFixtures: z
           .boolean()
           .default(false)
-          .describe(
-            "Run the discovery runner inline with the 9 fixture creators (no ScrapeCreators call).",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, only previews the search creation."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to create."),
+          .describe("Run the discovery runner inline with the 9 fixture creators (no ScrapeCreators call)."),
+        dryRun: z.boolean().default(true).describe("When true, only previews the search creation."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to create."),
       },
     },
     async ({
@@ -5230,10 +3621,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             tiers,
             audienceEsMinPct,
             targetVolume,
-            signals: {
-              adLibrary: true,
-              competitorBrands: competitorBrands ?? [],
-            },
+            signals: { adLibrary: true, competitorBrands: competitorBrands ?? [] },
             templates,
             qualificationMode,
             disqualifyThreshold,
@@ -5247,8 +3635,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to create this discovery search.",
+            message: "Set dryRun=false and confirm=true to create this discovery search.",
             plan,
             runFixtures: runFixtures === true,
           });
@@ -5337,14 +3724,8 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         templateId: z
           .string()
           .min(1)
-          .describe(
-            "Library template id (e.g. 'primer-contacto-creators-fintech'). List them via GET /api/partnerships/templates.",
-          ),
-        searchId: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Discovery search id (ds-…)."),
+          .describe("Library template id (e.g. 'primer-contacto-creators-fintech'). List them via GET /api/partnerships/templates."),
+        searchId: z.string().min(1).optional().describe("Discovery search id (ds-…)."),
         campaignId: z
           .string()
           .min(1)
@@ -5359,10 +3740,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           return errorResult("Provide searchId or campaignId.");
         }
         try {
-          const result = assignTemplateToSearch(clientSlug, templateId, {
-            searchId,
-            campaignId,
-          });
+          const result = assignTemplateToSearch(clientSlug, templateId, { searchId, campaignId });
           return jsonResult({
             ok: true,
             instance: {
@@ -5382,8 +3760,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             })),
           });
         } catch (err) {
-          if (err instanceof TemplateValidationError)
-            return errorResult(err.message);
+          if (err instanceof TemplateValidationError) return errorResult(err.message);
           throw err;
         }
       }),
@@ -5401,24 +3778,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Approves or rejects a human gate from /api/gates/awaiting (e.g. the partner-outreach 'approve-send' GateItem). Approving resumes the framework run — for partner contacts that executes the send step (dry-run by default, no external email unless the batch was queued with dryRun=false). Optional edits patch the gate payload before resuming (human-in-the-loop edits). Requires yalc:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        runId: z
-          .string()
-          .min(1)
-          .describe("Gate run id (from yalc_list_gates)."),
-        action: z
-          .enum(["approve", "reject"])
-          .describe("approve = resume + send · reject = stop."),
-        reason: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Required when rejecting."),
+        runId: z.string().min(1).describe("Gate run id (from yalc_list_gates)."),
+        action: z.enum(["approve", "reject"]).describe("approve = resume + send · reject = stop."),
+        reason: z.string().min(1).optional().describe("Required when rejecting."),
         edits: z
           .record(z.string(), z.unknown())
           .optional()
-          .describe(
-            "Optional payload edits applied on approve (e.g. tweaked draft bodies).",
-          ),
+          .describe("Optional payload edits applied on approve (e.g. tweaked draft bodies)."),
       },
     },
     async ({ clientSlug, runId, action, reason, edits }) =>
@@ -5426,35 +3792,22 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "yalc:write", clientSlug);
         const config = resolveYalcConfig(clientSlug);
         if (action === "reject") {
-          if (!reason)
-            return errorResult("reason is required to reject a gate.");
+          if (!reason) return errorResult("reason is required to reject a gate.");
           const data = await yalcFetch(
             config,
             `/api/gates/${encodeURIComponent(runId)}/reject`,
-            {
-              method: "POST",
-              body: { reason },
-              headers: traceHeaders(context),
-            },
+            { method: "POST", body: { reason }, headers: traceHeaders(context) },
           );
           return jsonResult(data);
         }
-        const preflight = await preflightPartnerContactGate(
-          config,
-          runId,
-          edits,
-        );
+        const preflight = await preflightPartnerContactGate(config, runId, edits);
         const preflightError = partnerContactPreflightError(preflight);
         if (preflightError) return errorResult(preflightError);
-        const data = await yalcFetch(
-          config,
-          `/api/gates/${encodeURIComponent(runId)}/approve`,
-          {
-            method: "POST",
-            body: { edits },
-            headers: traceHeaders(context),
-          },
-        );
+        const data = await yalcFetch(config, `/api/gates/${encodeURIComponent(runId)}/approve`, {
+          method: "POST",
+          body: { edits },
+          headers: traceHeaders(context),
+        });
         return jsonResult(data);
       }),
   );
@@ -5508,55 +3861,35 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             macro: z.number().positive().lt(100).optional(),
           })
           .optional()
-          .describe(
-            "ER benchmark (%) per tier, e.g. { micro: 6.0 } — feeds the 'ER vs tier' quality component.",
-          ),
+          .describe("ER benchmark (%) per tier, e.g. { micro: 6.0 } — feeds the 'ER vs tier' quality component."),
         verticals: z
           .array(z.string().min(1))
           .optional()
-          .describe(
-            "Program verticals — REPLACES the whole list (e.g. ['finanzas personales','fintech']).",
-          ),
+          .describe("Program verticals — REPLACES the whole list (e.g. ['finanzas personales','fintech'])."),
         formats: z
           .array(z.string().min(1))
           .optional()
-          .describe(
-            "Content formats — REPLACES the whole list (e.g. ['reel','post','story']).",
-          ),
+          .describe("Content formats — REPLACES the whole list (e.g. ['reel','post','story'])."),
         qualificationMode: z
           .enum(["auto", "manual", "hybrid"])
           .optional()
-          .describe(
-            "Default qualification mode for NEW Partnerships searches (hybrid = auto-discard below threshold, human decides the rest).",
-          ),
+          .describe("Default qualification mode for NEW Partnerships searches (hybrid = auto-discard below threshold, human decides the rest)."),
         disqualifyThreshold: z
           .number()
           .min(0)
           .max(100)
           .optional()
-          .describe(
-            "Auto-disqualify quality-score threshold (0-100) for NEW searches in auto/hybrid mode.",
-          ),
+          .describe("Auto-disqualify quality-score threshold (0-100) for NEW searches in auto/hybrid mode."),
         overrides: z
           .record(z.string(), z.unknown())
           .optional()
-          .describe(
-            "Advanced free-form deep-partial of CreatorModelConfig (tiers/weights/scoreBands/breakEven; null deletes a stored key). Merged with the first-class params above (those win).",
-          ),
+          .describe("Advanced free-form deep-partial of CreatorModelConfig (tiers/weights/scoreBands/breakEven; null deletes a stored key). Merged with the first-class params above (those win)."),
         reset: z
           .boolean()
           .default(false)
-          .describe(
-            "Clear the stored overrides document before applying this update (back to calc-creator-core defaults).",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("When true, previews the update without writing."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to write."),
+          .describe("Clear the stored overrides document before applying this update (back to calc-creator-core defaults)."),
+        dryRun: z.boolean().default(true).describe("When true, previews the update without writing."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to write."),
       },
     },
     async ({
@@ -5575,9 +3908,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         assertClientScope(context, "yalc:write", clientSlug);
 
         // Partial del PUT: overrides libres primero, params tipados encima.
-        const partial: Record<string, unknown> = isRecord(overrides)
-          ? { ...overrides }
-          : {};
+        const partial: Record<string, unknown> = isRecord(overrides) ? { ...overrides } : {};
         if (erBenchmarks) {
           const tiers = Object.entries(erBenchmarks)
             .filter(([, er]) => typeof er === "number")
@@ -5586,42 +3917,28 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         }
         if (verticals) partial.verticals = verticals;
         if (formats) partial.formats = formats;
-        if (
-          qualificationMode !== undefined ||
-          disqualifyThreshold !== undefined
-        ) {
-          const qualification = isRecord(partial.qualification)
-            ? { ...partial.qualification }
-            : {};
-          if (qualificationMode !== undefined)
-            qualification.defaultMode = qualificationMode;
-          if (disqualifyThreshold !== undefined)
-            qualification.threshold = disqualifyThreshold;
+        if (qualificationMode !== undefined || disqualifyThreshold !== undefined) {
+          const qualification = isRecord(partial.qualification) ? { ...partial.qualification } : {};
+          if (qualificationMode !== undefined) qualification.defaultMode = qualificationMode;
+          if (disqualifyThreshold !== undefined) qualification.threshold = disqualifyThreshold;
           partial.qualification = qualification;
         }
 
         try {
           if (dryRun !== false || confirm !== true) {
-            const preview = await previewModelConfigUpdate(
-              clientSlug,
-              partial,
-              { reset },
-            );
+            const preview = await previewModelConfigUpdate(clientSlug, partial, { reset });
             return jsonResult({
               ok: true,
               dryRun: true,
               requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to apply this model-config update.",
+              message: "Set dryRun=false and confirm=true to apply this model-config update.",
               partial,
               reset: reset === true,
               current: {
                 source: preview.current.source,
                 overrides: preview.current.overrides,
                 updatedAt: preview.current.updatedAt,
-                ...(preview.current.yalcError
-                  ? { yalcError: preview.current.yalcError }
-                  : {}),
+                ...(preview.current.yalcError ? { yalcError: preview.current.yalcError } : {}),
               },
               preview: {
                 overrides: preview.wouldStore,
@@ -5630,9 +3947,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             });
           }
 
-          const effective = await putModelConfigOverrides(clientSlug, partial, {
-            reset,
-          });
+          const effective = await putModelConfigOverrides(clientSlug, partial, { reset });
           return jsonResult({
             ok: true,
             applied: partial,
@@ -5644,8 +3959,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             note: "Threshold/mode apply to FUTURE discovery searches; existing campaigns keep their values.",
           });
         } catch (err) {
-          if (err instanceof ModelConfigValidationError)
-            return errorResult(err.message);
+          if (err instanceof ModelConfigValidationError) return errorResult(err.message);
           throw err;
         }
       }),
@@ -5681,8 +3995,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "open_design_health",
     {
       title: "Check Open Design health",
-      description:
-        "Checks the Open Design daemon through the Sancho MCP boundary. Requires open-design:read.",
+      description: "Checks the Open Design daemon through the Sancho MCP boundary. Requires open-design:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
       },
@@ -5698,42 +4011,21 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "open_design_list_catalog",
     {
       title: "List Open Design catalog",
-      description:
-        "Lists Open Design skills, design systems, prompt templates, craft guides or projects. Requires open-design:read.",
+      description: "Lists Open Design skills, design systems, prompt templates, craft guides or projects. Requires open-design:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         type: z
-          .enum([
-            "skills",
-            "design-systems",
-            "prompt-templates",
-            "craft-guides",
-            "projects",
-          ])
+          .enum(["skills", "design-systems", "prompt-templates", "craft-guides", "projects"])
           .describe("Open Design catalog type."),
-        filter: z
-          .string()
-          .optional()
-          .describe("Optional filter for supported catalog types."),
-        category: z
-          .enum(["image", "video", "audio"])
-          .optional()
-          .describe("Prompt-template category."),
+        filter: z.string().optional().describe("Optional filter for supported catalog types."),
+        category: z.enum(["image", "video", "audio"]).optional().describe("Prompt-template category."),
       },
     },
     async ({ clientSlug, type, filter, category }) =>
       runTool(context, "open_design_list_catalog", clientSlug, async () => {
         assertClientScope(context, "open-design:read", clientSlug);
-        const items = await listOpenDesignCatalog(
-          type,
-          { filter, category },
-          context,
-        );
-        return jsonResult({
-          type,
-          items,
-          count: Array.isArray(items) ? items.length : null,
-        });
+        const items = await listOpenDesignCatalog(type, { filter, category }, context);
+        return jsonResult({ type, items, count: Array.isArray(items) ? items.length : null });
       }),
   );
 
@@ -5745,22 +4037,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Finds an existing Open Design project for a client brand folder and optional scope without importing or creating projects. Requires open-design:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        scope: z
-          .string()
-          .optional()
-          .describe(
-            "Optional brand-relative folder scope, e.g. 'content/assets'.",
-          ),
+        scope: z.string().optional().describe("Optional brand-relative folder scope, e.g. 'content/assets'."),
       },
     },
     async ({ clientSlug, scope }) =>
       runTool(context, "open_design_resolve_project", clientSlug, async () => {
         assertClientScope(context, "open-design:read", clientSlug);
-        const resolution = await resolveExistingOpenDesignProject(
-          clientSlug,
-          scope,
-          odConfig(context),
-        );
+        const resolution = await resolveExistingOpenDesignProject(clientSlug, scope, odConfig(context));
         return jsonResult(resolution);
       }),
   );
@@ -5773,49 +4056,25 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Ensures a brand folder/scope is registered as an Open Design project and persists the project mapping. Requires open-design:write and explicit confirmation.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        scope: z
-          .string()
-          .optional()
-          .describe(
-            "Optional brand-relative folder scope, e.g. 'content/assets'.",
-          ),
+        scope: z.string().optional().describe("Optional brand-relative folder scope, e.g. 'content/assets'."),
         applyDesignSystem: z
           .boolean()
           .default(true)
-          .describe(
-            "Best-effort set the project designSystemId to the client slug.",
-          ),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without importing or writing mapping."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to import/persist."),
+          .describe("Best-effort set the project designSystemId to the client slug."),
+        dryRun: z.boolean().default(true).describe("Preview without importing or writing mapping."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to import/persist."),
       },
     },
-    async ({
-      clientSlug,
-      scope,
-      applyDesignSystem = true,
-      dryRun = true,
-      confirm = false,
-    }) =>
+    async ({ clientSlug, scope, applyDesignSystem = true, dryRun = true, confirm = false }) =>
       runTool(context, "open_design_import_project", clientSlug, async () => {
         assertClientScope(context, "open-design:write", clientSlug);
-        const preview = await previewOpenDesignProjectImport(
-          clientSlug,
-          scope,
-          { applyDesignSystem },
-        );
+        const preview = await previewOpenDesignProjectImport(clientSlug, scope, { applyDesignSystem });
         if (dryRun || !confirm) {
           return jsonResult({
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to import/register this Open Design project.",
+            message: "Set dryRun=false and confirm=true to import/register this Open Design project.",
             preview,
           });
         }
@@ -5836,35 +4095,13 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         projectId: z.string().min(1).describe("Open Design project id."),
-        name: z
-          .string()
-          .min(1)
-          .max(200)
-          .optional()
-          .describe("Optional project display name."),
-        skillId: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional OD skill id to set."),
-        designSystemId: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional OD design system id to set."),
+        name: z.string().min(1).max(200).optional().describe("Optional project display name."),
+        skillId: z.string().min(1).optional().describe("Optional OD skill id to set."),
+        designSystemId: z.string().min(1).optional().describe("Optional OD design system id to set."),
         clearSkill: z.boolean().default(false).describe("Set skillId to null."),
-        clearDesignSystem: z
-          .boolean()
-          .default(false)
-          .describe("Set designSystemId to null."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without patching the OD project."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to patch."),
+        clearDesignSystem: z.boolean().default(false).describe("Set designSystemId to null."),
+        dryRun: z.boolean().default(true).describe("Preview without patching the OD project."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to patch."),
       },
     },
     async ({
@@ -5893,16 +4130,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to update this Open Design project.",
+            message: "Set dryRun=false and confirm=true to update this Open Design project.",
             preview,
           });
         }
-        const project = await odPatchProject(
-          projectId,
-          patch,
-          odConfig(context),
-        );
+        const project = await odPatchProject(projectId, patch, odConfig(context));
         return jsonResult({ ok: true, clientSlug, projectId, project });
       }),
   );
@@ -5917,29 +4149,12 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         artifactId: z.string().min(1).describe("Open Design artifact id."),
         format: z.enum(OD_EXPORT_FORMAT_VALUES).describe("Export format."),
-        destination: z
-          .string()
-          .min(1)
-          .optional()
-          .describe("Optional daemon-side destination path."),
-        dryRun: z
-          .boolean()
-          .default(true)
-          .describe("Preview without exporting."),
-        confirm: z
-          .boolean()
-          .default(false)
-          .describe("Must be true with dryRun=false to export."),
+        destination: z.string().min(1).optional().describe("Optional daemon-side destination path."),
+        dryRun: z.boolean().default(true).describe("Preview without exporting."),
+        confirm: z.boolean().default(false).describe("Must be true with dryRun=false to export."),
       },
     },
-    async ({
-      clientSlug,
-      artifactId,
-      format,
-      destination,
-      dryRun = true,
-      confirm = false,
-    }) =>
+    async ({ clientSlug, artifactId, format, destination, dryRun = true, confirm = false }) =>
       runTool(context, "open_design_export_artifact", clientSlug, async () => {
         assertClientScope(context, "open-design:write", clientSlug);
         const request = pickDefined({ artifactId, format, destination }) as {
@@ -5952,20 +4167,12 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             ok: true,
             dryRun: true,
             requiresConfirmation: true,
-            message:
-              "Set dryRun=false and confirm=true to export this Open Design artifact.",
+            message: "Set dryRun=false and confirm=true to export this Open Design artifact.",
             preview: { clientSlug, request },
           });
         }
         const result = await odExport(request, odConfig(context));
-        return jsonResult({
-          ...result,
-          ok: result.ok,
-          clientSlug,
-          artifactId,
-          format,
-          destination: destination ?? null,
-        });
+        return jsonResult({ ...result, ok: result.ok, clientSlug, artifactId, format, destination: destination ?? null });
       }),
   );
 
@@ -5973,8 +4180,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "open_design_list_project_files",
     {
       title: "List Open Design project files",
-      description:
-        "Lists files for an existing Open Design project. Requires open-design:read.",
+      description: "Lists files for an existing Open Design project. Requires open-design:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         projectId: z.string().min(1).describe("Open Design project id."),
@@ -5988,29 +4194,20 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       },
     },
     async ({ clientSlug, projectId, limit }) =>
-      runTool(
-        context,
-        "open_design_list_project_files",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "open-design:read", clientSlug);
-          const max = clampLimit(
-            limit,
-            OD_PROJECT_FILE_LIMIT_DEFAULT,
-            OD_PROJECT_FILE_LIMIT_MAX,
-          );
-          const files = await odListProjectFiles(projectId, odConfig(context));
-          return jsonResult({
-            ok: true,
-            clientSlug,
-            projectId,
-            files: files.slice(0, max),
-            count: Math.min(files.length, max),
-            totalFiles: files.length,
-            limit: max,
-          });
-        },
-      ),
+      runTool(context, "open_design_list_project_files", clientSlug, async () => {
+        assertClientScope(context, "open-design:read", clientSlug);
+        const max = clampLimit(limit, OD_PROJECT_FILE_LIMIT_DEFAULT, OD_PROJECT_FILE_LIMIT_MAX);
+        const files = await odListProjectFiles(projectId, odConfig(context));
+        return jsonResult({
+          ok: true,
+          clientSlug,
+          projectId,
+          files: files.slice(0, max),
+          count: Math.min(files.length, max),
+          totalFiles: files.length,
+          limit: max,
+        });
+      }),
   );
 
   server.registerTool(
@@ -6036,21 +4233,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "open_design_get_project_file", clientSlug, async () => {
         assertClientScope(context, "open-design:read", clientSlug);
         const safePath = assertRelativeProjectPath(filePath);
-        const max = clampLimit(
-          maxChars,
-          OD_PROJECT_FILE_MAX_CHARS_DEFAULT,
-          OD_PROJECT_FILE_MAX_CHARS_MAX,
-        );
-        const content = await odReadProjectFile(
-          projectId,
-          safePath,
-          odConfig(context),
-        );
-        if (content == null)
-          throw new McpAuthError(
-            404,
-            `Open Design project file not found: ${safePath}`,
-          );
+        const max = clampLimit(maxChars, OD_PROJECT_FILE_MAX_CHARS_DEFAULT, OD_PROJECT_FILE_MAX_CHARS_MAX);
+        const content = await odReadProjectFile(projectId, safePath, odConfig(context));
+        if (content == null) throw new McpAuthError(404, `Open Design project file not found: ${safePath}`);
         const truncated = content.length > max;
         return jsonResult({
           ok: true,
@@ -6069,8 +4254,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     "open_design_list_artifacts",
     {
       title: "List Open Design project artifacts",
-      description:
-        "Lists artifacts for an existing Open Design project. Requires open-design:read.",
+      description: "Lists artifacts for an existing Open Design project. Requires open-design:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         projectId: z.string().min(1).describe("Open Design project id."),
@@ -6080,13 +4264,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       runTool(context, "open_design_list_artifacts", clientSlug, async () => {
         assertClientScope(context, "open-design:read", clientSlug);
         const artifacts = await odListArtifacts(projectId, odConfig(context));
-        return jsonResult({
-          ok: true,
-          clientSlug,
-          projectId,
-          artifacts,
-          count: artifacts.length,
-        });
+        return jsonResult({ ok: true, clientSlug, projectId, artifacts, count: artifacts.length });
       }),
   );
 
@@ -6109,12 +4287,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
   );
 
   registerKeywordAntennaTools(server, {
-    assertReadAccess: (clientSlug) =>
-      assertClientScope(context, "seo:read", clientSlug),
-    assertWriteAccess: (clientSlug) =>
-      assertClientScope(context, "seo:write", clientSlug),
-    run: (toolName, clientSlug, handler) =>
-      runTool(context, toolName, clientSlug, handler),
+    assertReadAccess: (clientSlug) => assertClientScope(context, "seo:read", clientSlug),
+    assertWriteAccess: (clientSlug) => assertClientScope(context, "seo:write", clientSlug),
+    run: (toolName, clientSlug, handler) => runTool(context, toolName, clientSlug, handler),
     jsonResult,
   });
 
@@ -6126,74 +4301,28 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Reads a client's metrics from the metric_snapshots time-series. view=series returns buckets; view=surfaces returns latest headline values; view=trend returns current-vs-previous delta; view=northstar returns the metrics-plan North Star/KPIs. Requires metrics:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        view: z
-          .enum(["series", "surfaces", "trend", "northstar"])
-          .default("series")
-          .describe("Which view to return."),
-        source: z
-          .string()
-          .optional()
-          .describe("Metric source, e.g. meta-ads, ghl, ga4."),
+        view: z.enum(["series", "surfaces", "trend", "northstar"]).default("series").describe("Which view to return."),
+        source: z.string().optional().describe("Metric source, e.g. meta-ads, ghl, ga4."),
         metric: z.string().optional().describe("Metric name/key."),
-        grain: z
-          .enum(["day", "week", "month"])
-          .default("day")
-          .describe("Bucket grain for series view."),
-        from: z
-          .string()
-          .optional()
-          .describe("Inclusive ISO date/time lower bound."),
-        to: z
-          .string()
-          .optional()
-          .describe("Inclusive ISO date/time upper bound."),
+        grain: z.enum(["day", "week", "month"]).default("day").describe("Bucket grain for series view."),
+        from: z.string().optional().describe("Inclusive ISO date/time lower bound."),
+        to: z.string().optional().describe("Inclusive ISO date/time upper bound."),
       },
     },
     async ({ clientSlug, view, source, metric, grain, from, to }) =>
-      runTool(
-        context,
-        "sancho_get_metrics_timeseries",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "metrics:read", clientSlug);
-          if (view === "surfaces")
-            return jsonResult(
-              await getSurfaceSummary(clientSlug, { from, to }),
-            );
-          if (view === "northstar") return jsonResult(getNorthStar(clientSlug));
-          if (view === "trend") {
-            if (!source || !metric)
-              throw new McpAuthError(
-                400,
-                "source and metric are required for view=trend",
-              );
-            if (!from || !to)
-              throw new McpAuthError(
-                400,
-                "from and to are required for view=trend",
-              );
-            const trendSource = source;
-            const trendMetric = metric;
-            return jsonResult(
-              await getTrend(clientSlug, {
-                source: trendSource,
-                metric: trendMetric,
-                from,
-                to,
-              }),
-            );
-          }
-          return jsonResult(
-            await getMetricsTimeSeries(clientSlug, {
-              source,
-              metric,
-              grain,
-              from,
-              to,
-            }),
-          );
-        },
-      ),
+      runTool(context, "sancho_get_metrics_timeseries", clientSlug, async () => {
+        assertClientScope(context, "metrics:read", clientSlug);
+        if (view === "surfaces") return jsonResult(await getSurfaceSummary(clientSlug, { from, to }));
+        if (view === "northstar") return jsonResult(getNorthStar(clientSlug));
+        if (view === "trend") {
+          if (!source || !metric) throw new McpAuthError(400, "source and metric are required for view=trend");
+          if (!from || !to) throw new McpAuthError(400, "from and to are required for view=trend");
+          const trendSource = source;
+          const trendMetric = metric;
+          return jsonResult(await getTrend(clientSlug, { source: trendSource, metric: trendMetric, from, to }));
+        }
+        return jsonResult(await getMetricsTimeSeries(clientSlug, { source, metric, grain, from, to }));
+      }),
   );
 
   server.registerTool(
@@ -6221,43 +4350,32 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Replaces a client's dashboard definition with a new validated version. Defaults to dry-run; set dryRun=false and confirm=true to save. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        definition: z
-          .string()
-          .min(1)
-          .describe("Full dashboard definition as a JSON string."),
+        definition: z.string().min(1).describe("Full dashboard definition as a JSON string."),
         changeNote: z.string().optional().describe("Optional version note."),
         dryRun: z.boolean().default(true),
         confirm: z.boolean().default(false),
       },
     },
     async ({ clientSlug, definition, changeNote, dryRun, confirm }) =>
-      runTool(
-        context,
-        "sancho_update_metrics_dashboard",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "metrics:write", clientSlug);
-          let parsed: unknown;
-          try {
-            parsed = JSON.parse(definition);
-          } catch {
-            throw new McpAuthError(400, "definition must be valid JSON");
-          }
-          if (dryRun !== false || confirm !== true) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message:
-                "Set dryRun=false and confirm=true to save this metrics dashboard.",
-              preview: parsed,
-            });
-          }
-          return jsonResult(
-            await saveDashboardDefinition(clientSlug, parsed, { changeNote }),
-          );
-        },
-      ),
+      runTool(context, "sancho_update_metrics_dashboard", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(definition);
+        } catch {
+          throw new McpAuthError(400, "definition must be valid JSON");
+        }
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({
+            ok: true,
+            dryRun: true,
+            requiresConfirmation: true,
+            message: "Set dryRun=false and confirm=true to save this metrics dashboard.",
+            preview: parsed,
+          });
+        }
+        return jsonResult(await saveDashboardDefinition(clientSlug, parsed, { changeNote }));
+      }),
   );
 
   server.registerTool(
@@ -6268,61 +4386,27 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Adds a custom formula metric card to the client's dashboard as a new version. Defaults to dry-run. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        label: z
-          .string()
-          .min(1)
-          .describe("Card label, e.g. Coste por reunion."),
-        formula: z
-          .string()
-          .min(1)
-          .describe(
-            "Formula using source.metric refs, numbers and arithmetic.",
-          ),
-        format: z
-          .enum(["number", "currency", "percent", "ratio"])
-          .default("number"),
-        tier: z
-          .enum(["north-star", "leading", "diagnostic"])
-          .default("diagnostic"),
+        label: z.string().min(1).describe("Card label, e.g. Coste por reunion."),
+        formula: z.string().min(1).describe("Formula using source.metric refs, numbers and arithmetic."),
+        format: z.enum(["number", "currency", "percent", "ratio"]).default("number"),
+        tier: z.enum(["north-star", "leading", "diagnostic"]).default("diagnostic"),
         surface: z.string().optional().describe("Surface/tab id to attach to."),
         changeNote: z.string().optional(),
         dryRun: z.boolean().default(true),
         confirm: z.boolean().default(false),
       },
     },
-    async ({
-      clientSlug,
-      label,
-      formula,
-      format,
-      tier,
-      surface,
-      changeNote,
-      dryRun,
-      confirm,
-    }) =>
+    async ({ clientSlug, label, formula, format, tier, surface, changeNote, dryRun, confirm }) =>
       runTool(context, "sancho_add_custom_metric", clientSlug, async () => {
         assertClientScope(context, "metrics:write", clientSlug);
         if (!isSafeFormula(formula)) {
-          throw new McpAuthError(
-            400,
-            "Unsafe formula: only source.metric refs, numbers and arithmetic are allowed.",
-          );
+          throw new McpAuthError(400, "Unsafe formula: only source.metric refs, numbers and arithmetic are allowed.");
         }
         if (dryRun !== false || confirm !== true) {
-          return jsonResult({
-            ok: true,
-            dryRun: true,
-            requiresConfirmation: true,
-            preview: { label, formula, format, tier, surface },
-          });
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, preview: { label, formula, format, tier, surface } });
         }
         return jsonResult(
-          await addCustomMetric(
-            clientSlug,
-            { label, formula, format, tier, surface },
-            { changeNote },
-          ),
+          await addCustomMetric(clientSlug, { label, formula, format, tier, surface }, { changeNote }),
         );
       }),
   );
@@ -6335,35 +4419,19 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Reverts the dashboard to a prior version by appending a new version that copies that snapshot. Defaults to dry-run. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        toVersion: z
-          .number()
-          .int()
-          .min(1)
-          .describe("Version number to restore."),
+        toVersion: z.number().int().min(1).describe("Version number to restore."),
         dryRun: z.boolean().default(true),
         confirm: z.boolean().default(false),
       },
     },
     async ({ clientSlug, toVersion, dryRun, confirm }) =>
-      runTool(
-        context,
-        "sancho_revert_metrics_dashboard",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "metrics:write", clientSlug);
-          if (dryRun !== false || confirm !== true) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message: `Set dryRun=false and confirm=true to revert to v${toVersion}.`,
-            });
-          }
-          return jsonResult(
-            await revertDashboardDefinition(clientSlug, toVersion),
-          );
-        },
-      ),
+      runTool(context, "sancho_revert_metrics_dashboard", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: `Set dryRun=false and confirm=true to revert to v${toVersion}.` });
+        }
+        return jsonResult(await revertDashboardDefinition(clientSlug, toVersion));
+      }),
   );
 
   server.registerTool(
@@ -6374,54 +4442,30 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         "Resets the dashboard to an archetype template as a new version. Defaults to dry-run. Requires metrics:write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        archetype: z
-          .string()
-          .min(1)
-          .describe(
-            "Archetype: lead-to-sale | marketplace | saas | ecommerce.",
-          ),
+        archetype: z.string().min(1).describe("Archetype: lead-to-sale | marketplace | saas | ecommerce."),
         dryRun: z.boolean().default(true),
         confirm: z.boolean().default(false),
       },
     },
     async ({ clientSlug, archetype, dryRun, confirm }) =>
-      runTool(
-        context,
-        "sancho_apply_metrics_template",
-        clientSlug,
-        async () => {
-          assertClientScope(context, "metrics:write", clientSlug);
-          if (dryRun !== false || confirm !== true) {
-            return jsonResult({
-              ok: true,
-              dryRun: true,
-              requiresConfirmation: true,
-              message: `Set dryRun=false and confirm=true to apply the ${archetype} template.`,
-            });
-          }
-          return jsonResult(
-            await applyDashboardTemplate(clientSlug, archetype),
-          );
-        },
-      ),
+      runTool(context, "sancho_apply_metrics_template", clientSlug, async () => {
+        assertClientScope(context, "metrics:write", clientSlug);
+        if (dryRun !== false || confirm !== true) {
+          return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, message: `Set dryRun=false and confirm=true to apply the ${archetype} template.` });
+        }
+        return jsonResult(await applyDashboardTemplate(clientSlug, archetype));
+      }),
   );
 
   return server;
 }
 
-function assertClientScope(
-  context: SanchoMcpContext,
-  scope: McpScope,
-  clientSlug: string,
-): void {
+function assertClientScope(context: SanchoMcpContext, scope: McpScope, clientSlug: string): void {
   assertMcpScope(context.principal, scope);
   assertMcpClientAccess(context.principal, clientSlug);
 }
 
-function assertClientReadScope(
-  context: SanchoMcpContext,
-  clientSlug: string,
-): void {
+function assertClientReadScope(context: SanchoMcpContext, clientSlug: string): void {
   assertMcpAnyScope(context.principal, ["clients:read", "sancho:read"]);
   assertMcpClientAccess(context.principal, clientSlug);
 }
@@ -6430,15 +4474,15 @@ function assertBrandScope(context: SanchoMcpContext, brandSlug: string): void {
   assertMcpBrandAccess(context.principal, brandSlug);
 }
 
-function assertBrandWriteScope(
-  context: SanchoMcpContext,
-  brandSlug: string,
-): void {
+function assertBrandWriteScope(context: SanchoMcpContext, brandSlug: string): void {
   assertMcpBrandAccess(context.principal, brandSlug, "docs:write");
 }
 
 function sanitizeClientForMcp(client: Client): Record<string, unknown> {
-  const { mcToken: _mcToken, ...safe } = client;
+  const {
+    mcToken: _mcToken,
+    ...safe
+  } = client;
   return {
     slug: safe.slug,
     name: safe.name,
@@ -6514,26 +4558,19 @@ function updateClientMetadata(
 async function getMcpAgent(agentId: string): Promise<AgentRichEntry | null> {
   const normalized = agentId.trim();
   if (!normalized) throw new McpAuthError(400, "agentId is required");
-  const agents =
-    (await getRuntime().control.listAgentsRich()) as AgentRichEntry[];
+  const agents = await getRuntime().control.listAgentsRich() as AgentRichEntry[];
   return agents.find((agent) => agent.id === normalized) || null;
 }
 
-async function validateAgentModel(
-  model: string | null,
-): Promise<{ warning?: string }> {
+async function validateAgentModel(model: string | null): Promise<{ warning?: string }> {
   if (model === null) return {};
   const catalog = await getModelCatalog();
   const check = isModelAvailable(catalog, model);
-  if (!check.ok)
-    throw new McpAuthError(400, check.reason || "Model is not available");
+  if (!check.ok) throw new McpAuthError(400, check.reason || "Model is not available");
   return { warning: check.warning };
 }
 
-function matchesStatus(
-  actual: string | null | undefined,
-  expected: string | undefined,
-): boolean {
+function matchesStatus(actual: string | null | undefined, expected: string | undefined): boolean {
   if (!expected) return true;
   return (actual || "").toLowerCase() === expected.toLowerCase();
 }
@@ -6591,33 +4628,20 @@ function listMcpRecurringTasks(
     maxPromptChars: number;
   },
 ) {
-  const clients = loadClients().map((client) => ({
-    slug: client.slug,
-    name: client.name,
-  }));
+  const clients = loadClients().map((client) => ({ slug: client.slug, name: client.name }));
   const localTasks = loadRecurringTasks(clientSlug);
   const localIds = new Set(localTasks.map((task) => task.id));
-  const { crons } = enrichCrons({
-    slug: clientSlug,
-    includeSystem: false,
-    clients,
-  });
+  const { crons } = enrichCrons({ slug: clientSlug, includeSystem: false, clients });
   const tasks = [
     ...crons
       .filter((cron) => !localIds.has(cron.id))
-      .map((cron) =>
-        serializeOpenClawRecurringTask(cron, options.maxPromptChars),
-      ),
-    ...localTasks.map((task) =>
-      serializeLocalRecurringTask(task, clientSlug, options.maxPromptChars),
-    ),
+      .map((cron) => serializeOpenClawRecurringTask(cron, options.maxPromptChars)),
+    ...localTasks.map((task) => serializeLocalRecurringTask(task, clientSlug, options.maxPromptChars)),
   ];
   const filtered = tasks
     .filter((task) => !options.status || task.status === options.status)
     .filter((task) => !options.source || task.source === options.source)
-    .filter((task) =>
-      matchesQuery(options.query, [task.name, task.description, task.prompt]),
-    )
+    .filter((task) => matchesQuery(options.query, [task.name, task.description, task.prompt]))
     .sort((a, b) => a.name.localeCompare(b.name));
   return {
     tasks: filtered.slice(0, options.limit),
@@ -6630,14 +4654,8 @@ function listMcpRecurringTasks(
 function findMcpRecurringTask(
   clientSlug: string,
   taskId: string,
-): {
-  source: McpRecurringSource;
-  status: McpRecurringStatus;
-  name: string;
-} | null {
-  const local = loadRecurringTasks(clientSlug).find(
-    (task) => task.id === taskId,
-  );
+): { source: McpRecurringSource; status: McpRecurringStatus; name: string } | null {
+  const local = loadRecurringTasks(clientSlug).find((task) => task.id === taskId);
   if (local) {
     return {
       source: local._source === "openclaw-cron" ? "openclaw-cron" : "local",
@@ -6645,15 +4663,8 @@ function findMcpRecurringTask(
       name: local.name,
     };
   }
-  const clients = loadClients().map((client) => ({
-    slug: client.slug,
-    name: client.name,
-  }));
-  const cron = enrichCrons({
-    slug: clientSlug,
-    includeSystem: false,
-    clients,
-  }).crons.find((item) => item.id === taskId);
+  const clients = loadClients().map((client) => ({ slug: client.slug, name: client.name }));
+  const cron = enrichCrons({ slug: clientSlug, includeSystem: false, clients }).crons.find((item) => item.id === taskId);
   if (!cron) return null;
   return {
     source: "openclaw-cron",
@@ -6671,15 +4682,8 @@ function listMcpContentCrons(
     maxPromptChars: number;
   },
 ) {
-  const clients = loadClients().map((client) => ({
-    slug: client.slug,
-    name: client.name,
-  }));
-  const { crons } = enrichCrons({
-    slug: clientSlug,
-    includeSystem: false,
-    clients,
-  });
+  const clients = loadClients().map((client) => ({ slug: client.slug, name: client.name }));
+  const { crons } = enrichCrons({ slug: clientSlug, includeSystem: false, clients });
   const contentCrons = crons
     .filter((cron) => cron.name.startsWith("Content:"))
     .map((cron) => {
@@ -6693,7 +4697,7 @@ function listMcpContentCrons(
         name: cron.name,
         baseName,
         enabled: cron.enabled,
-        status: cron.enabled ? ("active" as const) : ("paused" as const),
+        status: cron.enabled ? "active" as const : "paused" as const,
         category: cron.category,
         schedule: humanizeSchedule(cron.schedule_raw || undefined),
         scheduleRaw: cron.schedule_raw,
@@ -6701,10 +4705,7 @@ function listMcpContentCrons(
         agent: cron.agent,
         model: cron.model,
         description: cron.description,
-        promptPreview: truncateText(
-          prompt,
-          Math.min(options.maxPromptChars, 200),
-        ),
+        promptPreview: truncateText(prompt, Math.min(options.maxPromptChars, 200)),
         prompt: truncateText(prompt, options.maxPromptChars),
         promptTruncated: prompt.length > options.maxPromptChars,
         lastRunAt: cron.last_run_at,
@@ -6720,14 +4721,7 @@ function listMcpContentCrons(
       };
     })
     .filter((cron) => !options.status || cron.status === options.status)
-    .filter((cron) =>
-      matchesQuery(options.query, [
-        cron.name,
-        cron.baseName,
-        cron.description,
-        cron.prompt,
-      ]),
-    );
+    .filter((cron) => matchesQuery(options.query, [cron.name, cron.baseName, cron.description, cron.prompt]));
 
   return {
     crons: contentCrons.slice(0, options.limit),
@@ -6737,26 +4731,22 @@ function listMcpContentCrons(
       total: contentCrons.length,
       active: contentCrons.filter((cron) => cron.status === "active").length,
       paused: contentCrons.filter((cron) => cron.status === "paused").length,
-      lastRunAt:
-        contentCrons
-          .map((cron) => cron.lastRunAt)
-          .filter(Boolean)
-          .sort()
-          .reverse()[0] || null,
+      lastRunAt: contentCrons
+        .map((cron) => cron.lastRunAt)
+        .filter(Boolean)
+        .sort()
+        .reverse()[0] || null,
     },
   };
 }
 
-function serializeOpenClawRecurringTask(
-  cron: EnrichedCron,
-  maxPromptChars: number,
-) {
+function serializeOpenClawRecurringTask(cron: EnrichedCron, maxPromptChars: number) {
   const prompt = cron.prompt || "";
   return {
     id: cron.id,
     name: cron.name,
     source: "openclaw-cron" as const,
-    status: cron.enabled ? ("active" as const) : ("paused" as const),
+    status: cron.enabled ? "active" as const : "paused" as const,
     enabled: cron.enabled,
     category: cron.category,
     schedule: humanizeSchedule(cron.schedule_raw || undefined),
@@ -6780,18 +4770,10 @@ function serializeOpenClawRecurringTask(
   };
 }
 
-function serializeLocalRecurringTask(
-  task: RecurringTask,
-  clientSlug: string,
-  maxPromptChars: number,
-) {
+function serializeLocalRecurringTask(task: RecurringTask, clientSlug: string, maxPromptChars: number) {
   const prompt = typeof task.prompt === "string" ? task.prompt : "";
-  const description =
-    typeof task.description === "string" ? task.description : "";
-  const source =
-    task._source === "openclaw-cron"
-      ? ("openclaw-cron" as const)
-      : ("local" as const);
+  const description = typeof task.description === "string" ? task.description : "";
+  const source = task._source === "openclaw-cron" ? "openclaw-cron" as const : "local" as const;
   return {
     id: task.id,
     name: task.name,
@@ -6807,26 +4789,16 @@ function serializeLocalRecurringTask(
     description,
     prompt: truncateText(prompt, maxPromptChars),
     promptTruncated: prompt.length > maxPromptChars,
-    clientSlug:
-      typeof task.client_slug === "string" ? task.client_slug : clientSlug,
+    clientSlug: typeof task.client_slug === "string" ? task.client_slug : clientSlug,
     lastRunAt: typeof task.last_run_at === "string" ? task.last_run_at : null,
     nextRunAt: typeof task.next_run_at === "string" ? task.next_run_at : null,
     lastStatus: typeof task.last_status === "string" ? task.last_status : null,
-    lastDurationMs:
-      typeof task.last_duration_ms === "number" ? task.last_duration_ms : null,
-    consecutiveErrors:
-      typeof task.consecutive_errors === "number" ? task.consecutive_errors : 0,
-    lastDiagnosticSummary:
-      typeof task.last_diagnostic_summary === "string"
-        ? task.last_diagnostic_summary
-        : null,
+    lastDurationMs: typeof task.last_duration_ms === "number" ? task.last_duration_ms : null,
+    consecutiveErrors: typeof task.consecutive_errors === "number" ? task.consecutive_errors : 0,
+    lastDiagnosticSummary: typeof task.last_diagnostic_summary === "string" ? task.last_diagnostic_summary : null,
     lastError: typeof task.last_error === "string" ? task.last_error : null,
-    lastErrorReason:
-      typeof task.last_error_reason === "string"
-        ? task.last_error_reason
-        : null,
-    lastFinding:
-      typeof task.last_finding === "string" ? task.last_finding : null,
+    lastErrorReason: typeof task.last_error_reason === "string" ? task.last_error_reason : null,
+    lastFinding: typeof task.last_finding === "string" ? task.last_finding : null,
     running: task.running || null,
     createdAt: task.created_at || null,
     updatedAt: task.updated_at || null,
@@ -6856,15 +4828,11 @@ async function fetchYalcLeadMetrics(
   const config = resolveYalcConfig(clientSlug);
   const findLead = (data: unknown): Record<string, unknown> | null => {
     if (!isRecord(data) || !Array.isArray(data.leads)) return null;
-    const match = data.leads.find(
-      (lead) => isRecord(lead) && lead.id === leadId,
-    );
+    const match = data.leads.find((lead) => isRecord(lead) && lead.id === leadId);
     return isRecord(match) ? match : null;
   };
 
-  let lead = findLead(
-    await yalcFetch(config, "/api/leads", { headers: traceHeaders(context) }),
-  );
+  let lead = findLead(await yalcFetch(config, "/api/leads", { headers: traceHeaders(context) }));
   if (!lead) {
     lead = findLead(
       await yalcFetch(config, "/api/leads?lifecycleStatus=Disqualified", {
@@ -6877,8 +4845,7 @@ async function fetchYalcLeadMetrics(
   return {
     followers: typeof lead.followers === "number" ? lead.followers : null,
     // Yalc serializa `engagementRate` en % (3.4 = 3.4%) — mismas unidades que el motor.
-    engagementRatePct:
-      typeof lead.engagementRate === "number" ? lead.engagementRate : null,
+    engagementRatePct: typeof lead.engagementRate === "number" ? lead.engagementRate : null,
     handle: typeof lead.handle === "string" ? lead.handle : null,
   };
 }
@@ -6901,12 +4868,10 @@ async function runTool(
       error,
       metadata: { traceId: context.traceId },
     });
-    if (auditError)
-      return errorResult(`MCP audit failed: ${auditError}`, context.traceId);
+    if (auditError) return errorResult(`MCP audit failed: ${auditError}`, context.traceId);
     return result;
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown MCP tool error";
+    const message = err instanceof Error ? err.message : "Unknown MCP tool error";
     const auditError = await auditToolCall({
       principal: context.principal,
       toolName,
@@ -6915,16 +4880,11 @@ async function runTool(
       error: message,
       metadata: { traceId: context.traceId },
     });
-    return errorResult(
-      auditError ? `${message}; MCP audit failed: ${auditError}` : message,
-      context.traceId,
-    );
+    return errorResult(auditError ? `${message}; MCP audit failed: ${auditError}` : message, context.traceId);
   }
 }
 
-async function auditToolCall(
-  event: Parameters<typeof auditMcpToolCall>[0],
-): Promise<string | null> {
+async function auditToolCall(event: Parameters<typeof auditMcpToolCall>[0]): Promise<string | null> {
   try {
     await auditMcpToolCall(event);
     return null;
@@ -6954,18 +4914,13 @@ function errorResult(message: string, traceId?: string): CallToolResult {
         text: message,
       },
     ],
-    structuredContent: traceId
-      ? { error: message, traceId }
-      : { error: message },
+    structuredContent: traceId ? { error: message, traceId } : { error: message },
   };
 }
 
 function withTraceId(result: CallToolResult, traceId: string): CallToolResult {
   const structuredContent = isRecord(result.structuredContent)
-    ? {
-        ...result.structuredContent,
-        traceId: result.structuredContent.traceId || traceId,
-      }
+    ? { ...result.structuredContent, traceId: result.structuredContent.traceId || traceId }
     : { traceId };
   return {
     ...result,
@@ -6976,11 +4931,7 @@ function withTraceId(result: CallToolResult, traceId: string): CallToolResult {
         if (!isRecord(parsed)) return item;
         return {
           ...item,
-          text: JSON.stringify(
-            { ...parsed, traceId: parsed.traceId || traceId },
-            null,
-            2,
-          ),
+          text: JSON.stringify({ ...parsed, traceId: parsed.traceId || traceId }, null, 2),
         };
       } catch {
         return item;
@@ -7016,47 +4967,30 @@ async function resolveMcpDelegateSourceThread(
   if (typeof sourceThreadId === "string" && sourceThreadId.trim()) {
     return canonicalThreadId(normalizeChatThreadId(clientSlug, sourceThreadId));
   }
-  if (typeof sourceTaskId !== "string" || !sourceTaskId.trim())
-    return undefined;
+  if (typeof sourceTaskId !== "string" || !sourceTaskId.trim()) return undefined;
   const wanted = normalizedMcpRouteKey(sourceTaskId);
   const rows = await listUnifiedTaskRowsAsync(clientSlug);
-  const matches = rows.filter(
-    (row) => normalizedMcpRouteKey(row.id) === wanted,
-  );
-  if (
-    matches.length !== 1 ||
-    String(matches[0].type).toLowerCase() === "project"
-  )
-    return undefined;
+  const matches = rows.filter((row) => normalizedMcpRouteKey(row.id) === wanted);
+  if (matches.length !== 1 || String(matches[0].type).toLowerCase() === "project") return undefined;
   return canonicalTaskRouteThreadId(matches[0], clientSlug);
 }
 
-function normalizeMcpDelegateSkill(
-  value: string | undefined,
-): string | undefined {
+function normalizeMcpDelegateSkill(value: string | undefined): string | undefined {
   if (typeof value !== "string") return undefined;
   const token = value.trim().toLowerCase();
   return /^[a-z0-9][a-z0-9_-]{0,127}$/.test(token) ? token : undefined;
 }
 
-function normalizeMcpDelegateSkills(
-  value: string[] | undefined,
-): string[] | undefined {
+function normalizeMcpDelegateSkills(value: string[] | undefined): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
-  const normalized = Array.from(
-    new Set(
-      value
-        .map((item) => normalizeMcpDelegateSkill(item))
-        .filter((item): item is string => Boolean(item)),
-    ),
-  );
+  const normalized = Array.from(new Set(
+    value.map((item) => normalizeMcpDelegateSkill(item)).filter((item): item is string => Boolean(item)),
+  ));
   return normalized.length ? normalized : undefined;
 }
 
 function normalizedMcpRouteKey(value: unknown): string {
-  return typeof value === "string"
-    ? value.trim().toLocaleLowerCase("en-US")
-    : "";
+  return typeof value === "string" ? value.trim().toLocaleLowerCase("en-US") : "";
 }
 
 function isMcpDelegateSelfRoute(input: {
@@ -7067,29 +5001,20 @@ function isMcpDelegateSelfRoute(input: {
   targetThreadId: string;
 }): boolean {
   if (
-    input.sourceTaskId &&
-    normalizedMcpRouteKey(input.sourceTaskId) ===
-      normalizedMcpRouteKey(input.targetTaskId)
+    input.sourceTaskId
+    && normalizedMcpRouteKey(input.sourceTaskId) === normalizedMcpRouteKey(input.targetTaskId)
   ) {
     return true;
   }
   if (!input.sourceThreadId?.trim()) return false;
-  const source = canonicalThreadId(
-    normalizeChatThreadId(input.clientSlug, input.sourceThreadId),
-  );
-  const target = canonicalThreadId(
-    normalizeChatThreadId(input.clientSlug, input.targetThreadId),
-  );
+  const source = canonicalThreadId(normalizeChatThreadId(input.clientSlug, input.sourceThreadId));
+  const target = canonicalThreadId(normalizeChatThreadId(input.clientSlug, input.targetThreadId));
   return normalizedMcpRouteKey(source) === normalizedMcpRouteKey(target);
 }
 
 function isMcpDelegateTaskActive(task: unknown): boolean {
-  if (!isRecord(task) || typeof task.status !== "string" || !task.status.trim())
-    return false;
-  const status = task.status
-    .trim()
-    .toLocaleLowerCase("en-US")
-    .replace(/_/g, "-");
+  if (!isRecord(task) || typeof task.status !== "string" || !task.status.trim()) return false;
+  const status = task.status.trim().toLocaleLowerCase("en-US").replace(/_/g, "-");
   return !new Set([
     "archived",
     "cancelled",
@@ -7107,10 +5032,10 @@ function isMcpDelegateTaskActive(task: unknown): boolean {
 
 function mcNextBaseUrl(): string {
   return (
-    process.env.MC_NEXT_URL ||
-    process.env.BASE_URL ||
-    process.env.NEXTAUTH_URL ||
-    "http://localhost:3000"
+    process.env.MC_NEXT_URL
+    || process.env.BASE_URL
+    || process.env.NEXTAUTH_URL
+    || "http://localhost:3000"
   ).replace(/\/+$/, "");
 }
 
@@ -7125,10 +5050,7 @@ async function dispatchMcChatThroughControlPlane(
 ): Promise<{ chatId: string; controlPlane: unknown }> {
   const secret = getRuntime().messaging.getSharedSecret?.();
   if (!secret) {
-    throw new McpAuthError(
-      503,
-      "MCP delegation requires the runtime MC chat shared secret",
-    );
+    throw new McpAuthError(503, "MCP delegation requires the runtime MC chat shared secret");
   }
   const response = await fetch(`${mcNextBaseUrl()}/api/chat/send`, {
     method: "POST",
@@ -7164,10 +5086,7 @@ function parseGatewayBody(raw: string): unknown {
 function normalizeDelegateAgent(agent: string): string {
   const slug = agent.trim().toLowerCase();
   if (!AGENT_SLUG_RE.test(slug)) {
-    throw new McpAuthError(
-      400,
-      "agent must be a lowercase slug using letters, numbers and hyphens",
-    );
+    throw new McpAuthError(400, "agent must be a lowercase slug using letters, numbers and hyphens");
   }
   if (!DELEGATE_AGENT_SET.has(slug)) {
     throw new McpAuthError(
@@ -7183,9 +5102,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function pickDefined(obj: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => value !== undefined),
-  );
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined));
 }
 
 function normalizeChatThreadId(clientSlug: string, threadId: string): string {
@@ -7201,9 +5118,7 @@ function shortChatThreadId(threadId: string): string {
 }
 
 function chatThreadExists(clientSlug: string, threadId: string): boolean {
-  return listThreadsForSlug(clientSlug).some(
-    (thread) => isRecord(thread) && thread.id === threadId,
-  );
+  return listThreadsForSlug(clientSlug).some((thread) => isRecord(thread) && thread.id === threadId);
 }
 
 function sanitizeChatMessage(message: ChatMessage, index: number) {
@@ -7230,30 +5145,16 @@ const ASK_REGEX = /^:::ask\s*\n([\s\S]*?)\n:::\s*$/gm;
 const CODE_FENCE_REGEX = /```[\s\S]*?```/g;
 const ASK_RESPONSE_REGEX = /^\[ask:([^\]]+)\]\s*respuesta:/gim;
 
-function extractAskQuestions(
-  text: string,
-): Array<{ question: AskQuestion; start: number; end: number }> {
+function extractAskQuestions(text: string): Array<{ question: AskQuestion; start: number; end: number }> {
   if (!text || !text.includes(":::ask")) return [];
 
   const codeRanges = Array.from(text.matchAll(CODE_FENCE_REGEX))
     .filter((match) => match.index !== undefined)
-    .map(
-      (match) =>
-        [
-          match.index as number,
-          (match.index as number) + match[0].length,
-        ] as const,
-    );
+    .map((match) => [match.index as number, (match.index as number) + match[0].length] as const);
   const isInsideCode = (start: number, end: number) =>
-    codeRanges.some(
-      ([codeStart, codeEnd]) => start >= codeStart && end <= codeEnd,
-    );
+    codeRanges.some(([codeStart, codeEnd]) => start >= codeStart && end <= codeEnd);
 
-  const questions: Array<{
-    question: AskQuestion;
-    start: number;
-    end: number;
-  }> = [];
+  const questions: Array<{ question: AskQuestion; start: number; end: number }> = [];
   for (const match of text.matchAll(ASK_REGEX)) {
     const start = match.index;
     if (start === undefined) continue;
@@ -7275,9 +5176,7 @@ function extractPendingQuestions(messages: ChatMessage[]) {
     const message = messages[index];
     if (message.role === "user") continue;
 
-    const questions = extractAskQuestions(message.text || "").map(
-      ({ question }) => question,
-    );
+    const questions = extractAskQuestions(message.text || "").map(({ question }) => question);
     if (questions.length === 0) return [];
 
     const answered = answeredAskIdsAfter(messages, index);
@@ -7292,10 +5191,7 @@ function extractPendingQuestions(messages: ChatMessage[]) {
   return [];
 }
 
-function answeredAskIdsAfter(
-  messages: ChatMessage[],
-  messageIndex: number,
-): Set<string> {
+function answeredAskIdsAfter(messages: ChatMessage[], messageIndex: number): Set<string> {
   const answered = new Set<string>();
   for (const message of messages.slice(messageIndex + 1)) {
     if (message.role !== "user") continue;
@@ -7306,25 +5202,17 @@ function answeredAskIdsAfter(
   return answered;
 }
 
-function buildAskResponseFormat(
-  questions: Array<AskQuestion & { sourceMessageIndex: number }>,
-): string | null {
+function buildAskResponseFormat(questions: Array<AskQuestion & { sourceMessageIndex: number }>): string | null {
   if (questions.length === 0) return null;
   return questions
     .map((question) => {
-      const hint =
-        question.mode === "multi"
-          ? "<option label(s), comma-separated>"
-          : "<option label>";
+      const hint = question.mode === "multi" ? "<option label(s), comma-separated>" : "<option label>";
       return `[ask:${question.id}] respuesta: ${hint}`;
     })
     .join("\n");
 }
 
-function statusCounts<T>(
-  items: T[],
-  getStatus: (item: T) => unknown,
-): Record<string, number> & { total: number } {
+function statusCounts<T>(items: T[], getStatus: (item: T) => unknown): Record<string, number> & { total: number } {
   const counts: Record<string, number> = { total: items.length };
   for (const item of items) {
     const status = String(getStatus(item) || "unknown");
@@ -7333,25 +5221,15 @@ function statusCounts<T>(
   return counts as Record<string, number> & { total: number };
 }
 
-function matchesLooseStatus(
-  actual: unknown,
-  expected: string | undefined,
-): boolean {
+function matchesLooseStatus(actual: unknown, expected: string | undefined): boolean {
   if (!expected) return true;
   return String(actual || "").toLowerCase() === expected.toLowerCase();
 }
 
-function matchesQuery(
-  query: string | undefined,
-  fields: Array<string | null | undefined>,
-): boolean {
+function matchesQuery(query: string | undefined, fields: Array<string | null | undefined>): boolean {
   if (!query) return true;
   const needle = query.toLowerCase();
-  return fields.some((field) =>
-    String(field || "")
-      .toLowerCase()
-      .includes(needle),
-  );
+  return fields.some((field) => String(field || "").toLowerCase().includes(needle));
 }
 
 function assertContentPathSegment(name: string, value: string): void {
@@ -7394,17 +5272,13 @@ function serializeContentDraft(draft: Draft, maxChars: number) {
   };
 }
 
-function requireMcpContentTask(
-  clientSlug: string,
-  contentTaskId: string,
-): {
+function requireMcpContentTask(clientSlug: string, contentTaskId: string): {
   ct: ContentTask;
   parentTaskId: string;
   projectDir: string;
 } {
   const found = findContentTaskByIdAcrossProjects(clientSlug, contentTaskId);
-  if (!found)
-    throw new McpAuthError(404, `ContentTask not found: ${contentTaskId}`);
+  if (!found) throw new McpAuthError(404, `ContentTask not found: ${contentTaskId}`);
   return found;
 }
 
@@ -7426,9 +5300,7 @@ function buildContentTaskUpdatePlan(input: {
   mediaPolicy?: Record<string, "required" | "optional">;
   author?: string;
   status?: (typeof MCP_CONTENT_TASK_STATUS_VALUES)[number];
-  pipelineState?:
-    | (typeof MCP_CONTENT_TASK_PIPELINE_STATE_VALUES)[number]
-    | null;
+  pipelineState?: (typeof MCP_CONTENT_TASK_PIPELINE_STATE_VALUES)[number] | null;
   channelPhases?: Record<string, (typeof MCP_CHANNEL_PHASE_VALUES)[number]>;
 }): McpContentTaskUpdatePlan {
   const fields = pickDefined({
@@ -7443,13 +5315,10 @@ function buildContentTaskUpdatePlan(input: {
   }) as ContentTaskUpdateInput;
 
   const status = input.status as ContentTaskStatus | undefined;
-  const pipelineState =
-    input.pipelineState === undefined && status
-      ? defaultPipelineStateForStatus(status)
-      : (input.pipelineState as ContentTaskPipelineState | null | undefined);
-  const channelPhases = input.channelPhases as
-    | Record<string, ChannelPhase>
-    | undefined;
+  const pipelineState = input.pipelineState === undefined && status
+    ? defaultPipelineStateForStatus(status)
+    : input.pipelineState as ContentTaskPipelineState | null | undefined;
+  const channelPhases = input.channelPhases as Record<string, ChannelPhase> | undefined;
 
   return {
     fields,
@@ -7475,12 +5344,7 @@ function applyContentTaskUpdatePlan(
   const previousStatus = current.status;
 
   if (Object.keys(plan.fields).length > 0) {
-    updated = updateContentTask(
-      clientSlug,
-      parentTaskId,
-      contentTaskId,
-      plan.fields,
-    );
+    updated = updateContentTask(clientSlug, parentTaskId, contentTaskId, plan.fields);
   }
 
   if (plan.status !== undefined) {
@@ -7495,11 +5359,7 @@ function applyContentTaskUpdatePlan(
       VALID_CONTENT_TASK_STATUSES.indexOf(updated.status) <
       VALID_CONTENT_TASK_STATUSES.indexOf(previousStatus);
     if (movedBackward) {
-      updated = rollbackChannelPhasesToStatus(
-        clientSlug,
-        parentTaskId,
-        contentTaskId,
-      );
+      updated = rollbackChannelPhasesToStatus(clientSlug, parentTaskId, contentTaskId);
     }
   } else if (plan.pipelineState !== undefined) {
     updated = setContentTaskStatus(
@@ -7512,20 +5372,13 @@ function applyContentTaskUpdatePlan(
   }
 
   if (plan.channelPhases !== undefined) {
-    updated = setChannelPhases(
-      clientSlug,
-      parentTaskId,
-      contentTaskId,
-      plan.channelPhases,
-    );
+    updated = setChannelPhases(clientSlug, parentTaskId, contentTaskId, plan.channelPhases);
   }
 
   return updated;
 }
 
-function defaultPipelineStateForStatus(
-  status: ContentTaskStatus,
-): ContentTaskPipelineState | null {
+function defaultPipelineStateForStatus(status: ContentTaskStatus): ContentTaskPipelineState | null {
   if (status === "Approved") return "researching";
   if (status === "Pending Media") return "generating-media";
   return null;
@@ -7543,10 +5396,7 @@ function buildContentTaskTransition(
 } {
   if (action === "approve-draft") {
     if (ct.status !== "Draft") {
-      throw new McpAuthError(
-        409,
-        `approve-draft requires status="Draft" (current: "${ct.status}")`,
-      );
+      throw new McpAuthError(409, `approve-draft requires status="Draft" (current: "${ct.status}")`);
     }
     const hasMedia = contentTaskHasAnyMedia(clientSlug, ct);
     return {
@@ -7559,31 +5409,18 @@ function buildContentTaskTransition(
 
   if (action === "approve-media") {
     if (ct.status !== "Pending Media") {
-      throw new McpAuthError(
-        409,
-        `approve-media requires status="Pending Media" (current: "${ct.status}")`,
-      );
+      throw new McpAuthError(409, `approve-media requires status="Pending Media" (current: "${ct.status}")`);
     }
     const hasMedia = contentTaskHasAnyMedia(clientSlug, ct);
     if (!hasMedia) {
-      throw new McpAuthError(
-        409,
-        "approve-media requires at least one media asset attached to the draft(s)",
-      );
+      throw new McpAuthError(409, "approve-media requires at least one media asset attached to the draft(s)");
     }
     return { action, status: "Ready", pipelineState: null, hasMedia };
   }
 
   if (action === "discard" || action === "defer") {
-    if (
-      ct.status === "Published" ||
-      ct.status === "Discarded" ||
-      ct.status === "Deferred"
-    ) {
-      throw new McpAuthError(
-        409,
-        `${action} not allowed from terminal status "${ct.status}"`,
-      );
+    if (ct.status === "Published" || ct.status === "Discarded" || ct.status === "Deferred") {
+      throw new McpAuthError(409, `${action} not allowed from terminal status "${ct.status}"`);
     }
     return {
       action,
@@ -7599,10 +5436,7 @@ function contentTaskHasAnyMedia(clientSlug: string, ct: ContentTask): boolean {
   const channels = new Set(ct.target_channels || []);
   return listDrafts(clientSlug, ct.idea_id)
     .filter((draft) => {
-      const channel =
-        draft.meta.channel ||
-        draft.relPath.split("/").pop()?.replace(".md", "") ||
-        "";
+      const channel = draft.meta.channel || draft.relPath.split("/").pop()?.replace(".md", "") || "";
       return channels.has(channel);
     })
     .some((draft) => (draft.meta.media?.length ?? 0) > 0);
@@ -7668,12 +5502,7 @@ type ContentCarouselPatch = {
   enabledTemplates?: string[] | null;
 };
 
-type ContentIdeaStatus =
-  | "New"
-  | "Approved"
-  | "Discarded"
-  | "Deferred"
-  | "Published";
+type ContentIdeaStatus = "New" | "Approved" | "Discarded" | "Deferred" | "Published";
 type ContentIdea = Record<string, unknown> & {
   id: string;
   status: ContentIdeaStatus;
@@ -7708,8 +5537,7 @@ function buildContentConfigPatch(
       model: imageGeneration.model,
     });
     if (Object.keys(imagePatch).length > 0) {
-      patch.image_generation =
-        imagePatch as Partial<ContentConfig>["image_generation"];
+      patch.image_generation = imagePatch as Partial<ContentConfig>["image_generation"];
     }
   }
   if (carousel) {
@@ -7721,17 +5549,13 @@ function buildContentConfigPatch(
       enabled_templates: carousel.enabledTemplates,
     });
     if (Object.keys(carouselPatch).length > 0) {
-      patch.carousel =
-        carouselPatch as unknown as Partial<ContentConfig>["carousel"];
+      patch.carousel = carouselPatch as unknown as Partial<ContentConfig>["carousel"];
     }
   }
   return patch;
 }
 
-function mergeContentConfig(
-  current: ContentConfig,
-  patch: Partial<ContentConfig>,
-): ContentConfig {
+function mergeContentConfig(current: ContentConfig, patch: Partial<ContentConfig>): ContentConfig {
   return {
     image_generation: {
       ...current.image_generation,
@@ -7748,46 +5572,29 @@ function contentIdeaQueuePath(clientSlug: string): string {
   return path.join(brandDir(clientSlug), "content", "idea-queue.json");
 }
 
-async function loadContentIdeaQueue(
-  clientSlug: string,
-): Promise<ContentIdea[]> {
+async function loadContentIdeaQueue(clientSlug: string): Promise<ContentIdea[]> {
   try {
-    const raw = JSON.parse(
-      await fs.readFile(contentIdeaQueuePath(clientSlug), "utf8"),
-    ) as unknown;
-    const rows = Array.isArray(raw)
-      ? raw
-      : isRecord(raw) && Array.isArray(raw.ideas)
-        ? raw.ideas
-        : [];
+    const raw = JSON.parse(await fs.readFile(contentIdeaQueuePath(clientSlug), "utf8")) as unknown;
+    const rows = Array.isArray(raw) ? raw : isRecord(raw) && Array.isArray(raw.ideas) ? raw.ideas : [];
     return rows.filter(isRecord).map(normalizeContentIdea);
   } catch {
     return [];
   }
 }
 
-async function saveContentIdeaQueue(
-  clientSlug: string,
-  ideas: ContentIdea[],
-): Promise<void> {
+async function saveContentIdeaQueue(clientSlug: string, ideas: ContentIdea[]): Promise<void> {
   const filePath = contentIdeaQueuePath(clientSlug);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, `${JSON.stringify(ideas, null, 2)}\n`, "utf8");
 }
 
 function normalizeContentIdea(value: Record<string, unknown>): ContentIdea {
-  const id =
-    typeof value.id === "string" && value.id.trim()
-      ? value.id.trim()
-      : `idea-${Date.now()}`;
+  const id = typeof value.id === "string" && value.id.trim() ? value.id.trim() : `idea-${Date.now()}`;
   return {
     ...value,
     id,
     status: canonicalContentIdeaStatus(value.status),
-    created_at:
-      typeof value.created_at === "string"
-        ? value.created_at
-        : new Date().toISOString(),
+    created_at: typeof value.created_at === "string" ? value.created_at : new Date().toISOString(),
   };
 }
 
@@ -7820,10 +5627,7 @@ function buildContentIdea(input: {
 }): ContentIdea {
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
-  const id = resolveContentIdeaId(
-    input.existing,
-    input.id || `idea-${today}-${Math.random().toString(36).slice(2, 6)}`,
-  );
+  const id = resolveContentIdeaId(input.existing, input.id || `idea-${today}-${Math.random().toString(36).slice(2, 6)}`);
   return {
     id,
     title: input.title,
@@ -7845,10 +5649,7 @@ function buildContentIdea(input: {
   };
 }
 
-function resolveContentIdeaId(
-  existing: ContentIdea[],
-  desired: string,
-): string {
+function resolveContentIdeaId(existing: ContentIdea[], desired: string): string {
   const base = desired.trim();
   if (!base) throw new McpAuthError(400, "Idea id cannot be empty");
   if (!/^[a-z0-9][a-z0-9._-]*$/i.test(base)) {
@@ -7888,10 +5689,7 @@ function buildContentIdeaPatch(input: {
   });
 }
 
-function applyContentIdeaPatch(
-  idea: ContentIdea,
-  patch: Record<string, unknown>,
-): ContentIdea {
+function applyContentIdeaPatch(idea: ContentIdea, patch: Record<string, unknown>): ContentIdea {
   const next: ContentIdea = { ...idea, updated_at: new Date().toISOString() };
   for (const [key, value] of Object.entries(patch)) {
     if (value === null) {
@@ -7905,10 +5703,7 @@ function applyContentIdeaPatch(
   return next;
 }
 
-async function getPublishingPostMetrics(
-  clientSlug: string,
-  externalUrl: string,
-) {
+async function getPublishingPostMetrics(clientSlug: string, externalUrl: string) {
   const entry = await findMetricoolPostByUrl(clientSlug, externalUrl);
   const dimensions = entry?.dimensions;
   if (entry && dimensions?.url) {
@@ -7929,21 +5724,14 @@ async function getPublishingPostMetrics(
 }
 
 async function listOpenDesignCatalog(
-  type:
-    | "skills"
-    | "design-systems"
-    | "prompt-templates"
-    | "craft-guides"
-    | "projects",
+  type: "skills" | "design-systems" | "prompt-templates" | "craft-guides" | "projects",
   options: { filter?: string; category?: "image" | "video" | "audio" },
   context: SanchoMcpContext,
 ) {
   const config = odConfig(context);
   if (type === "skills") return odListSkills(options.filter, config);
-  if (type === "design-systems")
-    return odListDesignSystems(options.filter, config);
-  if (type === "prompt-templates")
-    return odListPromptTemplates(options.category, config);
+  if (type === "design-systems") return odListDesignSystems(options.filter, config);
+  if (type === "prompt-templates") return odListPromptTemplates(options.category, config);
   if (type === "craft-guides") return odListCraftGuides(config);
   return odListProjects(config);
 }
@@ -7956,27 +5744,17 @@ function buildOpenDesignProjectPatch(input: {
   clearDesignSystem?: boolean;
 }) {
   if (input.skillId && input.clearSkill) {
-    throw new McpAuthError(
-      400,
-      "Provide either skillId or clearSkill, not both",
-    );
+    throw new McpAuthError(400, "Provide either skillId or clearSkill, not both");
   }
   if (input.designSystemId && input.clearDesignSystem) {
-    throw new McpAuthError(
-      400,
-      "Provide either designSystemId or clearDesignSystem, not both",
-    );
+    throw new McpAuthError(400, "Provide either designSystemId or clearDesignSystem, not both");
   }
 
   const patch = pickDefined({
     name: input.name,
     skillId: input.clearSkill ? null : input.skillId,
     designSystemId: input.clearDesignSystem ? null : input.designSystemId,
-  }) as Partial<{
-    designSystemId: string | null;
-    skillId: string | null;
-    name: string;
-  }>;
+  }) as Partial<{ designSystemId: string | null; skillId: string | null; name: string }>;
 
   if (Object.keys(patch).length === 0) {
     throw new McpAuthError(400, "At least one project field is required");
@@ -7992,15 +5770,8 @@ function assertRelativeProjectPath(filePath: string): string {
     throw new McpAuthError(400, "filePath must be project-relative");
   }
   const normalized = path.posix.normalize(raw);
-  if (
-    normalized === "." ||
-    normalized === ".." ||
-    normalized.startsWith("../")
-  ) {
-    throw new McpAuthError(
-      403,
-      "Open Design project file traversal is not allowed",
-    );
+  if (normalized === "." || normalized === ".." || normalized.startsWith("../")) {
+    throw new McpAuthError(403, "Open Design project file traversal is not allowed");
   }
   return normalized;
 }
