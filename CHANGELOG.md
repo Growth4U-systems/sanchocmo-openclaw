@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.1...v1.6.2) (2026-07-15)
+
+
+### Bug Fixes
+
+* **runtime:** ship managed Hermes in production (SAN-50) ([#1305](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1305)) ([d7235af](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/d7235af951dab2909ff3135208a5e3e9de4b5233))
+
 ## [1.6.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.0...v1.6.1) (2026-07-15)
 
 
