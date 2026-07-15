@@ -9,13 +9,17 @@
 # the user's data.
 #
 # Layers:
-#   - Framework (skills/, docker/, src/lib/runtime/agent-contract/): overwritten
-#     from the image, gated on a version marker so we only re-copy when the image
-#     actually changed (avoids 180 MB of churn on every restart).
+#   - Framework (skills/, docker/, src/lib/runtime/agent-contract/, workspace-*/):
+#     overwritten from the image, gated on a version marker so we only re-copy
+#     when the image actually changed (avoids 180 MB of churn on every restart).
+#     Inside workspace-*/ a short seed-once list (USER.md, and TOOLS.md outside
+#     workspace-sancho) is the human's and survives the refresh — see
+#     seed_once_for() below. Data that does not travel in the seed (brand/,
+#     memory/, clients.json) is never even seen by the copy.
 #   - plugins/: source refreshed the same way, but the runtime install registry
 #     (installs.json) is preserved.
-#   - Data-bearing dirs (agents/, workspace-*/, config/, cron/): copied ONLY when
-#     absent — existing user data is never overwritten.
+#   - Data-bearing dirs (agents/, config/, cron/): copied ONLY when absent —
+#     existing user data is never overwritten.
 #
 # The seed lives at /opt/sancho-seed, a path the OPENCLAW_HOME mount does not shadow.
 # Git-checkout homes (Growth4U's VPS: staging builds from source, prod checks out a
@@ -47,19 +51,85 @@ fi
 
 mkdir -p "$HOME_DIR"
 
+# Files inside workspace-*/ that belong to the human, not the framework. They are
+# seeded on first run and NEVER overwritten by a later image — the seed does not
+# clobber the user's own content, not even to correct it (SAN-477).
+#
+# Everything else in a workspace is a template the image owns: SOUL.md,
+# AGENTS.md, PROTOCOLS.md, _system/… — inject-env-vars.sh renders them at boot,
+# so the image MUST be able to replace them or a placeholder change never lands.
+#
+# workspace-sancho's TOOLS.md and CHANGELOG.md are deliberately absent from this
+# list: they carry {MC_BASE_URL}/{MC_BASE} placeholders and are re-rendered every
+# boot, i.e. they are framework. The other workspaces' TOOLS.md are not rendered
+# (inject only walks sancho and cervantes) and are treated as the human's.
+seed_once_for() {
+  case "$1" in
+    workspace-sancho) echo "USER.md" ;;
+    workspace-*)      echo "USER.md TOOLS.md" ;;
+    *)                echo "" ;;
+  esac
+}
+
 # --- Framework refresh, gated on the image version marker --------------------
+# The dirs the image owns. workspace-* joined in SAN-464: they were treated as
+# data (copy-only-if-absent), which silently froze SOUL.md/PROTOCOLS.md forever
+# on any install that already had them. Only what travels in the seed is touched —
+# brand/, memory/ and clients.json are not in the image, so cp -a never sees them.
+# plugins/ is refreshed too, just with its own registry guard further down.
+FRAMEWORK_DIRS="skills docker src
+  workspace-sancho workspace-cervantes workspace-hamete
+  workspace-dulcinea workspace-rocinante workspace-mambrino workspace-merlin
+  workspace-sanson workspace-alarife workspace-maese-pedro"
+
 seed_ver="unknown"; [ -f "$SEED/.seed-version" ] && seed_ver="$(cat "$SEED/.seed-version")"
 home_ver="none";    [ -f "$HOME_DIR/.sancho-seed-version" ] && home_ver="$(cat "$HOME_DIR/.sancho-seed-version")"
 
-if [ "$seed_ver" != "$home_ver" ]; then
-  log "framework version changed (${home_ver} -> ${seed_ver}) — refreshing…"
+refresh_why=""
+[ "$seed_ver" != "$home_ver" ] && refresh_why="version changed (${home_ver} -> ${seed_ver})"
+
+# The version marker records what we last COPIED, not what is still on disk, and
+# the two drift: a partial backup restore, a manual `rm -rf` to "reset" a
+# workspace, a truncating disk-full. If a framework dir went missing under an
+# already-current marker, the refresh below would be skipped and nothing else
+# would put it back — workspace-sancho/scripts/mc-server.js gone means the server
+# never starts, and every reboot skips the very copy that would fix it. That is
+# the SAN-329 wedge, which workspace-* inherited when SAN-464 moved them out of
+# the data-bearing loop's "absent → copy" check. So: missing dir ⇒ refresh.
+if [ -z "$refresh_why" ]; then
+  for d in $FRAMEWORK_DIRS plugins; do
+    [ -d "$SEED/$d" ] || continue
+    if [ ! -d "$HOME_DIR/$d" ]; then
+      refresh_why="$d missing from the home (self-heal, SAN-329)"
+      break
+    fi
+  done
+fi
+
+if [ -n "$refresh_why" ]; then
+  log "framework refresh: ${refresh_why} — refreshing…"
 
   # Pure framework: overwrite-merge from the image. The seed only contains the
   # runtime-neutral contract under src/, not the full Next.js app source.
-  for d in skills docker src; do
-    if [ -d "$SEED/$d" ]; then
-      mkdir -p "$HOME_DIR/$d"
-      cp -a "$SEED/$d/." "$HOME_DIR/$d/"
+  for d in $FRAMEWORK_DIRS; do
+    [ -d "$SEED/$d" ] || continue
+    mkdir -p "$HOME_DIR/$d"
+
+    # Stash the human's files, overwrite-merge, put them back — same shape as the
+    # plugins/installs.json guard below. A file that doesn't exist yet is not
+    # stashed, so a first run correctly receives the seeded default.
+    keep=""
+    for f in $(seed_once_for "$d"); do
+      [ -f "$HOME_DIR/$d/$f" ] || continue
+      [ -n "$keep" ] || keep="$(mktemp -d)"
+      cp -a "$HOME_DIR/$d/$f" "$keep/$f"
+    done
+
+    cp -a "$SEED/$d/." "$HOME_DIR/$d/"
+
+    if [ -n "$keep" ]; then
+      cp -a "$keep/." "$HOME_DIR/$d/"
+      rm -rf "$keep"
     fi
   done
 
@@ -80,7 +150,7 @@ else
   log "framework up to date (${home_ver}) — skipping refresh"
 fi
 
-# --- Data-bearing dirs: seed when absent, self-heal a partial seed -----------
+# --- Data-bearing dirs (agents/, config/, cron/): seed when absent, self-heal --
 # Never overwrite user data, but DO recover from an interrupted first boot. The
 # old "copy only if absent" wedged forever when a boot was killed mid-copy: the
 # half-written dir (e.g. workspace-sancho without scripts/) already existed, so
@@ -102,10 +172,9 @@ mkdir -p "$SEED_STATE"
 # Drop temp dirs abandoned by a previously-killed copy.
 rm -rf "$HOME_DIR"/.seed-tmp.* 2>/dev/null || true
 
-for d in agents config cron \
-         workspace-sancho workspace-cervantes workspace-hamete \
-         workspace-dulcinea workspace-rocinante workspace-mambrino workspace-merlin \
-         workspace-sanson workspace-alarife workspace-maese-pedro; do
+# workspace-* left this loop in SAN-464 — the framework refresh above owns them
+# now. agents/, config/ and cron/ stay: they are pure runtime/user state.
+for d in agents config cron; do
   [ -d "$SEED/$d" ] || continue
   if [ ! -e "$HOME_DIR/$d" ]; then
     tmp="$HOME_DIR/.seed-tmp.$d.$$"
