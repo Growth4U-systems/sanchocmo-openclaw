@@ -35,16 +35,18 @@ ARG OPENCLAW_VERSION=2026.5.18
 ENV OPENCLAW_VERSION=${OPENCLAW_VERSION}
 RUN npm install -g openclaw@${OPENCLAW_VERSION}
 
-# Optional Hermes CLI install. Keep it opt-in so the default OpenClaw image path
-# stays small and unchanged; Hermes staging builds set INSTALL_HERMES=1.
-ARG INSTALL_HERMES=0
-ARG HERMES_AGENT_REF=main
+# Hermes is an interchangeable managed runtime exposed by the product UI, so the
+# release image must actually contain it. Pin the upstream ref: rebuilding the
+# same Sancho release must never pull a different Hermes commit from `main`.
+ARG INSTALL_HERMES=1
+ARG HERMES_AGENT_REF=v2026.7.7.2
 RUN if [ "$INSTALL_HERMES" = "1" ]; then \
       git clone --depth 1 --branch "$HERMES_AGENT_REF" https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent \
       && python3 -m venv /opt/hermes-agent/venv \
       && /opt/hermes-agent/venv/bin/pip install --upgrade pip setuptools wheel \
       && /opt/hermes-agent/venv/bin/pip install -e "/opt/hermes-agent[cli,cron,pty,mcp]" \
-      && ln -sf /opt/hermes-agent/venv/bin/hermes /usr/local/bin/hermes; \
+      && ln -sf /opt/hermes-agent/venv/bin/hermes /usr/local/bin/hermes \
+      && hermes --help >/dev/null; \
     else \
       echo "Skipping Hermes CLI install (INSTALL_HERMES=$INSTALL_HERMES)"; \
     fi

@@ -91,6 +91,8 @@ jobs:
           sbom: true
           build-args: |
             GIT_COMMIT=${{ github.sha }}
+            INSTALL_HERMES=1
+            HERMES_AGENT_REF=v2026.7.7.2
           # Registry buildcache in a SEPARATE package (`sanchocmo-buildcache`), not
           # the image package: keeps the image's tag list to real, pullable images,
           # and lets the cache stay private when the image goes public. Per-arch ref
@@ -163,7 +165,7 @@ jobs:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # gh release upload
+      contents: write # gh release upload
     steps:
       - uses: actions/checkout@v7
         with:

@@ -17,6 +17,7 @@ import {
   gatewayPortOrDefault,
   isCliBridgeProviderId,
   normalizeBaseUrl,
+  resolveServerCliAvailability,
   type CliBridgeProviderId,
 } from "@/lib/cli-runtime-bridge";
 import {
@@ -159,6 +160,10 @@ function startManagedBridge(
   if (!provider.serverStartSupported) {
     throw new Error(`${provider.label} no se puede arrancar desde el host de Sancho.`);
   }
+  const availability = resolveServerCliAvailability(providerId);
+  if (!availability.available) {
+    throw new Error(availability.reason);
+  }
   const host = gatewayListenHost(options.gatewayUrl);
   const port = gatewayPortOrDefault(providerId, options.gatewayUrl);
   const scriptPath = path.join(process.cwd(), provider.scriptPath);
@@ -239,6 +244,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       active: selection.runtime,
       configuredKind: runtimeKindFromEnv(),
       providers: CLI_BRIDGE_PROVIDERS.map((provider) => ({
+        ...(() => {
+          if (!provider.serverStartSupported) return { serverAvailable: null, serverIssue: null };
+          const availability = resolveServerCliAvailability(provider.id);
+          return {
+            serverAvailable: availability.available,
+            serverIssue: availability.reason || null,
+          };
+        })(),
         id: provider.id,
         label: provider.label,
         runtimeLocation: provider.runtimeLocation,
@@ -263,6 +276,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         provider: providerId,
         label: provider.label,
         runtimeLocation: provider.runtimeLocation,
+        active: readRuntimeSelection().runtime,
+      });
+    }
+    const availability = resolveServerCliAvailability(providerId);
+    if (!availability.available) {
+      return res.status(409).json({
+        ok: false,
+        error: availability.reason,
+        provider: providerId,
+        label: provider.label,
         active: readRuntimeSelection().runtime,
       });
     }
@@ -308,6 +331,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         active: readRuntimeSelection().runtime,
       });
     }
+    const availability = resolveServerCliAvailability(providerId);
+    if (!availability.available) {
+      return res.status(409).json({
+        ok: false,
+        error: availability.reason,
+        provider: providerId,
+        label: provider.label,
+        active: readRuntimeSelection().runtime,
+      });
+    }
 
     const parsedEnv = parseEnvContent(readEnvFile());
     const gatewayUrl =
@@ -328,7 +361,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!health.ok) {
       return res.status(500).json({
         ok: false,
-        error: `${provider.label} no arrancó desde Sancho. Revisa que el CLI esté instalado y autenticado en el servidor, o usa el modo manual avanzado.`,
+        error: `${provider.label} está instalado, pero su bridge no quedó disponible. Revisa el detalle técnico o los logs del servidor.`,
         health,
         provider: providerId,
         label: provider.label,
