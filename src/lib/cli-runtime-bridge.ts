@@ -35,6 +35,21 @@ export interface ServerCliAvailability {
   reason?: string;
 }
 
+const HERMES_PERSISTED_ENV_KEYS = [
+  "HERMES_CLI",
+  "HERMES_CLI_PROVIDER",
+  "HERMES_CLI_MODEL",
+  "HERMES_CLI_TOOLSETS",
+  "HERMES_WORKDIR",
+  "ANTHROPIC_API_KEY",
+  "ANTHROPIC_OAUTH_TOKEN",
+  "ANTHROPIC_AUTH_TOKEN",
+  "CLAUDE_CODE_OAUTH_TOKEN",
+  "OPENROUTER_API_KEY",
+  "OPENAI_API_KEY",
+  "FIREWORKS_API_KEY",
+] as const;
+
 export const CLI_BRIDGE_PROVIDERS: CliBridgeProviderMeta[] = [
   {
     id: "hermes",
@@ -220,10 +235,34 @@ export function buildCliBridgeEnv(
   return env;
 }
 
+export function buildManagedCliBridgeProcessEnv(
+  providerId: CliBridgeProviderId,
+  bridgeEnv: Record<string, string>,
+  runtimeEnv: NodeJS.ProcessEnv = process.env,
+  persistedEnv: Record<string, string> = {},
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...runtimeEnv };
+
+  if (providerId === "hermes") {
+    for (const key of HERMES_PERSISTED_ENV_KEYS) {
+      if (persistedEnv[key]) env[key] = persistedEnv[key];
+    }
+
+    if (env.HERMES_CLI_PROVIDER === "anthropic" && env.ANTHROPIC_API_KEY) {
+      delete env.ANTHROPIC_OAUTH_TOKEN;
+      delete env.ANTHROPIC_AUTH_TOKEN;
+      delete env.CLAUDE_CODE_OAUTH_TOKEN;
+    }
+  }
+
+  return { ...env, ...bridgeEnv };
+}
+
 const cliRuntimeBridge = {
   CLI_BRIDGE_PROVIDERS,
   buildCliBridgeCommand,
   buildCliBridgeEnv,
+  buildManagedCliBridgeProcessEnv,
   cliBridgeProvider,
   defaultGatewayUrl,
   externalRuntimeVarsForCliBridge,

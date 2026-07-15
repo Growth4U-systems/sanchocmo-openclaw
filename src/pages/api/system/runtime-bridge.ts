@@ -10,6 +10,7 @@ import {
   CLI_BRIDGE_PROVIDERS,
   buildCliBridgeCommand,
   buildCliBridgeEnv,
+  buildManagedCliBridgeProcessEnv,
   cliBridgeProvider,
   defaultGatewayUrl,
   externalRuntimeVarsForCliBridge,
@@ -171,18 +172,21 @@ function startManagedBridge(
     throw new Error(`No encontré el bridge local: ${provider.scriptPath}`);
   }
 
+  const bridgeEnv = buildCliBridgeEnv(providerId, {
+    sanchoBaseUrl: options.sanchoBaseUrl,
+    secret: options.secret,
+    host,
+    port,
+  });
   const child = spawn(process.execPath, [scriptPath], {
     cwd: process.cwd(),
     detached: true,
-    env: {
-      ...process.env,
-      ...buildCliBridgeEnv(providerId, {
-        sanchoBaseUrl: options.sanchoBaseUrl,
-        secret: options.secret,
-        host,
-        port,
-      }),
-    },
+    env: buildManagedCliBridgeProcessEnv(
+      providerId,
+      bridgeEnv,
+      process.env,
+      parseEnvContent(readEnvFile()),
+    ),
     stdio: "ignore",
   });
   child.unref();
