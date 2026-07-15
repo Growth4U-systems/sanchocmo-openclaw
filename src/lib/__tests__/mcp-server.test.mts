@@ -3736,6 +3736,35 @@ test("yalc_create_search is dry-run by default and previews the parsed plan", as
   }
 });
 
+test("yalc_create_search requires a stable commandId for confirmed writes", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["yalc:write"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const result = await client.callTool({
+      name: "yalc_create_search",
+      arguments: {
+        clientSlug: "alpha",
+        title: "Finanzas personales ES",
+        sectors: ["finanzas personales"],
+        networks: ["instagram"],
+        dryRun: false,
+        confirm: true,
+      },
+    });
+    assert.equal(result.isError, true);
+    assert.match(
+      result.content[0].type === "text" ? result.content[0].text : "",
+      /commandId is required/,
+    );
+  } finally {
+    await close();
+  }
+});
+
 test("yalc_update_model_config requires yalc:write scope", async () => {
   const { client, close } = await createConnectedClient({
     id: "operator",

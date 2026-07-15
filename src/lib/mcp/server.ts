@@ -3585,6 +3585,12 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           .describe("YALC campaign qualification mode (default hybrid)."),
         disqualifyThreshold: z.number().min(0).max(100).optional().describe("Auto-disqualify threshold (default 40)."),
         notes: z.string().optional().describe("Free-form plan notes for the runner agent."),
+        commandId: z
+          .string()
+          .min(1)
+          .max(200)
+          .optional()
+          .describe("Stable caller command id. Retry the same command with the same id to reuse its search."),
         runFixtures: z
           .boolean()
           .default(false)
@@ -3607,6 +3613,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       qualificationMode,
       disqualifyThreshold,
       notes,
+      commandId,
       runFixtures,
       dryRun,
       confirm,
@@ -3645,7 +3652,30 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           });
         }
 
-        const created = await createDiscoverySearch({ slug: clientSlug, plan });
+        if (!commandId) {
+          throw new McpAuthError(
+            400,
+            "commandId is required when creating a search; reuse it only when retrying the same confirmed action",
+          );
+        }
+
+        const created = await createDiscoverySearch({
+          slug: clientSlug,
+          plan,
+          commandId,
+          executionIntent: runFixtures === true ? "fixtures" : "auto",
+        });
+        if (created.replayed) {
+          return jsonResult({
+            ok: true,
+            replayed: true,
+            search: created.search,
+            campaignId: created.campaignId,
+            taskId: created.taskId,
+            runner: created.search.runner,
+            message: "This command was already created; returning its current state without running it again.",
+          });
+        }
         if (runFixtures === true) {
           const run = await runDiscoverySearch({
             slug: clientSlug,

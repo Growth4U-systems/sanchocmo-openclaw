@@ -155,6 +155,12 @@ export interface DiscoveryRunnerState {
 export interface DiscoverySearchRecord {
   id: string;
   slug: string;
+  /** Stable command receipt used to make creation retries safe. */
+  commandId?: string;
+  /** Canonical plan hash; protects a command id from accidental reuse. */
+  commandFingerprint?: string;
+  /** Frozen execution requested with the create command. */
+  executionIntent?: "auto" | "live" | "agent" | "fixtures" | "none";
   title: string;
   plan: DiscoveryPlan;
   /** Campaign Partnerships creada en Yalc. */
