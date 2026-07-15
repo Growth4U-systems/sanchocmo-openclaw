@@ -38,6 +38,46 @@ test("getRuntime defaults to the OpenClaw adapter", () => {
   else process.env.SANCHO_RUNTIME = previous;
 });
 
+test("OpenClaw health verifies the mc-chat plugin instead of only the gateway", async () => {
+  const previousGateway = process.env.MC_CHAT_GATEWAY;
+  const previousSecret = process.env.MC_CHAT_SECRET;
+  const previousFetch = globalThis.fetch;
+  const calls: { url: string; init?: RequestInit }[] = [];
+  process.env.MC_CHAT_GATEWAY = "https://openclaw.test";
+  process.env.MC_CHAT_SECRET = "health-secret";
+
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return new Response(JSON.stringify({ ok: true, channel: "mc-chat" }), { status: 200 });
+  }) as typeof fetch;
+
+  try {
+    const health = await runtime.createRuntimeAdapter("openclaw").lifecycle.healthcheck();
+    assert.equal(health.ok, true);
+    assert.equal(calls[0].url, "https://openclaw.test/mc-chat/health");
+    assert.equal((calls[0].init?.headers as Record<string, string>)["X-MC-Secret"], "health-secret");
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousGateway === undefined) delete process.env.MC_CHAT_GATEWAY;
+    else process.env.MC_CHAT_GATEWAY = previousGateway;
+    if (previousSecret === undefined) delete process.env.MC_CHAT_SECRET;
+    else process.env.MC_CHAT_SECRET = previousSecret;
+  }
+});
+
+test("OpenClaw health fails when the gateway is alive but mc-chat is missing", async () => {
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response("Not Found", { status: 404 })) as typeof fetch;
+
+  try {
+    const health = await runtime.createRuntimeAdapter("openclaw").lifecycle.healthcheck();
+    assert.equal(health.ok, false);
+    assert.equal(health.details?.status, 404);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test("getRuntime memoizes the selected adapter", () => {
   const previous = process.env.SANCHO_RUNTIME;
   process.env.SANCHO_RUNTIME = "openclaw";
