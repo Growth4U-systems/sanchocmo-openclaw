@@ -17,6 +17,7 @@
 
 import { updateTask } from "@/lib/data/tasks";
 import { resolveYalcConfig, yalcFetch } from "@/lib/yalc/client";
+import { observeDiscoveryExecutionTransition } from "./discovery-execution-observer";
 import { normalizeCandidates } from "./discovery-normalize";
 import { getSearch, updateRunnerState } from "./discovery-store";
 import { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
@@ -160,12 +161,34 @@ export async function runDiscoverySearch(
 
   const useFixtures = options.fixtures ?? fixturesEnabledByEnv();
   const mode = useFixtures ? "fixtures" : "live";
-  updateRunnerState(slug, searchId, {
+  const currentAttempts = Math.max(0, search.runner.attempts ?? 0);
+  const attempt =
+    search.runner.status === "error"
+      ? currentAttempts + 1
+      : Math.max(1, currentAttempts);
+  const runningSearch = updateRunnerState(slug, searchId, {
     status: "running",
     mode,
+    attempts: attempt,
     startedAt: new Date().toISOString(),
     error: null,
   });
+  await observeDiscoveryExecutionTransition(
+    runningSearch,
+    "execution.started",
+    {
+      status: "running",
+      currentStep: options.candidates === undefined ? "discover" : "ingest",
+    },
+    {
+      runnerMode: mode,
+      candidateSource: useFixtures
+        ? "fixtures"
+        : options.candidates === undefined
+          ? "provider"
+          : "agent_callback",
+    },
+  );
 
   try {
     const raw = useFixtures
@@ -230,6 +253,12 @@ export async function runDiscoverySearch(
       finishedAt: new Date().toISOString(),
       stats,
     });
+    await observeDiscoveryExecutionTransition(
+      updated,
+      "execution.completed",
+      { status: "completed", currentStep: "verify", output: { stats } },
+      { stats },
+    );
 
     if (search.taskId) {
       try {
@@ -256,11 +285,20 @@ export async function runDiscoverySearch(
       dropped: response.dropped ?? [],
     };
   } catch (err) {
-    updateRunnerState(slug, searchId, {
+    const failed = updateRunnerState(slug, searchId, {
       status: "error",
       finishedAt: new Date().toISOString(),
       error: err instanceof Error ? err.message : String(err),
     });
+    await observeDiscoveryExecutionTransition(
+      failed,
+      "execution.failed",
+      {
+        status: "failed",
+        currentStep: "failed",
+        error: err instanceof Error ? err.message : String(err),
+      },
+    );
     throw err;
   }
 }

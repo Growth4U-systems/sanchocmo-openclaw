@@ -22,6 +22,13 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // scripts/ -> repo root -> src/db/migrations-local (resolves regardless of cwd)
 const MIGRATIONS_FOLDER = path.resolve(__dirname, "../src/db/migrations-local");
+// Execution-control is also deployed to managed Postgres through the curated
+// migration runner. Apply that same idempotent SQL locally so both driver paths
+// expose the shadow Ledger without maintaining a second hand-copied schema.
+const EXECUTION_CONTROL_MIGRATION = path.resolve(
+  __dirname,
+  "../src/db/migrations/0019_execution_control.sql",
+);
 
 const log = (msg) => console.log(`[migrate-local] ${msg}`);
 
@@ -75,6 +82,8 @@ async function main() {
     const db = drizzle(sql);
     log(`Applying migrations from ${MIGRATIONS_FOLDER} …`);
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+    log("Applying additive execution-control migration …");
+    await sql.file(EXECUTION_CONTROL_MIGRATION);
     log("Migrations applied (schema up to date).");
   } catch (err) {
     log(`Migration failed (non-fatal, DB features may be degraded): ${err.message}`);

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { yalcErrorResponse } from "@/lib/yalc/client";
 import { enqueueDiscoverySearchRun, getSearch, runDiscoverySearch } from "@/lib/partnerships";
+import { observeDiscoveryExecutionEvent } from "@/lib/partnerships/discovery-execution-observer";
 
 /**
  * POST /api/partnerships/searches/{id}/run — ejecutar el runner (SAN-79).
@@ -48,6 +49,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         slug,
         searchId,
         fixtures: body.fixtures === true,
+      });
+      await observeDiscoveryExecutionEvent(search, "execution.enqueued", {
+        route: "retry_api",
+        runnerMode: search.runner.mode,
+        jobId: search.runner.jobId,
       });
       return res.status(202).json({
         ok: true,

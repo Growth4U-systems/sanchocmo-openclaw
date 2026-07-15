@@ -17,6 +17,10 @@ import {
   triggerDiscoveryRunner,
   updateRunnerState,
 } from "@/lib/partnerships";
+import {
+  observeDiscoveryExecutionDispatch,
+  observeDiscoveryExecutionEvent,
+} from "@/lib/partnerships/discovery-execution-observer";
 
 /**
  * Búsquedas de discovery (Partnerships · tab Encuentra) — SAN-79.
@@ -42,7 +46,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!slug) return res.status(400).json({ error: "Missing slug" });
 
   if (req.method === "GET") {
-    const resumed = resumeQueuedDiscoverySearches(slug);
+    const resumed = await resumeQueuedDiscoverySearches(slug);
     const statusFilter =
       typeof req.query.status === "string" ? req.query.status.trim() : "";
     const includeArchived =
@@ -94,6 +98,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     // run:"none"/false → solo crea, runner queued (sin despachar) — opt-out.
     if (body.run === "none" || body.run === false) {
+      await observeDiscoveryExecutionEvent(
+        created.search,
+        "execution.deferred",
+        { route: "none" },
+      );
       return res.status(201).json({
         ok: true,
         search: created.search,
@@ -107,6 +116,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const search = enqueueDiscoverySearchRun({
         slug,
         searchId: created.search.id,
+      });
+      await observeDiscoveryExecutionEvent(search, "execution.enqueued", {
+        route: "server_live",
+        runnerMode: search.runner.mode,
+        jobId: search.runner.jobId,
       });
       return res.status(201).json({
         ok: true,
@@ -129,14 +143,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       searchId: created.search.id,
       title: created.search.title,
     });
-    const search = dispatch.forwardedToGateway
-      ? created.search
-      : updateRunnerState(slug, created.search.id, {
-          status: "error",
-          error:
-            dispatch.error ||
-            "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra.",
-        });
+    const search = updateRunnerState(slug, created.search.id, {
+      status: dispatch.forwardedToGateway ? "queued" : "error",
+      attempts: Math.max(0, created.search.runner.attempts ?? 0) + 1,
+      error:
+        dispatch.error ||
+        (dispatch.forwardedToGateway
+          ? null
+          : "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra."),
+    });
+    await observeDiscoveryExecutionDispatch(search, {
+      route: "agent_legacy",
+      forwarded: dispatch.forwardedToGateway,
+      error: dispatch.error,
+    });
     return res.status(201).json({
       ok: true,
       search,

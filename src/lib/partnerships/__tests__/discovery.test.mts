@@ -424,6 +424,36 @@ test("enqueueDiscoverySearchRun devuelve rápido y completa el runner en backgro
   );
 });
 
+test("retry server-side abre un intento nuevo sin inflarlo al arrancar", async () => {
+  const created = await lib.createDiscoverySearch({
+    slug: "monzo",
+    plan: {
+      title: "Retry fixtures",
+      sectors: ["fintech"],
+      networks: ["instagram"],
+    },
+  });
+  lib.updateRunnerState("monzo", created.search.id, {
+    status: "error",
+    mode: "fixtures",
+    attempts: 1,
+    error: "previous failure",
+  });
+
+  const queued = lib.enqueueDiscoverySearchRun({
+    slug: "monzo",
+    searchId: created.search.id,
+    fixtures: true,
+  });
+  assert.equal(queued.runner.attempts, 2);
+
+  const done = await waitFor(
+    () => lib.getSearch("monzo", created.search.id),
+    (record) => record?.runner.status === "done",
+  );
+  assert.equal(done?.runner.attempts, 2);
+});
+
 test("archiveSearch conserva el registro y bloquea reintentos del runner", async () => {
   const created = await lib.createDiscoverySearch({
     slug: "monzo",
@@ -442,7 +472,7 @@ test("archiveSearch conserva el registro y bloquea reintentos del runner", async
   assert.equal(stored.id, created.search.id);
   assert.ok(stored.archivedAt, "la búsqueda sigue en disco para histórico");
 
-  const resumed = lib.resumeQueuedDiscoverySearches("monzo");
+  const resumed = await lib.resumeQueuedDiscoverySearches("monzo");
   assert.ok(!resumed.includes(created.search.id), "archivada no se re-encola");
   assert.throws(
     () => lib.enqueueDiscoverySearchRun({ slug: "monzo", searchId: created.search.id, fixtures: true }),
@@ -456,7 +486,7 @@ test("resumeQueuedDiscoverySearches no ejecuta búsquedas queued sin job server-
     plan: { title: "Solo crear", sectors: ["fintech"], networks: ["instagram"] },
   });
 
-  const resumed = lib.resumeQueuedDiscoverySearches("monzo");
+  const resumed = await lib.resumeQueuedDiscoverySearches("monzo");
   assert.ok(!resumed.includes(created.search.id));
   const record = lib.getSearch("monzo", created.search.id)!;
   assert.equal(record.runner.status, "queued");
