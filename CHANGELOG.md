@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.2](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.1...v1.7.2) (2026-07-15)
+
+
+### Bug Fixes
+
+* **chat:** preserve Growie context and isolate ask state (SAN-476 SAN-479) ([6c794cd](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6c794cdee2746accf74eb10f70862dc1a0a03e19))
+* **support:** pin Growie to GLM 5.2 and add official avatar (SAN-474 SAN-475) ([#1329](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1329)) ([7d729e2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7d729e265692bb55e6880e1e17a6a164fcbd8a28))
+* **workspace:** stop shipping a real person's identity as the default USER.md (SAN-477) ([#1335](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1335)) ([2f23a06](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2f23a06e18b80242e429293e29a15f0ddedcdda3))
+
 ## [1.7.1](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.0...v1.7.1) (2026-07-15)
 
 
