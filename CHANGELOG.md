@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.5](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.4...v1.7.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **deploy:** let prod deploy and roll back without a git checkout (SAN-464) ([ef67081](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ef67081e4e43234830ed2a8496ff74ac5c021dd0))
+* **installer:** empaquetar scripts/checklist.sh en el tarball de runtime ([#1343](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1343)) ([795e2ad](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/795e2ad698e8400bc21d2ecec80bfdaf03bebfe2))
+
 ## [1.7.4](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.3...v1.7.4) (2026-07-15)
 
 
