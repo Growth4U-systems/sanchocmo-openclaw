@@ -18,6 +18,7 @@ import {
   heartbeatLocalConnector,
   isLocalConnectorProviderId,
   localConnectorHealth,
+  localConnectorInstallerScript,
   registerLocalConnector,
   type LocalConnectorProviderId,
 } from "@/lib/runtime/local-connector";
@@ -74,39 +75,16 @@ function text(res: NextApiResponse, status: number, body: string, contentType = 
   res.send(body);
 }
 
-function installScript(baseUrl: string, token: string): string {
-  const safeBase = JSON.stringify(normalizeBaseUrl(baseUrl));
-  const safeToken = JSON.stringify(token);
-  return `#!/usr/bin/env bash
-set -euo pipefail
-
-SANCHO_BASE_URL=${safeBase}
-SANCHO_CONNECTOR_TOKEN=${safeToken}
-SANCHO_CONNECTOR_DIR="\${SANCHO_CONNECTOR_DIR:-$HOME/.sancho/runtime-connector}"
-
-if ! command -v node >/dev/null 2>&1; then
-  echo "Sancho Connector necesita Node.js 18 o superior. Instala Node y vuelve a ejecutar este comando." >&2
-  exit 1
-fi
-
-mkdir -p "$SANCHO_CONNECTOR_DIR"
-curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/script?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_DIR/connector.mjs"
-curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/bridge?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_DIR/bridge.mjs"
-chmod +x "$SANCHO_CONNECTOR_DIR/connector.mjs" "$SANCHO_CONNECTOR_DIR/bridge.mjs"
-
-SANCHO_BASE_URL="$SANCHO_BASE_URL" \\
-SANCHO_CONNECTOR_TOKEN="$SANCHO_CONNECTOR_TOKEN" \\
-SANCHO_CONNECTOR_BRIDGE_PATH="$SANCHO_CONNECTOR_DIR/bridge.mjs" \\
-node "$SANCHO_CONNECTOR_DIR/connector.mjs"
-`;
-}
-
 function localScriptPath(): string {
   return path.join(process.cwd(), "scripts", "sancho-local-connector.mjs");
 }
 
 function bridgeScriptPath(provider: LocalConnectorProviderId): string {
   return path.join(process.cwd(), cliBridgeProvider(provider).scriptPath);
+}
+
+function contractScriptPath(): string {
+  return path.join(process.cwd(), "src", "lib", "runtime", "agent-contract", "mc-chat-context.mjs");
 }
 
 async function readBody(req: NextApiRequest): Promise<unknown> {
@@ -198,7 +176,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const token = bearerToken(req);
     const session = authenticateLocalConnectorToken(token);
     if (!session) return res.status(401).json({ error: "Pairing inválido o caducado" });
-    return text(res, 200, installScript(inferBaseUrl(req), token), "text/x-shellscript; charset=utf-8");
+    return text(
+      res,
+      200,
+      localConnectorInstallerScript(inferBaseUrl(req), token, session.provider),
+      "text/x-shellscript; charset=utf-8",
+    );
   }
 
   if (route === "script") {
@@ -215,6 +198,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(401).json({ error: "Pairing inválido o caducado" });
     }
     return text(res, 200, fs.readFileSync(bridgeScriptPath(session.provider), "utf-8"), "text/javascript; charset=utf-8");
+  }
+
+  if (route === "contract") {
+    if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+    const session = authenticateLocalConnectorToken(bearerToken(req));
+    if (!session) return res.status(401).json({ error: "Pairing inválido o caducado" });
+    return text(res, 200, fs.readFileSync(contractScriptPath(), "utf-8"), "text/javascript; charset=utf-8");
   }
 
   if (route === "health") {

@@ -5,6 +5,7 @@ import cliRuntimeBridge from "@/lib/cli-runtime-bridge";
 const {
   buildCliBridgeCommand,
   buildCliBridgeEnv,
+  buildManagedCliBridgeProcessEnv,
   cliBridgeProvider,
   defaultGatewayUrl,
   externalRuntimeVarsForCliBridge,
@@ -92,6 +93,42 @@ test("buildCliBridgeEnv exposes the env needed to start a bridge from Sancho", (
       CLAUDE_CODE_RUNTIME_MODEL: "haiku",
     },
   );
+});
+
+test("managed Hermes bridge restores API auth and removes subscription credentials", () => {
+  const env = buildManagedCliBridgeProcessEnv(
+    "hermes",
+    { HERMES_BRIDGE_SECRET: "runtime-secret" },
+    {
+      HERMES_CLI_PROVIDER: "anthropic",
+      CLAUDE_CODE_OAUTH_TOKEN: "stale-claude-oauth",
+      ANTHROPIC_OAUTH_TOKEN: "stale-anthropic-oauth",
+    },
+    {
+      HERMES_CLI_PROVIDER: "anthropic",
+      HERMES_CLI_MODEL: "claude-sonnet-4-6",
+      ANTHROPIC_API_KEY: "persisted-api-key",
+      CLAUDE_CODE_OAUTH_TOKEN: "persisted-claude-oauth",
+    },
+  );
+
+  assert.equal(env.HERMES_CLI_MODEL, "claude-sonnet-4-6");
+  assert.equal(env.ANTHROPIC_API_KEY, "persisted-api-key");
+  assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, undefined);
+  assert.equal(env.ANTHROPIC_OAUTH_TOKEN, undefined);
+  assert.equal(env.HERMES_BRIDGE_SECRET, "runtime-secret");
+});
+
+test("managed user-device bridge does not inherit persisted server credentials", () => {
+  const env = buildManagedCliBridgeProcessEnv(
+    "codex",
+    { CODEX_BRIDGE_SECRET: "runtime-secret" },
+    {},
+    { ANTHROPIC_API_KEY: "persisted-api-key" },
+  );
+
+  assert.equal(env.ANTHROPIC_API_KEY, undefined);
+  assert.equal(env.CODEX_BRIDGE_SECRET, "runtime-secret");
 });
 
 test("buildCliBridgeCommand emits a single runnable Claude Code command", () => {
