@@ -519,6 +519,30 @@ rm ~/.openclaw/.setup-complete
 docker compose restart
 ```
 
+### De dónde sale el framework
+
+La app viene de la imagen publicada. El **framework** (`skills/`, `docker/`,
+`workspace-*/`) viene del **seed de la imagen** (`/opt/sancho-seed`), que
+`docker/init-home.sh` vuelca en el home al bootear — antes de los 5 pasos de
+arriba:
+
+- **Framework** → se pisa desde la imagen, gateado por `.seed-version`, así que
+  sólo se re-copia cuando la imagen cambió de verdad. El gate también dispara si
+  un dir del framework desapareció del home, para que un workspace perdido no
+  espere al próximo bump de imagen (SAN-329).
+- **Lo del humano** (`USER.md`, y `TOOLS.md` fuera de `workspace-sancho`) → se
+  siembra en el primer run y **no se pisa nunca más**.
+- **Datos** (`brand/`, `memory/`, `clients.json`) → no viajan en la imagen, así
+  que el seed ni los ve.
+
+Después del seed, `docker/inject-env-vars.sh` resuelve los `{MC_BASE_URL}` de las
+plantillas (paso 3 de arriba). Ese orden importa: el seed repone la plantilla, el
+render la deja usable.
+
+> **Homes con `.git` se saltean el seed entero** (`init-home.sh:43`): ahí el
+> deploy es dueño del framework vía `git checkout`. Es lo que hace hoy el VPS de
+> staging. Prod dejó de hacerlo en SAN-464.
+
 ---
 
 ## Connect this VPS to the CI/CD pipeline (GitHub Actions)
