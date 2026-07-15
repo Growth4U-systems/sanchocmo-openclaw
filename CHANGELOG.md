@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.5](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.4...v1.6.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **outreach:** harden creator discovery and template previews ([#1315](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1315)) ([fd29eee](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/fd29eeec01b9a899d28ec7c67228efecc0f0d2a5))
+
 ## [1.6.4](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.6.3...v1.6.4) (2026-07-15)
 
 
