@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.4](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.3...v1.7.4) (2026-07-15)
+
+
+### Bug Fixes
+
+* **docker:** keep agents/ in git so the image build finds it (SAN-464) ([8b9e2b6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/8b9e2b69f18c56dd089c425db6fb200963b9c52d))
+
 ## [1.7.3](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.2...v1.7.3) (2026-07-15)
 
 
