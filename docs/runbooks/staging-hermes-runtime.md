@@ -25,15 +25,17 @@ SANCHOCMO_GATEWAY_PORT=18793
 SANCHOCMO_LEGACY_PORT=18794
 
 HERMES_BRIDGE_ENABLED=1
-HERMES_BRIDGE_PORT=18791
+HERMES_BRIDGE_PORT=18795
 HERMES_CHAT_SECRET=<openssl-rand-hex-32>
 HERMES_CLI=hermes
-HERMES_CLI_PROVIDER=openrouter
-HERMES_CLI_MODEL=openai/gpt-4o-mini
+HERMES_CLI_PROVIDER=anthropic
+HERMES_CLI_MODEL=claude-sonnet-4-6
 HERMES_WORKDIR=/root/.openclaw
 
-OPENROUTER_API_KEY=<openrouter-key>
+ANTHROPIC_API_KEY=<anthropic-key>
 ```
+
+Port `18791` is reserved by OpenClaw browser control inside the Sancho container; do not reuse it for Hermes.
 
 Generate the shared secret on the VPS:
 
@@ -88,14 +90,14 @@ The container healthcheck is runtime-aware:
 
 - OpenClaw checks `http://localhost:18789/healthz`.
 - Hermes checks `http://localhost:3000/api/health`.
-- If `HERMES_BRIDGE_ENABLED=1`, Hermes also checks `http://localhost:18791/healthz`.
+- If `HERMES_BRIDGE_ENABLED=1`, Hermes also checks `http://localhost:18795/healthz`.
 
 Verify:
 
 ```bash
 docker inspect --format='{{.State.Health.Status}}' sanchocmo-hermes
 curl -sf https://staging-hermes.sanchocmo.ai/api/health
-docker compose -f docker-compose.yml -f docker-compose.hermes.yml exec sanchocmo curl -sf http://127.0.0.1:18791/healthz
+docker compose -f docker-compose.yml -f docker-compose.hermes.yml exec sanchocmo curl -sf http://127.0.0.1:18795/healthz
 ```
 
 ## Smoke Test

@@ -15,11 +15,11 @@ const {
 
 test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", () => {
   assert.deepEqual(
-    externalRuntimeVarsForCliBridge("hermes", "http://127.0.0.1:18791/", "secret"),
+    externalRuntimeVarsForCliBridge("hermes", "http://127.0.0.1:18795/", "secret"),
     {
       SANCHO_EXTERNAL_RUNTIME_KIND: "hermes",
       SANCHO_EXTERNAL_PROTOCOL: "sancho",
-      SANCHO_EXTERNAL_GATEWAY_URL: "http://127.0.0.1:18791",
+      SANCHO_EXTERNAL_GATEWAY_URL: "http://127.0.0.1:18795",
       SANCHO_EXTERNAL_SECRET: "secret",
       SANCHO_EXTERNAL_INBOUND_PATH: "/sancho/inbound",
       SANCHO_EXTERNAL_HEALTH_PATH: "/healthz",
@@ -32,6 +32,7 @@ test("CLI bridge metadata separates server runtimes from user-device runtimes", 
   assert.equal(cliBridgeProvider("hermes").serverStartSupported, true);
   assert.equal(cliBridgeProvider("hermes").cliCommandEnv, "HERMES_CLI");
   assert.equal(cliBridgeProvider("hermes").defaultCliCommand, "hermes");
+  assert.equal(defaultGatewayUrl("hermes"), "http://127.0.0.1:18795");
   assert.equal(cliBridgeProvider("claude-code").runtimeLocation, "user-device");
   assert.equal(cliBridgeProvider("claude-code").serverStartSupported, false);
   assert.equal(cliBridgeProvider("codex").runtimeLocation, "user-device");
@@ -62,7 +63,7 @@ test("buildCliBridgeCommand emits a single runnable Hermes command", () => {
 
   assert.match(command, /SANCHO_BASE_URL=https:\/\/sancho\.example\.com/);
   assert.match(command, /SANCHO_WEBHOOK_URL=https:\/\/sancho\.example\.com\/api\/chat\/webhook/);
-  assert.match(command, /HERMES_BRIDGE_PORT=18791/);
+  assert.match(command, /HERMES_BRIDGE_PORT=18795/);
   assert.match(command, /HERMES_BRIDGE_SECRET='shared secret'/);
   assert.match(command, /HERMES_SANCHO_SECRET='shared secret'/);
   assert.match(command, /HERMES_RUN_TIMEOUT_MS=900000/);
