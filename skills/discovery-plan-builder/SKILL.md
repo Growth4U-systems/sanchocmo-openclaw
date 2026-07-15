@@ -203,12 +203,18 @@ admin de `clients.json` — nunca pidas tokens en el chat):
 curl -s -X POST "http://localhost:3000/api/partnerships/searches" \
   -H "Content-Type: application/json" \
   -H "x-admin-token: $MC_ADMIN_TOKEN" \
-  -d '{ "slug": "{slug}", "threadId": "<thread_id>", "plan": { ...el JSON del plan... } }'
+  -d '{ "slug": "{slug}", "threadId": "<thread_id>", "commandId": "discovery:<thread_id>:q_launch", "plan": { ...el JSON del plan... } }'
 ```
 
 `threadId` = el valor de `thread_id` de tu bloque `[MC Chat Context]` (este mismo
 hilo). Es lo que permite que, al reabrir la búsqueda desde su tarjeta en Encuentra,
 se retome ESTA sesión en vez de empezar un hilo nuevo (SAN-328).
+
+`commandId` identifica **el acto de lanzamiento confirmado**, no cada intento HTTP.
+Constrúyelo una vez como `discovery:<thread_id>:q_launch` y reutiliza exactamente el
+mismo valor si el POST da timeout o la respuesta se pierde. Nunca inventes un ID
+nuevo para un retry. Una respuesta con `replayed: true` confirma que el primer
+intento ya había creado la búsqueda; no vuelvas a lanzarla por otra vía.
 
 Respuesta: `{ ok, search, campaignId, taskId }`. Esto ya ha hecho TODO el
 trabajo de creación:
@@ -240,5 +246,9 @@ Incluye `searchId` y `campaignId` por si el usuario opera por MCP/CLI después.
 
 - `400 plan.*` → el plan no valida; corrige el campo y reintenta (no molestes
   al usuario si puedes arreglarlo tú con lo ya acordado).
-- `502/504 YALC` → Yalc no responde; informa y sugiere revisar Conexiones
-  (Settings → Providers). NO crees la tarea a mano: el endpoint es atómico.
+- `409 DISCOVERY_COMMAND_CONFLICT` → ese `commandId` ya pertenece a otro plan;
+  no lo reintentes con contenido cambiado. Vuelve al plan confirmado o inicia un
+  lanzamiento nuevo en otro hilo.
+- `502/504 YALC` → Yalc no responde; reintenta una vez con el **mismo**
+  `commandId`. Si persiste, informa y sugiere revisar Conexiones (Settings →
+  Providers). NO crees la tarea a mano.

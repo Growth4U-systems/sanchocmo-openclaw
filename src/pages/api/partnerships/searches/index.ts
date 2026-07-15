@@ -30,7 +30,7 @@ import {
  *     → { searches, count } (estado del runner incluido — lo consume la UI
  *       de Encuentra y el agente runner para encontrar trabajo encolado).
  *
- *   POST /api/partnerships/searches  { slug, plan, run?, threadId? }
+ *   POST /api/partnerships/searches  { slug, plan, run?, threadId?, commandId? }
  *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
  *     madre) y ejecuta discovery sin bloquear el request. `run`:
  *       - ausente / "live" → job server-side para un plan solo Instagram.
