@@ -152,8 +152,15 @@ import {
   previewModelConfigUpdate,
   putModelConfigOverrides,
   runDiscoverySearch,
+  supportsLiveDiscovery,
   TemplateValidationError,
+  triggerDiscoveryRunner,
+  updateRunnerState,
 } from "@/lib/partnerships";
+import {
+  partnerContactPreflightError,
+  preflightPartnerContactGate,
+} from "@/lib/partnerships/contact-gate";
 import {
   resolveOdConfig,
   odHealth,
@@ -3547,11 +3554,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Create Partnerships discovery search",
       description:
-        "Creates a creator discovery search (Partnerships · SAN-79): a Partnerships campaign in YALC, a mother Outreach task in Sancho, and a queued discovery runner. Same action as the discovery-plan-builder chat skill and the Encuentra UI. Optionally executes the runner inline with the 9 mockup fixture creators (no ScrapeCreators). Requires yalc:write. Defaults to dry-run and requires confirm=true to write.",
+        "Creates a creator discovery search (Partnerships · SAN-79): a Partnerships campaign in YALC, a mother Outreach task in Sancho, and a queued discovery runner. Instagram-only plans run server-side; plans with TikTok or YouTube are dispatched to Rocinante's agentic runner. Same action as the discovery-plan-builder chat skill and the Encuentra UI. Optionally executes the runner inline with the 9 mockup fixture creators (no ScrapeCreators). Requires yalc:write. Defaults to dry-run and requires confirm=true to write.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
         title: z.string().min(1).describe("Search title, e.g. 'Finanzas personales ES · IG+TikTok'."),
         sectors: z.array(z.string().min(1)).min(1).describe("Target sectors/verticals (e.g. 'finanzas personales', 'ahorro')."),
+        hashtags: z
+          .array(z.string().min(1))
+          .optional()
+          .describe("Niche-specific discovery hashtags (e.g. '#trasplantecapilar', '#saludcapilar')."),
         networks: z.array(z.string().min(1)).min(1).describe("Networks to scout: instagram, tiktok, youtube, ..."),
         tiers: z
           .array(z.enum(["nano", "micro", "mid", "macro"]))
@@ -3582,6 +3593,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
       clientSlug,
       title,
       sectors,
+      hashtags,
       networks,
       tiers,
       audienceEsMinPct,
@@ -3604,6 +3616,7 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           {
             title,
             sectors,
+            hashtags,
             networks,
             tiers,
             audienceEsMinPct,
@@ -3645,23 +3658,54 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             dropped: run.dropped,
           });
         }
-        const search = enqueueDiscoverySearchRun({
+        if (supportsLiveDiscovery(created.search.plan)) {
+          const search = enqueueDiscoverySearchRun({
+            slug: clientSlug,
+            searchId: created.search.id,
+          });
+          return jsonResult({
+            ok: true,
+            search,
+            campaignId: created.campaignId,
+            taskId: created.taskId,
+            runner: {
+              async: true,
+              mode: "live",
+              jobId: search.runner.jobId,
+              status: search.runner.status,
+            },
+            message:
+              "Search queued. Sancho is running server-side Instagram discovery with ScrapeCreators in the background. Poll GET /api/partnerships/searches for status.",
+          });
+        }
+
+        const dispatch = await triggerDiscoveryRunner({
           slug: clientSlug,
           searchId: created.search.id,
+          title: created.search.title,
         });
+        const search = dispatch.forwardedToGateway
+          ? created.search
+          : updateRunnerState(clientSlug, created.search.id, {
+              status: "error",
+              error:
+                dispatch.error ||
+                "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra.",
+            });
         return jsonResult({
-          ok: true,
+          ok: dispatch.forwardedToGateway,
           search,
           campaignId: created.campaignId,
           taskId: created.taskId,
           runner: {
-            async: true,
-            mode: "live",
-            jobId: search.runner.jobId,
-            status: search.runner.status,
+            mode: "agent",
+            dispatched: dispatch.forwardedToGateway,
+            threadId: dispatch.threadId,
+            error: dispatch.error,
           },
-          message:
-            "Search queued. Sancho is running server-side discovery with ScrapeCreators in the background. Poll GET /api/partnerships/searches for status.",
+          message: dispatch.forwardedToGateway
+            ? "Search queued. Rocinante is running TikTok/YouTube discovery with ScrapeCreators. Poll GET /api/partnerships/searches for status."
+            : "Search created, but Rocinante could not be reached. Retry it from Encuentra.",
         });
       }),
   );
@@ -3756,6 +3800,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           );
           return jsonResult(data);
         }
+        const preflight = await preflightPartnerContactGate(config, runId, edits);
+        const preflightError = partnerContactPreflightError(preflight);
+        if (preflightError) return errorResult(preflightError);
         const data = await yalcFetch(config, `/api/gates/${encodeURIComponent(runId)}/approve`, {
           method: "POST",
           body: { edits },

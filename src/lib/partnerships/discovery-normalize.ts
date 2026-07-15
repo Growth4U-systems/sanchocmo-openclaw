@@ -10,6 +10,7 @@
 import type { CompetitorPromo, CreatorMetrics, CreatorSignals } from "@/lib/calc-creator-core";
 import { normalizeNetwork } from "./discovery-plan";
 import type { RawDiscoveryCandidate } from "./discovery-types";
+import { TEMPLATE_VARIABLE_OPTIONS } from "./templates";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -32,6 +33,21 @@ function asBoolean(value: unknown): boolean | undefined {
 
 function asString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+const ALLOWED_CUSTOM_VARIABLES = new Set(
+  TEMPLATE_VARIABLE_OPTIONS.filter((variable) => variable.source === "custom").map((variable) => variable.key),
+);
+
+function normalizeCustomVariables(value: unknown): Record<string, string> | undefined {
+  if (!isRecord(value)) return undefined;
+  const variables: Record<string, string> = {};
+  for (const [rawKey, rawValue] of Object.entries(value)) {
+    const key = rawKey.trim().toLowerCase();
+    const stringValue = asString(rawValue);
+    if (ALLOWED_CUSTOM_VARIABLES.has(key) && stringValue) variables[key] = stringValue;
+  }
+  return Object.keys(variables).length > 0 ? variables : undefined;
 }
 
 export function normalizeHandle(value: unknown): string | null {
@@ -120,6 +136,8 @@ export function normalizeCandidate(input: unknown): RawDiscoveryCandidate | null
   if (email) candidate.email = email;
   if (followers !== undefined) candidate.followers = followers;
   if (engagementRatePct !== undefined) candidate.engagementRatePct = engagementRatePct;
+  const customVariables = normalizeCustomVariables(input.customVariables ?? input.custom_variables);
+  if (customVariables) candidate.customVariables = customVariables;
   const signals = normalizeSignals(input.signals);
   if (signals) candidate.signals = signals;
   return candidate;

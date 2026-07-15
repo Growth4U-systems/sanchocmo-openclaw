@@ -1,5 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
+import {
+  compose,
+  getSlug,
+  withErrorHandler,
+  withSlugAuth,
+} from "@/lib/api-middleware";
 import { yalcErrorResponse } from "@/lib/yalc/client";
 import {
   createDiscoverySearch,
@@ -8,6 +13,7 @@ import {
   listSearches,
   resumeQueuedDiscoverySearches,
   runDiscoverySearch,
+  supportsLiveDiscovery,
   triggerDiscoveryRunner,
   updateRunnerState,
 } from "@/lib/partnerships";
@@ -21,10 +27,9 @@ import {
  *
  *   POST /api/partnerships/searches  { slug, plan, run?, threadId? }
  *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
- *     madre) y, POR DEFECTO, encola un job server-side para ejecutar discovery
- *     REAL con ScrapeCreators sin bloquear el request. `run`:
- *       - ausente / "live"  → job server-side con ScrapeCreators.
- *       - "agent"           → despacha el runner a Rocinante (fallback manual).
+ *     madre) y ejecuta discovery sin bloquear el request. `run`:
+ *       - ausente / "live" → job server-side para un plan solo Instagram.
+ *       - "agent" o redes TikTok/YouTube → despacha el runner a Rocinante.
  *       - "fixtures" (o true) → runner inline con los 9 creators fake (verifier).
  *       - "none" / false      → solo crea, runner queued (sin despachar).
  *     → { ok, search, campaignId, taskId[, runner] }
@@ -38,18 +43,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "GET") {
     const resumed = resumeQueuedDiscoverySearches(slug);
-    const statusFilter = typeof req.query.status === "string" ? req.query.status.trim() : "";
+    const statusFilter =
+      typeof req.query.status === "string" ? req.query.status.trim() : "";
     const includeArchived =
       req.query.includeArchived === "1" || req.query.includeArchived === "true";
-    const archivedOnly = req.query.archived === "1" || req.query.archived === "true";
-    const searches = listSearches(slug).filter(
-      (search) => {
-        const archived = Boolean(search.archivedAt);
-        if (archivedOnly && !archived) return false;
-        if (!archivedOnly && !includeArchived && archived) return false;
-        return !statusFilter || search.runner.status === statusFilter;
-      },
-    );
+    const archivedOnly =
+      req.query.archived === "1" || req.query.archived === "true";
+    const searches = listSearches(slug).filter((search) => {
+      const archived = Boolean(search.archivedAt);
+      if (archivedOnly && !archived) return false;
+      if (!archivedOnly && !includeArchived && archived) return false;
+      return !statusFilter || search.runner.status === statusFilter;
+    });
     return res.status(200).json({ searches, count: searches.length, resumed });
   }
 
@@ -58,7 +63,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 
-  const body = (req.body || {}) as { plan?: unknown; run?: unknown; threadId?: unknown };
+  const body = (req.body || {}) as {
+    plan?: unknown;
+    run?: unknown;
+    threadId?: unknown;
+  };
   try {
     const created = await createDiscoverySearch({
       slug,
@@ -69,7 +78,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     });
 
     if (body.run === "fixtures" || body.run === true) {
-      const run = await runDiscoverySearch({ slug, searchId: created.search.id, fixtures: true });
+      const run = await runDiscoverySearch({
+        slug,
+        searchId: created.search.id,
+        fixtures: true,
+      });
       return res.status(201).json({
         ok: true,
         search: run.search,
@@ -89,8 +102,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    if (!body.run || body.run === "live") {
-      const search = enqueueDiscoverySearchRun({ slug, searchId: created.search.id });
+    const canRunLive = supportsLiveDiscovery(created.search.plan);
+    if ((body.run === undefined || body.run === "live") && canRunLive) {
+      const search = enqueueDiscoverySearchRun({
+        slug,
+        searchId: created.search.id,
+      });
       return res.status(201).json({
         ok: true,
         search,
@@ -105,8 +122,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // run:"agent": despacha a Rocinante para el discovery REAL. Best-effort —
-    // si el gateway está caído, la búsqueda queda en error recuperable desde UI.
+    // run:"agent" o plan con redes no cubiertas por live: despacha a Rocinante.
+    // Best-effort: si el gateway está caído, queda como error recuperable.
     const dispatch = await triggerDiscoveryRunner({
       slug,
       searchId: created.search.id,

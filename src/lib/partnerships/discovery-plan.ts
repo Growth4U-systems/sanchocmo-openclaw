@@ -53,6 +53,15 @@ function stringList(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function hashtagList(value: unknown): string[] {
+  return Array.from(new Set(
+    stringList(value)
+      .map((item) => item.replace(/^#+/, "").replace(/\s+/g, "").toLowerCase())
+      .filter(Boolean)
+      .map((item) => `#${item}`),
+  ));
+}
+
 function finiteNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
@@ -102,16 +111,30 @@ export function parseDiscoveryPlan(
     throw new DiscoveryPlanError("plan.disqualifyThreshold must be between 0 and 100");
   }
 
+  const audienceEsMinPct = finiteNumber(input.audienceEsMinPct);
+  if (audienceEsMinPct !== undefined && (audienceEsMinPct < 0 || audienceEsMinPct > 100)) {
+    throw new DiscoveryPlanError("plan.audienceEsMinPct must be between 0 and 100");
+  }
+
+  const targetVolume = finiteNumber(input.targetVolume);
+  if (
+    targetVolume !== undefined
+    && (!Number.isInteger(targetVolume) || targetVolume < 1 || targetVolume > 500)
+  ) {
+    throw new DiscoveryPlanError("plan.targetVolume must be an integer between 1 and 500");
+  }
+
   const signalsInput = isRecord(input.signals) ? input.signals : {};
   const competitorBrands = stringList(signalsInput.competitorBrands);
 
   return {
     title,
     sectors,
+    hashtags: hashtagList(input.hashtags),
     networks: Array.from(new Set(networks)),
     tiers: tiers.length > 0 ? Array.from(new Set(tiers)) : [...TIER_KEYS],
-    audienceEsMinPct: finiteNumber(input.audienceEsMinPct),
-    targetVolume: finiteNumber(input.targetVolume),
+    audienceEsMinPct,
+    targetVolume,
     signals: {
       adLibrary: signalsInput.adLibrary !== false,
       competitorBrands,
@@ -162,6 +185,7 @@ export function describePlan(plan: DiscoveryPlan): string {
     `Redes: ${plan.networks.join(" + ")}`,
     `Tiers: ${plan.tiers.join(" / ")}`,
   ];
+  if (plan.hashtags?.length) rows.splice(1, 0, `Hashtags: ${plan.hashtags.join(" · ")}`);
   if (plan.audienceEsMinPct !== undefined) rows.push(`Audiencia: ≥ ${plan.audienceEsMinPct}% España`);
   if (plan.targetVolume !== undefined) rows.push(`Volumen: ~${plan.targetVolume} candidatos`);
   if (plan.signals?.competitorBrands?.length) {

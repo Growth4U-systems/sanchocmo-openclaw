@@ -232,7 +232,8 @@ test("umbral editado → búsqueda nueva lo congela y el run de fixtures descart
     plan: {
       title: "Finanzas ES · umbral nuevo",
       sectors: ["finanzas personales"],
-      networks: ["instagram"],
+      networks: ["instagram", "tiktok", "youtube"],
+      tiers: ["nano", "micro", "mid", "macro"],
       // SIN qualificationMode ni disqualifyThreshold → defaults efectivos.
     },
   });

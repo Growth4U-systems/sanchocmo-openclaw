@@ -410,12 +410,6 @@ export default defineChannelPluginEntry({
         const guardRunId = `mc-chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
         const abortController = new AbortController();
         const guardLimits = mcChatCostGuard.limits();
-        mcChatCostGuard.registerActiveTurn({
-          runId: guardRunId,
-          sessionKey,
-          abortController,
-          startedAt: Date.now(),
-        });
 
         // Build MsgContext for OpenClaw dispatch
         const msgCtx = finalizeInboundContext({
@@ -484,6 +478,15 @@ export default defineChannelPluginEntry({
         let temporaryInterventionDispatched = false;
         const turnSeenRouteRequests = new Set();
         const turnStartedAt = Date.now();
+        // Register only after this session reaches the front of the serialized
+        // queue. Registering before enqueue let a follow-up share counters with
+        // the active turn and replace its AbortController.
+        mcChatCostGuard.registerActiveTurn({
+          runId: guardRunId,
+          sessionKey,
+          abortController,
+          startedAt: turnStartedAt,
+        });
         const turnTimer = guardLimits.enabled
           ? setTimeout(() => {
               mcChatCostGuard.abortRun(

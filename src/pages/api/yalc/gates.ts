@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import { resolveYalcConfig, yalcErrorResponse, yalcFetch } from "@/lib/yalc/client";
+import {
+  partnerContactPreflightError,
+  preflightPartnerContactGate,
+} from "@/lib/partnerships/contact-gate";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = getSlug(req);
@@ -17,6 +21,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       const action = String(req.body?.action || "");
       if (!runId) return res.status(400).json({ error: "runId required" });
       if (action === "approve") {
+        const preflight = await preflightPartnerContactGate(config, runId, req.body?.edits);
+        const preflightError = partnerContactPreflightError(preflight);
+        if (preflightError) {
+          return res.status(409).json({
+            error: "unresolved_template_variables",
+            message: preflightError,
+            unresolvedVariables: preflight?.unresolvedVariables || [],
+          });
+        }
         return res.status(200).json(
           await yalcFetch(config, `/api/gates/${encodeURIComponent(runId)}/approve?sync=1`, {
             method: "POST",

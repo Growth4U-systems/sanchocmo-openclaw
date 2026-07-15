@@ -206,7 +206,7 @@ test("beforeToolCall blocks repeated broad filesystem probes", () => {
     { runId: "run-risky", sessionKey: "session-risky" },
   );
   guard.beforeToolCall(
-    { name: "exec", input: { command: "grep -rn \"partnerships\" /app/mc-nextjs/src" } },
+    { name: "exec", input: { command: "grep -rn \"partnerships\" /app" } },
     { runId: "run-risky", sessionKey: "session-risky" },
   );
   const blocked = guard.beforeToolCall(
@@ -217,6 +217,70 @@ test("beforeToolCall blocks repeated broad filesystem probes", () => {
   assert.equal(aborted, true);
   assert.equal(blocked.block, true);
   assert.match(blocked.blockReason, /herramientas de riesgo/);
+});
+
+test("beforeToolCall allows scoped code searches but still guards runtime roots", () => {
+  const guard = createCostGuard({
+    env: { MC_CHAT_MAX_RISKY_TOOL_CALLS_PER_RUN: "1" },
+    clock: () => 1_000,
+  });
+  guard.registerActiveTurn({
+    runId: "run-scoped-search",
+    sessionKey: "session-scoped-search",
+    abortController: { abort: () => {} },
+  });
+
+  const scoped = guard.beforeToolCall(
+    { name: "exec", input: { command: "rg -n partnerships /app/mc-nextjs/src/lib" } },
+    { runId: "run-scoped-search", sessionKey: "session-scoped-search" },
+  );
+  assert.equal(scoped, undefined);
+
+  guard.beforeToolCall(
+    { name: "exec", input: { command: "rg -n partnerships /app" } },
+    { runId: "run-scoped-search", sessionKey: "session-scoped-search" },
+  );
+  const blocked = guard.beforeToolCall(
+    { name: "exec", input: { command: "find /root/.openclaw -name '*.json'" } },
+    { runId: "run-scoped-search", sessionKey: "session-scoped-search" },
+  );
+  assert.equal(blocked.block, true);
+});
+
+test("a managed turn can resume immediately in the same session after a reactive stop", () => {
+  const guard = createCostGuard({
+    env: { MC_CHAT_MAX_RISKY_TOOL_CALLS_PER_RUN: "1" },
+    clock: () => 1_000,
+  });
+  guard.registerActiveTurn({
+    runId: "run-blocked",
+    sessionKey: "session-resume",
+    abortController: { abort: () => {} },
+  });
+  guard.beforeToolCall(
+    { name: "exec", input: { command: "rg foo /app" } },
+    { runId: "run-blocked", sessionKey: "session-resume" },
+  );
+  guard.beforeToolCall(
+    { name: "exec", input: { command: "find /root/.openclaw -type f" } },
+    { runId: "run-blocked", sessionKey: "session-resume" },
+  );
+  guard.clearActiveTurn("run-blocked", "session-resume");
+
+  assert.deepEqual(
+    guard.beforeAgentRun({ sessionKey: "session-resume", prompt: "continúa" }, { sessionKey: "session-resume" }),
+    { outcome: "pass" },
+  );
+  guard.registerActiveTurn({
+    runId: "run-resumed",
+    sessionKey: "session-resume",
+    abortController: { abort: () => {} },
+  });
+  const firstRiskInNewTurn = guard.beforeToolCall(
+    { name: "exec", input: { command: "rg foo /app" } },
+    { runId: "run-resumed", sessionKey: "session-resume" },
+  );
+  assert.equal(firstRiskInNewTurn, undefined);
 });
 
 test("beforeToolCall blocks exact repeated tool calls", () => {

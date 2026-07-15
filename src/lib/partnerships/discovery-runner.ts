@@ -23,14 +23,28 @@ import { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
 import { getEffectiveModelConfig } from "./model-config";
 import { qualifyCandidates } from "./qualify-enrich";
 import { scrapeLiveDiscoveryCandidates } from "./scrapecreators-live";
-import type { DiscoveryRunnerStats, DiscoverySearchRecord } from "./discovery-types";
+import type {
+  DiscoveryPlan,
+  DiscoveryRunnerStats,
+  DiscoverySearchRecord,
+  RawDiscoveryCandidate,
+} from "./discovery-types";
 import type { QualifiedCandidate } from "./qualify-enrich";
 
 interface YalcAssignResponse {
   ok?: boolean;
   campaignId?: string;
-  leads?: Array<{ id?: string; handle?: string | null; lifecycleStatus?: string; discardNote?: string | null }>;
-  dropped?: Array<{ providerId?: string; handle?: string | null; score?: number | null }>;
+  leads?: Array<{
+    id?: string;
+    handle?: string | null;
+    lifecycleStatus?: string;
+    discardNote?: string | null;
+  }>;
+  dropped?: Array<{
+    providerId?: string;
+    handle?: string | null;
+    score?: number | null;
+  }>;
 }
 
 export interface RunDiscoveryOptions {
@@ -53,18 +67,25 @@ export interface RunDiscoveryResult {
 function buildStats(
   qualified: QualifiedCandidate[],
   invalid: number,
+  filtered: number,
   response: YalcAssignResponse,
 ): DiscoveryRunnerStats {
   const inserted = response.leads ?? [];
   const dropped = response.dropped ?? [];
-  const disqualified = inserted.filter((lead) => lead.lifecycleStatus === "Disqualified").length;
+  const disqualified = inserted.filter(
+    (lead) => lead.lifecycleStatus === "Disqualified",
+  ).length;
   const avgQuality =
     qualified.length > 0
-      ? Math.round(qualified.reduce((sum, item) => sum + item.score.total, 0) / qualified.length)
+      ? Math.round(
+          qualified.reduce((sum, item) => sum + item.score.total, 0) /
+            qualified.length,
+        )
       : null;
   return {
     candidates: qualified.length,
     invalid,
+    filtered,
     inserted: inserted.length,
     sourced: inserted.length - disqualified,
     disqualified,
@@ -73,12 +94,69 @@ function buildStats(
   };
 }
 
+/**
+ * Aplica los hard gates del plan también a los candidatos del runner agentic.
+ * Si el runner agentic trae audiencia ES real, esa señal manda. En el runner
+ * live de Instagram (sin geografía de audiencia), el gate usa el porcentaje
+ * CET calculado de timestamps reales. Nunca se infiere desde bio o captions.
+ */
+export function applyDiscoveryPlanGates(
+  candidates: RawDiscoveryCandidate[],
+  plan: DiscoveryPlan,
+): { candidates: RawDiscoveryCandidate[]; filtered: number } {
+  const wantedNetworks = new Set(plan.networks);
+  const wantedTiers = new Set(plan.tiers || []);
+  const tierForFollowers = (
+    followers: number | undefined,
+  ): DiscoveryPlan["tiers"][number] | null => {
+    if (followers === undefined || followers < 0) return null;
+    if (followers < 25_000) return "nano";
+    if (followers < 100_000) return "micro";
+    if (followers < 250_000) return "mid";
+    return "macro";
+  };
+
+  const eligible = candidates.filter((candidate) => {
+    if (!wantedNetworks.has(candidate.network)) return false;
+    if (wantedTiers.size > 0) {
+      const tier = tierForFollowers(candidate.followers);
+      if (!tier || !wantedTiers.has(tier)) return false;
+    }
+    if (plan.audienceEsMinPct !== undefined) {
+      const audienceSignal =
+        candidate.signals?.spanishAudiencePct ??
+        candidate.signals?.cetAlignmentPct;
+      if (
+        typeof audienceSignal !== "number" ||
+        !Number.isFinite(audienceSignal) ||
+        audienceSignal < plan.audienceEsMinPct
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const requested = Number.isFinite(plan.targetVolume)
+    ? Math.max(1, Math.floor(plan.targetVolume as number))
+    : eligible.length;
+  const selected = eligible.slice(0, Math.min(requested, 500));
+  return {
+    candidates: selected,
+    filtered: candidates.length - selected.length,
+  };
+}
+
 /** Ejecuta el runner de una búsqueda existente (creada con createDiscoverySearch). */
-export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<RunDiscoveryResult> {
+export async function runDiscoverySearch(
+  options: RunDiscoveryOptions,
+): Promise<RunDiscoveryResult> {
   const { slug, searchId } = options;
   const search = getSearch(slug, searchId);
-  if (!search) throw new Error(`Discovery search not found: ${searchId} (${slug})`);
-  if (search.archivedAt) throw new Error(`Discovery search is archived: ${searchId}`);
+  if (!search)
+    throw new Error(`Discovery search not found: ${searchId} (${slug})`);
+  if (search.archivedAt)
+    throw new Error(`Discovery search is archived: ${searchId}`);
 
   const useFixtures = options.fixtures ?? fixturesEnabledByEnv();
   const mode = useFixtures ? "fixtures" : "live";
@@ -92,13 +170,19 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
   try {
     const raw = useFixtures
       ? loadFixtureCandidates()
-      : options.candidates ?? await scrapeLiveDiscoveryCandidates(search.plan);
-    const { candidates, invalid } = normalizeCandidates(raw);
+      : (options.candidates ??
+        (await scrapeLiveDiscoveryCandidates(search.plan)));
+    const normalized = normalizeCandidates(raw);
+    const gated = applyDiscoveryPlanGates(normalized.candidates, search.plan);
+    const { candidates } = gated;
+    const { invalid } = normalized;
     if (candidates.length === 0) {
       throw new Error(
         useFixtures
           ? "Fixture mode produced no candidates"
-          : "No candidates provided — run the agentic scraping (discovery-search-runner skill) or pass fixtures=true",
+          : normalized.candidates.length === 0
+            ? "No candidates provided — run live/agentic discovery or pass fixtures=true"
+            : `No candidates met the plan hard gates${search.plan.audienceEsMinPct !== undefined ? ` (audiencia ES/alineación CET ≥ ${search.plan.audienceEsMinPct}%)` : ""}`,
       );
     }
 
@@ -106,7 +190,10 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
     // con la config EFECTIVA del modelo (Yalc model-config + defaults, SAN-76;
     // degrada a la sembrada si Yalc no responde).
     const effective = await getEffectiveModelConfig(slug);
-    const qualified = qualifyCandidates(candidates, { searchId, config: effective.config });
+    const qualified = qualifyCandidates(candidates, {
+      searchId,
+      config: effective.config,
+    });
 
     // Inserción en Yalc — resolveEntryStatus decide Sourced/Disqualified/drop.
     const jobId = search.runner.jobId || `partnerships.discovery:${searchId}`;
@@ -137,7 +224,7 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
       },
     );
 
-    const stats = buildStats(qualified, invalid, response);
+    const stats = buildStats(qualified, invalid, gated.filtered, response);
     const updated = updateRunnerState(slug, searchId, {
       status: "done",
       finishedAt: new Date().toISOString(),
@@ -150,10 +237,14 @@ export async function runDiscoverySearch(options: RunDiscoveryOptions): Promise<
           execution_notes:
             `Runner ${mode} completado: ${stats.inserted} leads insertados en la campaign ${search.campaignId} ` +
             `(${stats.sourced} Sourced · ${stats.disqualified} Disqualified auto · ${stats.dropped} drop) · ` +
+            `${stats.filtered} fuera por gates/volumen · ` +
             `quality medio ${stats.avgQuality ?? "—"}.`,
         });
       } catch (err) {
-        console.error(`[partnerships] updateTask failed for search ${searchId} (${slug}):`, err);
+        console.error(
+          `[partnerships] updateTask failed for search ${searchId} (${slug}):`,
+          err,
+        );
       }
     }
 

@@ -93,8 +93,10 @@ export async function yalcFetch<T = unknown>(
   const payload = contentType.includes("application/json") ? await res.json() : await res.text();
   if (!res.ok) {
     const message =
-      payload && typeof payload === "object" && "error" in payload
-        ? String((payload as { error: unknown }).error)
+      payload && typeof payload === "object" && "message" in payload
+        ? String((payload as { message: unknown }).message)
+        : payload && typeof payload === "object" && "error" in payload
+          ? String((payload as { error: unknown }).error)
         : `YALC ${res.status} ${res.statusText}`;
     throw new YalcClientError(message, res.status, payload);
   }

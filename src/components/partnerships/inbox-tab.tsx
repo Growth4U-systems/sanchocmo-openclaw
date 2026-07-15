@@ -104,8 +104,8 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
       payload && typeof payload === "object" && "message" in payload
         ? String((payload as { message: unknown }).message)
         : payload && typeof payload === "object" && "error" in payload
-        ? String((payload as { error: unknown }).error)
-        : `Request failed (${res.status})`;
+          ? String((payload as { error: unknown }).error)
+          : `Request failed (${res.status})`;
     throw new Error(message);
   }
   return payload as T;
@@ -151,10 +151,23 @@ function normalizeHandle(value?: string | null): string {
   return (value || "").trim().replace(/^@+/, "").toLowerCase();
 }
 
-function gateDraftMatchesLead(draft: AwaitingGateDraft, lead: InboxLead): boolean {
+function gateDraftMatchesLead(
+  draft: AwaitingGateDraft,
+  lead: InboxLead,
+): boolean {
   if (draft.leadId && draft.leadId === lead.id) return true;
-  if (draft.providerId && lead.providerId && draft.providerId === lead.providerId) return true;
-  if (draft.email && lead.email && draft.email.toLowerCase() === lead.email.toLowerCase()) return true;
+  if (
+    draft.providerId &&
+    lead.providerId &&
+    draft.providerId === lead.providerId
+  )
+    return true;
+  if (
+    draft.email &&
+    lead.email &&
+    draft.email.toLowerCase() === lead.email.toLowerCase()
+  )
+    return true;
   const draftHandle = normalizeHandle(draft.handle);
   const leadHandle = normalizeHandle(lead.handle);
   return Boolean(draftHandle && leadHandle && draftHandle === leadHandle);
@@ -168,17 +181,50 @@ function gateMatchesLead(gate: AwaitingGateItem, lead: InboxLead): boolean {
   ) {
     return false;
   }
-  if (Array.isArray(gate.inputs?.leadIds) && gate.inputs.leadIds.includes(lead.id)) return true;
-  return (gate.payload?.drafts || []).some((draft) => gateDraftMatchesLead(draft, lead));
+  if (
+    Array.isArray(gate.inputs?.leadIds) &&
+    gate.inputs.leadIds.includes(lead.id)
+  )
+    return true;
+  return (gate.payload?.drafts || []).some((draft) =>
+    gateDraftMatchesLead(draft, lead),
+  );
 }
 
-function gateDraftForLead(gate: AwaitingGateItem | null, lead: InboxLead | null): AwaitingGateDraft | null {
-  if (!gate || !lead) return null;
-  return (gate.payload?.drafts || []).find((draft) => gateDraftMatchesLead(draft, lead)) || null;
+function unresolvedDraftVariables(
+  drafts: readonly AwaitingGateDraft[],
+): string[] {
+  const unresolved = new Set<string>();
+  if (drafts.length === 0) unresolved.add("preview_no_disponible");
+
+  for (const draft of drafts) {
+    const steps = draft.steps || [];
+    if (steps.length === 0) unresolved.add("paso_no_disponible");
+    for (const step of steps) {
+      if (!step.body?.trim()) unresolved.add("paso_sin_contenido");
+      for (const text of [step.subject, step.body]) {
+        if (!text) continue;
+        for (const match of text.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)) {
+          unresolved.add(match[1].split("|")[0].trim() || "variable_vacía");
+        }
+        const remainder = text.replace(/\{\{[\s\S]*?\}\}/g, "");
+        if (remainder.includes("{{") || remainder.includes("}}")) {
+          unresolved.add("sintaxis_incompleta");
+        }
+      }
+    }
+  }
+  return [...unresolved].sort();
 }
 
-function firstDraftBody(draft: AwaitingGateDraft | null): string {
-  return (draft?.steps || []).find((step) => typeof step.body === "string" && step.body.trim())?.body || "";
+function gateDraftLabel(draft: AwaitingGateDraft, index: number): string {
+  return (
+    draft.displayName ||
+    draft.handle ||
+    draft.email ||
+    draft.leadId ||
+    `Creator ${index + 1}`
+  );
 }
 
 export function InboxTab({ slug }: { slug: string }) {
@@ -239,18 +285,21 @@ export function InboxTab({ slug }: { slug: string }) {
   const pendingContactGate = useMemo(
     () =>
       selected
-        ? (gatesQuery.data?.items || []).find((gate) => gateMatchesLead(gate, selected)) || null
+        ? (gatesQuery.data?.items || []).find((gate) =>
+            gateMatchesLead(gate, selected),
+          ) || null
         : null,
     [gatesQuery.data, selected],
   );
-  const pendingContactDraft = useMemo(
-    () => gateDraftForLead(pendingContactGate, selected),
-    [pendingContactGate, selected],
+  const pendingContactDrafts = useMemo(
+    () => pendingContactGate?.payload?.drafts || [],
+    [pendingContactGate],
   );
-  const pendingContactPreview = useMemo(
-    () => firstDraftBody(pendingContactDraft),
-    [pendingContactDraft],
+  const pendingContactUnresolved = useMemo(
+    () => unresolvedDraftVariables(pendingContactDrafts),
+    [pendingContactDrafts],
   );
+  const pendingContactCanApprove = pendingContactUnresolved.length === 0;
 
   useEffect(() => {
     const requestedLeadId =
@@ -287,7 +336,8 @@ export function InboxTab({ slug }: { slug: string }) {
       ) || null,
     [threadQuery.data],
   );
-  const waitingForFirstTouch = selected?.inboxState === "en-cola" && messages.length === 0;
+  const waitingForFirstTouch =
+    selected?.inboxState === "en-cola" && messages.length === 0;
 
   // ── negotiation-assist: precio en la última reply entrante ──
   const lastIncoming = useMemo(
@@ -360,6 +410,10 @@ export function InboxTab({ slug }: { slug: string }) {
     prompt: string;
     dryRun: boolean;
     preview: string;
+    drafts: AwaitingGateDraft[];
+    unresolvedVariables: string[];
+    canApprove: boolean;
+    error?: string | null;
     sent?: boolean;
   }
   const [gate, setGate] = useState<PendingGate | null>(null);
@@ -367,7 +421,14 @@ export function InboxTab({ slug }: { slug: string }) {
   const createGate = useMutation({
     mutationFn: () =>
       fetchJson<{
-        gates: Array<{ runId: string; prompt: string; dryRun: boolean }>;
+        gates: Array<{
+          runId: string;
+          prompt: string;
+          dryRun: boolean;
+          canApprove: boolean;
+          unresolvedVariables?: string[];
+          drafts?: AwaitingGateDraft[];
+        }>;
       }>(`/api/partnerships/contact?slug=${encodeURIComponent(slug)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -390,11 +451,25 @@ export function InboxTab({ slug }: { slug: string }) {
         showToast("⚠️ No se pudo preparar la aprobación", "warn");
         return;
       }
+      const renderedDrafts = first.drafts || [];
+      const unresolvedVariables = [
+        ...new Set([
+          ...(first.unresolvedVariables || []),
+          ...unresolvedDraftVariables(renderedDrafts),
+        ]),
+      ].sort();
+      const canApprove = first.canApprove && unresolvedVariables.length === 0;
       setGate({
         runId: first.runId,
         prompt: first.prompt,
         dryRun: first.dryRun,
-        preview: draft,
+        canApprove,
+        drafts: renderedDrafts,
+        unresolvedVariables,
+        preview: first.drafts?.[0]?.steps?.[0]?.body || draft,
+        error: canApprove
+          ? null
+          : `No hay un preview listo para aprobar: ${unresolvedVariables.join(", ")}.`,
       });
     },
     onError: (error) =>
@@ -435,12 +510,42 @@ export function InboxTab({ slug }: { slug: string }) {
   });
 
   const approveGate = useMutation({
-    mutationFn: (runId: string) =>
-      fetchJson(`/api/yalc/gates?slug=${encodeURIComponent(slug)}`, {
+    mutationFn: async (runId: string) => {
+      const approval = await fetchJson<{
+        ok?: boolean;
+        jobId?: string;
+        status?: string;
+      }>(`/api/yalc/gates?slug=${encodeURIComponent(slug)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ runId, action: "approve" }),
-      }),
+      });
+      if (approval.jobId) {
+        for (let attempt = 0; attempt < 90; attempt += 1) {
+          const job = await fetchJson<{
+            status?: string;
+            errorMessage?: string | null;
+            errorCode?: string | null;
+          }>(
+            `/api/yalc/jobs/${encodeURIComponent(approval.jobId)}?slug=${encodeURIComponent(slug)}`,
+          );
+          if (job.status === "succeeded") return;
+          if (job.status === "failed" || job.status === "interrupted") {
+            throw new Error(
+              job.errorMessage || job.errorCode || "El envío de Yalc falló.",
+            );
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 2_000));
+        }
+        throw new Error(
+          "Yalc sigue procesando el envío. Revisa el job en Outreach.",
+        );
+      }
+      if (approval.ok === true || approval.status === "succeeded") return;
+      throw new Error(
+        "Yalc no devolvió una confirmación verificable. El gate puede estar ya procesado; revisa su estado antes de reintentar.",
+      );
+    },
     onSuccess: () => {
       setGate((prev) => (prev ? { ...prev, sent: true } : prev));
       showToast("✓ envío aprobado");
@@ -448,11 +553,11 @@ export function InboxTab({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey: leadsKey });
       void queryClient.invalidateQueries({ queryKey: gatesKey });
     },
-    onError: (error) =>
-      showToast(
-        `⚠️ ${error instanceof Error ? error.message : "error"}`,
-        "warn",
-      ),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "error";
+      setGate((prev) => (prev ? { ...prev, error: message } : prev));
+      showToast(`⚠️ ${message}`, "warn");
+    },
   });
 
   if (leadsQuery.isLoading) {
@@ -635,12 +740,14 @@ export function InboxTab({ slug }: { slug: string }) {
                     Cargando hilo…
                   </p>
                 )}
-                {!threadQuery.isLoading && messages.length === 0 && !pendingContactGate && (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    Sin mensajes todavía — el primer mensaje saldrá al aprobar el
-                    contacto.
-                  </p>
-                )}
+                {!threadQuery.isLoading &&
+                  messages.length === 0 &&
+                  !pendingContactGate && (
+                    <p className="py-4 text-center text-sm text-muted-foreground">
+                      Sin mensajes todavía — el primer mensaje saldrá al aprobar
+                      el contacto.
+                    </p>
+                  )}
                 {pendingContactGate && (
                   <section
                     className="rounded-xl border border-yellow-500/40 bg-yellow-50/70 p-4"
@@ -652,67 +759,119 @@ export function InboxTab({ slug }: { slug: string }) {
                           Primer contacto pendiente de aprobación
                         </h3>
                         <p className="mt-1 max-w-2xl text-xs leading-relaxed text-yellow-900/80">
-                          El lead está en cola. Todavía no salió por Instagram ni
-                          aparece como enviado hasta que apruebes este gate.
+                          El lead está en cola. Todavía no salió por Instagram
+                          ni aparece como enviado hasta que apruebes este gate.
                         </p>
                       </div>
                       <button
                         type="button"
-                        disabled={approveGate.isPending}
-                        onClick={() => approveGate.mutate(pendingContactGate.run_id)}
+                        disabled={
+                          approveGate.isPending || !pendingContactCanApprove
+                        }
+                        onClick={() =>
+                          approveGate.mutate(pendingContactGate.run_id)
+                        }
                         className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                         data-testid="approve-pending-contact"
                       >
-                        {approveGate.isPending ? "Aprobando…" : "Aprobar y enviar"}
+                        {approveGate.isPending
+                          ? "Enviando y verificando…"
+                          : "Aprobar y enviar"}
                       </button>
                     </div>
                     <div className="mt-3 space-y-1.5 text-xs text-yellow-950">
                       <div className="rounded-md border border-yellow-500/30 bg-background/70 px-3 py-1.5">
                         <b>Secuencia:</b>{" "}
-                        {pendingContactGate.payload?.sequenceName || "Primer contacto"}
+                        {pendingContactGate.payload?.sequenceName ||
+                          "Primer contacto"}
                       </div>
                       <div className="rounded-md border border-yellow-500/30 bg-background/70 px-3 py-1.5">
                         <b>Acción:</b>{" "}
-                        {pendingContactGate.prompt || "Aprobar envío al creator"}
+                        {pendingContactGate.prompt ||
+                          "Aprobar envío al creator"}
                       </div>
                     </div>
-                    {pendingContactPreview && (
-                      <div className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-dashed border-yellow-500/40 bg-background px-3 py-2 text-xs leading-relaxed text-foreground">
-                        {pendingContactPreview}
+                    <div className="mt-3 max-h-64 space-y-3 overflow-y-auto rounded-md border border-dashed border-yellow-500/40 bg-background px-3 py-2 text-xs leading-relaxed text-foreground">
+                      {pendingContactDrafts.map((contactDraft, draftIndex) => (
+                        <article
+                          key={
+                            contactDraft.leadId ||
+                            `${contactDraft.handle || "creator"}-${draftIndex}`
+                          }
+                        >
+                          <h4 className="font-semibold">
+                            {gateDraftLabel(contactDraft, draftIndex)}
+                          </h4>
+                          {(contactDraft.steps || []).map((step, stepIndex) => (
+                            <div
+                              key={stepIndex}
+                              className="mt-2 border-t border-border/60 pt-2 first:mt-1 first:border-t-0 first:pt-0"
+                            >
+                              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Paso {stepIndex + 1}
+                                {step.delayDays
+                                  ? ` · espera ${step.delayDays} días`
+                                  : ""}
+                              </div>
+                              {step.subject && (
+                                <div className="mt-1 font-semibold">
+                                  Asunto: {step.subject}
+                                </div>
+                              )}
+                              <div className="mt-1 whitespace-pre-wrap">
+                                {step.body || "Sin contenido"}
+                              </div>
+                            </div>
+                          ))}
+                        </article>
+                      ))}
+                      {pendingContactDrafts.length === 0 && (
+                        <p>No hay ningún preview renderizado para verificar.</p>
+                      )}
+                    </div>
+                    {!pendingContactCanApprove && (
+                      <div
+                        className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+                        role="alert"
+                      >
+                        <b>No se puede aprobar:</b>{" "}
+                        {pendingContactUnresolved.join(", ")}.
                       </div>
                     )}
                   </section>
                 )}
-                {waitingForFirstTouch && !pendingContactGate && !gatesQuery.isLoading && (
-                  <section
-                    className="rounded-xl border border-yellow-500/40 bg-yellow-50/70 p-4"
-                    data-testid="missing-contact-gate"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-yellow-900">
-                          Contacto en cola sin aprobación abierta
-                        </h3>
-                        <p className="mt-1 max-w-2xl text-xs leading-relaxed text-yellow-900/80">
-                          Sancho no encuentra un gate pendiente para este lead.
-                          Si el envío anterior se cerró o falló antes de salir,
-                          prepara una nueva aprobación desde acá.
-                        </p>
+                {waitingForFirstTouch &&
+                  !pendingContactGate &&
+                  !gatesQuery.isLoading && (
+                    <section
+                      className="rounded-xl border border-yellow-500/40 bg-yellow-50/70 p-4"
+                      data-testid="missing-contact-gate"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-semibold text-yellow-900">
+                            Contacto en cola sin aprobación abierta
+                          </h3>
+                          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-yellow-900/80">
+                            Sancho no encuentra un gate pendiente para este
+                            lead. Si el envío anterior se cerró o falló antes de
+                            salir, prepara una nueva aprobación desde acá.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={createFirstContactGate.isPending}
+                          onClick={() => createFirstContactGate.mutate()}
+                          className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
+                          data-testid="retry-first-contact"
+                        >
+                          {createFirstContactGate.isPending
+                            ? "Preparando…"
+                            : "Preparar contacto de nuevo"}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        disabled={createFirstContactGate.isPending}
-                        onClick={() => createFirstContactGate.mutate()}
-                        className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
-                        data-testid="retry-first-contact"
-                      >
-                        {createFirstContactGate.isPending
-                          ? "Preparando…"
-                          : "Preparar contacto de nuevo"}
-                      </button>
-                    </div>
-                  </section>
-                )}
+                    </section>
+                  )}
 
                 {messages.map((message) => (
                   <div
@@ -975,19 +1134,75 @@ export function InboxTab({ slug }: { slug: string }) {
                     {gate.prompt || "Aprobar el envío de la respuesta"}
                   </div>
                 </div>
-                <div className="mt-3 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs">
-                  {gate.preview}
+                <div
+                  className="mt-3 max-h-64 space-y-3 overflow-y-auto rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs"
+                  data-testid="gate-draft-previews"
+                >
+                  {gate.drafts.map((contactDraft, draftIndex) => (
+                    <article
+                      key={
+                        contactDraft.leadId ||
+                        `${contactDraft.handle || "creator"}-${draftIndex}`
+                      }
+                    >
+                      <h3 className="font-semibold">
+                        {gateDraftLabel(contactDraft, draftIndex)}
+                      </h3>
+                      {(contactDraft.steps || []).map((step, stepIndex) => (
+                        <div
+                          key={stepIndex}
+                          className="mt-2 border-t border-border/60 pt-2 first:mt-1 first:border-t-0 first:pt-0"
+                        >
+                          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Paso {stepIndex + 1}
+                            {step.delayDays
+                              ? ` · espera ${step.delayDays} días`
+                              : ""}
+                          </div>
+                          {step.subject && (
+                            <div className="mt-1 font-semibold">
+                              Asunto: {step.subject}
+                            </div>
+                          )}
+                          <div className="mt-1 whitespace-pre-wrap">
+                            {step.body || "Sin contenido"}
+                          </div>
+                        </div>
+                      ))}
+                    </article>
+                  ))}
+                  {gate.drafts.length === 0 && (
+                    <p className="whitespace-pre-wrap">
+                      {gate.preview ||
+                        "No hay ningún preview renderizado para verificar."}
+                    </p>
+                  )}
                 </div>
+                {gate.error && (
+                  <div
+                    className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                    role="alert"
+                    data-testid="gate-error"
+                  >
+                    <b>No se puede enviar:</b> {gate.error}
+                  </div>
+                )}
+                {gate.unresolvedVariables.length > 0 && (
+                  <p className="mt-2 text-xs text-destructive">
+                    Variables o datos pendientes:{" "}
+                    {gate.unresolvedVariables.join(", ")}.
+                  </p>
+                )}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    disabled={approveGate.isPending}
+                    disabled={approveGate.isPending || !gate.canApprove}
                     onClick={() => approveGate.mutate(gate.runId)}
                     className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:opacity-50"
                     data-testid="approve-gate"
                   >
                     {approveGate.isPending
-                      ? "Aprobando…"
+                      ? "Enviando y verificando…"
                       : "✅ Aprobar y enviar"}
                   </button>
                   <button

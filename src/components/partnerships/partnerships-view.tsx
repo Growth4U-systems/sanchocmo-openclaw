@@ -46,7 +46,10 @@ import type {
 } from "@/lib/partnerships/types";
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
 import type { TemplateSummary } from "@/lib/partnerships/templates";
-import { OutreachTabs, type OutreachTabKey } from "@/components/outreach/outreach-tabs";
+import {
+  OutreachTabs,
+  type OutreachTabKey,
+} from "@/components/outreach/outreach-tabs";
 import { EncuentraTab } from "./encuentra-tab";
 import { KanbanView } from "./kanban-view";
 import { ListaView } from "./lista-view";
@@ -88,8 +91,8 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
       payload && typeof payload === "object" && "message" in payload
         ? String((payload as { message: unknown }).message)
         : payload && typeof payload === "object" && "error" in payload
-        ? String((payload as { error: unknown }).error)
-        : `Request failed (${res.status})`;
+          ? String((payload as { error: unknown }).error)
+          : `Request failed (${res.status})`;
     throw new Error(message);
   }
   return payload as T;
@@ -225,17 +228,23 @@ export function PartnershipsView() {
 
   const campaigns = useMemo(
     () =>
-      (campaignsQuery.data?.campaigns || []).filter(
-        (campaign) => isCampaignKind(campaign, "creator"),
+      (campaignsQuery.data?.campaigns || []).filter((campaign) =>
+        isCampaignKind(campaign, "creator"),
       ),
     [campaignsQuery.data],
   );
   const activeLeads = useMemo(
-    () => (activeLeadsQuery.data?.leads || []).filter((lead) => isCampaignKind(lead, "creator")),
+    () =>
+      (activeLeadsQuery.data?.leads || []).filter((lead) =>
+        isCampaignKind(lead, "creator"),
+      ),
     [activeLeadsQuery.data],
   );
   const discardedLeads = useMemo(
-    () => (discardedLeadsQuery.data?.leads || []).filter((lead) => isCampaignKind(lead, "creator")),
+    () =>
+      (discardedLeadsQuery.data?.leads || []).filter((lead) =>
+        isCampaignKind(lead, "creator"),
+      ),
     [discardedLeadsQuery.data],
   );
   const allLeads = useMemo(
@@ -426,15 +435,8 @@ export function PartnershipsView() {
     queuedLeads: number;
     sequenceName: string;
     draftCount?: number;
-    previews?: Array<{
-      leadId: string | null;
-      displayName: string;
-      handle: string | null;
-      network: string | null;
-      subject: string | null;
-      body: string;
-      stepCount: number;
-    }>;
+    canApprove: boolean;
+    unresolvedVariables: string[];
     drafts?: Array<{
       leadId: string | null;
       providerId?: string | null;
@@ -442,58 +444,87 @@ export function PartnershipsView() {
       network: string | null;
       email?: string | null;
       displayName: string;
+      ready: boolean;
+      unresolvedVariables: string[];
       steps: Array<{
         subject: string | null;
         body: string;
         delayDays: number;
       }>;
     }>;
+    approvalError?: string | null;
+    sending?: boolean;
+    jobId?: string | null;
     sent?: boolean;
   }
   const [contactGate, setContactGate] = useState<PendingContactGate | null>(
     null,
   );
-  const [editingContactDraftKey, setEditingContactDraftKey] = useState<string | null>(
-    null,
-  );
+  const [contactPreviewIndex, setContactPreviewIndex] = useState(0);
+  const [editingContactDraftKey, setEditingContactDraftKey] = useState<
+    string | null
+  >(null);
 
-  function contactDraftKey(input: { leadId: string | null; displayName: string }) {
+  function contactDraftKey(input: {
+    leadId: string | null;
+    displayName: string;
+  }) {
     return input.leadId || input.displayName;
+  }
+
+  function unresolvedContactDrafts(
+    drafts: NonNullable<PendingContactGate["drafts"]>,
+  ): string[] {
+    const unresolved = new Set<string>();
+    if (drafts.length === 0) unresolved.add("preview_no_disponible");
+    for (const draft of drafts) {
+      if (draft.steps.length === 0) unresolved.add("paso_no_disponible");
+      for (const step of draft.steps) {
+        if (!step.body.trim()) unresolved.add("paso_sin_contenido");
+        for (const text of [step.subject, step.body]) {
+          if (!text) continue;
+          for (const match of text.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)) {
+            unresolved.add(match[1].split("|")[0].trim() || "variable_vacía");
+          }
+          const remainder = text.replace(/\{\{[\s\S]*?\}\}/g, "");
+          if (remainder.includes("{{") || remainder.includes("}}")) {
+            unresolved.add("sintaxis_incompleta");
+          }
+        }
+      }
+    }
+    return [...unresolved].sort();
   }
 
   function updateContactGateDraft(
     key: string,
+    stepIndex: number,
     patch: { subject?: string | null; body?: string },
   ) {
     setContactGate((prev) => {
       if (!prev) return prev;
+      const drafts = (prev.drafts || []).map((draft) => {
+        if (contactDraftKey(draft) !== key) return draft;
+        const steps = draft.steps.map((step, index) =>
+          index === stepIndex ? { ...step, ...patch } : step,
+        );
+        const unresolvedVariables = unresolvedContactDrafts([
+          { ...draft, steps },
+        ]);
+        return {
+          ...draft,
+          steps,
+          unresolvedVariables,
+          ready: unresolvedVariables.length === 0,
+        };
+      });
+      const unresolvedVariables = unresolvedContactDrafts(drafts);
       return {
         ...prev,
-        previews: prev.previews?.map((preview) =>
-          contactDraftKey(preview) === key
-            ? {
-                ...preview,
-                ...(patch.subject !== undefined ? { subject: patch.subject } : {}),
-                ...(patch.body !== undefined ? { body: patch.body } : {}),
-              }
-            : preview,
-        ),
-        drafts: prev.drafts?.map((draft) => {
-          if (contactDraftKey(draft) !== key) return draft;
-          const [first, ...rest] = draft.steps;
-          if (!first) return draft;
-          return {
-            ...draft,
-            steps: [
-              {
-                ...first,
-                ...(patch.subject !== undefined ? { subject: patch.subject } : {}),
-                ...(patch.body !== undefined ? { body: patch.body } : {}),
-              },
-              ...rest,
-            ],
-          };
-        }),
+        drafts,
+        unresolvedVariables,
+        canApprove: drafts.length > 0 && unresolvedVariables.length === 0,
+        approvalError: null,
       };
     });
   }
@@ -514,7 +545,29 @@ export function PartnershipsView() {
         }),
       });
       const first = payload.gates?.[0];
-      if (first) setContactGate({ ...first, sent: false });
+      if (first) {
+        const drafts = first.drafts || [];
+        const unresolvedVariables = [
+          ...new Set([
+            ...(first.unresolvedVariables || []),
+            ...unresolvedContactDrafts(drafts),
+          ]),
+        ].sort();
+        setContactPreviewIndex(0);
+        setEditingContactDraftKey(null);
+        setContactGate({
+          ...first,
+          drafts,
+          unresolvedVariables,
+          canApprove:
+            first.canApprove &&
+            drafts.length > 0 &&
+            unresolvedVariables.length === 0,
+          approvalError: null,
+          sending: false,
+          sent: false,
+        });
+      }
       void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
       void queryClient.invalidateQueries({ queryKey: discardedLeadsKey });
     } catch (error) {
@@ -526,8 +579,27 @@ export function PartnershipsView() {
   }
 
   async function approveContactGate(runId: string) {
+    if (!contactGate?.canApprove) {
+      setContactGate((prev) =>
+        prev
+          ? {
+              ...prev,
+              approvalError:
+                "No se puede aprobar: hay variables sin valor o Yalc no devolvió un preview verificable.",
+            }
+          : prev,
+      );
+      return;
+    }
     try {
-      await fetchJson(`/api/yalc/gates?slug=${encodeURIComponent(slug)}`, {
+      setContactGate((prev) =>
+        prev ? { ...prev, approvalError: null, sending: true } : prev,
+      );
+      const approval = await fetchJson<{
+        ok?: boolean;
+        jobId?: string;
+        status?: string;
+      }>(`/api/yalc/gates?slug=${encodeURIComponent(slug)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -538,17 +610,54 @@ export function PartnershipsView() {
             : {}),
         }),
       });
-      setContactGate((prev) => (prev ? { ...prev, sent: true } : prev));
+      if (approval.jobId) {
+        setContactGate((prev) =>
+          prev ? { ...prev, jobId: approval.jobId } : prev,
+        );
+        let completed = false;
+        for (let attempt = 0; attempt < 90; attempt += 1) {
+          const job = await fetchJson<{
+            status?: string;
+            errorMessage?: string | null;
+            errorCode?: string | null;
+          }>(
+            `/api/yalc/jobs/${encodeURIComponent(approval.jobId)}?slug=${encodeURIComponent(slug)}`,
+          );
+          if (job.status === "succeeded") {
+            completed = true;
+            break;
+          }
+          if (job.status === "failed" || job.status === "interrupted") {
+            throw new Error(
+              job.errorMessage || job.errorCode || "El envío de Yalc falló.",
+            );
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 2_000));
+        }
+        if (!completed)
+          throw new Error(
+            "Yalc sigue procesando el envío. Revisa el estado del job en Outreach.",
+          );
+      } else if (approval.ok !== true && approval.status !== "succeeded") {
+        throw new Error(
+          "Yalc no devolvió una confirmación verificable. El gate puede estar ya procesado; revisa su estado antes de reintentar.",
+        );
+      }
+      setContactGate((prev) =>
+        prev ? { ...prev, sent: true, sending: false } : prev,
+      );
       setEditingContactDraftKey(null);
       void queryClient.invalidateQueries({ queryKey: activeLeadsKey });
       void queryClient.invalidateQueries({
         queryKey: ["yalc", slug, "partnerships", "inbox-leads"],
       });
     } catch (error) {
-      showToast(
-        `⚠️ ${error instanceof Error ? error.message : "No se pudo aprobar"}`,
-        "warn",
+      const message =
+        error instanceof Error ? error.message : "No se pudo aprobar";
+      setContactGate((prev) =>
+        prev ? { ...prev, approvalError: message, sending: false } : prev,
       );
+      showToast(`⚠️ ${message}`, "warn");
     }
   }
 
@@ -579,7 +688,8 @@ export function PartnershipsView() {
 
   const retryDiscoveryMutation = useMutation({
     mutationFn: (search: DiscoverySearchRecord) => {
-      const liveServerSide = search.runner.mode === "live" || !search.runner.mode;
+      const liveServerSide =
+        search.runner.mode === "live" || !search.runner.mode;
       if (liveServerSide) {
         return fetchJson<{
           ok: boolean;
@@ -663,7 +773,9 @@ export function PartnershipsView() {
     },
     onError: (error) =>
       showToast(
-        error instanceof Error ? error.message : "No se pudo renombrar la campaña",
+        error instanceof Error
+          ? error.message
+          : "No se pudo renombrar la campaña",
         "warn",
       ),
   });
@@ -708,7 +820,9 @@ export function PartnershipsView() {
     },
     onError: (error) =>
       showToast(
-        error instanceof Error ? error.message : "No se pudo archivar la búsqueda",
+        error instanceof Error
+          ? error.message
+          : "No se pudo archivar la búsqueda",
         "warn",
       ),
   });
@@ -866,7 +980,9 @@ export function PartnershipsView() {
                   void assignTemplate(campaign, templateId)
                 }
                 onCreateTemplate={() => pushQuery({ tab: "plantillas" })}
-                onRetrySearch={(search) => retryDiscoveryMutation.mutate(search)}
+                onRetrySearch={(search) =>
+                  retryDiscoveryMutation.mutate(search)
+                }
                 retryingSearchId={retryDiscoveryMutation.variables?.id ?? null}
                 onRenameCampaign={(campaign, title) =>
                   campaignUpdateAction.mutate({
@@ -1027,7 +1143,7 @@ export function PartnershipsView() {
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 max-h-[90vh] w-[min(760px,94vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border-[3px] border-ink bg-card p-6 shadow-comic"
+            className="fixed left-1/2 top-1/2 max-h-[92vh] w-[min(760px,94vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border-[3px] border-ink bg-card p-6 shadow-comic"
             data-testid="contact-gate-modal"
           >
             {!contactGate.sent ? (
@@ -1051,121 +1167,205 @@ export function PartnershipsView() {
                     </div>
                   )}
                 </div>
-                {contactGate.previews?.length ? (
-                  <div
-                    className="mt-3 rounded-lg border border-border bg-background"
-                    data-testid="contact-gate-preview"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          Preview del primer DM
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          Renderizado por Yalc antes de aprobar.
-                        </p>
-                      </div>
-                      <span className="rounded border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">
-                        {contactGate.previews.length} de{" "}
-                        {contactGate.draftCount ?? contactGate.queuedLeads}
-                      </span>
-                    </div>
-                    <div className="max-h-72 space-y-3 overflow-y-auto p-3">
-                      {contactGate.previews.map((preview) => {
-                        const previewKey = contactDraftKey(preview);
-                        const editing = editingContactDraftKey === previewKey;
-                        return (
-                        <article
-                          key={previewKey}
-                          className="rounded-md border border-border bg-muted/20 px-3 py-2"
-                        >
-                          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <b className="text-foreground">
-                              {preview.displayName}
-                            </b>
-                            {preview.network && <span>{preview.network}</span>}
-                            <span>
-                              {preview.stepCount} paso
-                              {preview.stepCount === 1 ? "" : "s"}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setEditingContactDraftKey((current) =>
-                                  current === previewKey ? null : previewKey,
+                {contactGate.drafts?.length ? (
+                  (() => {
+                    const safeIndex = Math.min(
+                      contactPreviewIndex,
+                      contactGate.drafts.length - 1,
+                    );
+                    const draft = contactGate.drafts[safeIndex];
+                    return (
+                      <section
+                        className="mt-4 overflow-hidden rounded-xl border border-border bg-background"
+                        data-testid="contact-gate-preview"
+                      >
+                        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border bg-muted/30 px-4 py-3">
+                          <div>
+                            <h3 className="text-sm font-bold text-foreground">
+                              Mensaje final por creator
+                            </h3>
+                            <p className="text-[11px] text-muted-foreground">
+                              Render real devuelto por Yalc, antes de aprobar.
+                            </p>
+                          </div>
+                          <label className="text-[11px] font-semibold text-muted-foreground">
+                            Creator {safeIndex + 1} de{" "}
+                            {contactGate.drafts.length}
+                            <select
+                              value={safeIndex}
+                              onChange={(event) =>
+                                setContactPreviewIndex(
+                                  Number(event.target.value),
                                 )
                               }
-                              className="ml-auto rounded border border-border bg-card px-2 py-0.5 text-[11px] font-semibold text-rust transition-colors hover:border-rust hover:bg-rust/10"
-                              data-testid="edit-contact-gate-draft"
+                              className="mt-1 block min-w-[220px] rounded-md border border-border bg-card px-2 py-1.5 text-xs text-foreground"
+                              data-testid="contact-preview-lead-select"
                             >
-                              {editing ? "Listo" : "Editar"}
-                            </button>
+                              {contactGate.drafts.map((item, index) => (
+                                <option
+                                  key={
+                                    item.leadId ||
+                                    `${item.displayName}-${index}`
+                                  }
+                                  value={index}
+                                >
+                                  {item.displayName}
+                                  {item.network ? ` · ${item.network}` : ""}
+                                  {item.ready ? " · listo" : " · revisar"}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                        {!draft.ready && (
+                          <div
+                            className="border-b border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive"
+                            role="alert"
+                          >
+                            <b>Variables sin resolver:</b>{" "}
+                            {draft.unresolvedVariables
+                              .map((key) => `{{${key}}}`)
+                              .join(", ")}
+                            . Corrige la plantilla o completa el dato del lead.
                           </div>
-                          {editing ? (
-                            <div className="space-y-2">
-                              <input
-                                value={preview.subject || ""}
-                                onChange={(event) =>
-                                  updateContactGateDraft(previewKey, {
-                                    subject: event.target.value.trim()
-                                      ? event.target.value
-                                      : null,
-                                  })
-                                }
-                                placeholder="Asunto interno"
-                                className="w-full rounded border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground focus:border-rust focus:outline-none"
-                                data-testid="contact-gate-subject-input"
-                              />
-                              <textarea
-                                value={preview.body}
-                                onChange={(event) =>
-                                  updateContactGateDraft(previewKey, {
-                                    body: event.target.value,
-                                  })
-                                }
-                                rows={8}
-                                className="w-full resize-y rounded border border-border bg-card px-2 py-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none"
-                                data-testid="contact-gate-body-input"
-                              />
-                              <p className="text-[11px] text-muted-foreground">
-                                Al aprobar, Yalc usará este texto editado para
-                                el envío.
-                              </p>
-                            </div>
-                          ) : (
-                            <>
-                              {preview.subject && (
-                                <div className="mb-2 rounded border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground">
-                                  Asunto interno: {preview.subject}
-                                </div>
-                              )}
-                              <div
-                                className="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
-                                data-testid="contact-gate-preview-body"
+                        )}
+                        <div className="max-h-[42vh] space-y-3 overflow-y-auto p-4">
+                          {draft.steps.map((step, index) => {
+                            const draftKey = contactDraftKey(draft);
+                            const editingKey = `${draftKey}:${index}`;
+                            const editing =
+                              editingContactDraftKey === editingKey;
+                            return (
+                              <article
+                                key={index}
+                                className="rounded-lg border border-border bg-card p-3"
+                                data-testid="contact-preview-step"
                               >
-                                {preview.body}
-                              </div>
-                            </>
-                          )}
-                        </article>
-                        );
-                      })}
-                    </div>
-                  </div>
+                                <div className="mb-2 flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  <span>
+                                    Paso {index + 1}
+                                    {index > 0 &&
+                                      ` · espera ${step.delayDays} días`}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setEditingContactDraftKey((current) =>
+                                        current === editingKey
+                                          ? null
+                                          : editingKey,
+                                      )
+                                    }
+                                    className="rounded border border-border bg-card px-2 py-0.5 text-[11px] font-semibold normal-case tracking-normal text-rust transition-colors hover:border-rust hover:bg-rust/10"
+                                    data-testid="edit-contact-gate-draft"
+                                  >
+                                    {editing ? "Listo" : "Editar"}
+                                  </button>
+                                </div>
+                                {editing ? (
+                                  <div className="space-y-2">
+                                    <input
+                                      value={step.subject || ""}
+                                      onChange={(event) =>
+                                        updateContactGateDraft(
+                                          draftKey,
+                                          index,
+                                          {
+                                            subject: event.target.value.trim()
+                                              ? event.target.value
+                                              : null,
+                                          },
+                                        )
+                                      }
+                                      placeholder="Asunto interno"
+                                      className="w-full rounded border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground focus:border-rust focus:outline-none"
+                                      data-testid="contact-gate-subject-input"
+                                    />
+                                    <textarea
+                                      value={step.body}
+                                      onChange={(event) =>
+                                        updateContactGateDraft(
+                                          draftKey,
+                                          index,
+                                          {
+                                            body: event.target.value,
+                                          },
+                                        )
+                                      }
+                                      rows={8}
+                                      className="w-full resize-y rounded border border-border bg-card px-2 py-2 text-sm leading-relaxed text-foreground focus:border-rust focus:outline-none"
+                                      data-testid="contact-gate-body-input"
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                      Al aprobar, Yalc usará este texto editado.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {step.subject && (
+                                      <div className="mb-2 border-b border-border pb-2 text-xs font-bold text-foreground">
+                                        {step.subject}
+                                      </div>
+                                    )}
+                                    <div
+                                      className="whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                                      data-testid="contact-gate-preview-body"
+                                    >
+                                      {step.body}
+                                    </div>
+                                  </>
+                                )}
+                              </article>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    );
+                  })()
                 ) : (
-                  <div className="mt-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                    Yalc no devolvió preview del mensaje. Puedes aprobar solo
-                    si ya revisaste la plantilla asignada.
+                  <div
+                    className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive"
+                    role="alert"
+                  >
+                    Yalc no devolvió borradores verificables. El envío queda
+                    bloqueado para evitar aprobar texto sin previsualizar.
+                  </div>
+                )}
+                {!contactGate.canApprove &&
+                  contactGate.unresolvedVariables.length > 0 && (
+                    <div
+                      className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive"
+                      role="alert"
+                    >
+                      <b>El envío está bloqueado:</b>{" "}
+                      {contactGate.unresolvedVariables.join(", ")}.
+                    </div>
+                  )}
+                {contactGate.approvalError && (
+                  <div
+                    className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+                    role="alert"
+                    data-testid="contact-gate-error"
+                  >
+                    <b>No se pudo enviar:</b> {contactGate.approvalError}
                   </div>
                 )}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     type="button"
+                    disabled={!contactGate.canApprove || contactGate.sending}
                     onClick={() => void approveContactGate(contactGate.runId)}
-                    className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90"
+                    title={
+                      !contactGate.canApprove
+                        ? "Resuelve todas las variables antes de aprobar"
+                        : undefined
+                    }
+                    className="rounded-lg border-2 border-rust bg-rust px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rust/90 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
                     data-testid="approve-contact-gate"
                   >
-                    ✅ Aprobar y enviar
+                    {contactGate.sending
+                      ? "Enviando y verificando…"
+                      : "✅ Aprobar y enviar"}
                   </button>
                   <button
                     type="button"

@@ -55,25 +55,47 @@ export {
   updateRunnerState,
 } from "./discovery-store";
 
-export { createDiscoverySearch, DISCOVERY_RUNNER_SKILL, DISCOVERY_TASK_TYPE } from "./create-search";
+export {
+  createDiscoverySearch,
+  DISCOVERY_RUNNER_SKILL,
+  DISCOVERY_TASK_TYPE,
+} from "./create-search";
 export type { CreateSearchResult } from "./create-search";
 
-export { runDiscoverySearch } from "./discovery-runner";
-export type { RunDiscoveryOptions, RunDiscoveryResult } from "./discovery-runner";
+export {
+  applyDiscoveryPlanGates,
+  runDiscoverySearch,
+} from "./discovery-runner";
+export type {
+  RunDiscoveryOptions,
+  RunDiscoveryResult,
+} from "./discovery-runner";
 export {
   discoveryJobId,
   enqueueDiscoverySearchRun,
   resumeQueuedDiscoverySearches,
 } from "./discovery-jobs";
 export type { EnqueueDiscoverySearchRunOptions } from "./discovery-jobs";
-export { scrapeLiveDiscoveryCandidates } from "./scrapecreators-live";
+export {
+  buildLiveDiscoveryQueries,
+  scrapeLiveDiscoveryCandidates,
+  supportsLiveDiscovery,
+  unsupportedLiveDiscoveryNetworks,
+} from "./scrapecreators-live";
 
 export { triggerDiscoveryRunner } from "./trigger-runner";
-export type { TriggerDiscoveryRunnerInput, TriggerDiscoveryRunnerResult } from "./trigger-runner";
+export type {
+  TriggerDiscoveryRunnerInput,
+  TriggerDiscoveryRunnerResult,
+} from "./trigger-runner";
 
 // ── SAN-80 · Plantillas + Contacto + Inbox + negotiation-assist ─────────────
 
 export {
+  extractTemplateVariableKeys,
+  findInvalidTemplateExpressions,
+  findUnsupportedTemplateFallbacks,
+  findUnsupportedTemplateVariables,
   instantiateTemplate,
   parseTemplate,
   renderTemplateText,
@@ -81,8 +103,10 @@ export {
   slugifyTemplateName,
   templateRelativePath,
   templateSummary,
+  TEMPLATE_VARIABLE_OPTIONS,
   TEMPLATE_VARIABLES,
   toYalcSequence,
+  toYalcTemplateText,
 } from "./templates";
 export type {
   AssignedTemplate,
@@ -92,6 +116,8 @@ export type {
   TemplateRenderContext,
   TemplateStep,
   TemplateSummary,
+  TemplateVariableOption,
+  TemplateVariableSource,
 } from "./templates";
 
 export { SEED_TEMPLATES } from "./template-seeds";
@@ -115,7 +141,17 @@ export type { AssignTemplateResult, SaveTemplateInput } from "./template-store";
 
 export { contactPartnerLeads, PartnerContactError } from "./contact";
 export type { ContactGateResult, ContactLeadsInput } from "./contact";
-export type { ContactDraftPreview } from "./contact-preview";
+export {
+  contactDraftPreviewsFromResponse,
+  contactGateDraftsFromResponse,
+  unresolvedTemplateVariables,
+  unresolvedVariablesFromDrafts,
+} from "./contact-preview";
+export type {
+  ContactDraftPreview,
+  ContactDraftStep,
+  ContactGateDraft,
+} from "./contact-preview";
 
 export {
   INBOX_STATE_LABELS,
@@ -124,7 +160,11 @@ export {
   inboxStateCounts,
   inboxStateForLead,
 } from "./inbox-mapping";
-export type { InboxLeadLike, InboxStateKey, InboxStateMeta } from "./inbox-mapping";
+export type {
+  InboxLeadLike,
+  InboxStateKey,
+  InboxStateMeta,
+} from "./inbox-mapping";
 
 export {
   detectLatestPrice,
@@ -152,8 +192,14 @@ export type {
   ReportPeriodDays,
 } from "./creator-report";
 
-export { materializePerformanceSeeds, SEED_PERFORMANCE } from "./performance-seeds";
-export type { SeedPerformanceCreator, SeedPerformancePost } from "./performance-seeds";
+export {
+  materializePerformanceSeeds,
+  SEED_PERFORMANCE,
+} from "./performance-seeds";
+export type {
+  SeedPerformanceCreator,
+  SeedPerformancePost,
+} from "./performance-seeds";
 
 export {
   ensurePerformanceSeed,
@@ -162,7 +208,11 @@ export {
   savePerformance,
 } from "./performance-store";
 
-export { creatorReportForSlug, parseReportPeriod, REPORT_PERIODS } from "./report-service";
+export {
+  creatorReportForSlug,
+  parseReportPeriod,
+  REPORT_PERIODS,
+} from "./report-service";
 export type { CreatorReportServiceOptions } from "./report-service";
 
 // ── SAN-76 · Model config (defaults calc-creator-core + overrides en Yalc) ──

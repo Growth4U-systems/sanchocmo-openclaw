@@ -201,10 +201,18 @@ function riskyToolReason(event) {
   if (/\bfor\s+\w+\s+in\s+[^\n]*(\*\.json|\*\.md|\*\.jsonl)[^\n]*\bcat\b/i.test(command)) {
     return "dumps masivos de archivos";
   }
-  if (/\b(find|grep|rg)\b[^;\n]*(\/root\/\.openclaw|\/app|~\/\.openclaw)/i.test(command)) {
+  // Only treat searches rooted at the whole runtime/workspace tree as broad.
+  // A scoped probe such as `rg foo /app/mc-nextjs/src/lib` is a normal code
+  // lookup and should not consume the same budget as `find /app ...`.
+  const searchesFilesystem = /\b(find|grep|rg)\b/i.test(command);
+  const targetsBroadRoot = [
+    /(?:^|[\s"'=])\/root\/\.openclaw(?:\/?[*?]+)?(?=$|[\s"';|&])/i,
+    /(?:^|[\s"'=])\/app(?:\/?[*?]+)?(?=$|[\s"';|&])/i,
+    /(?:^|[\s"'=])~\/\.openclaw(?:\/?[*?]+)?(?=$|[\s"';|&])/i,
+  ].some((pattern) => pattern.test(command));
+  if (searchesFilesystem && targetsBroadRoot) {
     return "búsquedas amplias en el filesystem";
   }
-  if (/\bgrep\s+-r/i.test(command)) return "búsquedas recursivas amplias";
   if (/\bfind\s+\/root\b/i.test(command)) return "búsquedas amplias en /root";
 
   return null;
@@ -254,7 +262,12 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
     if (!state.blocked) {
       state.blocked = true;
       state.blockReason = reason;
-      if (state.sessionKey || state.jobId) {
+      // A reactive stop belongs to the current turn. The UI explicitly tells
+      // the user they may continue in the same chat, so managed MC turns must
+      // not leave a five-minute session cooldown behind. beforeAgentRun keeps
+      // its own cooldown for an oversized initial prompt, where retrying the
+      // same context really would repeat the problem.
+      if (!state.managedActiveTurn && (state.sessionKey || state.jobId)) {
         sessionCooldowns.set(state.sessionKey || state.jobId, {
           untilMs: clock() + currentLimits.cooldownMs,
           reason,
@@ -285,7 +298,7 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
     if (runId) runs.delete(runId);
     if (activeSessionKey) {
       for (const [key, state] of runs.entries()) {
-        if (state.sessionKey === activeSessionKey && !state.blocked) runs.delete(key);
+        if (state.sessionKey === activeSessionKey) runs.delete(key);
       }
     }
   }
@@ -444,7 +457,7 @@ export function createCostGuard({ env = process.env, clock = nowMs } = {}) {
       if (state.riskyToolCalls > currentLimits.maxRiskyToolCallsPerRun) {
         const reason = markBlocked(
           state,
-          `La ejecución acumuló ${state.riskyToolCalls} herramientas de riesgo (${riskReason}).`,
+          `La ejecución intentó ${state.riskyToolCalls} herramientas de riesgo; la última se clasificó como ${riskReason}.`,
           currentLimits,
         );
         return { block: true, blockReason: reason };

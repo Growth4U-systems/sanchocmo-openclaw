@@ -24,8 +24,12 @@ import { SlideOver } from "@/components/shared/slide-over";
 import { DocSlideOver } from "@/components/shared/doc-slideover";
 import { TaskSlideOver } from "@/components/shared/task-slideover";
 // Imports de LEAF modules client-safe (el index del paquete arrastra fs).
-import type { PartnershipTemplate, TemplateVariableOption } from "@/lib/partnerships/templates";
+import type {
+  PartnershipTemplate,
+  TemplateVariableOption,
+} from "@/lib/partnerships/templates";
 import type { DiscoverySearchRecord } from "@/lib/partnerships/discovery-types";
+import type { PartnershipLeadsPayload } from "@/lib/partnerships/types";
 import { SequenceEditor, type EditorState } from "./sequence-editor";
 import { ToastViewport, useToast } from "./ui";
 
@@ -35,9 +39,11 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const payload = text ? JSON.parse(text) : {};
   if (!res.ok) {
     const message =
-      payload && typeof payload === "object" && "error" in payload
-        ? String((payload as { error: unknown }).error)
-        : `Request failed (${res.status})`;
+      payload && typeof payload === "object" && "message" in payload
+        ? String((payload as { message: unknown }).message)
+        : payload && typeof payload === "object" && "error" in payload
+          ? String((payload as { error: unknown }).error)
+          : `Request failed (${res.status})`;
     throw new Error(message);
   }
   return payload as T;
@@ -61,22 +67,22 @@ function emptyEditor(): EditorState {
   };
 }
 
-interface TemplateVariablesPayload {
-  variables: TemplateVariableOption[];
-}
-
 export function PlantillasTab({ slug }: { slug: string }) {
   const openChat = useOpenChat();
   const queryClient = useQueryClient();
   const { toast, showToast } = useToast();
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [docPath, setDocPath] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
 
   const templatesKey = ["partnerships", slug, "templates"] as const;
   const templatesQuery = useQuery({
     queryKey: templatesKey,
     queryFn: () =>
-      fetchJson<{ templates: PartnershipTemplate[] }>(
-        `/api/partnerships/templates?slug=${encodeURIComponent(slug)}`,
-      ),
+      fetchJson<{
+        templates: PartnershipTemplate[];
+        variables: TemplateVariableOption[];
+      }>(`/api/partnerships/templates?slug=${encodeURIComponent(slug)}`),
     enabled: !!slug,
   });
   const searchesQuery = useQuery({
@@ -87,28 +93,26 @@ export function PlantillasTab({ slug }: { slug: string }) {
       ),
     enabled: !!slug,
   });
+  const previewLeadsQuery = useQuery({
+    queryKey: ["yalc", slug, "partnerships", "template-preview-leads"],
+    queryFn: () =>
+      fetchJson<PartnershipLeadsPayload>(
+        `/api/yalc/leads?slug=${encodeURIComponent(slug)}&type=Partnerships`,
+      ),
+    enabled: !!slug && !!editor,
+  });
 
   const templates = useMemo(
-    () => (templatesQuery.data?.templates || []).filter((template) => template.type === "partnerships"),
+    () =>
+      (templatesQuery.data?.templates || []).filter(
+        (template) => template.type === "partnerships",
+      ),
     [templatesQuery.data],
   );
   const searches = useMemo(
     () => searchesQuery.data?.searches || [],
     [searchesQuery.data],
   );
-
-  const [editor, setEditor] = useState<EditorState | null>(null);
-  const [docPath, setDocPath] = useState<string | null>(null);
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const editorVariableType = editor?.type === "b2b" ? "B2B" : "Partnerships";
-  const variablesQuery = useQuery({
-    queryKey: ["yalc", slug, "template-variables", editorVariableType],
-    queryFn: () =>
-      fetchJson<TemplateVariablesPayload>(
-        `/api/yalc/template-variables?slug=${encodeURIComponent(slug)}&type=${encodeURIComponent(editorVariableType)}`,
-      ),
-    enabled: !!slug && !!editor,
-  });
 
   const saveMutation = useMutation({
     mutationFn: (state: EditorState) => {
@@ -349,7 +353,7 @@ export function PlantillasTab({ slug }: { slug: string }) {
               : "✏️ Editar secuencia"
             : "✏️ Nueva plantilla"
         }
-        width="w-[560px] max-w-[94vw]"
+        width="w-[760px] max-w-[96vw]"
       >
         {editor && (
           <SequenceEditor
@@ -357,9 +361,20 @@ export function PlantillasTab({ slug }: { slug: string }) {
             onChange={setEditor}
             onSave={() => saveMutation.mutate(editor)}
             saving={saveMutation.isPending}
-            variables={variablesQuery.data?.variables}
-            variablesLoading={variablesQuery.isLoading}
-            variablesError={variablesQuery.error instanceof Error ? variablesQuery.error.message : null}
+            variables={templatesQuery.data?.variables}
+            variablesLoading={templatesQuery.isLoading}
+            variablesError={
+              templatesQuery.error instanceof Error
+                ? templatesQuery.error.message
+                : null
+            }
+            previewLeads={previewLeadsQuery.data?.leads || []}
+            previewLeadsLoading={previewLeadsQuery.isLoading}
+            previewLeadsError={
+              previewLeadsQuery.error instanceof Error
+                ? previewLeadsQuery.error.message
+                : null
+            }
           />
         )}
       </SlideOver>

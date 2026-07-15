@@ -25,6 +25,11 @@ const {
   slugifyTemplateName,
   templateSummary,
   toYalcSequence,
+  toYalcTemplateText,
+  findInvalidTemplateExpressions,
+  findUnsupportedTemplateFallbacks,
+  findUnsupportedTemplateVariables,
+  TEMPLATE_VARIABLE_OPTIONS,
   TEMPLATE_VARIABLES,
 } = templatesLib;
 const { SEED_TEMPLATES } = seedsLib;
@@ -118,12 +123,11 @@ describe("templates · render de variables", () => {
 describe("templates · real variables + fallbacks (SAN-169)", () => {
   it("substitutes the new creator variables", () => {
     const ctx = {
-      name: "Ana",
       handle: "@ana.finanzas",
       network: "Instagram",
       followers: 124000,
-      sector: "fintech",
       precio: 3500,
+      customVariables: { nombre_perfil: "Ana", sector_plan: "fintech" },
     };
     const out = renderTemplateText(
       "Hola {{nombre}} ({{handle}}) en {{plataforma}} · {{seguidores}} · {{sector}} · {{precio}}",
@@ -133,12 +137,12 @@ describe("templates · real variables + fallbacks (SAN-169)", () => {
   });
 
   it("uses the fallback when a value is missing", () => {
-    const out = renderTemplateText('Hola {{nombre | "ahí"}},', { handle: "@x" });
+    const out = renderTemplateText('Hola {{nombre | "ahí"}},', {});
     assert.equal(out, "Hola ahí,");
   });
 
   it("leaves the raw token when no value and no fallback", () => {
-    const out = renderTemplateText("Hola {{nombre}},", { handle: "@x" });
+    const out = renderTemplateText("Hola {{nombre}},", {});
     assert.equal(out, "Hola {{nombre}},");
   });
 
@@ -146,18 +150,73 @@ describe("templates · real variables + fallbacks (SAN-169)", () => {
     const out = renderTemplateText("score {{quality_score}}", { qualityScore: 87 });
     assert.equal(out, "score 87");
   });
+
+  it("renders literal ScrapeCreators fields persisted as custom variables", () => {
+    const out = renderTemplateText("{{categoria}} · {{ultimo_post_texto}}", {
+      customVariables: {
+        nombre_perfil: "Ana Finanzas",
+        categoria: "Health/Beauty",
+        ultimo_post_texto: "Tres hábitos para cuidar tu salud capilar.",
+      },
+    });
+    assert.equal(out, "Health/Beauty · Tres hábitos para cuidar tu salud capilar.");
+  });
 });
 
-describe("templates · chip catalogue (SAN-169)", () => {
-  it("offers the real send-variables and NOT quality_score", () => {
-    assert.deepEqual([...TEMPLATE_VARIABLES], [
-      "{{nombre}}",
-      "{{handle}}",
-      "{{plataforma}}",
-      "{{seguidores}}",
-      "{{sector}}",
-      "{{precio}}",
-    ]);
+describe("templates · catálogo canónico", () => {
+  it("only exposes variables with an exact source path and example", () => {
+    assert.ok(TEMPLATE_VARIABLES.includes("{{handle}}"));
+    assert.ok(TEMPLATE_VARIABLES.includes("{{categoria}}"));
+    assert.ok(TEMPLATE_VARIABLES.includes("{{ultimo_post_texto}}"));
+    assert.ok(TEMPLATE_VARIABLES.includes("{{quality_score}}"));
+    assert.equal(TEMPLATE_VARIABLES.includes("{{anchor_topic}}"), false);
+    for (const variable of TEMPLATE_VARIABLE_OPTIONS) {
+      assert.ok(variable.sourcePath, `${variable.token} sourcePath`);
+      assert.ok(variable.example, `${variable.token} example`);
+    }
+  });
+
+  it("maps public nombre/sector to literal custom fields before Yalc", () => {
+    assert.equal(
+      toYalcTemplateText("Hola {{nombre}}, vi {{sector}}. {{handle}}"),
+      "Hola {{nombre_perfil}}, vi {{sector_plan}}. {{handle}}",
+    );
+  });
+
+  it("rejects invented variables but accepts catalog aliases", () => {
+    assert.deepEqual(
+      findUnsupportedTemplateVariables([{ subject: null, body: "{{anchor_topic}} · {{anchor_specific}}" }]),
+      ["anchor_specific", "anchor_topic"],
+    );
+    assert.deepEqual(
+      findUnsupportedTemplateVariables([{ subject: "{{name}}", body: "{{network}} · {{followers}}" }]),
+      [],
+    );
+  });
+
+  it("detects fallback syntax that the real Yalc sender cannot render", () => {
+    assert.deepEqual(
+      findUnsupportedTemplateFallbacks([
+        { subject: '{{nombre | "ahí"}}', body: '{{categoria}} · {{precio | "a convenir"}}' },
+      ]),
+      ["nombre", "precio"],
+    );
+  });
+
+  it("rejects every malformed moustache expression", () => {
+    assert.deepEqual(
+      findInvalidTemplateExpressions([{
+        subject: "{{anchor-topic}} {{anchor.topic}} {{ }}",
+        body: "{{nombre | 'ahí'}} y {{sin_cierre",
+      }]),
+      [
+        "delimitador {{…}} incompleto",
+        "{{ }}",
+        "{{anchor-topic}}",
+        "{{anchor.topic}}",
+        "{{nombre | 'ahí'}}",
+      ],
+    );
   });
 });
 
@@ -218,6 +277,40 @@ describe("templates · sin auto-seed en runtime (SAN-176)", () => {
       assert.equal(store.listTemplates(slug).length, SEED_TEMPLATES.length);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("saveTemplate rechaza variables inventadas y fallbacks antes de persistir", async () => {
+    const fs = await import("node:fs");
+    const storeModule = await import("../template-store");
+    const store =
+      (storeModule as unknown as { default: typeof storeModule }).default ?? storeModule;
+    const slug = `variables-contract-${process.pid}`;
+    const base = {
+      name: "Contrato de variables",
+      kind: "sequence" as const,
+      type: "partnerships" as const,
+      description: "test",
+    };
+
+    try {
+      assert.throws(
+        () => store.saveTemplate(slug, {
+          ...base,
+          steps: [{ title: "Intro", delayDays: 0, subject: null, body: "Hola {{anchor_specific}}" }],
+        }),
+        /Variables no disponibles.*anchor_specific/,
+      );
+      assert.throws(
+        () => store.saveTemplate(slug, {
+          ...base,
+          steps: [{ title: "Intro", delayDays: 0, subject: null, body: 'Hola {{nombre | "ahí"}}' }],
+        }),
+        /Fallbacks no soportados/,
+      );
+      assert.equal(fs.existsSync(store.templatesDir(slug)), false);
+    } finally {
+      fs.rmSync(store.templatesDir(slug), { recursive: true, force: true });
     }
   });
 });

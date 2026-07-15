@@ -3,7 +3,7 @@ name: discovery-plan-builder
 description: "Planifica por chat una búsqueda de creators para Partnerships (SAN-79). Conversación en el chat global de Sancho: recomienda sectores/redes/tiers según el contexto del cliente, itera con el usuario y produce un PLAN estructurado (plan-card). Al confirmar, crea la búsqueda: campaign type=Partnerships en Yalc + tarea Outreach madre + runner de discovery encolado. Usar cuando: 'crear nueva búsqueda', 'busca creators', 'lanza un discovery de influencers', 'programa de creators', o desde el botón 'Crear nueva búsqueda' del tab Encuentra (Outreach). NO usar para: outreach B2B clásico (outreach-playbook), construir secuencias (outreach-sequence-builder), ni ejecutar el scraping (discovery-search-runner)."
 metadata:
   author: Growth4U
-  version: '0.1'
+  version: '0.2'
   system: SanchoCMO
   issue: SAN-79
   owner_agent: rocinante
@@ -135,6 +135,7 @@ plan-card de Encuentra (en este orden):
 | Fila | Contenido |
 |---|---|
 | **Sectores** | verticales objetivo (finanzas personales · ahorro · inversión básica) |
+| **Hashtags** | queries concretas del nicho (#trasplantecapilar · #saludcapilar), si aportan precisión |
 | **Redes** | instagram + tiktok (+youtube...) |
 | **Tiers** | Micro (25–100K) / Mid (100–250K)... con la regla acordada |
 | **Audiencia** | ≥ N% España (proxy idioma) |
@@ -150,6 +151,7 @@ el JSON es ruido para él. La forma del contrato:
 {
   "title": "Finanzas personales ES · IG+TikTok",
   "sectors": ["finanzas personales", "ahorro", "inversión básica"],
+  "hashtags": ["#finanzaspersonales", "#ahorro", "#inversionprincipiantes"],
   "networks": ["instagram", "tiktok"],
   "tiers": ["micro", "mid"],
   "audienceEsMinPct": 70,
@@ -164,6 +166,8 @@ el JSON es ruido para él. La forma del contrato:
 
 Reglas del contrato:
 - `title`, `sectors` (≥1) y `networks` (≥1) son obligatorios; el resto opcional.
+- `hashtags` contiene solo términos específicos de ESTE nicho; nunca añadas
+  hashtags genéricos de IA/tecnología si no aparecen en el sector acordado.
 - `tiers` ⊂ {nano, micro, mid, macro}; vacío = todos.
 - `qualificationMode` default `hybrid` (umbral 40): score < umbral entra
   `Disqualified` con nota auto (reversible); el resto entra `Sourced` ya
@@ -212,6 +216,11 @@ trabajo de creación:
 2. Tarea **Outreach madre** en el sistema de tasks (plan + campaignId + estado
    del runner guardados en `brand/{slug}/outreach/searches/{searchId}.json`).
 3. Runner de discovery **encolado** (`runner.status=queued`).
+
+El runner live server-side cubre actualmente **solo Instagram**. Los planes que
+incluyen TikTok o YouTube se despachan al runner agentic `discovery-search-runner`,
+que usa los endpoints específicos de esas redes; no prometas que el camino
+server-side cubrirá silenciosamente una red no soportada.
 
 Para una demo/verificación sin scraping real añade `"run": "fixtures"` al body:
 ejecuta el runner inline con los 9 creators fake del mockup.

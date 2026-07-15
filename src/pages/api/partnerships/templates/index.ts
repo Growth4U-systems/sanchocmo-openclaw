@@ -4,6 +4,7 @@ import {
   listTemplates,
   saveTemplate,
   templateSummary,
+  TEMPLATE_VARIABLE_OPTIONS,
   TemplateValidationError,
 } from "@/lib/partnerships";
 
@@ -30,6 +31,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(200).json({
       templates,
       summaries: templates.map(templateSummary),
+      variables: TEMPLATE_VARIABLE_OPTIONS,
       count: templates.length,
     });
   }
