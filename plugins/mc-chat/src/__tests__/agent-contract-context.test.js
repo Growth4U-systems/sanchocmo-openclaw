@@ -11,6 +11,7 @@ test("buildMcChatContextBlock includes common MC chat contract and ask protocol"
     slug: "growth4u",
     threadId: "strategy",
     threadName: "Strategy",
+    runtimeId: "openclaw",
     skill: "fast-foundation",
     requestedAgent: "sancho",
   });
@@ -19,6 +20,7 @@ test("buildMcChatContextBlock includes common MC chat contract and ask protocol"
   assert.ok(block.includes("channel: mc-chat"));
   assert.ok(block.includes("client_slug: growth4u"));
   assert.ok(block.includes("thread_id: strategy"));
+  assert.ok(block.includes("runtime_id: openclaw"));
   assert.ok(block.includes("thread_name: Strategy"));
   assert.ok(block.includes("execution_mode: guided"));
   assert.ok(block.includes("skill_policy: guided"));

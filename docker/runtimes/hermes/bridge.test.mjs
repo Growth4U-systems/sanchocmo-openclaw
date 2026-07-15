@@ -70,6 +70,7 @@ test("buildHermesPrompt preserves Sancho routing metadata", () => {
   });
 
   assert.match(prompt, /Sancho Mission Control/);
+  assert.match(prompt, /runtime_id: hermes/);
   assert.match(prompt, /never call clarify or any interactive question tool/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
@@ -130,13 +131,15 @@ test("buildHermesPrompt includes Sancho context pack when available", () => {
   assert.match(prompt, /Brand context summary/);
 });
 
-test("buildHermesArgs maps Sancho skills to Hermes -s preload", () => {
+test("buildHermesArgs keeps Sancho skills portable instead of requiring Hermes installation", () => {
   const previousProvider = process.env.HERMES_CLI_PROVIDER;
   const previousModel = process.env.HERMES_CLI_MODEL;
   const previousToolsets = process.env.HERMES_CLI_TOOLSETS;
+  const previousSkills = process.env.HERMES_CLI_SKILLS;
   process.env.HERMES_CLI_PROVIDER = "nous";
   process.env.HERMES_CLI_MODEL = "anthropic/claude-sonnet-4";
   process.env.HERMES_CLI_TOOLSETS = "web,terminal,skills";
+  delete process.env.HERMES_CLI_SKILLS;
 
   try {
     const args = buildHermesArgs(
@@ -150,8 +153,6 @@ test("buildHermesArgs maps Sancho skills to Hermes -s preload", () => {
     assert.deepEqual(args, [
       "chat",
       "-Q",
-      "-s",
-      "seo-content,content-review",
       "--provider",
       "nous",
       "--model",
@@ -168,19 +169,22 @@ test("buildHermesArgs maps Sancho skills to Hermes -s preload", () => {
     else process.env.HERMES_CLI_MODEL = previousModel;
     if (previousToolsets === undefined) delete process.env.HERMES_CLI_TOOLSETS;
     else process.env.HERMES_CLI_TOOLSETS = previousToolsets;
+    if (previousSkills === undefined) delete process.env.HERMES_CLI_SKILLS;
+    else process.env.HERMES_CLI_SKILLS = previousSkills;
   }
 });
 
-test("buildHermesArgs skips generic Sancho chat skill aliases", () => {
-  const args = buildHermesArgs(
-    {
-      skill: "general",
-      skills: ["default", "seo-content", "none", "seo-content"],
-    },
-    "hello",
-  );
+test("buildHermesArgs supports explicit Hermes-native skills", () => {
+  const previousSkills = process.env.HERMES_CLI_SKILLS;
+  process.env.HERMES_CLI_SKILLS = "computer-use";
+  const args = buildHermesArgs({ skill: "sancho-manager" }, "hello");
 
-  assert.deepEqual(args, ["chat", "-Q", "-s", "seo-content", "-q", "hello"]);
+  try {
+    assert.deepEqual(args, ["chat", "-Q", "-s", "computer-use", "-q", "hello"]);
+  } finally {
+    if (previousSkills === undefined) delete process.env.HERMES_CLI_SKILLS;
+    else process.env.HERMES_CLI_SKILLS = previousSkills;
+  }
 });
 
 test("buildHermesArgs restricts read-only turns to non-mutating toolsets", () => {
@@ -220,6 +224,8 @@ test("buildHermesArgs restricts read-only turns to non-mutating toolsets", () =>
 });
 
 test("buildHermesArgs never preloads a hinted skill in auto mode", () => {
+  const previousSkills = process.env.HERMES_CLI_SKILLS;
+  delete process.env.HERMES_CLI_SKILLS;
   const args = buildHermesArgs(
     {
       skill: "discovery-plan-builder",
@@ -230,7 +236,12 @@ test("buildHermesArgs never preloads a hinted skill in auto mode", () => {
     "hello",
   );
 
-  assert.deepEqual(args, ["chat", "-Q", "-q", "hello"]);
+  try {
+    assert.deepEqual(args, ["chat", "-Q", "-q", "hello"]);
+  } finally {
+    if (previousSkills === undefined) delete process.env.HERMES_CLI_SKILLS;
+    else process.env.HERMES_CLI_SKILLS = previousSkills;
+  }
 });
 
 test("cleanHermesStdout removes transport metadata and runtime warnings", () => {

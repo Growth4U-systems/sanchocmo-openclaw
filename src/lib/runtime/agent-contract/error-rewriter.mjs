@@ -39,6 +39,12 @@ const CLASSIFIERS = [
     hint: "Sancho detectó bloques internos de razonamiento persistidos. El runtime los limpia antes de reintentar para conservar la memoria visible sin romper la request.",
   },
   {
+    category: "runtime_configuration",
+    regex: /^(?:error:\s*)?unknown skill\(s\):|^(?:error:\s*)?(?:invalid|unknown) (?:configuration|config option|argument):/im,
+    header: "Runtime incompatible con esta configuración",
+    hint: "Sancho recibió un rechazo de configuración del runtime. Revisa el adapter o la configuración del motor antes de reintentar.",
+  },
+  {
     category: "model_unavailable",
     regex: /model.{0,10}(not found|unavailable|overloaded)|\b503\b/i,
     header: "Modelo no disponible",

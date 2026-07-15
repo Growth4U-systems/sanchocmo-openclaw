@@ -6,6 +6,7 @@ import {
   buildMcChatContextBlock,
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
+import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18792;
@@ -244,6 +245,7 @@ export function buildClaudePrompt(message, contextPack = null) {
   const mcChatContext = buildMcChatContextBlock({
     ...message,
     requestedAgent,
+    runtimeId: "claude-code",
     skillMode,
     canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
     temporaryAgent: message.temporaryAgent,
@@ -521,16 +523,19 @@ async function startClaudeRun(message, runId) {
     }
 
     const raw = [cleanStderr, cleanStdout].filter(Boolean).join("\n\n").slice(0, 4096);
+    const failure = classifyRuntimeCliFailure(raw, {
+      provider: "claude-code",
+      runtimeLabel: "Claude Code",
+      exitCode: code,
+      signal,
+    });
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
-      text: `Claude Code failed while executing this runtime turn${signal ? ` (${signal})` : ""}.`,
+      text: failure.text,
       agent: message.agent || message.agentId || "claude-code",
       errorDetail: {
-        category: "network",
-        raw: raw || `Claude Code exited with code ${code}`,
-        provider: "claude-code",
-        classifiedAt: Date.now(),
+        ...failure.errorDetail,
       },
     }, "failure");
   });

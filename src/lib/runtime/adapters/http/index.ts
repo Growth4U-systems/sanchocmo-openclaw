@@ -188,6 +188,7 @@ function bridgePrompt(message: InboundMessage): string {
     skills: message.skills,
     skill: message.skill,
     primarySkill: message.primarySkill,
+    runtimeId: firstEnv(["SANCHO_EXTERNAL_RUNTIME_KIND"]) || "external-http",
     requestedAgent,
     // `mc-bridge` returns final text synchronously; Next consumes control
     // markers through the runtime-neutral control plane in `/api/chat/send`.

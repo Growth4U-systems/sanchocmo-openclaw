@@ -9,6 +9,7 @@ import {
   buildMcChatContextBlock,
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
+import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18793;
@@ -196,6 +197,7 @@ export function buildCodexPrompt(message, contextPack = null) {
   const mcChatContext = buildMcChatContextBlock({
     ...message,
     requestedAgent,
+    runtimeId: "codex",
     skillMode,
     canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1,
     temporaryAgent: message.temporaryAgent,
@@ -420,16 +422,19 @@ async function startCodexRun(message, runId) {
     }
 
     const raw = [cleanStderr, cleanOutput].filter(Boolean).join("\n\n").slice(0, 4096);
+    const failure = classifyRuntimeCliFailure(raw, {
+      provider: "codex",
+      runtimeLabel: "Codex",
+      exitCode: code,
+      signal,
+    });
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
-      text: `Codex failed while executing this runtime turn${signal ? ` (${signal})` : ""}.`,
+      text: failure.text,
       agent: message.agent || message.agentId || "codex",
       errorDetail: {
-        category: "network",
-        raw: raw || `Codex exited with code ${code}`,
-        provider: "codex",
-        classifiedAt: Date.now(),
+        ...failure.errorDetail,
       },
     }, "failure");
   });

@@ -7,6 +7,7 @@ import {
   groundingSkillForTurn,
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
+import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 // OpenClaw reserves 18791 for browser control inside the Sancho container.
@@ -85,20 +86,6 @@ function normalizeArray(value) {
 
 function uniqueStrings(values) {
   return Array.from(new Set(values.filter((value) => typeof value === "string" && value.trim())));
-}
-
-function runtimeSkill(value) {
-  if (typeof value !== "string") return null;
-  const skill = value.trim();
-  if (!skill) return null;
-  const lower = skill.toLowerCase();
-  if (["general", "default", "none", "null"].includes(lower)) return null;
-  return skill;
-}
-
-function hermesSkills(message) {
-  if (resolveTurnSkillPolicy(message) !== "pinned") return [];
-  return uniqueStrings([runtimeSkill(message.skill), ...normalizeArray(message.skills).map(runtimeSkill)]);
 }
 
 function stripAnsi(value) {
@@ -196,6 +183,7 @@ export function buildHermesPrompt(message, contextPack = null) {
   const mcChatContext = buildMcChatContextBlock({
     ...message,
     requestedAgent,
+    runtimeId: "hermes",
     skillMode,
     // Final replies are posted back to Next, whose runtime-neutral control
     // plane consumes task/intervention markers.
@@ -247,8 +235,10 @@ export function buildHermesPrompt(message, contextPack = null) {
 
 export function buildHermesArgs(message, prompt) {
   const args = ["chat", "-Q"];
-  const skills = hermesSkills(message);
-  if (skills.length > 0) args.push("-s", skills.join(","));
+  // Sancho skills are runtime-neutral and travel in the context pack. Only
+  // explicitly configured Hermes-native skills may be passed to the CLI.
+  const nativeSkills = process.env.HERMES_CLI_SKILLS?.trim();
+  if (nativeSkills) args.push("-s", nativeSkills);
   if (process.env.HERMES_CLI_PROVIDER) args.push("--provider", process.env.HERMES_CLI_PROVIDER);
   if (process.env.HERMES_CLI_MODEL) args.push("--model", process.env.HERMES_CLI_MODEL);
   if (message.readOnly === true) {
@@ -440,16 +430,19 @@ async function startHermesRun(message, runId) {
     }
 
     const raw = [cleanStderr, cleanStdout].filter(Boolean).join("\n\n").slice(0, 4096);
+    const failure = classifyRuntimeCliFailure(raw, {
+      provider: "hermes",
+      runtimeLabel: "Hermes",
+      exitCode: code,
+      signal,
+    });
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
-      text: `Hermes falló ejecutando este turno${signal ? ` (${signal})` : ""}.`,
+      text: failure.text,
       agent: message.agent || message.agentId || "hermes",
       errorDetail: {
-        category: "network",
-        raw: raw || `Hermes exited with code ${code}`,
-        provider: "hermes",
-        classifiedAt: Date.now(),
+        ...failure.errorDetail,
       },
     }, "failure");
   });

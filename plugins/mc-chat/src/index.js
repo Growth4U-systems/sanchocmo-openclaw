@@ -258,6 +258,7 @@ export default defineChannelPluginEntry({
           docKind,
           skill,
           primarySkill,
+          runtimeId: "openclaw",
           skills,
           scope,
           skillMode,
@@ -344,9 +345,8 @@ export default defineChannelPluginEntry({
 
         // ─── Bounded grounding (SAN-246/SAN-382 follow-up) ───
         // Fetch a compact context manifest from Next and prepend it to the user
-        // text. The manifest is summary + file paths only; it tells agents to
-        // read selectively instead of shoving full Foundation docs into the
-        // prompt. FAIL-SOFT: any failure logs a warning and continues WITHOUT
+        // text. The manifest includes portable skill instructions plus bounded
+        // client context. FAIL-SOFT: any failure logs a warning and continues WITHOUT
         // blocking the dispatch — never crash the gateway over grounding.
         let groundedText = text;
         if (requestedAgent) {
