@@ -134,7 +134,7 @@ A specialist's deliverable is a **record/asset in its system of record** — nev
 
 | Specialist | System of record | Verify (read-back) |
 |---|---|---|
-| **Rocinante** | YALC — campaigns / leads / searches | `yalc_list_campaigns` / `yalc_list_leads` |
+| **Rocinante** | Outreach — campaigns / leads / searches | `yalc_list_campaigns` / `yalc_list_leads` |
 | **Maese Pedro** | Open Design daemon — `brand/{slug}/.od/artifacts/` | artifact id exists |
 | **Alarife** | Payload CMS — draft / published page | page id exists |
 | **Mambrino** | Ad platforms — Meta / Google / LinkedIn | campaign id exists |
@@ -142,7 +142,7 @@ A specialist's deliverable is a **record/asset in its system of record** — nev
 | **Hamete** | `brand/{slug}/research/` files | file exists + sources |
 | **Dulcinea** | `brand/{slug}/content/` files | file exists |
 
-NEVER defer the write (*"el registro lo dejo para cuando confirmes el shortlist"*): create the record **now** in a reversible state (e.g. YALC `Sourced`), and let human decisions be **gates inside the pipeline**, not a top-5 in the chat.
+NEVER defer the write (*"el registro lo dejo para cuando confirmes el shortlist"*): create the record **now** in a reversible state (e.g. Outreach `Sourced`), and let human decisions be **gates inside the pipeline**, not a top-5 in the chat.
 
 ### 21. 🤝 Real handoff — never ventriloquize a specialist (SAN-218)
 
