@@ -1,6 +1,7 @@
 import {
   bigserial,
   boolean,
+  check,
   foreignKey,
   index,
   integer,
@@ -932,4 +933,102 @@ export const metricStageRollups = pgTable("metric_stage_rollups", {
   index("metric_stage_rollups_slug_stage_idx").on(table.slug, table.stageId),
   index("metric_stage_rollups_slug_channel_idx").on(table.slug, table.channel),
   index("metric_stage_rollups_slug_range_idx").on(table.slug, table.rangeFrom, table.rangeTo),
+]);
+
+// ============================================================
+// Generic execution control plane — durable run/step/event ledger
+// ============================================================
+
+export const executionRuns = pgTable("execution_runs", {
+  id: text("id").primaryKey(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  aggregateType: text("aggregate_type").notNull(),
+  aggregateId: text("aggregate_id").notNull(),
+  operation: text("operation").notNull(),
+  mode: text("mode").notNull().default("shadow"),
+  status: text("status").notNull().default("queued"),
+  currentStep: text("current_step"),
+  traceId: text("trace_id"),
+  input: jsonb("input").$type<unknown>(),
+  output: jsonb("output").$type<unknown>(),
+  error: text("error"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  startedAt: timestamp("started_at"),
+  finishedAt: timestamp("finished_at"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  check(
+    "execution_runs_mode_check",
+    sql`${table.mode} in ('shadow', 'canary', 'active')`,
+  ),
+  check(
+    "execution_runs_status_check",
+    sql`${table.status} in ('queued', 'running', 'waiting_approval', 'completed', 'partial', 'failed', 'cancelled')`,
+  ),
+  check(
+    "execution_runs_metadata_object_check",
+    sql`jsonb_typeof(${table.metadata}) = 'object'`,
+  ),
+  uniqueIndex("execution_runs_aggregate_idempotency_idx").on(
+    table.aggregateType,
+    table.aggregateId,
+    table.operation,
+    table.idempotencyKey,
+  ),
+  index("execution_runs_aggregate_created_idx").on(
+    table.aggregateType,
+    table.aggregateId,
+    table.createdAt,
+  ),
+  index("execution_runs_status_updated_idx").on(table.status, table.updatedAt),
+  index("execution_runs_trace_idx").on(table.traceId),
+]);
+
+export const executionSteps = pgTable("execution_steps", {
+  id: text("id").primaryKey(),
+  runId: text("run_id")
+    .notNull()
+    .references(() => executionRuns.id, { onDelete: "cascade" }),
+  stepKey: text("step_key").notNull(),
+  status: text("status").notNull().default("pending"),
+  attempt: integer("attempt").notNull().default(0),
+  input: jsonb("input").$type<unknown>(),
+  output: jsonb("output").$type<unknown>(),
+  error: text("error"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  startedAt: timestamp("started_at"),
+  finishedAt: timestamp("finished_at"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  check(
+    "execution_steps_status_check",
+    sql`${table.status} in ('pending', 'running', 'waiting_approval', 'completed', 'failed', 'cancelled', 'skipped')`,
+  ),
+  check("execution_steps_attempt_check", sql`${table.attempt} >= 0`),
+  uniqueIndex("execution_steps_run_key_idx").on(table.runId, table.stepKey),
+  index("execution_steps_run_status_idx").on(table.runId, table.status),
+]);
+
+export const executionEvents = pgTable("execution_events", {
+  sequence: bigserial("sequence", { mode: "number" }).notNull(),
+  id: text("id").primaryKey(),
+  runId: text("run_id")
+    .notNull()
+    .references(() => executionRuns.id, { onDelete: "cascade" }),
+  aggregateType: text("aggregate_type").notNull(),
+  aggregateId: text("aggregate_id").notNull(),
+  traceId: text("trace_id"),
+  type: text("type").notNull(),
+  ts: timestamp("ts").notNull().defaultNow(),
+  data: jsonb("data").$type<unknown>(),
+}, (table) => [
+  index("execution_events_run_sequence_idx").on(table.runId, table.sequence),
+  index("execution_events_aggregate_sequence_idx").on(
+    table.aggregateType,
+    table.aggregateId,
+    table.sequence,
+  ),
+  index("execution_events_trace_idx").on(table.traceId),
+  index("execution_events_ts_idx").on(table.ts),
 ]);

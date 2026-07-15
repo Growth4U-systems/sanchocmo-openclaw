@@ -80,6 +80,8 @@ jobs:
           PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS: ${{ vars.PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS || '300000' }}
           PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: ${{ vars.PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES || '500' }}
           PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY: ${{ vars.PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY || '5' }}
+          PARTNERSHIPS_DISCOVERY_EXECUTION_V2: ${{ vars.PARTNERSHIPS_DISCOVERY_EXECUTION_V2 || 'off' }}
+          PARTNERSHIPS_DISCOVERY_V2_SLUGS: ${{ vars.PARTNERSHIPS_DISCOVERY_V2_SLUGS }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
@@ -200,6 +202,7 @@ jobs:
               "YALC_BASE_URL", "SANCHO_REPLY_WEBHOOK_URL",
               "SCRAPECREATORS_TIMEOUT_MS", "PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS",
               "PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES", "PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY",
+              "PARTNERSHIPS_DISCOVERY_EXECUTION_V2", "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
@@ -345,6 +348,8 @@ jobs:
             # replacement application container is allowed to start.
             echo "▶ Ensuring durable agent-run schema…"
             docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:agent-runs" < /dev/null
+            echo "▶ Ensuring durable execution-control schema…"
+            docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:execution-control" < /dev/null
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
               echo "▶ Running DB migrations…"
               # The repo's historical SQL migrations are not a safe input for

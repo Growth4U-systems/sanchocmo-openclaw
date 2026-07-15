@@ -8,6 +8,10 @@
  */
 
 import { getSearch, listSearches, updateRunnerState } from "./discovery-store";
+import {
+  observeDiscoveryExecutionEvent,
+  observeDiscoveryExecutionTransition,
+} from "./discovery-execution-observer";
 import { runDiscoverySearch } from "./discovery-runner";
 import type {
   DiscoveryRunnerErrorCode,
@@ -38,10 +42,22 @@ export function enqueueDiscoverySearchRun(
   const jobId = discoveryJobId(search.id);
   const key = activeKey(options.slug, search.id);
   const mode = options.fixtures ? "fixtures" : "live";
+  const currentAttempts = Math.max(0, search.runner.attempts ?? 0);
+  const alreadyQueuedAttempt =
+    search.runner.status === "queued" &&
+    search.runner.jobId === jobId &&
+    search.runner.mode === mode &&
+    currentAttempts > 0;
+  const attempts = active.has(key)
+    ? Math.max(1, currentAttempts)
+    : alreadyQueuedAttempt
+      ? currentAttempts
+      : currentAttempts + 1;
   const queued = updateRunnerState(options.slug, search.id, {
     status: active.has(key) ? "running" : "queued",
     mode,
     jobId,
+    attempts,
     queuedAt: search.runner.queuedAt || new Date().toISOString(),
     startedAt: active.has(key) ? search.runner.startedAt : null,
     finishedAt: null,
@@ -61,26 +77,41 @@ export function enqueueDiscoverySearchRun(
   return queued;
 }
 
-export function resumeQueuedDiscoverySearches(slug: string): string[] {
+export async function resumeQueuedDiscoverySearches(slug: string): Promise<string[]> {
   const resumed: string[] = [];
   for (const search of listSearches(slug)) {
     if (search.archivedAt) continue;
     const key = activeKey(slug, search.id);
     if (search.runner.status === "running" && !active.has(key) && isStaleRunning(search)) {
-      updateRunnerState(slug, search.id, {
+      const interrupted = updateRunnerState(slug, search.id, {
         status: "error",
         finishedAt: new Date().toISOString(),
         error: "El runner se interrumpió antes de terminar. Puedes reintentar la búsqueda.",
         errorCode: "job_interrupted",
         retryable: true,
       });
+      await observeDiscoveryExecutionTransition(
+        interrupted,
+        "execution.interrupted",
+        {
+          status: "failed",
+          currentStep: "recover",
+          error: interrupted.runner.error,
+        },
+        { reason: "stale_running" },
+      );
       continue;
     }
     if (search.runner.status !== "queued" || !isServerSideDiscoveryJob(search)) continue;
-    enqueueDiscoverySearchRun({
+    const queued = enqueueDiscoverySearchRun({
       slug,
       searchId: search.id,
       fixtures: search.runner.mode === "fixtures",
+    });
+    await observeDiscoveryExecutionEvent(queued, "execution.recovered", {
+      route: "queued_resume",
+      runnerMode: queued.runner.mode,
+      jobId: queued.runner.jobId,
     });
     resumed.push(search.id);
   }
@@ -98,7 +129,7 @@ async function executeDiscoverySearchRun(options: Required<EnqueueDiscoverySearc
       jobId: discoveryJobId(searchId),
       startedAt: new Date().toISOString(),
       finishedAt: null,
-      attempts: (before?.runner.attempts ?? 0) + 1,
+      attempts: Math.max(1, before?.runner.attempts ?? 1),
       error: null,
       errorCode: null,
       retryable: false,

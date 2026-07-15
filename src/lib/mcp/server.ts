@@ -162,6 +162,10 @@ import {
   preflightPartnerContactGate,
 } from "@/lib/partnerships/contact-gate";
 import {
+  observeDiscoveryExecutionDispatch,
+  observeDiscoveryExecutionEvent,
+} from "@/lib/partnerships/discovery-execution-observer";
+import {
   resolveOdConfig,
   odHealth,
   odListCraftGuides,
@@ -3663,6 +3667,11 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
             slug: clientSlug,
             searchId: created.search.id,
           });
+          await observeDiscoveryExecutionEvent(search, "execution.enqueued", {
+            route: "mcp_server_live",
+            runnerMode: search.runner.mode,
+            jobId: search.runner.jobId,
+          });
           return jsonResult({
             ok: true,
             search,
@@ -3684,14 +3693,20 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           searchId: created.search.id,
           title: created.search.title,
         });
-        const search = dispatch.forwardedToGateway
-          ? created.search
-          : updateRunnerState(clientSlug, created.search.id, {
-              status: "error",
-              error:
-                dispatch.error ||
-                "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra.",
-            });
+        const search = updateRunnerState(clientSlug, created.search.id, {
+          status: dispatch.forwardedToGateway ? "queued" : "error",
+          attempts: Math.max(0, created.search.runner.attempts ?? 0) + 1,
+          error:
+            dispatch.error ||
+            (dispatch.forwardedToGateway
+              ? null
+              : "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra."),
+        });
+        await observeDiscoveryExecutionDispatch(search, {
+          route: "mcp_agent_legacy",
+          forwarded: dispatch.forwardedToGateway,
+          error: dispatch.error,
+        });
         return jsonResult({
           ok: dispatch.forwardedToGateway,
           search,

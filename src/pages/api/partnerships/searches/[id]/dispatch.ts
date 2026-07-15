@@ -5,6 +5,7 @@ import {
   triggerDiscoveryRunner,
   updateRunnerState,
 } from "@/lib/partnerships";
+import { observeDiscoveryExecutionDispatch } from "@/lib/partnerships/discovery-execution-observer";
 
 /**
  * POST /api/partnerships/searches/{id}/dispatch
@@ -47,6 +48,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const next = updateRunnerState(slug, search.id, {
     status: dispatch.forwardedToGateway ? "queued" : "error",
     mode: null,
+    attempts: Math.max(0, search.runner.attempts ?? 0) + 1,
     queuedAt: new Date().toISOString(),
     startedAt: null,
     finishedAt: null,
@@ -56,6 +58,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         ? null
         : "No se pudo avisar a Rocinante. Reintenta el discovery desde Encuentra."),
     stats: null,
+  });
+  await observeDiscoveryExecutionDispatch(next, {
+    route: "retry_api",
+    forwarded: dispatch.forwardedToGateway,
+    error: dispatch.error,
   });
 
   return res.status(200).json({

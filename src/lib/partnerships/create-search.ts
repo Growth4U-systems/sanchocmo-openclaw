@@ -13,6 +13,7 @@
 import { createTask } from "@/lib/data/tasks";
 import { resolveYalcConfig, yalcFetch } from "@/lib/yalc/client";
 import { buildCampaignPayload, describePlan, parseDiscoveryPlan } from "./discovery-plan";
+import { observeDiscoveryExecutionCreated } from "./discovery-execution-observer";
 import { getEffectiveModelConfig } from "./model-config";
 import { newSearchId, saveSearch, searchRelativePath } from "./discovery-store";
 import type { DiscoveryPlan, DiscoverySearchRecord } from "./discovery-types";
@@ -135,6 +136,11 @@ export async function createDiscoverySearch(options: {
   } catch (err) {
     console.error(`[partnerships] assignTemplatesFromPlan failed for ${searchId} (${slug}):`, err);
   }
+
+  // Shadow-observe at the shared creation boundary so UI/API, chat/MCP and
+  // scripts all produce the same durable command. The observer is fail-open
+  // and disabled by default, so it cannot make legacy creation fail.
+  await observeDiscoveryExecutionCreated(search);
 
   return { search, campaignId, taskId, plan };
 }
