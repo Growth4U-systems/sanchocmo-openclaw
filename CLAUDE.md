@@ -25,9 +25,11 @@ essentials:
   one open `chore: release vX.Y.Z` PR (base `main`, **squash** like any other).
   Merging it creates the tag + GitHub Release from `main`. The tags **are** the
   releases — there is no release-pointer branch to promote. Publishing a release
-  does **not** deploy prod — `deploy-prod.yml` is **`workflow_dispatch` only**: a
-  human runs it from the Actions tab and enters the tag to ship (validated against
-  real Releases). Prod never auto-deploys.
+  does **not** deploy prod — `deploy-prod.yml` is **`workflow_dispatch` only**:
+  someone runs it and enters the tag to ship (validated against real Releases).
+  Prod never auto-deploys. Agents don't ship prod on their own initiative — only
+  when the human explicitly authorizes that deploy in the conversation (see the
+  `git-workflow` skill).
 - **Commits use Conventional Commits** (enforced by commitlint): `feat:` → minor,
   `fix:` → patch, `feat!:`/`BREAKING CHANGE:` → major. release-please reads these.
 - **Never push directly to `main`**, never force-push it, never `--no-verify`

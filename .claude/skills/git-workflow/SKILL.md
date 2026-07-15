@@ -65,13 +65,16 @@ release.
    tag + GitHub Release on the `main` commit and builds the image
    (`docker-image.yml`).
 2. **Prod does NOT auto-deploy.** `deploy-prod.yml` is **`workflow_dispatch`
-   only** and a **human** runs it. **You do not deploy prod** — you tell the
-   human how (below).
+   only**. **You never deploy prod on your own initiative** — you hand the human
+   the command (below). You may run it yourself **only** when they explicitly
+   authorize that deploy in the conversation.
 
-## Deploying prod — what to tell the human (you don't run this)
+## Deploying prod
 
-Prod ships a **version, never a branch**. Asked to "deploy prod" / "ship vX.Y.Z",
-hand them one of these — don't dispatch it yourself:
+Prod ships a **version, never a branch**.
+
+**Default: you don't dispatch it — the human does.** Asked to "deploy prod" /
+"ship vX.Y.Z", hand them one of these:
 
 ```bash
 npm run deploy:prod              # picker: lists published Releases, they choose
@@ -81,6 +84,24 @@ npm run deploy:prod -- --dry-run # show what it would dispatch, ship nothing
 
 Or: Actions → "Deploy to Production" → "Run workflow" → **leave `tag` empty for
 the latest published Release**, or type a tag.
+
+**The exception — explicit authorization.** If the human explicitly tells you to
+ship a named version in this conversation ("deployá v1.5.0 a prod", "dale,
+shipealo"), you may dispatch it yourself. This is a real, bounded exception, not
+a loophole:
+
+- **Explicit and in-conversation.** "Ship v1.5.0" authorizes *that* deploy. It
+  does not authorize the next one — approval doesn't carry across versions or
+  sessions. Silence, a thumbs-up on a plan, or "sounds good" on a proposal is
+  not authorization.
+- **A version, never a branch.** Everything below still holds: only published
+  Releases deploy, the dispatch must come from `main`, and you never hand-cut a
+  tag to make a rejection go away.
+- **Report what actually happened** — the run URL, and the real outcome. A
+  failed prod deploy you describe as fine is worse than not deploying.
+
+Everything else about prod stays a human decision: *whether* to ship, and *when*.
+You execute an authorized deploy; you don't decide there should be one.
 
 Three things worth knowing when this comes up:
 
