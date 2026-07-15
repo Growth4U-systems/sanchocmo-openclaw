@@ -1,3 +1,5 @@
+import type { GrowieThreadHistoryMessage } from "@/lib/support/growie";
+
 export type RuntimeCapability =
   | "chat"
   | "cron"
@@ -83,6 +85,8 @@ export interface InboundMessage {
     imageDigest?: string;
     environment?: string;
   };
+  /** Server-derived visible history used to bootstrap a new Growie model session once. */
+  priorThreadMessages?: GrowieThreadHistoryMessage[];
   _source?: string;
   agentId?: string;
   agent?: string;

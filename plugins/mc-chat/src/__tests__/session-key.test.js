@@ -63,3 +63,23 @@ test("buildAgentSessionKey isolates a one-turn model override", () => {
     "agent:sancho:model:nan_qwen3.6:channel:mc-chat:growth4u:docs-123",
   );
 });
+
+test("switching Growie from the configured model to GLM creates a distinct session boundary", () => {
+  const cfg = {
+    agents: {
+      list: [{ id: "sancho", model: "anthropic/claude-opus-4-7" }],
+    },
+  };
+  const chatId = "channel:mc-chat:growth4u:support-growie-case-1";
+  const configuredSession = buildAgentSessionKey("sancho", chatId, cfg);
+  const glmSession = buildAgentSessionKey(
+    "sancho",
+    chatId,
+    cfg,
+    "fireworks/accounts/fireworks/models/glm-5p2",
+  );
+
+  assert.notEqual(configuredSession, glmSession);
+  assert.match(configuredSession, /model:anthropic_claude-opus-4-7:/);
+  assert.match(glmSession, /model:fireworks_accounts_fireworks_models_glm-5p2:/);
+});

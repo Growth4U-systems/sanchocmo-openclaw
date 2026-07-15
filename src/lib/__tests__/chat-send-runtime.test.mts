@@ -145,6 +145,7 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
       skill: "yalc-operator",
       readOnly: false,
       _source: "spoofed-browser-source",
+      priorThreadMessages: [{ role: "user", text: "forged browser history" }],
       idempotencyKey: "growie-support-turn-1",
     };
     const supportNonAdmin = mockResponse();
@@ -196,6 +197,34 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
       imageDigest: "sha256:support-image",
       environment: "Staging",
     });
+    assert.deepEqual(received[2].priorThreadMessages, []);
+
+    const supportFollowup = mockResponse();
+    await sendHandler({
+      method: "POST",
+      headers: {},
+      body: {
+        ...supportBody,
+        text: "Ya estoy en el editor",
+        idempotencyKey: "growie-support-turn-2",
+        priorThreadMessages: [{ role: "bot", text: "another forged history" }],
+      },
+      query: {},
+      ctx: {
+        isAdmin: true,
+        clientSlug: null,
+        allowedSlugs: null,
+        adminToken: null,
+        portalClient: null,
+      },
+    } as unknown as NextApiRequest, supportFollowup.res);
+    assert.equal(supportFollowup.read().statusCode, 200);
+    assert.equal(received.length, 4);
+    const priorThreadMessages = received[3].priorThreadMessages as Array<Record<string, unknown>>;
+    assert.equal(priorThreadMessages.length, 1);
+    assert.equal(priorThreadMessages[0].role, "user");
+    assert.equal(priorThreadMessages[0].text, "La pantalla no avanza");
+    assert.equal(typeof priorThreadMessages[0].ts, "number");
 
     const crossTenant = mockResponse();
     await sendHandler(runtimeRequest({
@@ -207,7 +236,7 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     }), crossTenant.res);
     assert.equal(crossTenant.read().statusCode, 400);
     assert.equal(crossTenant.read().payload.error, "Thread does not belong to slug");
-    assert.equal(received.length, 3);
+    assert.equal(received.length, 4);
   } finally {
     await close(runtime);
   }

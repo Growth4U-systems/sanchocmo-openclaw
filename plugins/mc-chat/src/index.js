@@ -42,6 +42,7 @@ import {
   semanticSessionFamilyKey,
 } from "./session-dispatch-state.js";
 import { registerRuntimeRun } from "./runtime-run-state.js";
+import { buildCanonicalHistoryBootstrapIfNeeded } from "./canonical-history.js";
 
 function normalizeOpenAiAuthMode(mode) {
   if (typeof mode !== "string") return null;
@@ -269,6 +270,7 @@ export default defineChannelPluginEntry({
           readOnly,
           channelMode,
           supportContext,
+          priorThreadMessages,
           temporaryAgent,
           controlDepth,
           taskRouteProposal,
@@ -383,8 +385,6 @@ export default defineChannelPluginEntry({
           logger.info(`[mc-chat] user attachments injected (agent=${requestedAgent} slug=${slug} count=${Array.isArray(attachments) ? attachments.length : 0})`);
         }
 
-        const bodyForAgent = mcChatContextBlock + '\n\n' + groundedText;
-
         // Resolve sender identity based on admin/client role
         // This maps to toolsBySender keys in openclaw.json:
         //   "id:mc-admin" → alsoAllow: [gateway, exec, cron]
@@ -420,28 +420,6 @@ export default defineChannelPluginEntry({
         const abortController = new AbortController();
         const guardLimits = mcChatCostGuard.limits();
 
-        // Build MsgContext for OpenClaw dispatch
-        const msgCtx = finalizeInboundContext({
-          Body: text,
-          BodyForAgent: bodyForAgent,
-          RawBody: text,
-          CommandBody: text,
-          From: chatId,
-          To: chatId,
-          SessionKey: sessionKey,
-          AccountId: DEFAULT_ACCOUNT_ID,
-          SenderName: resolvedSenderName,
-          SenderId: resolvedSenderId,
-          SenderUsername: resolvedSenderId,
-          Provider: CHANNEL_KEY,
-          Surface: CHANNEL_KEY,
-          OriginatingChannel: CHANNEL_KEY,
-          OriginatingTo: chatId,
-          ChatType: "channel",
-          IsGroupChat: false,
-          Timestamp: Date.now(),
-        });
-
         // Acknowledge receipt immediately — response comes async via outbound callback
         res.statusCode = 200;
         res.end(JSON.stringify({
@@ -470,15 +448,65 @@ export default defineChannelPluginEntry({
         }
 
         await enqueueSessionDispatch(sessionKey, async ({ queued, waitedMs, dispatchKey }) => {
+        if (queued) {
+          logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} family=${dispatchKey} thread=${threadId} waitedMs=${waitedMs}`);
+        }
+
+        // Decide history hydration only after this session reaches the front of
+        // its queue. A previous turn may have planted the durable marker while
+        // this request waited; deciding before enqueue would replay the same
+        // canonical history into both turns.
+        let canonicalHistoryBootstrap = null;
+        try {
+          canonicalHistoryBootstrap = buildCanonicalHistoryBootstrapIfNeeded({
+            readOnly: isReadOnly,
+            source: _source,
+            channelMode,
+            slug,
+            threadId,
+            agentId: requestedAgent,
+            sessionKey,
+            priorThreadMessages,
+            home: process.env.OPENCLAW_HOME,
+            onError: (error) => logger.warn(`[mc-chat] canonical-history marker lookup failed: ${error?.message || error}`),
+          });
+        } catch (error) {
+          // History hydration is contextual enrichment. Never block the user's
+          // current request if a malformed registry or transcript cannot be read.
+          logger.warn(`[mc-chat] canonical-history bootstrap skipped: ${error?.message || error}`);
+        }
+        if (canonicalHistoryBootstrap) {
+          logger.info(`[mc-chat] canonical thread history bootstrapped session=${sessionKey} messages=${Array.isArray(priorThreadMessages) ? priorThreadMessages.length : 0}`);
+        }
+        const bodyForAgent = [mcChatContextBlock, canonicalHistoryBootstrap, groundedText]
+          .filter(Boolean)
+          .join("\n\n");
+        const msgCtx = finalizeInboundContext({
+          Body: text,
+          BodyForAgent: bodyForAgent,
+          RawBody: text,
+          CommandBody: text,
+          From: chatId,
+          To: chatId,
+          SessionKey: sessionKey,
+          AccountId: DEFAULT_ACCOUNT_ID,
+          SenderName: resolvedSenderName,
+          SenderId: resolvedSenderId,
+          SenderUsername: resolvedSenderId,
+          Provider: CHANNEL_KEY,
+          Surface: CHANNEL_KEY,
+          OriginatingChannel: CHANNEL_KEY,
+          OriginatingTo: chatId,
+          ChatType: "channel",
+          IsGroupChat: false,
+          Timestamp: Date.now(),
+        });
         const releaseRuntimeRun = registerRuntimeRun({
           slug,
           threadId,
           agent: requestedAgent,
           missionControlRunId,
         });
-        if (queued) {
-          logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} family=${dispatchKey} thread=${threadId} waitedMs=${waitedMs}`);
-        }
 
         // Dispatch to agent asynchronously
         let runtimeErrorPosted = false;
@@ -581,6 +609,22 @@ export default defineChannelPluginEntry({
               ...(errorDetail ? { errorDetail } : {}),
             }, "Bot runtime-error callback");
           };
+
+          if (turnModelOverride && _source === "growie-support") {
+            await postWithRetry(callbackUrl, {
+              slug,
+              threadId,
+              ...callbackIdentity,
+              role: "progress",
+              agent: requestedAgent || "sancho",
+              event: {
+                kind: "thinking",
+                label: canonicalHistoryBootstrap
+                  ? "🧠 Recuperando el contexto del caso"
+                  : "🔎 Analizando el caso",
+              },
+            }, "Growie initial progress callback");
+          }
 
           const restoreBrandEnv = applyBrandEnvToProcess(slug);
           const restoreChatEnv = applyRuntimeEnvToProcess({

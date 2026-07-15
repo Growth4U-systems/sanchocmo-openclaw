@@ -37,8 +37,7 @@ test("Postgres agent-run claims and terminal receipts are atomic under concurren
     await client.unsafe(migration);
     await client.unsafe(migration);
 
-    let receipts;
-    receipts = await Promise.all(
+    const receipts = await Promise.all(
       Array.from({ length: 8 }, () => repository.createWithReceipt(input)),
     );
     assert.equal(receipts.filter((receipt) => receipt.created).length, 1);
