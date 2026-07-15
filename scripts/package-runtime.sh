@@ -12,6 +12,7 @@ FILES=(
   sancho
   install.sh
   scripts/compose-env.sh
+  scripts/checklist.sh
   scripts/wizard.sh
   .env.example
 )
