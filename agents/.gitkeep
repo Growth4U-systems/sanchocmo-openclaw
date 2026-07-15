@@ -1,0 +1,12 @@
+# Keeps agents/ in git so the image build's `COPY agents/ ./agents/`
+# (Dockerfile:109) has a directory to copy.
+#
+# Until SAN-464 the only tracked files here were four auth-state.json — live
+# runtime state the container rewrites every boot, tracked by mistake. Untracking
+# them emptied agents/ out of git entirely and broke the image build for v1.7.3:
+# the build context comes from a clean git checkout, where an empty dir does not
+# exist. It went unnoticed because the image is only built on `release: published`,
+# never on a PR, and staging builds from source on the VPS where agents/ is on disk.
+#
+# Ship the directory, not its contents: per-install agent state belongs to the
+# install, not to the image.
