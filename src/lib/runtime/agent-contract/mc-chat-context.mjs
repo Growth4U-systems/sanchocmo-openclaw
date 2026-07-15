@@ -76,6 +76,7 @@ export function groundingSkillForTurn(input = {}) {
  *   skills?: string[],
  *   skill?: string,
  *   primarySkill?: string,
+ *   runtimeId?: string,
  *   requestedAgent?: string,
  *   canDelegate?: boolean,
  *   temporaryAgent?: boolean,
@@ -100,6 +101,7 @@ export function buildMcChatContextBlock(input) {
     skills,
     skill,
     primarySkill,
+    runtimeId,
     requestedAgent = "sancho",
     canDelegate = true,
     temporaryAgent = false,
@@ -116,6 +118,9 @@ export function buildMcChatContextBlock(input) {
     `client_slug: ${slug}`,
     `thread_id: ${threadId}`,
   ];
+  if (typeof runtimeId === "string" && runtimeId.trim()) {
+    lines.push(`runtime_id: ${runtimeId.trim()}`);
+  }
   const boundedControlDepth = controlDepth === 1 ? 1 : 0;
   const supportDiagnostic = readOnly && channelMode === "support-diagnostic";
   if (readOnly) {

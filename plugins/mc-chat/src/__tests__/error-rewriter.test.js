@@ -164,6 +164,12 @@ test("network: detects connection errors", () => {
   assert.ok(out.text.startsWith("⚠️ **Error de red**"));
 });
 
+test("runtime configuration: detects an incompatible native skill", () => {
+  const out = classifyAndRewriteError("Error: Unknown skill(s): sancho-manager");
+  assert.equal(out.errorDetail.category, "runtime_configuration");
+  assert.ok(out.text.startsWith("⚠️ **Runtime incompatible con esta configuración**"));
+});
+
 test("passthrough: normal bot reply is returned unchanged", () => {
   const out = classifyAndRewriteError(FIXTURE_NORMAL_REPLY);
   assert.equal(out.errorDetail, null);

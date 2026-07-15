@@ -143,6 +143,8 @@ test("local connector installer preserves the bridge shared-module layout", () =
   assert.match(installer, /docker\/runtimes\/\$SANCHO_CONNECTOR_PROVIDER/);
   assert.match(installer, /src\/lib\/runtime\/agent-contract/);
   assert.match(installer, /local-connector\/contract\?token=\$SANCHO_CONNECTOR_TOKEN/);
+  assert.match(installer, /local-connector\/contract\/error-rewriter\?token=\$SANCHO_CONNECTOR_TOKEN/);
+  assert.match(installer, /local-connector\/contract\/runtime-cli-failure\?token=\$SANCHO_CONNECTOR_TOKEN/);
   assert.match(installer, /SANCHO_CONNECTOR_BRIDGE_PATH="\$SANCHO_CONNECTOR_BRIDGE_DIR\/bridge\.mjs"/);
 
   const bridgePath = path.join("runtime-connector", "docker", "runtimes", "codex", "bridge.mjs");

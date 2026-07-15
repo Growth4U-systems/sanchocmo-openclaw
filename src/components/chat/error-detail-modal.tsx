@@ -15,6 +15,7 @@ const CATEGORY_LABEL: Record<ErrorCategory, string> = {
   missing_context: "Falta contexto inicial",
   context_overflow: "Contexto demasiado largo",
   invalid_thinking_signature: "Historial interno corrupto",
+  runtime_configuration: "Configuración incompatible del runtime",
   watchdog_abort: "Sesión sin progreso (timeout)",
   model_unavailable: "Modelo no disponible",
   session_concurrency: "Turno concurrente en el mismo hilo",

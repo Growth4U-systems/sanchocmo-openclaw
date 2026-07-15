@@ -9,10 +9,10 @@
  * no Foundation on disk, FAILS LOUD (verdict="missing") so the gateway can
  * route to kickoff instead of letting the agent invent context.
  *
- * Size discipline: the pack ships a compact SUMMARY (self-sufficient text from
- * the brand-brain view) + bounded excerpts of the required context. Resolved
- * paths stay in the payload for traceability, but agents do not need shared
- * filesystem access to start grounded.
+ * Size discipline: the pack ships bounded canonical skill instructions, a
+ * compact SUMMARY, and bounded excerpts of required context. Resolved paths
+ * stay in the payload for traceability, but agents do not need the skill or
+ * client filesystem installed locally to start grounded.
  *
  * Boundary note: this is Next/TS land. The mc-chat plugin (ESM, cannot import
  * `src/lib/…`) reaches it over HTTP via `src/pages/api/chat/context-pack.ts`.
@@ -43,6 +43,8 @@ export interface ContextPackDocument {
 export interface ContextPack {
   slug: string;
   skill: string | null;
+  /** Bounded canonical instructions so external runtimes do not need the skill installed locally. */
+  skillInstructions: string | null;
   /** Self-sufficient grounding text (positioning + brand snapshot + pillar state). */
   summary: string;
   /** RESOLVED absolute paths of the skill's `context_required` docs that exist on disk. */
@@ -65,6 +67,7 @@ const MAX_DOC_PATHS = 6;
 const MAX_DOCUMENT_CHARS = 6_000;
 const MAX_DIRECTORY_ENTRIES = 25;
 const MAX_DIRECTORY_FILE_EXCERPTS = 4;
+const MAX_SKILL_INSTRUCTION_CHARS = 16_000;
 
 /** Runtime skills catalog root (same convention as src/pages/api/system/skills.ts). */
 function skillsRoots(): string[] {
@@ -87,13 +90,17 @@ function skillsRoots(): string[] {
 }
 
 /**
- * Read a skill's `context_required` entries (the path templates that contain
- * `{slug}`). Returns [] when the skill or its SKILL.md is absent — a missing
- * skill is not fatal: the summary alone still grounds the agent.
+ * Read a skill's portable instructions and `context_required` entries. A
+ * missing skill is not fatal: the summary alone still grounds the agent.
  */
-function readSkillContextRequired(skill: string | null): string[] {
-  if (!skill) return [];
-  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(skill)) return [];
+function readSkillDefinition(skill: string | null): {
+  contextRequired: string[];
+  instructions: string | null;
+} {
+  if (!skill) return { contextRequired: [], instructions: null };
+  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(skill)) {
+    return { contextRequired: [], instructions: null };
+  }
   let content: string;
   for (const root of skillsRoots()) {
     const skillMdPath = path.join(root, skill, "SKILL.md");
@@ -101,12 +108,16 @@ function readSkillContextRequired(skill: string | null): string[] {
       content = fs.readFileSync(skillMdPath, "utf-8");
       const { meta } = parseSkillFrontmatter(content);
       const required = Array.isArray(meta.context_required) ? meta.context_required : [];
-      return required.filter((p) => typeof p === "string" && p.trim().length > 0);
+      const bounded = truncateContent(content, MAX_SKILL_INSTRUCTION_CHARS);
+      return {
+        contextRequired: required.filter((p) => typeof p === "string" && p.trim().length > 0),
+        instructions: bounded.content,
+      };
     } catch {
       // Try the next catalog root.
     }
   }
-  return [];
+  return { contextRequired: [], instructions: null };
 }
 
 /**
@@ -364,11 +375,13 @@ function resolveRequiredDocPaths(slug: string, required: string[]): {
  */
 export function assembleContextPack(slug: string, skill: string | null): ContextPack {
   const normalizedSkill = typeof skill === "string" && skill.trim() ? skill.trim() : null;
+  const skillDefinition = readSkillDefinition(normalizedSkill);
 
   if (!brandExists(slug)) {
     return {
       slug,
       skill: normalizedSkill,
+      skillInstructions: skillDefinition.instructions,
       summary: `Cliente: ${slug}\nFoundation: AUSENTE (no existe brand/${slug} en disco).`,
       docPaths: [],
       documents: [],
@@ -379,7 +392,7 @@ export function assembleContextPack(slug: string, skill: string | null): Context
   }
 
   const summary = buildSummary(slug);
-  const required = readSkillContextRequired(normalizedSkill);
+  const required = skillDefinition.contextRequired;
   const { abs, documents, missingRequired, resolvedCount, total } = resolveRequiredDocPaths(slug, required);
 
   let verdict: ContextPackVerdict;
@@ -400,6 +413,7 @@ export function assembleContextPack(slug: string, skill: string | null): Context
   return {
     slug,
     skill: normalizedSkill,
+    skillInstructions: skillDefinition.instructions,
     summary,
     docPaths: abs,
     documents,

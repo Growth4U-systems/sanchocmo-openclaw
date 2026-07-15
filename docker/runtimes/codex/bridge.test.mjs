@@ -62,6 +62,7 @@ test("buildCodexPrompt preserves Sancho routing metadata and context pack", () =
   );
 
   assert.match(prompt, /Codex CLI runtime for Sancho/);
+  assert.match(prompt, /runtime_id: codex/);
   assert.match(prompt, /read and follow skills\/<skill>\/SKILL\.md/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);

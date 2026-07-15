@@ -100,6 +100,7 @@ test("(a) canonical layout → verdict=ok + resolved absolute paths", () => {
 
   assert.equal(pack.verdict, "ok");
   assert.equal(pack.brandFound, true);
+  assert.match(pack.skillInstructions || "", /# Body/);
   assert.equal(pack.docPaths.length, 3, "all 3 required docs resolved");
   assert.equal(pack.documents.length, 3, "all 3 required docs embedded");
   assert.deepEqual(pack.missingRequired, []);
@@ -226,6 +227,7 @@ test("no skill → brand exists, summary grounds it, verdict=ok", () => {
   const pack = mod.assembleContextPack(slug, null);
 
   assert.equal(pack.verdict, "ok");
+  assert.equal(pack.skillInstructions, null);
   assert.deepEqual(pack.docPaths, [], "no skill → no required docs to resolve");
   assert.deepEqual(pack.documents, [], "no skill → no documents to embed");
   assert.match(pack.summary, /Acme Corp/);

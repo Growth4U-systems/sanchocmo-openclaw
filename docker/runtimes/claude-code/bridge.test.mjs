@@ -63,6 +63,7 @@ test("buildClaudePrompt preserves Sancho routing metadata", () => {
   );
 
   assert.match(prompt, /Claude Code runtime for Sancho/);
+  assert.match(prompt, /runtime_id: claude-code/);
   assert.match(prompt, /"threadId": "acme:content:123"/);
   assert.match(prompt, /"agent": "dulcinea"/);
   assert.match(prompt, /ORDEN DE DECISIÓN OBLIGATORIO/);

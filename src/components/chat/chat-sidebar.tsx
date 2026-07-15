@@ -75,6 +75,12 @@ function agentBadge(agent?: string) {
 }
 
 function executionErrorCopy(category: ErrorDetail["category"]): { title: string; body: string } {
+  if (category === "runtime_configuration") {
+    return {
+      title: "Este runtime necesita una configuración compatible",
+      body: "Sancho no completó el turno. Revisa el motor antes de reintentarlo.",
+    };
+  }
   if (category === "cost_guard" || category === "context_overflow") {
     return {
       title: "La ejecución se detuvo antes de terminar",

@@ -83,8 +83,16 @@ function bridgeScriptPath(provider: LocalConnectorProviderId): string {
   return path.join(process.cwd(), cliBridgeProvider(provider).scriptPath);
 }
 
-function contractScriptPath(): string {
-  return path.join(process.cwd(), "src", "lib", "runtime", "agent-contract", "mc-chat-context.mjs");
+function contractScriptPath(asset = "mc-chat-context"): string | null {
+  const files: Record<string, string> = {
+    "mc-chat-context": "mc-chat-context.mjs",
+    "error-rewriter": "error-rewriter.mjs",
+    "runtime-cli-failure": "runtime-cli-failure.mjs",
+  };
+  const filename = files[asset];
+  return filename
+    ? path.join(process.cwd(), "src", "lib", "runtime", "agent-contract", filename)
+    : null;
 }
 
 async function readBody(req: NextApiRequest): Promise<unknown> {
@@ -200,11 +208,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return text(res, 200, fs.readFileSync(bridgeScriptPath(session.provider), "utf-8"), "text/javascript; charset=utf-8");
   }
 
-  if (route === "contract") {
+  if (route === "contract" || route.startsWith("contract/")) {
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
     const session = authenticateLocalConnectorToken(bearerToken(req));
     if (!session) return res.status(401).json({ error: "Pairing inválido o caducado" });
-    return text(res, 200, fs.readFileSync(contractScriptPath(), "utf-8"), "text/javascript; charset=utf-8");
+    const asset = route === "contract" ? "mc-chat-context" : route.slice("contract/".length);
+    const scriptPath = contractScriptPath(asset);
+    if (!scriptPath) return res.status(404).json({ error: "Contract asset not found" });
+    return text(res, 200, fs.readFileSync(scriptPath, "utf-8"), "text/javascript; charset=utf-8");
   }
 
   if (route === "health") {

@@ -41,6 +41,7 @@ export type ErrorCategory =
   | "missing_context"
   | "context_overflow"
   | "invalid_thinking_signature"
+  | "runtime_configuration"
   | "watchdog_abort"
   | "model_unavailable"
   | "session_concurrency"
