@@ -15,6 +15,7 @@ const {
   latestOnlineLocalConnector,
   localConnectorHealth,
   localConnectorInstallCommand,
+  localConnectorInstallerScript,
   localConnectorRuntimeVars,
   registerLocalConnector,
 } = await import("../runtime/local-connector");
@@ -129,4 +130,30 @@ test("activation and install helpers use the Sancho self-queue contract", () => 
   );
   assert.match(installCommand, /bash "\$SANCHO_CONNECTOR_INSTALLER"$/);
   assert.doesNotMatch(installCommand, /\|\s*bash/);
+});
+
+test("local connector installer preserves the bridge shared-module layout", () => {
+  const installer = localConnectorInstallerScript(
+    "https://sancho.example.com/",
+    "pairing-token",
+    "codex",
+  );
+
+  assert.match(installer, /SANCHO_CONNECTOR_PROVIDER="codex"/);
+  assert.match(installer, /docker\/runtimes\/\$SANCHO_CONNECTOR_PROVIDER/);
+  assert.match(installer, /src\/lib\/runtime\/agent-contract/);
+  assert.match(installer, /local-connector\/contract\?token=\$SANCHO_CONNECTOR_TOKEN/);
+  assert.match(installer, /SANCHO_CONNECTOR_BRIDGE_PATH="\$SANCHO_CONNECTOR_BRIDGE_DIR\/bridge\.mjs"/);
+
+  const bridgePath = path.join("runtime-connector", "docker", "runtimes", "codex", "bridge.mjs");
+  const importedContract = path.resolve(path.dirname(bridgePath), "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs");
+  const installedContract = path.resolve(
+    "runtime-connector",
+    "src",
+    "lib",
+    "runtime",
+    "agent-contract",
+    "mc-chat-context.mjs",
+  );
+  assert.equal(importedContract, installedContract);
 });

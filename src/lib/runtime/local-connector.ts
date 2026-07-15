@@ -436,6 +436,42 @@ export function localConnectorInstallCommand(sanchoBaseUrl: string, pairingToken
   ].join(" && ");
 }
 
+export function localConnectorInstallerScript(
+  sanchoBaseUrl: string,
+  pairingToken: string,
+  provider: LocalConnectorProviderId,
+): string {
+  const safeBase = JSON.stringify(normalizeBaseUrl(sanchoBaseUrl));
+  const safeToken = JSON.stringify(pairingToken);
+  const safeProvider = JSON.stringify(provider);
+  return `#!/usr/bin/env bash
+set -euo pipefail
+
+SANCHO_BASE_URL=${safeBase}
+SANCHO_CONNECTOR_TOKEN=${safeToken}
+SANCHO_CONNECTOR_PROVIDER=${safeProvider}
+SANCHO_CONNECTOR_DIR="\${SANCHO_CONNECTOR_DIR:-$HOME/.sancho/runtime-connector}"
+SANCHO_CONNECTOR_BRIDGE_DIR="$SANCHO_CONNECTOR_DIR/docker/runtimes/$SANCHO_CONNECTOR_PROVIDER"
+SANCHO_CONNECTOR_CONTRACT_DIR="$SANCHO_CONNECTOR_DIR/src/lib/runtime/agent-contract"
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "Sancho Connector necesita Node.js 18 o superior. Instala Node y vuelve a ejecutar este comando." >&2
+  exit 1
+fi
+
+mkdir -p "$SANCHO_CONNECTOR_BRIDGE_DIR" "$SANCHO_CONNECTOR_CONTRACT_DIR"
+curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/script?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_DIR/connector.mjs"
+curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/bridge?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_BRIDGE_DIR/bridge.mjs"
+curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/contract?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_CONTRACT_DIR/mc-chat-context.mjs"
+chmod +x "$SANCHO_CONNECTOR_DIR/connector.mjs" "$SANCHO_CONNECTOR_BRIDGE_DIR/bridge.mjs"
+
+SANCHO_BASE_URL="$SANCHO_BASE_URL" \\
+SANCHO_CONNECTOR_TOKEN="$SANCHO_CONNECTOR_TOKEN" \\
+SANCHO_CONNECTOR_BRIDGE_PATH="$SANCHO_CONNECTOR_BRIDGE_DIR/bridge.mjs" \\
+node "$SANCHO_CONNECTOR_DIR/connector.mjs"
+`;
+}
+
 export function localConnectorHealth(provider?: LocalConnectorProviderId): {
   ok: boolean;
   provider?: LocalConnectorProviderId;
