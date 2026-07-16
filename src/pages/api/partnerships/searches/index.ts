@@ -8,6 +8,7 @@ import {
 import { yalcErrorResponse } from "@/lib/yalc/client";
 import {
   createDiscoverySearch,
+  DiscoveryCommandError,
   DiscoveryPlanError,
   enqueueDiscoverySearchRun,
   listSearches,
@@ -29,7 +30,7 @@ import {
  *     → { searches, count } (estado del runner incluido — lo consume la UI
  *       de Encuentra y el agente runner para encontrar trabajo encolado).
  *
- *   POST /api/partnerships/searches  { slug, plan, run?, threadId? }
+ *   POST /api/partnerships/searches  { slug, plan, run?, threadId?, commandId? }
  *     Crea la búsqueda (campaign type=Partnerships en Yalc + tarea Outreach
  *     madre) y ejecuta discovery sin bloquear el request. `run`:
  *       - ausente / "live" → job server-side para un plan solo Instagram.
@@ -71,7 +72,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     plan?: unknown;
     run?: unknown;
     threadId?: unknown;
+    commandId?: unknown;
   };
+  const allowedRuns = new Set<unknown>([undefined, true, false, "fixtures", "none", "live", "agent"]);
+  if (!allowedRuns.has(body.run)) {
+    return res.status(400).json({ error: "run must be live, agent, fixtures or none" });
+  }
+  const executionIntent =
+    body.run === true || body.run === "fixtures"
+      ? "fixtures"
+      : body.run === false || body.run === "none"
+        ? "none"
+        : body.run === "live"
+          ? "live"
+          : body.run === "agent"
+            ? "agent"
+            : "auto";
   try {
     const created = await createDiscoverySearch({
       slug,
@@ -79,7 +95,22 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // SAN-328: el hilo MC Chat donde la skill construyó el plan, para que la
       // tarjeta de Encuentra reabra esa misma sesión en vez de un hilo nuevo.
       threadId: typeof body.threadId === "string" ? body.threadId : null,
+      commandId: typeof body.commandId === "string" ? body.commandId : null,
+      executionIntent,
     });
+
+    // A retried create command is a read of the original receipt. Never
+    // enqueue, dispatch or run the same search a second time.
+    if (created.replayed) {
+      return res.status(200).json({
+        ok: true,
+        replayed: true,
+        search: created.search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+        runner: created.search.runner,
+      });
+    }
 
     if (body.run === "fixtures" || body.run === true) {
       const run = await runDiscoverySearch({
@@ -170,6 +201,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       },
     });
   } catch (err) {
+    if (err instanceof DiscoveryCommandError) {
+      return res.status(err.status).json({ error: err.message, code: "DISCOVERY_COMMAND_CONFLICT" });
+    }
     if (err instanceof DiscoveryPlanError) {
       return res.status(400).json({ error: err.message });
     }

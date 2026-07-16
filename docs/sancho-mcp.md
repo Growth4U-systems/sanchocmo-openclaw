@@ -227,6 +227,10 @@ Current scaffolded tools:
 
 Mutating tools are side-effecting and require their matching write scope (`clients:write`, `agents:write`, `tasks:write`, `chat:write`, `content:write`, `media:write`, `publishing:write`, `integrations:write`, `open-design:write`, `docs:write`, `intelligence:write`, `recurring:write` or `yalc:write`). They default to dry-run where supported and only write when `dryRun=false` and `confirm=true`.
 
+Confirmed `yalc_create_search` writes also require a caller-generated stable
+`commandId`. Reuse that same ID only when retrying the same confirmed search;
+changing the plan or execution mode with an existing ID returns a conflict.
+
 `sancho_update_task` only accepts a whitelist of fields (`name`, `status`, `description`, `brief`, `completion`, `owner`) and rejects updates that change nothing.
 
 ### Alarife web-build delegation

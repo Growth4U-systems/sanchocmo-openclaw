@@ -9,6 +9,7 @@
 
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
@@ -295,6 +296,57 @@ test("qualify-enrich sin ad-library puntúa neutro y marca la señal ausente", (
 
 let firstTaskId: string | null = null;
 
+test("createDiscoverySearch reutiliza una orden concurrente sin duplicar Yalc ni proyecto", async () => {
+  const plan = {
+    title: "Retry seguro · salud capilar",
+    sectors: ["salud capilar"],
+    networks: ["instagram"],
+    tiers: ["micro"],
+    targetVolume: 1,
+  };
+  const callsBefore = yalcCalls.filter(
+    (call) => call.method === "POST" && call.url.startsWith("/api/campaigns?"),
+  ).length;
+
+  const [first, replay] = await Promise.all([
+    lib.createDiscoverySearch({ slug: "monzo", plan, commandId: "ui-search-command-1" }),
+    lib.createDiscoverySearch({ slug: "monzo", plan, commandId: "ui-search-command-1" }),
+  ]);
+
+  assert.equal(first.replayed, false);
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.search.id, first.search.id);
+  assert.equal(replay.search.projectId, first.search.projectId);
+  assert.equal(replay.campaignId, first.campaignId);
+  assert.equal(
+    yalcCalls.filter((call) => call.method === "POST" && call.url.startsWith("/api/campaigns?")).length,
+    callsBefore + 1,
+  );
+  const campaignCall = yalcCalls.filter(
+    (call) => call.method === "POST" && call.url.startsWith("/api/campaigns?"),
+  ).at(-1)!;
+  const commandHash = createHash("sha256").update("monzo\u0000ui-search-command-1").digest("hex");
+  assert.equal(campaignCall.headers["idempotency-key"], `partnerships.discovery:${commandHash}`);
+
+  await assert.rejects(
+    () => lib.createDiscoverySearch({
+      slug: "monzo",
+      commandId: "ui-search-command-1",
+      plan: { ...plan, title: "Misma orden, otro contenido" },
+    }),
+    (error: unknown) => error instanceof lib.DiscoveryCommandError && error.status === 409,
+  );
+  await assert.rejects(
+    () => lib.createDiscoverySearch({
+      slug: "monzo",
+      commandId: "ui-search-command-1",
+      executionIntent: "none",
+      plan,
+    }),
+    (error: unknown) => error instanceof lib.DiscoveryCommandError && error.status === 409,
+  );
+});
+
 test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados en Yalc", async () => {
   const created = await lib.createDiscoverySearch({
     slug: "monzo",
@@ -311,7 +363,9 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
   });
 
   // Campaign Partnerships creada en Yalc con modo hybrid + umbral 40.
-  const campaignCall = yalcCalls.find((call) => call.method === "POST" && call.url.startsWith("/api/campaigns?"));
+  const campaignCall = yalcCalls
+    .filter((call) => call.method === "POST" && call.url.startsWith("/api/campaigns?"))
+    .at(-1);
   assert.ok(campaignCall, "POST /api/campaigns llamado");
   const campaignBody = campaignCall!.body as Record<string, unknown>;
   assert.equal(campaignBody.type, "Partnerships");
@@ -380,8 +434,7 @@ test("createDiscoverySearch + runDiscoverySearch (fixtures) deja leads scoreados
 
   // listSearches lo expone para Encuentra / runner agentic.
   const listed = lib.listSearches("monzo");
-  assert.equal(listed.length, 1);
-  assert.equal(listed[0].id, created.search.id);
+  assert.ok(listed.some((search) => search.id === created.search.id));
 });
 
 test("enqueueDiscoverySearchRun devuelve rápido y completa el runner en background", async () => {

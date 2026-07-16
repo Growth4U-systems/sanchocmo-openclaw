@@ -57,6 +57,7 @@ export {
 
 export {
   createDiscoverySearch,
+  DiscoveryCommandError,
   DISCOVERY_RUNNER_SKILL,
   DISCOVERY_TASK_TYPE,
 } from "./create-search";
