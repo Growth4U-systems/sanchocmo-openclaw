@@ -117,6 +117,38 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-sancho}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sancho}
       - POSTGRES_DB=${POSTGRES_DB:-sancho}
+    # Self-heal the role password on EVERY boot (SAN-482). Postgres only applies
+    # POSTGRES_PASSWORD on the first init of an empty data dir, so once this
+    # named volume exists its stored password never changes. If `.env`'s
+    # POSTGRES_PASSWORD ever diverges from the volume — e.g. a re-install or a
+    # fresh `curl` install regenerates `.env` in a new dir while this global
+    # `postgres_data` volume survives — the app's DATABASE_URL no longer matches
+    # the role and every request dies with `28P01 password authentication failed`
+    # (silently: migrate-local is non-fatal, so chat messages just "disappear").
+    # Reconcile via the local unix-socket `trust` connection, which authenticates
+    # regardless of the stored password, forcing the role back in sync with the
+    # env. Idempotent; on first init it's a no-op (already matches). Scoped to
+    # local-db by the profile above — external/Neon installs never run this
+    # service. The local-db password is `openssl rand -hex 32` (only [0-9a-f]),
+    # so interpolating it into the SQL literal is safe.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        (
+          until pg_isready -q -h /var/run/postgresql -U "$$POSTGRES_USER"; do
+            sleep 1
+          done
+          if psql -v ON_ERROR_STOP=1 -h /var/run/postgresql \
+               -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" \
+               -c "ALTER ROLE \"$$POSTGRES_USER\" WITH PASSWORD '$$POSTGRES_PASSWORD';" \
+               >/dev/null 2>&1; then
+            echo "[pg-reconcile] role $$POSTGRES_USER password synced to env"
+          else
+            echo "[pg-reconcile] role sync skipped (non-fatal)"
+          fi
+        ) &
+        exec docker-entrypoint.sh postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
