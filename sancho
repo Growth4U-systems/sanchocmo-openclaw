@@ -38,6 +38,24 @@ done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 REAL_SCRIPT="$SCRIPT_DIR/$(basename "$SOURCE")"
 cd "$SCRIPT_DIR"
+
+# Cómo se nombra el CLI a sí mismo en la ayuda y los mensajes: si hay un `sancho`
+# en el PATH que resuelve a ESTE install (el usuario corrió `sancho link`), usamos
+# `sancho`; si no, `./sancho`. Mira el PATH, no cómo nos invocaron, así acierta
+# tanto si te llamaron `sancho` como `./sancho`. Exportado para que el hijo
+# `scripts/wizard.sh` y el sourced `scripts/compose-env.sh` lo hereden.
+SANCHO_CMD="./sancho"
+if _global_sancho="$(command -v sancho 2>/dev/null)"; then
+  while [ -L "$_global_sancho" ]; do
+    _gdir="$(cd -P "$(dirname "$_global_sancho")" && pwd)"
+    _global_sancho="$(readlink "$_global_sancho")"
+    case "$_global_sancho" in /*) ;; *) _global_sancho="$_gdir/$_global_sancho" ;; esac
+  done
+  [ "$_global_sancho" = "$REAL_SCRIPT" ] && SANCHO_CMD="sancho"
+  unset _gdir
+fi
+unset _global_sancho
+export SANCHO_CMD
 # shellcheck source=scripts/compose-env.sh
 source "$SCRIPT_DIR/scripts/compose-env.sh"
 # shellcheck source=scripts/checklist.sh
@@ -46,29 +64,29 @@ source "$SCRIPT_DIR/scripts/checklist.sh"
 IMAGE_REPO="ghcr.io/growth4u-systems/sanchocmo"
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 sancho — CLI único de ciclo de vida de SanchoCMO.
 
-  ./sancho run            arranque súper simple: wizard quick (si falta .env) + up
-                          + abre el navegador. Si ya está configurado, = `up`.
-  ./sancho install [--od|--yalc|--build|--no-up|--force|--quick|--advanced]
+  ${SANCHO_CMD} run            arranque súper simple: wizard quick (si falta .env) + up
+                          + abre el navegador. Si ya está configurado, = \`up\`.
+  ${SANCHO_CMD} install [--od|--yalc|--build|--no-up|--force|--quick|--advanced]
                           primer arranque: wizard (si falta .env) + up
-  ./sancho up             levanta el stack (overlays habilitados en .env)
-  ./sancho down           baja contenedores + red, CONSERVA los datos
-  ./sancho restart        down + up
-  ./sancho update [tag]   sin arg: última del tag actual; con arg (vX.Y.Z|
+  ${SANCHO_CMD} up             levanta el stack (overlays habilitados en .env)
+  ${SANCHO_CMD} down           baja contenedores + red, CONSERVA los datos
+  ${SANCHO_CMD} restart        down + up
+  ${SANCHO_CMD} update [tag]   sin arg: última del tag actual; con arg (vX.Y.Z|
                           edge|latest): pinea SANCHOCMO_IMAGE y actualiza
-  ./sancho logs [svc]     tail -f de logs (default: sanchocmo)
-  ./sancho status         estado de los contenedores del stack
-  ./sancho destroy        down -v — BORRA los datos (pide confirmación)
-  ./sancho reconfigure    re-corre el wizard de configuración
-  ./sancho link [--force] deja `sancho` en el PATH (para no usar ./sancho)
-  ./sancho help           esta ayuda
+  ${SANCHO_CMD} logs [svc]     tail -f de logs (default: sanchocmo)
+  ${SANCHO_CMD} status         estado de los contenedores del stack
+  ${SANCHO_CMD} destroy        down -v — BORRA los datos (pide confirmación)
+  ${SANCHO_CMD} reconfigure    re-corre el wizard de configuración
+  ${SANCHO_CMD} link [--force] deja \`sancho\` en el PATH (para no depender del dir)
+  ${SANCHO_CMD} help           esta ayuda
 EOF
 }
 
 require_env() {
-  [ -f .env ] || die "No hay .env todavía. Configurá primero con:  ./sancho install"
+  [ -f .env ] || die "No hay .env todavía. Configurá primero con:  ${SANCHO_CMD} install"
 }
 
 # Espera a que MC esté realmente listo (healthcheck del contenedor) y recién ahí
@@ -107,11 +125,11 @@ announce_ready() {
        echo  "   $base" ;;
     3) # Still booting past the timeout — not an error; first boot is slow.
        bold "⏳ Mission Control sigue arrancando — el primer arranque puede tardar varios minutos."
-       echo  "   Esto NO es un error. Seguí el progreso:  ./sancho logs"
+       echo  "   Esto NO es un error. Seguí el progreso:  ${SANCHO_CMD} logs"
        echo  "   Cuando esté listo, entrá acá:            $base" ;;
     *) # Container missing/crashed — this one IS worth looking at.
        bold "⚠ El contenedor no está corriendo o no respondió."
-       echo  "   Revisá qué pasó:  ./sancho logs"
+       echo  "   Revisá qué pasó:  ${SANCHO_CMD} logs"
        echo  "   URL prevista:     $base" ;;
   esac
   # Surface the login token last, whenever MC is up or still coming up.
@@ -155,7 +173,7 @@ link_global() {
     if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$REAL_SCRIPT" ]; then
       if [ "$force" != "1" ]; then
         echo "  ⚠ Ya existe $target y no es un link a este install — lo salteo."
-        echo "    Si querés pisarlo:  ./sancho link --force"
+        echo "    Si querés pisarlo:  ${SANCHO_CMD} link --force"
         return 1
       fi
     fi
@@ -290,7 +308,7 @@ cmd_down() {
   bold "Bajando ($COMPOSE $COMPOSE_ARGS down --remove-orphans)"
   # shellcheck disable=SC2086
   $COMPOSE $COMPOSE_ARGS down --remove-orphans
-  echo "  ✓ Stack bajado. Los datos (volúmenes) se conservan — ./sancho up para volver."
+  echo "  ✓ Stack bajado. Los datos (volúmenes) se conservan — ${SANCHO_CMD} up para volver."
 }
 
 cmd_restart() { cmd_down; echo ""; cmd_up; }
@@ -383,5 +401,5 @@ case "$cmd" in
   reconfigure)        cmd_reconfigure "$@" ;;
   link)               cmd_link "$@" ;;
   help|-h|--help)     usage ;;
-  *) die "Comando desconocido: $cmd  (probá: ./sancho help)" ;;
+  *) die "Comando desconocido: $cmd  (probá: ${SANCHO_CMD} help)" ;;
 esac
