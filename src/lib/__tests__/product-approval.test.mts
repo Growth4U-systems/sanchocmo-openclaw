@@ -15,6 +15,12 @@ import {
 
 const createdAt = new Date("2026-07-15T10:00:00.000Z");
 const expiresAt = "2026-07-16T10:00:00.000Z";
+// Fixed decision instant INSIDE the validity window (after submit at 10:01,
+// before expiresAt at 10:00 next day). Every decideProductApproval() call must
+// pass an explicit `now` — omitting it (or passing `new Date()`) defaults to the
+// wall clock, which turns this suite into a time-bomb that fails once the real
+// date passes `expiresAt`. (SAN-484)
+const decidedAt = new Date("2026-07-15T10:02:00.000Z");
 const slackIdentityEnv = {
   SANCHO_PRODUCT_APPROVER_MARTIN_SLACK_USER_ID: "U-MARTIN",
   SANCHO_PRODUCT_APPROVER_ALFONSO_SLACK_USER_ID: "U-ALFONSO",
@@ -83,7 +89,7 @@ test("Alfonso can approve from Growie without requiring a Slack identity", () =>
     rationale: "Aprobado desde la superficie interna autenticada.",
     expectedProposalHash: pending.proposalHash,
     expectedVersion: pending.version,
-  });
+  }, decidedAt);
   assert.equal(approved.status, "approved");
   assert.equal(approved.decision?.approverId, "alfonso");
 });
@@ -99,7 +105,7 @@ test("channel membership and an unverified Slack click do not authorize a decisi
       rationale: "Estoy en el canal.",
       expectedProposalHash: pending.proposalHash,
       expectedVersion: pending.version,
-    }, new Date(), slackIdentityEnv),
+    }, decidedAt, slackIdentityEnv),
     (error) => error instanceof ProductApprovalError && error.code === "unauthorized_approver",
   );
 
@@ -111,7 +117,7 @@ test("channel membership and an unverified Slack click do not authorize a decisi
       rationale: "Falta identidad externa autenticada.",
       expectedProposalHash: pending.proposalHash,
       expectedVersion: pending.version,
-    }, new Date(), slackIdentityEnv),
+    }, decidedAt, slackIdentityEnv),
     (error) => error instanceof ProductApprovalError && error.code === "unauthorized_approver",
   );
 
@@ -124,7 +130,7 @@ test("channel membership and an unverified Slack click do not authorize a decisi
       rationale: "Intento atribuirme la identidad de Martín.",
       expectedProposalHash: pending.proposalHash,
       expectedVersion: pending.version,
-    }, new Date(), slackIdentityEnv),
+    }, decidedAt, slackIdentityEnv),
     (error) => error instanceof ProductApprovalError && error.code === "unauthorized_approver",
   );
 });
@@ -166,7 +172,7 @@ test("requesting changes creates a new draft version and invalidates late button
       rationale: "Este botón pertenece a la versión anterior.",
       expectedProposalHash: pending.proposalHash,
       expectedVersion: pending.version,
-    }),
+    }, new Date("2026-07-15T10:05:00.000Z")),
     (error) => error instanceof ProductApprovalError && error.code === "stale_proposal",
   );
 });
