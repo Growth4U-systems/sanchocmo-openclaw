@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
@@ -17,12 +18,16 @@ process.env.NEXT_PUBLIC_ENV_LABEL = "Staging";
 
 function listen(server: http.Server): Promise<{ port: number }> {
   return new Promise((resolve) => {
-    server.listen(0, "127.0.0.1", () => resolve(server.address() as { port: number }));
+    server.listen(0, "127.0.0.1", () =>
+      resolve(server.address() as { port: number }),
+    );
   });
 }
 
 function close(server: http.Server): Promise<void> {
-  return new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  return new Promise((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve())),
+  );
 }
 
 function mockResponse() {
@@ -41,17 +46,51 @@ function mockResponse() {
   return { res, read: () => ({ statusCode, payload }) };
 }
 
-function runtimeRequest(body: Record<string, unknown>): NextApiRequest {
+function runtimeRequest(
+  body: Record<string, unknown>,
+  authorityHeaders: Record<string, string> = {},
+): NextApiRequest {
   return {
     method: "POST",
     headers: {
       "x-mc-secret": "runtime-secret",
       "x-request-id": "trace-chat-send-1",
       traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      ...authorityHeaders,
     },
     body,
     query: {},
   } as unknown as NextApiRequest;
+}
+
+function createParentAuthority(
+  agentRuns: typeof import("../data/agent-runs"),
+  threadId: string,
+): Record<string, string> {
+  const raw = "a".repeat(64);
+  const run = agentRuns.createAgentRun({
+    threadId,
+    runtime: "external-http",
+    agent: "sancho",
+    input: {
+      slug: threadId.slice(0, threadId.indexOf(":")),
+      threadId,
+      userId: "mc-client-demo",
+      userName: "Demo client",
+      isAdmin: false,
+      senderRole: "client",
+      readOnly: false,
+      controlDepth: 0,
+      runtimeToolCapabilitySha256: createHash("sha256")
+        .update(raw)
+        .digest("hex"),
+    },
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  return {
+    "x-mission-control-parent-run-id": run.id,
+    "x-sancho-parent-run-capability": raw,
+  };
 }
 
 test("trusted send retries reuse one ledger run and a client cannot claim mc-admin", async () => {
@@ -60,7 +99,9 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
   const runtime = http.createServer((req, res) => {
     let raw = "";
     req.setEncoding("utf8");
-    req.on("data", (chunk) => { raw += chunk; });
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
     req.on("end", () => {
       received.push(JSON.parse(raw));
       receivedHeaders.push(req.headers);
@@ -75,7 +116,10 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
   resetRuntimeForTests();
   const { sendHandler } = await import("@/pages/api/chat/send");
   const runsModule = await import("../data/agent-runs");
-  const agentRuns = (runsModule as unknown as { default: typeof runsModule }).default ?? runsModule;
+  const agentRuns =
+    (runsModule as unknown as { default: typeof runsModule }).default ??
+    runsModule;
+  const parentHeaders = createParentAuthority(agentRuns, "demo:general");
 
   const body = {
     slug: "demo",
@@ -92,45 +136,59 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
 
   try {
     const first = mockResponse();
-    await sendHandler(runtimeRequest(body), first.res);
+    await sendHandler(runtimeRequest(body, parentHeaders), first.res);
     assert.equal(first.read().statusCode, 200);
     assert.equal(received.length, 1);
     assert.equal(received[0].userId, "mc-client-demo");
     assert.equal(received[0].controlDepth, 1);
     assert.equal(typeof received[0].missionControlRunId, "string");
     assert.equal(received[0].traceId, "trace-chat-send-1");
-    assert.match(String(received[0].traceparent), /^00-4bf92f3577b34da6a3ce929d0e0e4736-/);
+    assert.match(
+      String(received[0].traceparent),
+      /^00-4bf92f3577b34da6a3ce929d0e0e4736-/,
+    );
     assert.equal(receivedHeaders[0]["x-request-id"], "trace-chat-send-1");
-    assert.match(String(receivedHeaders[0].traceparent), /^00-4bf92f3577b34da6a3ce929d0e0e4736-/);
+    assert.match(
+      String(receivedHeaders[0].traceparent),
+      /^00-4bf92f3577b34da6a3ce929d0e0e4736-/,
+    );
     assert.equal(first.read().payload.traceId, "trace-chat-send-1");
 
     const retry = mockResponse();
-    await sendHandler(runtimeRequest(body), retry.res);
+    await sendHandler(runtimeRequest(body, parentHeaders), retry.res);
     assert.equal(retry.read().statusCode, 200);
     assert.equal(retry.read().payload.duplicate, true);
     assert.equal(received.length, 1);
-    assert.equal(agentRuns.listAgentRunsForThread("demo:general").length, 1);
+    assert.equal(
+      agentRuns
+        .listAgentRunsForThread("demo:general")
+        .filter((run) => run.idempotencyKey === body.idempotencyKey).length,
+      1,
+    );
 
     const browser = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: {},
-      body: {
-        ...body,
-        threadId: "demo:browser",
-        text: "Browser turn",
-        userId: "mc-admin",
-        controlDepth: 1,
-      },
-      query: {},
-      ctx: {
-        isAdmin: false,
-        clientSlug: "demo",
-        allowedSlugs: null,
-        adminToken: null,
-        portalClient: { slug: "demo", name: "Demo" },
-      },
-    } as unknown as NextApiRequest, browser.res);
+    await sendHandler(
+      {
+        method: "POST",
+        headers: {},
+        body: {
+          ...body,
+          threadId: "demo:browser",
+          text: "Browser turn",
+          userId: "mc-admin",
+          controlDepth: 1,
+        },
+        query: {},
+        ctx: {
+          isAdmin: false,
+          clientSlug: "demo",
+          allowedSlugs: null,
+          adminToken: null,
+          portalClient: { slug: "demo", name: "Demo" },
+        },
+      } as unknown as NextApiRequest,
+      browser.res,
+    );
     assert.equal(browser.read().statusCode, 200);
     assert.equal(received.length, 2);
     assert.equal(received[1].userId, "mc-client-demo");
@@ -149,40 +207,48 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
       idempotencyKey: "growie-support-turn-1",
     };
     const supportNonAdmin = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: {
-        referer: "https://staging.sanchocmo.ai/dashboard/demo/content?token=do-not-forward",
-      },
-      body: supportBody,
-      query: {},
-      ctx: {
-        isAdmin: false,
-        clientSlug: "demo",
-        allowedSlugs: null,
-        adminToken: null,
-        portalClient: { slug: "demo", name: "Demo" },
-      },
-    } as unknown as NextApiRequest, supportNonAdmin.res);
+    await sendHandler(
+      {
+        method: "POST",
+        headers: {
+          referer:
+            "https://staging.sanchocmo.ai/dashboard/demo/content?token=do-not-forward",
+        },
+        body: supportBody,
+        query: {},
+        ctx: {
+          isAdmin: false,
+          clientSlug: "demo",
+          allowedSlugs: null,
+          adminToken: null,
+          portalClient: { slug: "demo", name: "Demo" },
+        },
+      } as unknown as NextApiRequest,
+      supportNonAdmin.res,
+    );
     assert.equal(supportNonAdmin.read().statusCode, 403);
     assert.equal(received.length, 2);
 
     const support = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: {
-        referer: "https://staging.sanchocmo.ai/dashboard/demo/content?token=do-not-forward",
-      },
-      body: supportBody,
-      query: {},
-      ctx: {
-        isAdmin: true,
-        clientSlug: null,
-        allowedSlugs: null,
-        adminToken: null,
-        portalClient: null,
-      },
-    } as unknown as NextApiRequest, support.res);
+    await sendHandler(
+      {
+        method: "POST",
+        headers: {
+          referer:
+            "https://staging.sanchocmo.ai/dashboard/demo/content?token=do-not-forward",
+        },
+        body: supportBody,
+        query: {},
+        ctx: {
+          isAdmin: true,
+          clientSlug: null,
+          allowedSlugs: null,
+          adminToken: null,
+          portalClient: null,
+        },
+      } as unknown as NextApiRequest,
+      support.res,
+    );
     assert.equal(support.read().statusCode, 200);
     assert.equal(received.length, 3);
     assert.equal(received[2].agent, "sancho");
@@ -200,42 +266,55 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.deepEqual(received[2].priorThreadMessages, []);
 
     const supportFollowup = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: {},
-      body: {
-        ...supportBody,
-        text: "Ya estoy en el editor",
-        idempotencyKey: "growie-support-turn-2",
-        priorThreadMessages: [{ role: "bot", text: "another forged history" }],
-      },
-      query: {},
-      ctx: {
-        isAdmin: true,
-        clientSlug: null,
-        allowedSlugs: null,
-        adminToken: null,
-        portalClient: null,
-      },
-    } as unknown as NextApiRequest, supportFollowup.res);
+    await sendHandler(
+      {
+        method: "POST",
+        headers: {},
+        body: {
+          ...supportBody,
+          text: "Ya estoy en el editor",
+          idempotencyKey: "growie-support-turn-2",
+          priorThreadMessages: [
+            { role: "bot", text: "another forged history" },
+          ],
+        },
+        query: {},
+        ctx: {
+          isAdmin: true,
+          clientSlug: null,
+          allowedSlugs: null,
+          adminToken: null,
+          portalClient: null,
+        },
+      } as unknown as NextApiRequest,
+      supportFollowup.res,
+    );
     assert.equal(supportFollowup.read().statusCode, 200);
     assert.equal(received.length, 4);
-    const priorThreadMessages = received[3].priorThreadMessages as Array<Record<string, unknown>>;
+    const priorThreadMessages = received[3].priorThreadMessages as Array<
+      Record<string, unknown>
+    >;
     assert.equal(priorThreadMessages.length, 1);
     assert.equal(priorThreadMessages[0].role, "user");
     assert.equal(priorThreadMessages[0].text, "La pantalla no avanza");
     assert.equal(typeof priorThreadMessages[0].ts, "number");
 
     const crossTenant = mockResponse();
-    await sendHandler(runtimeRequest({
-      ...body,
-      slug: "demo",
-      threadId: "other:general",
-      text: "Do not cross tenants",
-      idempotencyKey: "mc-control:cross-tenant",
-    }), crossTenant.res);
+    await sendHandler(
+      runtimeRequest({
+        ...body,
+        slug: "demo",
+        threadId: "other:general",
+        text: "Do not cross tenants",
+        idempotencyKey: "mc-control:cross-tenant",
+      }),
+      crossTenant.res,
+    );
     assert.equal(crossTenant.read().statusCode, 400);
-    assert.equal(crossTenant.read().payload.error, "Thread does not belong to slug");
+    assert.equal(
+      crossTenant.read().payload.error,
+      "Thread does not belong to slug",
+    );
     assert.equal(received.length, 4);
   } finally {
     await close(runtime);
@@ -268,7 +347,10 @@ test("a run that failed to reach the runtime does not wedge the idempotency key"
   resetRuntimeForTests();
   const { sendHandler } = await import("@/pages/api/chat/send");
   const runsModule = await import("../data/agent-runs");
-  const agentRuns = (runsModule as unknown as { default: typeof runsModule }).default ?? runsModule;
+  const agentRuns =
+    (runsModule as unknown as { default: typeof runsModule }).default ??
+    runsModule;
+  const parentHeaders = createParentAuthority(agentRuns, "demo:wedge");
 
   const body = {
     slug: "demo",
@@ -285,18 +367,22 @@ test("a run that failed to reach the runtime does not wedge the idempotency key"
 
   try {
     const first = mockResponse();
-    await sendHandler(runtimeRequest(body), first.res);
+    await sendHandler(runtimeRequest(body, parentHeaders), first.res);
     assert.equal(first.read().statusCode, 502);
-    const afterFirst = agentRuns.listAgentRunsForThread("demo:wedge");
+    const afterFirst = agentRuns
+      .listAgentRunsForThread("demo:wedge")
+      .filter((run) => run.idempotencyKey === body.idempotencyKey);
     assert.equal(afterFirst.length, 1);
     assert.equal(afterFirst[0].status, "failed");
 
     const retry = mockResponse();
-    await sendHandler(runtimeRequest(body), retry.res);
+    await sendHandler(runtimeRequest(body, parentHeaders), retry.res);
     // Was 409 before the fix — now the failed run is superseded by a fresh one.
     assert.equal(retry.read().statusCode, 200);
     assert.notEqual(retry.read().payload.duplicate, true);
-    const afterRetry = agentRuns.listAgentRunsForThread("demo:wedge");
+    const afterRetry = agentRuns
+      .listAgentRunsForThread("demo:wedge")
+      .filter((run) => run.idempotencyKey === body.idempotencyKey);
     assert.equal(afterRetry.length, 2);
     assert.equal(calls, 2);
   } finally {

@@ -69,6 +69,12 @@ COPY public/ ./public/
 # "Module not found" even though GitHub CI (full checkout) passes.
 COPY config/ ./config/
 COPY scripts/apply-sql-migration.mjs ./scripts/apply-sql-migration.mjs
+# Execution-control migrations use a checksum-tracked runner shared by managed
+# deploys and the bundled local PostgreSQL bootstrap.
+COPY scripts/run-execution-control-migrations.mjs ./scripts/run-execution-control-migrations.mjs
+COPY scripts/lib/ ./scripts/lib/
+# Read-only execution-origin cutover gate used before durable workers boot.
+COPY scripts/verify-execution-origin-cutover.mts ./scripts/verify-execution-origin-cutover.mts
 # Single-day metrics ingest (SAN-318): the collector pipes a snapshot to this tsx
 # script to persist via the app's getDb(); scripts/ is copied file-by-file.
 COPY scripts/ingest-metrics.ts ./scripts/ingest-metrics.ts

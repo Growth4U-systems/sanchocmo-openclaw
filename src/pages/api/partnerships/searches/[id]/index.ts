@@ -1,6 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
-import { archiveSearch, getSearch } from "@/lib/partnerships";
+import {
+  compose,
+  getSlug,
+  withErrorHandler,
+  withSlugAuth,
+} from "@/lib/api-middleware";
+import {
+  archiveSearch,
+  DiscoveryStoreValidationError,
+  getSearch,
+  isValidDiscoverySearchId,
+} from "@/lib/partnerships";
 
 /**
  * DELETE /api/partnerships/searches/{id}
@@ -19,9 +29,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const searchId = typeof req.query.id === "string" ? req.query.id.trim() : "";
   if (!searchId) return res.status(400).json({ error: "Missing search id" });
+  if (!isValidDiscoverySearchId(searchId)) {
+    return res.status(400).json({
+      error: "Invalid discovery search id",
+      code: "DISCOVERY_SEARCH_ID_INVALID",
+    });
+  }
 
-  if (!getSearch(slug, searchId)) {
-    return res.status(404).json({ error: `Discovery search not found: ${searchId}` });
+  let existing;
+  try {
+    existing = getSearch(slug, searchId);
+  } catch (error) {
+    if (error instanceof DiscoveryStoreValidationError) {
+      return res.status(409).json({
+        error: "Discovery search receipt identity is invalid",
+        code: "DISCOVERY_SEARCH_RECEIPT_INVALID",
+      });
+    }
+    throw error;
+  }
+  if (!existing) {
+    return res
+      .status(404)
+      .json({ error: `Discovery search not found: ${searchId}` });
   }
 
   const reason =

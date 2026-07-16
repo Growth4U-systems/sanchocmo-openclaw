@@ -4,6 +4,12 @@
   "description": "Webchat channel plugin that connects Mission Control dashboard to OpenClaw agents",
   "version": "0.1.0",
   "channels": ["mc-chat"],
+  "contracts": {
+    "tools": ["leads_search_start", "partnerships_discovery_start"]
+  },
+  "activation": {
+    "onStartup": true
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -29,6 +35,57 @@
             "items": { "type": "string" },
             "description": "Portal tokens or admin tokens allowed to send messages"
           }
+        }
+      }
+    }
+  },
+  "channelConfigs": {
+    "mc-chat": {
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "mcServerUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "contextPackUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "sharedSecret": {
+            "type": "string"
+          },
+          "allowFrom": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "label": "Mission Control Chat",
+      "description": "Authenticated Mission Control webchat channel for OpenClaw agents.",
+      "uiHints": {
+        "mcServerUrl": {
+          "label": "MC Server URL",
+          "help": "Trusted Mission Control origin used for callbacks and runtime tools."
+        },
+        "contextPackUrl": {
+          "label": "Context Pack API URL",
+          "help": "Trusted Mission Control origin used to load bounded turn context."
+        },
+        "sharedSecret": {
+          "label": "Shared Secret",
+          "sensitive": true,
+          "help": "Transport authentication only; run capabilities authorize tenant-scoped actions."
         }
       }
     }

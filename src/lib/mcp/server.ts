@@ -146,6 +146,7 @@ import {
   creatorReportForSlug,
   enqueueDiscoverySearchRun,
   getEffectiveModelConfig,
+  isDiscoverySetupPending,
   ModelConfigValidationError,
   parseDiscoveryPlan,
   parseReportPeriod,
@@ -3665,6 +3666,20 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           commandId,
           executionIntent: runFixtures === true ? "fixtures" : "auto",
         });
+        if (isDiscoverySetupPending(created)) {
+          return jsonResult({
+            ok: true,
+            accepted: true,
+            ready: false,
+            replayed: created.replayed,
+            setupRunId: created.setupRunId,
+            searchId: created.searchId,
+            status: created.status,
+            statusUrl: created.statusUrl,
+            message:
+              "Search setup was admitted durably and is still in progress.",
+          });
+        }
         if (created.replayed) {
           return jsonResult({
             ok: true,

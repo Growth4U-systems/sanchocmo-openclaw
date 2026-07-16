@@ -63,6 +63,9 @@ class FakeRepository implements ExecutionControlRepository {
     mode: "shadow",
     status: "queued",
     metadata: {},
+    availableAt: "2026-07-15T10:00:00.000Z",
+    claimCount: 0,
+    handlerAttempt: 0,
     createdAt: "2026-07-15T10:00:00.000Z",
     updatedAt: "2026-07-15T10:00:00.000Z",
   };
@@ -96,17 +99,68 @@ class FakeRepository implements ExecutionControlRepository {
   async getRunById(): Promise<ExecutionRun | null> {
     return this.run;
   }
+  async getRunByIdForScope(input: {
+    tenantKey: string;
+    operation: string;
+    mode: "canary" | "active";
+    runId: string;
+  }): Promise<ExecutionRun | null> {
+    return this.run.id === input.runId &&
+      this.run.tenantKey === input.tenantKey &&
+      this.run.operation === input.operation &&
+      this.run.mode === input.mode
+      ? this.run
+      : null;
+  }
   async getRunByAggregate(): Promise<ExecutionRun | null> {
     return this.run;
   }
+  async getRunByAggregateForScope(input: {
+    tenantKey: string;
+    operation: string;
+    mode: "canary" | "active";
+    aggregateType: string;
+    aggregateId: string;
+  }): Promise<ExecutionRun | null> {
+    return this.run.tenantKey === input.tenantKey &&
+      this.run.operation === input.operation &&
+      this.run.mode === input.mode &&
+      this.run.aggregateType === input.aggregateType &&
+      this.run.aggregateId === input.aggregateId
+      ? this.run
+      : null;
+  }
   async listEvents(): Promise<ExecutionEvent[]> {
     return [];
+  }
+  async claimRun() {
+    return null;
+  }
+  async claimNextRun() {
+    return null;
+  }
+  async renewRunLease() {
+    return null;
+  }
+  async checkpointRun() {
+    return null;
+  }
+  async requeueRun() {
+    return null;
+  }
+  async finishRun() {
+    return null;
   }
 }
 
 const enabledEnv = {
   PARTNERSHIPS_DISCOVERY_EXECUTION_V2: "shadow",
   PARTNERSHIPS_DISCOVERY_V2_SLUGS: "hospital-capilar",
+};
+const canaryEnv = {
+  PARTNERSHIPS_DISCOVERY_EXECUTION_V2: "canary",
+  PARTNERSHIPS_DISCOVERY_V2_SLUGS: "hospital-capilar",
+  PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE: "local-persistent-single-host",
 };
 
 test("disabled shadow performs no database work", async () => {
@@ -133,13 +187,164 @@ test("shadow create is idempotent and persists a sanitized frozen command", asyn
   assert.equal(second.created, false);
   assert.equal(
     repository.creates[0].idempotencyKey,
-    "partnerships.discovery:hospital-capilar:ds-1:attempt:1:v1",
+    "partnerships.discovery:hospital-capilar:ds-1:attempt:1:v2",
   );
   assert.equal(repository.creates[0].tenantKey, "hospital-capilar");
   assert.doesNotMatch(
     JSON.stringify(repository.creates[0].input),
     /private-chat-thread/,
   );
+});
+
+test("canary create is fail-closed and uses a receipt distinct from shadow", async () => {
+  const repository = new FakeRepository();
+  repository.run = { ...repository.run, mode: "canary" };
+
+  const result = await observeDiscoveryExecutionCreated(search(), {
+    repository,
+    env: canaryEnv,
+  });
+
+  assert.equal(result.recorded, true);
+  assert.equal(repository.creates[0].mode, "canary");
+  assert.equal(
+    repository.creates[0].idempotencyKey,
+    "partnerships.discovery:hospital-capilar:ds-1:attempt:1:canary:v2",
+  );
+  assert.equal(repository.creates[0].metadata?.authority, "execution_ledger");
+
+  repository.createRun = async () => {
+    throw new Error("ledger unavailable");
+  };
+  await assert.rejects(
+    () =>
+      observeDiscoveryExecutionCreated(search(), {
+        repository,
+        env: canaryEnv,
+      }),
+    /ledger unavailable/,
+  );
+});
+
+test("canary parks an explicit run:none command outside the claim queue", async () => {
+  const repository = new FakeRepository();
+  repository.run = { ...repository.run, mode: "canary" };
+  const deferred = search();
+  deferred.executionIntent = "none";
+
+  await observeDiscoveryExecutionCreated(deferred, {
+    repository,
+    env: canaryEnv,
+  });
+
+  assert.deepEqual(repository.transitions[0], {
+    runId: "xrun-1",
+    input: {
+      status: "waiting_approval",
+      expectedStatus: "queued",
+      currentStep: "deferred",
+    },
+    type: "execution.deferred",
+  });
+});
+
+test("canary replay reuses the exact linked run after mutable runner state changes", async () => {
+  const repository = new FakeRepository();
+  const current = search();
+  current.executionControl = {
+    mode: "canary",
+    admittedAt: current.createdAt,
+    generation: 1,
+    runId: "xrun-1",
+    commandFingerprint: "fingerprint-1",
+  };
+  current.runner = {
+    ...current.runner,
+    status: "done",
+    mode: "live",
+    jobId: "mutable-job",
+    finishedAt: "2026-07-15T10:10:00.000Z",
+  };
+  repository.run = {
+    ...repository.run,
+    mode: "canary",
+    status: "completed",
+    commandFingerprint: "fingerprint-1",
+    input: {
+      schemaVersion: 2,
+      slug: current.slug,
+      searchId: current.id,
+      executionGeneration: 1,
+    },
+  };
+
+  const result = await observeDiscoveryExecutionCreated(current, {
+    repository,
+    env: canaryEnv,
+  });
+
+  assert.equal(result.runId, "xrun-1");
+  assert.equal(result.created, false);
+  assert.equal(repository.creates.length, 0);
+});
+
+test("canary linked-run replay fails closed when exact scope lookup misses", async () => {
+  const repository = new FakeRepository();
+  const current = search();
+  current.executionControl = {
+    mode: "canary",
+    admittedAt: current.createdAt,
+    generation: 1,
+    runId: "xrun-missing",
+    commandFingerprint: "fingerprint-1",
+  };
+  repository.run = { ...repository.run, mode: "canary" };
+  repository.getRunByIdForScope = async () => null;
+
+  await assert.rejects(
+    observeDiscoveryExecutionCreated(current, {
+      repository,
+      env: canaryEnv,
+    }),
+    /missing from its exact scope/,
+  );
+  assert.equal(repository.creates.length, 0);
+});
+
+test("setup child-before-bind replay recovers the frozen child without create", async () => {
+  const repository = new FakeRepository();
+  const current = search();
+  current.executionControl = {
+    mode: "canary",
+    admittedAt: current.createdAt,
+    generation: 1,
+    setupRunId: "xrun-setup",
+    preparedFingerprint: "prepared-1",
+  };
+  current.runner = { ...current.runner, status: "running", mode: "live" };
+  repository.run = {
+    ...repository.run,
+    mode: "canary",
+    status: "running",
+    commandFingerprint: "fingerprint-child",
+    input: {
+      schemaVersion: 2,
+      slug: current.slug,
+      searchId: current.id,
+      executionGeneration: 1,
+      setupRunId: "xrun-setup",
+      preparedFingerprint: "prepared-1",
+    },
+  };
+
+  const result = await observeDiscoveryExecutionCreated(current, {
+    repository,
+    env: canaryEnv,
+  });
+
+  assert.equal(result.runId, "xrun-1");
+  assert.equal(result.created, false);
+  assert.equal(repository.creates.length, 0);
 });
 
 test("shadow database failure never fails the legacy search", async () => {
@@ -219,7 +424,7 @@ test("each retry attempt gets a distinct idempotency key", async () => {
 
   assert.equal(
     repository.creates[0].idempotencyKey,
-    "partnerships.discovery:hospital-capilar:ds-1:attempt:2:v1",
+    "partnerships.discovery:hospital-capilar:ds-1:attempt:2:v2",
   );
   assert.equal((repository.creates[0].input as { attempt: number }).attempt, 2);
 });

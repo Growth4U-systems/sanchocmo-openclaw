@@ -7,12 +7,13 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   real,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 
 // ============================================================
 // User & Auth tables (compatible with BetterAuth schema)
@@ -939,131 +940,703 @@ export const metricStageRollups = pgTable("metric_stage_rollups", {
 // Generic execution control plane — durable run/step/event ledger
 // ============================================================
 
-export const executionRuns = pgTable("execution_runs", {
-  id: text("id").primaryKey(),
-  // Nullable only during SAN-480's expand/contract rollback window. Every
-  // current application writer requires it; the contract migration will add
-  // the database NOT NULL constraint after staging validation.
-  tenantKey: text("tenant_key"),
-  idempotencyKey: text("idempotency_key").notNull(),
-  aggregateType: text("aggregate_type").notNull(),
-  aggregateId: text("aggregate_id").notNull(),
-  operation: text("operation").notNull(),
-  mode: text("mode").notNull().default("shadow"),
-  status: text("status").notNull().default("queued"),
-  currentStep: text("current_step"),
-  traceId: text("trace_id"),
-  input: jsonb("input").$type<unknown>(),
-  output: jsonb("output").$type<unknown>(),
-  error: text("error"),
-  metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  startedAt: timestamp("started_at"),
-  finishedAt: timestamp("finished_at"),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => [
-  check(
-    "execution_runs_mode_check",
-    sql`${table.mode} in ('shadow', 'canary', 'active')`,
-  ),
-  check(
-    "execution_runs_status_check",
-    sql`${table.status} in ('queued', 'running', 'waiting_approval', 'completed', 'partial', 'failed', 'cancelled')`,
-  ),
-  check(
-    "execution_runs_metadata_object_check",
-    sql`jsonb_typeof(${table.metadata}) = 'object'`,
-  ),
-  uniqueIndex("execution_runs_aggregate_idempotency_idx").on(
-    table.aggregateType,
-    table.aggregateId,
-    table.operation,
-    table.idempotencyKey,
-  ),
-  uniqueIndex("execution_runs_tenant_aggregate_idempotency_idx").on(
-    table.tenantKey,
-    table.aggregateType,
-    table.aggregateId,
-    table.operation,
-    table.idempotencyKey,
-  ),
-  index("execution_runs_aggregate_created_idx").on(
-    table.aggregateType,
-    table.aggregateId,
-    table.createdAt,
-  ),
-  index("execution_runs_status_updated_idx").on(table.status, table.updatedAt),
-  index("execution_runs_tenant_created_idx").on(
-    table.tenantKey,
-    table.createdAt,
-    table.id,
-  ),
-  index("execution_runs_tenant_status_created_idx").on(
-    table.tenantKey,
-    table.status,
-    table.createdAt,
-    table.id,
-  ),
-  index("execution_runs_tenant_operation_status_created_idx").on(
-    table.tenantKey,
-    table.operation,
-    table.status,
-    table.createdAt,
-    table.id,
-  ),
-  index("execution_runs_tenant_operation_created_idx").on(
-    table.tenantKey,
-    table.operation,
-    table.createdAt,
-    table.id,
-  ),
-  index("execution_runs_trace_idx").on(table.traceId),
-]);
+// These tables retain `timestamp without time zone` for compatibility. Their
+// wall-clock values are UTC by contract, including writes that use a column
+// default rather than the execution-control repository.
+const executionUtcTimestampDefault = sql`clock_timestamp() AT TIME ZONE 'UTC'`;
 
-export const executionSteps = pgTable("execution_steps", {
-  id: text("id").primaryKey(),
-  runId: text("run_id")
-    .notNull()
-    .references(() => executionRuns.id, { onDelete: "cascade" }),
-  stepKey: text("step_key").notNull(),
-  status: text("status").notNull().default("pending"),
-  attempt: integer("attempt").notNull().default(0),
-  input: jsonb("input").$type<unknown>(),
-  output: jsonb("output").$type<unknown>(),
-  error: text("error"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  startedAt: timestamp("started_at"),
-  finishedAt: timestamp("finished_at"),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (table) => [
-  check(
-    "execution_steps_status_check",
-    sql`${table.status} in ('pending', 'running', 'waiting_approval', 'completed', 'failed', 'cancelled', 'skipped')`,
-  ),
-  check("execution_steps_attempt_check", sql`${table.attempt} >= 0`),
-  uniqueIndex("execution_steps_run_key_idx").on(table.runId, table.stepKey),
-  index("execution_steps_run_status_idx").on(table.runId, table.status),
-]);
+export const executionRuns = pgTable(
+  "execution_runs",
+  {
+    id: text("id").primaryKey(),
+    // Contracted after the expand/backfill window. It is part of both the
+    // authorization boundary and the idempotency identity.
+    tenantKey: text("tenant_key").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    aggregateType: text("aggregate_type").notNull(),
+    aggregateId: text("aggregate_id").notNull(),
+    operation: text("operation").notNull(),
+    mode: text("mode").notNull().default("shadow"),
+    status: text("status").notNull().default("queued"),
+    currentStep: text("current_step"),
+    traceId: text("trace_id"),
+    input: jsonb("input").$type<unknown>(),
+    output: jsonb("output").$type<unknown>(),
+    error: text("error"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    // Nullable for pre-0022 rows; current writers lazily adopt only exact matches.
+    commandFingerprint: text("command_fingerprint"),
+    availableAt: timestamp("available_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    leaseOwner: text("lease_owner"),
+    // A bearer lease token is never persisted in cleartext.
+    leaseTokenHash: text("lease_token_hash"),
+    leaseExpiresAt: timestamp("lease_expires_at"),
+    claimCount: integer("claim_count").notNull().default(0),
+    handlerAttempt: integer("handler_attempt").notNull().default(0),
+    blockedReasonCode: text("blocked_reason_code"),
+    blockedAt: timestamp("blocked_at"),
+    cancelRequestId: text("cancel_request_id"),
+    cancelRequestedAt: timestamp("cancel_requested_at"),
+    cancelActorType: text("cancel_actor_type"),
+    cancelActorId: text("cancel_actor_id"),
+    cancelReasonCode: text("cancel_reason_code"),
+    cancelAcknowledgedAt: timestamp("cancel_acknowledged_at"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    check(
+      "execution_runs_mode_check",
+      sql`${table.mode} in ('shadow', 'canary', 'active')`,
+    ),
+    check(
+      "execution_runs_status_check",
+      sql`${table.status} in ('queued', 'running', 'waiting_approval', 'blocked', 'completed', 'partial', 'failed', 'cancelled')`,
+    ),
+    check(
+      "execution_runs_block_reason_code_check",
+      sql`${table.blockedReasonCode} is null or ${table.blockedReasonCode} in ('handler_version_invalid', 'handler_contract_unsupported', 'handler_contract_mismatch', 'execution_policy_mismatch', 'command_contract_mismatch', 'runtime_authority_unavailable')`,
+    ),
+    check(
+      "execution_runs_block_shape_check",
+      sql`(
+        ${table.status} = 'blocked' and
+        ${table.blockedReasonCode} is not null and
+        ${table.blockedAt} is not null and
+        ${table.leaseOwner} is null and
+        ${table.leaseTokenHash} is null and
+        ${table.leaseExpiresAt} is null and
+        ${table.finishedAt} is null
+      ) or (
+        ${table.status} <> 'blocked' and
+        ${table.blockedReasonCode} is null and
+        ${table.blockedAt} is null
+      )`,
+    ),
+    check(
+      "execution_runs_metadata_object_check",
+      sql`jsonb_typeof(${table.metadata}) = 'object'`,
+    ),
+    check(
+      "execution_runs_cancellation_shape_check",
+      sql`(
+      ${table.cancelRequestId} is null and
+      ${table.cancelRequestedAt} is null and
+      ${table.cancelActorType} is null and
+      ${table.cancelActorId} is null and
+      ${table.cancelReasonCode} is null and
+      ${table.cancelAcknowledgedAt} is null
+    ) or (
+      ${table.cancelRequestId} is not null and
+      ${table.cancelRequestedAt} is not null and
+      ${table.cancelActorType} is not null and
+      ${table.cancelActorId} is not null and
+      ${table.cancelReasonCode} is not null and
+      (
+        (${table.status} = 'running' and ${table.cancelAcknowledgedAt} is null) or
+        (${table.status} = 'cancelled' and ${table.cancelAcknowledgedAt} is not null)
+      )
+    )`,
+    ),
+    check(
+      "execution_runs_cancel_request_id_check",
+      sql`${table.cancelRequestId} is null or ${table.cancelRequestId} ~ '^([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|cancel_[a-f0-9]{32,64})$'`,
+    ),
+    check(
+      "execution_runs_cancel_actor_type_check",
+      sql`${table.cancelActorType} is null or ${table.cancelActorType} in ('user', 'service', 'system')`,
+    ),
+    check(
+      "execution_runs_cancel_actor_id_check",
+      sql`${table.cancelActorId} is null or ${table.cancelActorId} ~ '^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$'`,
+    ),
+    check(
+      "execution_runs_cancel_reason_code_check",
+      sql`${table.cancelReasonCode} is null or ${table.cancelReasonCode} in ('user_requested', 'superseded', 'invalid_command', 'policy_blocked', 'operator_intervention', 'system_shutdown')`,
+    ),
+    uniqueIndex("execution_runs_tenant_aggregate_idempotency_idx").on(
+      table.tenantKey,
+      table.aggregateType,
+      table.aggregateId,
+      table.operation,
+      table.idempotencyKey,
+    ),
+    uniqueIndex("execution_runs_id_tenant_idx").on(table.id, table.tenantKey),
+    index("execution_runs_aggregate_created_idx").on(
+      table.aggregateType,
+      table.aggregateId,
+      table.createdAt,
+    ),
+    index("execution_runs_status_updated_idx").on(
+      table.status,
+      table.updatedAt,
+    ),
+    index("execution_runs_tenant_created_idx").on(
+      table.tenantKey,
+      table.createdAt,
+      table.id,
+    ),
+    index("execution_runs_tenant_status_created_idx").on(
+      table.tenantKey,
+      table.status,
+      table.createdAt,
+      table.id,
+    ),
+    index("execution_runs_tenant_operation_status_created_idx").on(
+      table.tenantKey,
+      table.operation,
+      table.status,
+      table.createdAt,
+      table.id,
+    ),
+    index("execution_runs_tenant_operation_created_idx").on(
+      table.tenantKey,
+      table.operation,
+      table.createdAt,
+      table.id,
+    ),
+    index("execution_runs_trace_idx").on(table.traceId),
+    index("execution_runs_queued_claim_idx")
+      .on(
+        table.tenantKey,
+        table.operation,
+        table.mode,
+        table.availableAt,
+        table.createdAt,
+        table.id,
+      )
+      .where(
+        sql`${table.status} = 'queued' and ${table.mode} in ('canary', 'active')`,
+      ),
+    index("execution_runs_running_expired_lease_idx")
+      .on(table.tenantKey, table.operation, table.mode, table.leaseExpiresAt)
+      .where(
+        sql`${table.status} = 'running' and ${table.leaseExpiresAt} is not null`,
+      ),
+    index("execution_runs_runnable_scope_idx")
+      .on(table.operation, table.mode, table.tenantKey)
+      .where(
+        sql`${table.status} in ('queued', 'running') and ${table.mode} in ('canary', 'active')`,
+      ),
+    index("execution_runs_cancellation_requested_idx")
+      .on(
+        table.tenantKey,
+        table.operation,
+        table.mode,
+        table.cancelRequestedAt,
+        table.id,
+      )
+      .where(
+        sql`${table.status} = 'running' and ${table.cancelRequestId} is not null`,
+      ),
+    index("execution_runs_blocked_scope_idx")
+      .on(
+        table.operation,
+        table.mode,
+        table.tenantKey,
+        table.blockedAt,
+        table.id,
+      )
+      .where(
+        sql`${table.status} = 'blocked' and ${table.mode} in ('canary', 'active')`,
+      ),
+  ],
+);
 
-export const executionEvents = pgTable("execution_events", {
-  sequence: bigserial("sequence", { mode: "number" }).notNull(),
-  id: text("id").primaryKey(),
-  runId: text("run_id")
-    .notNull()
-    .references(() => executionRuns.id, { onDelete: "cascade" }),
-  aggregateType: text("aggregate_type").notNull(),
-  aggregateId: text("aggregate_id").notNull(),
-  traceId: text("trace_id"),
-  type: text("type").notNull(),
-  ts: timestamp("ts").notNull().defaultNow(),
-  data: jsonb("data").$type<unknown>(),
-}, (table) => [
-  index("execution_events_run_sequence_idx").on(table.runId, table.sequence),
-  index("execution_events_aggregate_sequence_idx").on(
-    table.aggregateType,
-    table.aggregateId,
-    table.sequence,
-  ),
-  index("execution_events_trace_idx").on(table.traceId),
-  index("execution_events_ts_idx").on(table.ts),
-]);
+/**
+ * Authoritative root execution tree plus monotonic Stop tombstone. Public run
+ * metadata may mirror the origin for diagnostics, but it grants no authority.
+ */
+export const executionOrigins = pgTable(
+  "execution_origins",
+  {
+    tenantKey: text("tenant_key").notNull(),
+    kind: text("kind").notNull(),
+    parentAgentRunId: text("parent_agent_run_id").notNull(),
+    cancelRequestId: text("cancel_request_id"),
+    cancelRequestedAt: timestamp("cancel_requested_at"),
+    cancelActorType: text("cancel_actor_type"),
+    cancelActorId: text("cancel_actor_id"),
+    cancelReasonCode: text("cancel_reason_code"),
+    commandOperation: text("command_operation"),
+    commandFingerprint: text("command_fingerprint"),
+    commandClaimedAt: timestamp("command_claimed_at"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    primaryKey({
+      name: "execution_origins_pkey",
+      columns: [table.tenantKey, table.kind, table.parentAgentRunId],
+    }),
+    check(
+      "execution_origins_kind_check",
+      sql`${table.kind} = 'mc_chat_parent_run'`,
+    ),
+    check(
+      "execution_origins_parent_agent_run_id_check",
+      sql`${table.parentAgentRunId} ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$'`,
+    ),
+    check(
+      "execution_origins_cancel_request_id_check",
+      sql`${table.cancelRequestId} is null or ${table.cancelRequestId} ~ '^([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|cancel_[a-f0-9]{32,64})$'`,
+    ),
+    check(
+      "execution_origins_cancel_actor_type_check",
+      sql`${table.cancelActorType} is null or ${table.cancelActorType} in ('user', 'service', 'system')`,
+    ),
+    check(
+      "execution_origins_cancel_actor_id_check",
+      sql`${table.cancelActorId} is null or ${table.cancelActorId} ~ '^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$'`,
+    ),
+    check(
+      "execution_origins_cancel_reason_code_check",
+      sql`${table.cancelReasonCode} is null or ${table.cancelReasonCode} in ('user_requested', 'superseded', 'invalid_command', 'policy_blocked', 'operator_intervention', 'system_shutdown')`,
+    ),
+    check(
+      "execution_origins_cancellation_shape_check",
+      sql`(
+        ${table.cancelRequestId} is null and
+        ${table.cancelRequestedAt} is null and
+        ${table.cancelActorType} is null and
+        ${table.cancelActorId} is null and
+        ${table.cancelReasonCode} is null
+      ) or (
+        ${table.cancelRequestId} is not null and
+        ${table.cancelRequestedAt} is not null and
+        ${table.cancelActorType} is not null and
+        ${table.cancelActorId} is not null and
+        ${table.cancelReasonCode} is not null
+      )`,
+    ),
+    check(
+      "execution_origins_command_operation_check",
+      sql`${table.commandOperation} is null or ${table.commandOperation} ~ '^[a-z][a-z0-9._-]{0,127}$'`,
+    ),
+    check(
+      "execution_origins_command_fingerprint_check",
+      sql`${table.commandFingerprint} is null or ${table.commandFingerprint} ~ '^[a-f0-9]{64}$'`,
+    ),
+    check(
+      "execution_origins_command_claim_shape_check",
+      sql`(
+        ${table.commandOperation} is null and
+        ${table.commandFingerprint} is null and
+        ${table.commandClaimedAt} is null
+      ) or (
+        ${table.commandOperation} is not null and
+        ${table.commandFingerprint} is not null and
+        ${table.commandClaimedAt} is not null
+      )`,
+    ),
+    index("execution_origins_cancelled_idx")
+      .on(table.tenantKey, table.cancelRequestedAt, table.parentAgentRunId)
+      .where(sql`${table.cancelRequestId} is not null`),
+  ],
+);
+
+/** Immutable authoritative registration of one durable run under its root. */
+export const executionRunOrigins = pgTable(
+  "execution_run_origins",
+  {
+    runId: text("run_id").primaryKey(),
+    tenantKey: text("tenant_key").notNull(),
+    kind: text("kind").notNull(),
+    parentAgentRunId: text("parent_agent_run_id").notNull(),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    check(
+      "execution_run_origins_kind_check",
+      sql`${table.kind} = 'mc_chat_parent_run'`,
+    ),
+    foreignKey({
+      name: "execution_run_origins_run_tenant_fk",
+      columns: [table.runId, table.tenantKey],
+      foreignColumns: [executionRuns.id, executionRuns.tenantKey],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "execution_run_origins_origin_fk",
+      columns: [table.tenantKey, table.kind, table.parentAgentRunId],
+      foreignColumns: [
+        executionOrigins.tenantKey,
+        executionOrigins.kind,
+        executionOrigins.parentAgentRunId,
+      ],
+    }).onDelete("restrict"),
+    index("execution_run_origins_root_run_idx").on(
+      table.tenantKey,
+      table.kind,
+      table.parentAgentRunId,
+      table.runId,
+    ),
+  ],
+);
+
+export const executionSteps = pgTable(
+  "execution_steps",
+  {
+    id: text("id").primaryKey(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => executionRuns.id, { onDelete: "cascade" }),
+    stepKey: text("step_key").notNull(),
+    status: text("status").notNull().default("pending"),
+    attempt: integer("attempt").notNull().default(0),
+    input: jsonb("input").$type<unknown>(),
+    output: jsonb("output").$type<unknown>(),
+    error: text("error"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    check(
+      "execution_steps_status_check",
+      sql`${table.status} in ('pending', 'running', 'waiting_approval', 'completed', 'failed', 'cancelled', 'skipped')`,
+    ),
+    check("execution_steps_attempt_check", sql`${table.attempt} >= 0`),
+    uniqueIndex("execution_steps_run_key_idx").on(table.runId, table.stepKey),
+    index("execution_steps_run_status_idx").on(table.runId, table.status),
+  ],
+);
+
+export const executionEffects = pgTable(
+  "execution_effects",
+  {
+    id: text("id").primaryKey(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => executionRuns.id, { onDelete: "cascade" }),
+    stepKey: text("step_key").notNull(),
+    effectKey: text("effect_key").notNull(),
+    handlerVersion: integer("handler_version").notNull(),
+    definitionVersion: integer("definition_version").notNull(),
+    capability: text("capability").notNull(),
+    safety: text("safety").notNull(),
+    payloadSchemaVersion: integer("payload_schema_version").notNull(),
+    payloadFingerprint: text("payload_fingerprint").notNull(),
+    policyFingerprint: text("policy_fingerprint").notNull(),
+    receiptSchemaVersion: integer("receipt_schema_version").notNull(),
+    status: text("status").notNull().default("prepared"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    reconcileCount: integer("reconcile_count").notNull().default(0),
+    receipt: jsonb("receipt").$type<Record<string, unknown>>(),
+    receiptFingerprint: text("receipt_fingerprint"),
+    lastErrorCode: text("last_error_code"),
+    availableAt: timestamp("available_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    lastAttemptAt: timestamp("last_attempt_at"),
+    lastDeadlineAt: timestamp("last_deadline_at"),
+    finishedAt: timestamp("finished_at"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    uniqueIndex("execution_effects_run_step_unique").on(
+      table.runId,
+      table.stepKey,
+    ),
+    uniqueIndex("execution_effects_effect_key_unique").on(table.effectKey),
+    check(
+      "execution_effects_status_check",
+      sql`${table.status} in ('prepared', 'retry_wait', 'uncertain', 'succeeded', 'failed', 'cancelled')`,
+    ),
+    check(
+      "execution_effects_safety_check",
+      sql`${table.safety} in ('read_only', 'target_idempotency', 'reconcile_before_replay')`,
+    ),
+    check(
+      "execution_effects_attempt_check",
+      sql`${table.attemptCount} >= 0 and ${table.reconcileCount} >= 0`,
+    ),
+    check(
+      "execution_effects_versions_check",
+      sql`${table.handlerVersion} > 0 and ${table.definitionVersion} > 0 and ${table.payloadSchemaVersion} > 0 and ${table.receiptSchemaVersion} > 0`,
+    ),
+    check(
+      "execution_effects_step_key_check",
+      sql`${table.stepKey} ~ '^[a-z][a-z0-9._-]{0,63}$'`,
+    ),
+    check(
+      "execution_effects_effect_key_check",
+      sql`octet_length(${table.effectKey}) between 1 and 512 and ${table.effectKey} !~ '[[:space:]]'`,
+    ),
+    check(
+      "execution_effects_capability_check",
+      sql`${table.capability} ~ '^[a-z][a-z0-9._-]{0,127}$'`,
+    ),
+    check(
+      "execution_effects_payload_hash_check",
+      sql`${table.payloadFingerprint} ~ '^[a-f0-9]{64}$'`,
+    ),
+    check(
+      "execution_effects_policy_hash_check",
+      sql`${table.policyFingerprint} ~ '^[a-f0-9]{64}$'`,
+    ),
+    check(
+      "execution_effects_receipt_hash_check",
+      sql`${table.receiptFingerprint} is null or ${table.receiptFingerprint} ~ '^[a-f0-9]{64}$'`,
+    ),
+    check(
+      "execution_effects_error_code_check",
+      sql`${table.lastErrorCode} is null or ${table.lastErrorCode} ~ '^[a-z][a-z0-9._-]{0,127}$'`,
+    ),
+    check(
+      "execution_effects_receipt_size_check",
+      sql`${table.receipt} is null or (jsonb_typeof(${table.receipt}) = 'object' and octet_length(${table.receipt}::text) <= 16384)`,
+    ),
+    check(
+      "execution_effects_succeeded_receipt_check",
+      sql`(${table.status} = 'succeeded') = (${table.receipt} is not null and ${table.receiptFingerprint} is not null)`,
+    ),
+    index("execution_effects_run_status_idx").on(
+      table.runId,
+      table.status,
+      table.stepKey,
+    ),
+    index("execution_effects_retry_idx")
+      .on(table.availableAt, table.runId)
+      .where(sql`${table.status} in ('retry_wait', 'uncertain')`),
+  ],
+);
+
+/**
+ * Generic durable outbox for terminal product projections. One compact row per
+ * run is enough: the immutable command and terminal result remain authoritative
+ * on execution_runs and are loaded only after a fenced claim.
+ */
+export const executionTerminalProjections = pgTable(
+  "execution_terminal_projections",
+  {
+    runId: text("run_id")
+      .primaryKey()
+      .references(() => executionRuns.id, { onDelete: "restrict" }),
+    tenantKey: text("tenant_key").notNull(),
+    operation: text("operation").notNull(),
+    mode: text("mode").notNull(),
+    terminalStatus: text("terminal_status").notNull(),
+    state: text("state").notNull().default("pending"),
+    availableAt: timestamp("available_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    claimCount: integer("claim_count").notNull().default(0),
+    leaseOwner: text("lease_owner"),
+    leaseTokenHash: text("lease_token_hash"),
+    leaseExpiresAt: timestamp("lease_expires_at"),
+    lastAttemptAt: timestamp("last_attempt_at"),
+    lastErrorCode: text("last_error_code"),
+    projectedAt: timestamp("projected_at"),
+    createdAt: timestamp("created_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    check(
+      "execution_terminal_projections_mode_check",
+      sql`${table.mode} in ('canary', 'active')`,
+    ),
+    check(
+      "execution_terminal_projections_terminal_status_check",
+      sql`${table.terminalStatus} in ('completed', 'partial', 'failed', 'cancelled')`,
+    ),
+    check(
+      "execution_terminal_projections_state_check",
+      sql`${table.state} in ('pending', 'running', 'retry_wait', 'succeeded', 'blocked')`,
+    ),
+    check(
+      "execution_terminal_projections_claim_count_check",
+      sql`${table.claimCount} >= 0 and ${table.claimCount} <= 1000000`,
+    ),
+    check(
+      "execution_terminal_projections_scope_check",
+      sql`octet_length(${table.tenantKey}) between 1 and 128 and ${table.tenantKey} = lower(${table.tenantKey}) and ${table.tenantKey} ~ '^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$' and ${table.operation} ~ '^[a-z][a-z0-9._-]{0,127}$'`,
+    ),
+    check(
+      "execution_terminal_projections_lease_shape_check",
+      sql`(
+        ${table.state} = 'running' and
+        ${table.leaseOwner} is not null and
+        ${table.leaseTokenHash} is not null and
+        ${table.leaseExpiresAt} is not null
+      ) or (
+        ${table.state} <> 'running' and
+        ${table.leaseOwner} is null and
+        ${table.leaseTokenHash} is null and
+        ${table.leaseExpiresAt} is null
+      )`,
+    ),
+    check(
+      "execution_terminal_projections_lease_owner_check",
+      sql`${table.leaseOwner} is null or (octet_length(${table.leaseOwner}) between 1 and 160 and ${table.leaseOwner} !~ '[[:cntrl:]]')`,
+    ),
+    check(
+      "execution_terminal_projections_lease_hash_check",
+      sql`${table.leaseTokenHash} is null or ${table.leaseTokenHash} ~ '^[a-f0-9]{64}$'`,
+    ),
+    check(
+      "execution_terminal_projections_error_code_check",
+      sql`${table.lastErrorCode} is null or ${table.lastErrorCode} ~ '^[a-z][a-z0-9._-]{0,127}$'`,
+    ),
+    check(
+      "execution_terminal_projections_error_state_check",
+      sql`(
+        ${table.state} in ('retry_wait', 'blocked') and
+        ${table.lastErrorCode} is not null
+      ) or (
+        ${table.state} in ('pending', 'succeeded') and
+        ${table.lastErrorCode} is null
+      ) or ${table.state} = 'running'`,
+    ),
+    check(
+      "execution_terminal_projections_attempt_shape_check",
+      sql`(
+        ${table.claimCount} = 0 and ${table.lastAttemptAt} is null
+      ) or (
+        ${table.claimCount} > 0 and ${table.lastAttemptAt} is not null
+      )`,
+    ),
+    check(
+      "execution_terminal_projections_projected_check",
+      sql`(${table.state} = 'succeeded') = (${table.projectedAt} is not null)`,
+    ),
+    index("execution_terminal_projections_claim_idx")
+      .on(
+        table.tenantKey,
+        table.operation,
+        table.mode,
+        table.availableAt,
+        table.createdAt,
+        table.runId,
+      )
+      .where(sql`${table.state} in ('pending', 'retry_wait')`),
+    index("execution_terminal_projections_stale_lease_idx")
+      .on(table.tenantKey, table.operation, table.mode, table.leaseExpiresAt)
+      .where(sql`${table.state} = 'running'`),
+    index("execution_terminal_projections_runnable_scope_idx")
+      .on(table.operation, table.mode, table.tenantKey)
+      .where(sql`${table.state} in ('pending', 'retry_wait', 'running')`),
+    index("execution_terminal_projections_blocked_idx")
+      .on(table.updatedAt, table.operation, table.mode, table.tenantKey)
+      .where(sql`${table.state} = 'blocked'`),
+    index("execution_terminal_projections_blocked_scope_idx")
+      .on(table.operation, table.mode, table.tenantKey)
+      .where(sql`${table.state} = 'blocked'`),
+  ],
+);
+
+/**
+ * Product-owned, immutable read model for the bounded native Leads search
+ * canary. The generic Ledger owns execution state; this table owns only the
+ * user-visible terminal search result. Insert-only projection by run id makes
+ * stale terminal deliveries harmless and detects divergent replays.
+ */
+export const leadsSearchProjections = pgTable(
+  "leads_search_projections",
+  {
+    runId: text("run_id")
+      .primaryKey()
+      .references(() => executionRuns.id, { onDelete: "restrict" }),
+    tenantKey: text("tenant_key").notNull(),
+    terminalStatus: text("terminal_status").notNull(),
+    candidateCount: integer("candidate_count").notNull().default(0),
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    projectionFingerprint: text("projection_fingerprint").notNull(),
+    projectedAt: timestamp("projected_at")
+      .notNull()
+      .default(executionUtcTimestampDefault),
+  },
+  (table) => [
+    check(
+      "leads_search_projections_tenant_check",
+      sql`octet_length(${table.tenantKey}) between 1 and 128 and ${table.tenantKey} = lower(${table.tenantKey}) and ${table.tenantKey} ~ '^[a-z0-9]([a-z0-9._-]*[a-z0-9])?$'`,
+    ),
+    check(
+      "leads_search_projections_status_check",
+      sql`${table.terminalStatus} in ('completed', 'partial', 'failed', 'cancelled')`,
+    ),
+    check(
+      "leads_search_projections_candidate_count_check",
+      sql`${table.candidateCount} between 0 and 10`,
+    ),
+    check(
+      "leads_search_projections_result_check",
+      sql`(
+        ${table.terminalStatus} = 'completed' and
+        ${table.result} is not null and
+        jsonb_typeof(${table.result}) = 'object' and
+        octet_length(${table.result}::text) <= 16384
+      ) or (
+        ${table.terminalStatus} in ('partial', 'failed', 'cancelled') and
+        ${table.result} is null and
+        ${table.candidateCount} = 0
+      )`,
+    ),
+    check(
+      "leads_search_projections_fingerprint_check",
+      sql`${table.projectionFingerprint} ~ '^[a-f0-9]{64}$'`,
+    ),
+    index("leads_search_projections_tenant_projected_idx").on(
+      table.tenantKey,
+      desc(table.projectedAt),
+      desc(table.runId),
+    ),
+  ],
+);
+
+export const executionEvents = pgTable(
+  "execution_events",
+  {
+    sequence: bigserial("sequence", { mode: "number" }).notNull(),
+    id: text("id").primaryKey(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => executionRuns.id, { onDelete: "cascade" }),
+    aggregateType: text("aggregate_type").notNull(),
+    aggregateId: text("aggregate_id").notNull(),
+    traceId: text("trace_id"),
+    type: text("type").notNull(),
+    ts: timestamp("ts").notNull().default(executionUtcTimestampDefault),
+    data: jsonb("data").$type<unknown>(),
+  },
+  (table) => [
+    index("execution_events_run_sequence_idx").on(table.runId, table.sequence),
+    index("execution_events_aggregate_sequence_idx").on(
+      table.aggregateType,
+      table.aggregateId,
+      table.sequence,
+    ),
+    index("execution_events_trace_idx").on(table.traceId),
+    index("execution_events_ts_idx").on(table.ts),
+  ],
+);

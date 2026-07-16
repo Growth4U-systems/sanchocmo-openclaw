@@ -1,8 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
+import {
+  compose,
+  getSlug,
+  withErrorHandler,
+  withSlugAuth,
+} from "@/lib/api-middleware";
 import { yalcErrorResponse } from "@/lib/yalc/client";
-import { enqueueDiscoverySearchRun, getSearch, runDiscoverySearch } from "@/lib/partnerships";
+import {
+  enqueueDiscoverySearchRun,
+  DiscoveryRetryConflictError,
+  DiscoveryStoreValidationError,
+  getSearch,
+  isValidDiscoverySearchId,
+  requestDiscoverySearchRun,
+  runDiscoverySearch,
+} from "@/lib/partnerships";
 import { observeDiscoveryExecutionEvent } from "@/lib/partnerships/discovery-execution-observer";
+import {
+  DiscoveryDurableAuthorityError,
+  isDiscoveryLedgerAuthoritative,
+  resolveDiscoveryExecutionPolicy,
+} from "@/lib/partnerships/discovery-execution-policy";
 
 /**
  * POST /api/partnerships/searches/{id}/run — ejecutar el runner (SAN-79).
@@ -34,16 +52,82 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const searchId = typeof req.query.id === "string" ? req.query.id.trim() : "";
   if (!searchId) return res.status(400).json({ error: "Missing search id" });
-  const existing = getSearch(slug, searchId);
+  if (!isValidDiscoverySearchId(searchId)) {
+    return res.status(400).json({
+      error: "Invalid discovery search id",
+      code: "DISCOVERY_SEARCH_ID_INVALID",
+    });
+  }
+  let existing;
+  try {
+    existing = getSearch(slug, searchId);
+  } catch (error) {
+    if (error instanceof DiscoveryStoreValidationError) {
+      return res.status(409).json({
+        error: "Discovery search receipt identity is invalid",
+        code: "DISCOVERY_SEARCH_RECEIPT_INVALID",
+      });
+    }
+    throw error;
+  }
   if (!existing) {
-    return res.status(404).json({ error: `Discovery search not found: ${searchId}` });
+    return res
+      .status(404)
+      .json({ error: `Discovery search not found: ${searchId}` });
   }
   if (existing.archivedAt) {
     return res.status(409).json({ error: "Esta búsqueda está archivada." });
   }
 
-  const body = (req.body || {}) as { async?: unknown; candidates?: unknown; fixtures?: unknown };
+  const body = (req.body || {}) as {
+    async?: unknown;
+    candidates?: unknown;
+    fixtures?: unknown;
+  };
   try {
+    const executionPolicy = resolveDiscoveryExecutionPolicy(slug);
+    if (
+      isDiscoveryLedgerAuthoritative(existing) ||
+      (executionPolicy.enabled && executionPolicy.mode === "canary")
+    ) {
+      if (existing.executionIntent === "none") {
+        return res.status(409).json({
+          error:
+            "Esta búsqueda fue creada como solo borrador; crea un nuevo comando confirmado para ejecutarla.",
+          code: "DISCOVERY_CANARY_DEFERRED",
+        });
+      }
+      if (body.candidates !== undefined) {
+        return res.status(409).json({
+          error:
+            "El piloto durable no acepta callbacks inline de candidatos; crea una búsqueda Instagram server-side.",
+          code: "DISCOVERY_CANARY_INLINE_DISABLED",
+        });
+      }
+      if (body.fixtures === true && existing.executionIntent !== "fixtures") {
+        return res.status(409).json({
+          error:
+            "El modo fixtures debe quedar fijado al crear el comando durable.",
+          code: "DISCOVERY_CANARY_INTENT_CONFLICT",
+        });
+      }
+      const search = await requestDiscoverySearchRun({
+        slug,
+        searchId,
+        fixtures: existing.executionIntent === "fixtures",
+      });
+      return res.status(search.runner.status === "done" ? 200 : 202).json({
+        ok: true,
+        search,
+        runner: {
+          async: true,
+          mode: "durable",
+          jobId: search.runner.jobId,
+          status: search.runner.status,
+        },
+      });
+    }
+
     if (body.async === true && body.candidates === undefined) {
       const search = enqueueDiscoverySearchRun({
         slug,
@@ -81,6 +165,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       dropped: result.dropped,
     });
   } catch (err) {
+    if (err instanceof DiscoveryRetryConflictError) {
+      return res
+        .status(err.status)
+        .json({ error: err.message, code: err.code });
+    }
+    if (err instanceof DiscoveryDurableAuthorityError) {
+      return res
+        .status(err.status)
+        .json({ error: err.message, code: err.code });
+    }
     if (err instanceof Error && /No candidates provided/i.test(err.message)) {
       return res.status(400).json({ error: err.message });
     }

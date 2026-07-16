@@ -13,7 +13,14 @@
  * (`DiscoverySearchRecord`), referenciado desde la tarea madre.
  */
 
-import type { CreatorSignals, QualificationMode, QualityComponent, ScoreBand, TierKey } from "@/lib/calc-creator-core";
+import type {
+  CreatorSignals,
+  QualificationMode,
+  QualityComponent,
+  ScoreBand,
+  TierKey,
+} from "@/lib/calc-creator-core";
+import type { CreatorModelConfig } from "@/lib/calc-creator-core";
 
 /** Tipo de campaña Yalc — una sola pipeline, dos motions: B2B y Partnerships (SAN-349). */
 export type CampaignType = "B2B" | "Partnerships";
@@ -116,6 +123,8 @@ export type DiscoveryRunnerErrorCode =
   | "unsupported_network"
   | "no_candidates"
   | "yalc_unavailable"
+  | "artifact_corrupt"
+  | "artifact_conflict"
   | "job_interrupted"
   | "runner_failed";
 
@@ -161,6 +170,25 @@ export interface DiscoverySearchRecord {
   commandFingerprint?: string;
   /** Frozen execution requested with the create command. */
   executionIntent?: "auto" | "live" | "agent" | "fixtures" | "none";
+  /**
+   * Explicit rollout admission. Startup recovery must never infer this from
+   * older shadow-era fields when a tenant is later promoted to canary.
+   */
+  executionControl?: {
+    mode: "canary";
+    admittedAt: string;
+    /** Durable pre-effect admission that prepared this search. */
+    setupRunId?: string;
+    /** Frozen setup command hash used to fence setup projections. */
+    preparedFingerprint?: string;
+    /** Monotonic product-projection generation; old records default to 1. */
+    generation?: number;
+    runId?: string;
+    /** Immutable Ledger command hash bound when runId is attached. */
+    commandFingerprint?: string;
+  };
+  /** Effective scoring config frozen before durable Ledger admission. */
+  executionModelConfig?: CreatorModelConfig;
   title: string;
   plan: DiscoveryPlan;
   /** Campaign Partnerships creada en Yalc. */

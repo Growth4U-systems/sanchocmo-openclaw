@@ -6,6 +6,7 @@ import {
   isStopCommand,
   resetSessionDispatchStateForTest,
   semanticSessionFamilyKey,
+  tryStartSessionDispatch,
 } from "../session-dispatch-state.js";
 
 function deferred() {
@@ -128,4 +129,64 @@ test("enqueueSessionDispatch can serialize related session keys by family key", 
   await first.promise;
   await second.promise;
   assert.deepEqual(events, ["first:false:true", "first:done", "second:true:true", "second:done"]);
+});
+
+test("tryStartSessionDispatch rejects a same-family backlog instead of queueing it", async () => {
+  resetSessionDispatchStateForTest();
+  const gate = deferred();
+  const events = [];
+  const first = tryStartSessionDispatch(
+    "session:first",
+    async () => {
+      events.push("first:start");
+      await gate.promise;
+      events.push("first:done");
+    },
+    { familyKey: "family:one" },
+  );
+  const second = tryStartSessionDispatch(
+    "session:second",
+    async () => {
+      events.push("second:must-not-run");
+    },
+    { familyKey: "family:one" },
+  );
+  assert.equal(first.started, true);
+  assert.equal(second.started, false);
+  assert.deepEqual(events, ["first:start"]);
+  gate.resolve();
+  await first.promise;
+  const retry = tryStartSessionDispatch(
+    "session:second",
+    async () => events.push("second:retry"),
+    { familyKey: "family:one" },
+  );
+  assert.equal(retry.started, true);
+  await retry.promise;
+  assert.deepEqual(events, ["first:start", "first:done", "second:retry"]);
+});
+
+test("tryStartSessionDispatch keeps different families concurrent", async () => {
+  resetSessionDispatchStateForTest();
+  const gate = deferred();
+  const events = [];
+  const first = tryStartSessionDispatch(
+    "session:first",
+    async () => {
+      events.push("first:start");
+      await gate.promise;
+    },
+    { familyKey: "family:one" },
+  );
+  const second = tryStartSessionDispatch(
+    "session:second",
+    async () => events.push("second:start"),
+    { familyKey: "family:two" },
+  );
+  assert.equal(first.started, true);
+  assert.equal(second.started, true);
+  await second.promise;
+  assert.deepEqual(events, ["first:start", "second:start"]);
+  gate.resolve();
+  await first.promise;
 });

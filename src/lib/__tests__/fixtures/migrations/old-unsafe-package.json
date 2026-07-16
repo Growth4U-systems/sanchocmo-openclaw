@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0019_execution_control.sql && node scripts/apply-sql-migration.mjs src/db/migrations/0020_execution_tenant_scope.sql"
+  }
+}

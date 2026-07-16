@@ -1,11 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { compose, getSlug, withErrorHandler, withSlugAuth } from "@/lib/api-middleware";
 import {
+  compose,
+  getSlug,
+  withErrorHandler,
+  withSlugAuth,
+} from "@/lib/api-middleware";
+import {
+  DiscoveryStoreValidationError,
   getSearch,
+  isValidDiscoverySearchId,
   triggerDiscoveryRunner,
   updateRunnerState,
 } from "@/lib/partnerships";
 import { observeDiscoveryExecutionDispatch } from "@/lib/partnerships/discovery-execution-observer";
+import {
+  isDiscoveryLedgerAuthoritative,
+  resolveDiscoveryExecutionPolicy,
+} from "@/lib/partnerships/discovery-execution-policy";
 
 /**
  * POST /api/partnerships/searches/{id}/dispatch
@@ -24,10 +35,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const searchId = typeof req.query.id === "string" ? req.query.id.trim() : "";
   if (!searchId) return res.status(400).json({ error: "Missing search id" });
+  if (!isValidDiscoverySearchId(searchId)) {
+    return res.status(400).json({
+      error: "Invalid discovery search id",
+      code: "DISCOVERY_SEARCH_ID_INVALID",
+    });
+  }
 
-  const search = getSearch(slug, searchId);
+  let search;
+  try {
+    search = getSearch(slug, searchId);
+  } catch (error) {
+    if (error instanceof DiscoveryStoreValidationError) {
+      return res.status(409).json({
+        error: "Discovery search receipt identity is invalid",
+        code: "DISCOVERY_SEARCH_RECEIPT_INVALID",
+      });
+    }
+    throw error;
+  }
   if (!search) {
-    return res.status(404).json({ error: `Discovery search not found: ${searchId}` });
+    return res
+      .status(404)
+      .json({ error: `Discovery search not found: ${searchId}` });
   }
   if (search.archivedAt) {
     return res.status(409).json({ error: "Esta búsqueda está archivada." });
@@ -36,7 +66,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(409).json({ error: "Esta búsqueda ya terminó." });
   }
   if (search.runner.status === "running") {
-    return res.status(409).json({ error: "El discovery ya está en ejecución." });
+    return res
+      .status(409)
+      .json({ error: "El discovery ya está en ejecución." });
+  }
+  const executionPolicy = resolveDiscoveryExecutionPolicy(slug);
+  if (
+    isDiscoveryLedgerAuthoritative(search) ||
+    (executionPolicy.enabled && executionPolicy.mode === "canary")
+  ) {
+    return res.status(409).json({
+      error:
+        "El piloto durable ejecuta búsquedas Instagram server-side y no permite dispatch agentic fuera del Ledger.",
+      code: "DISCOVERY_CANARY_AGENT_DISPATCH_DISABLED",
+    });
   }
 
   const dispatch = await triggerDiscoveryRunner({

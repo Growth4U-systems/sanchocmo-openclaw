@@ -73,13 +73,21 @@ export function isYalcConfigured(slug?: string): boolean {
 export async function yalcFetch<T = unknown>(
   config: YalcRuntimeConfig,
   path: string,
-  init: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
+  init: {
+    method?: string;
+    body?: unknown;
+    headers?: Record<string, string>;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<T> {
   const url = new URL(path.startsWith("/") ? path : `/${path}`, config.baseUrl);
   // Scope every call to the brand's YALC tenant. Without this the cockpit
   // always hits the `default` tenant, so all brands share one brain/campaigns.
   if (config.slug) url.searchParams.set("tenant", config.slug);
-  const headers: Record<string, string> = { Accept: "application/json", ...init.headers };
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...init.headers,
+  };
   if (config.token) headers.Authorization = `Bearer ${config.token}`;
   if (init.body !== undefined) headers["Content-Type"] = "application/json";
 
@@ -87,17 +95,20 @@ export async function yalcFetch<T = unknown>(
     method: init.method || (init.body === undefined ? "GET" : "POST"),
     headers,
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    signal: init.signal,
   });
 
   const contentType = res.headers.get("content-type") || "";
-  const payload = contentType.includes("application/json") ? await res.json() : await res.text();
+  const payload = contentType.includes("application/json")
+    ? await res.json()
+    : await res.text();
   if (!res.ok) {
     const message =
       payload && typeof payload === "object" && "message" in payload
         ? String((payload as { message: unknown }).message)
         : payload && typeof payload === "object" && "error" in payload
           ? String((payload as { error: unknown }).error)
-        : `YALC ${res.status} ${res.statusText}`;
+          : `YALC ${res.status} ${res.statusText}`;
     throw new YalcClientError(message, res.status, payload);
   }
   return payload as T;

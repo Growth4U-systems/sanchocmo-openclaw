@@ -54,6 +54,14 @@ import { resolvePillarDocPath } from "@/lib/pillar-doc-paths";
 import { formatThreadDisplayName } from "@/lib/thread-display-name";
 import { StatusPill } from "@/components/shared/status-pill";
 import { TASK_STATUS_OPTIONS, normalizeTaskStatusQuiet, statusDot, statusLabel } from "@/lib/task-status";
+import {
+  clearAcceptedChatDraft,
+  formatChatSendError,
+  removeAcceptedChatFiles,
+  sameChatDraftSendIdentity,
+  type ChatDraftSendIdentity,
+} from "@/lib/chat-send-client";
+import { chatCancellationRunIds } from "@/lib/chat/cancel-batch-client";
 
 // ---------------------------------------------------------------------------
 // Agent badge config
@@ -76,6 +84,17 @@ const AGENT_BADGES: Record<string, { emoji: string; label: string; color: string
 
 function agentBadge(agent?: string) {
   return AGENT_BADGES[agent ?? "sancho"] ?? AGENT_BADGES.sancho;
+}
+
+function externalExecutionStatusLabel(
+  status: "queued" | "running" | "waiting_approval" | "blocked",
+  cancelRequestedAt?: string,
+): string {
+  if (cancelRequestedAt) return "Deteniendo";
+  if (status === "queued") return "En cola";
+  if (status === "waiting_approval") return "Esperando aprobación";
+  if (status === "blocked") return "Bloqueada";
+  return "En curso";
 }
 
 function executionErrorCopy(category: ErrorDetail["category"]): { title: string; body: string } {
@@ -704,6 +723,12 @@ export function ChatSidebar() {
     [messages],
   );
   const pendingProgress: ProgressEvent[] = messagesQuery.data?.pendingProgress ?? [];
+  const activeExecutions = messagesQuery.data?.activeExecutions ?? [];
+  const activeExecutionParentRunIds =
+    messagesQuery.data?.activeExecutionParentRunIds ??
+    (messagesQuery.data?.activeExecutionsParentRunId
+      ? [messagesQuery.data.activeExecutionsParentRunId]
+      : []);
 
   // Send / cancel / mark-read
   const sendMutation = useSendMessage();
@@ -792,10 +817,24 @@ export function ChatSidebar() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // File upload state
-  interface PendingFile { file: File; preview?: string }
+  interface PendingFile {
+    file: File;
+    preview?: string;
+  }
+  type UploadedChatAttachment = {
+    url: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+  };
+  type PendingDraftSend = {
+    identity: ChatDraftSendIdentity<PendingFile>;
+    attachments?: UploadedChatAttachment[];
+  };
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const pendingDraftSendRef = useRef<PendingDraftSend | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -912,7 +951,26 @@ export function ChatSidebar() {
   const now = Date.now();
   const hasFreshStatus = !!statusData?.text && now - (statusData?.ts ?? 0) < STATUS_FRESH_MS;
   const hasActiveRun = activeRun?.status === "queued" || activeRun?.status === "running";
-  const isAwaitingReply = sendMutation.isPending || hasFreshStatus || hasActiveRun;
+  const hasActiveExternalExecution = activeExecutions.length > 0;
+  const externalCancellationPending =
+    hasActiveExternalExecution &&
+    activeExecutions.every((execution) => !!execution.cancelRequestedAt);
+  const cancellableRunIds = chatCancellationRunIds(
+    activeRun?.id,
+    activeExecutionParentRunIds,
+  );
+  const cancellationFullyPending =
+    !hasActiveRun && externalCancellationPending;
+  const partialCancellation =
+    cancelMutation.data?.threadId === activeThreadId &&
+    cancelMutation.data.partial
+      ? cancelMutation.data
+      : null;
+  const isAwaitingReply =
+    sendMutation.isPending ||
+    hasFreshStatus ||
+    hasActiveRun ||
+    hasActiveExternalExecution;
   const showTyping = isAwaitingReply;
 
   // Live "thinking for Ns" counter on the typing indicator. Anchored to the
@@ -1000,40 +1058,94 @@ export function ChatSidebar() {
     quickActions.length > 0 &&
     !!activeThreadId &&
     !sendMutation.isPending &&
+    !hasActiveExternalExecution &&
     (messages.length === 0 || (lastMsgIsBot && lastMsgIsStale));
 
   // Handlers
   const handleSend = useCallback(async () => {
+    if (sendMutation.isPending || uploading) return;
     const trimmed = input.trim();
     const hasFiles = pendingFiles.length > 0;
     if ((!trimmed && !hasFiles) || !activeThreadId) return;
     setUploadError(null);
-
-    let attachments: { url: string; filename: string; mimeType: string; size: number }[] | undefined;
-
-    // Upload pending files first
-    if (hasFiles) {
-      setUploading(true);
-      try {
-        attachments = await uploadFiles(pendingFiles);
-      } catch (err) {
-        console.error("[chat] Upload failed:", err);
-        setUploadError(err instanceof Error ? err.message : "No se pudo subir el archivo.");
-        setUploading(false);
-        return;
-      }
-      // Clean up previews
-      pendingFiles.forEach((pf) => { if (pf.preview) URL.revokeObjectURL(pf.preview); });
-      setPendingFiles([]);
-      setUploading(false);
+    const submittedDraft = input;
+    const submittedFiles = pendingFiles;
+    const draftIdentity: ChatDraftSendIdentity<PendingFile> = {
+      threadId: activeThreadId,
+      text: trimmed,
+      files: submittedFiles,
+    };
+    let pendingDraftSend = pendingDraftSendRef.current;
+    if (
+      !pendingDraftSend ||
+      !sameChatDraftSendIdentity(pendingDraftSend.identity, draftIdentity)
+    ) {
+      pendingDraftSend = { identity: draftIdentity };
+      pendingDraftSendRef.current = pendingDraftSend;
     }
 
-    const text = trimmed || (attachments ? attachments.map((a) => a.filename).join(", ") : "");
-    sendMutation.mutate({ text, threadId: activeThreadId, attachments });
-    setInput("");
-    const ta = document.querySelector<HTMLTextAreaElement>(".chat-textarea");
-    if (ta) ta.style.height = "auto";
-  }, [input, activeThreadId, sendMutation, pendingFiles, uploadFiles]);
+    let attachments = pendingDraftSend.attachments;
+
+    // Upload pending files only once for this logical command. If the chat POST
+    // loses its response or returns 503, retrying reuses both the attachment
+    // receipts and the hook's idempotency key, so the request body stays exact.
+    if (hasFiles) {
+      setUploading(true);
+      if (!attachments) {
+        try {
+          attachments = await uploadFiles(submittedFiles);
+          pendingDraftSend.attachments = attachments;
+        } catch (err) {
+          console.error("[chat] Upload failed:", err);
+          setUploadError(
+            err instanceof Error ? err.message : "No se pudo subir el archivo.",
+          );
+          setUploading(false);
+          return;
+        }
+      }
+    }
+
+    const text =
+      trimmed ||
+      (attachments ? attachments.map((a) => a.filename).join(", ") : "");
+    try {
+      await sendMutation.mutateAsync({
+        text,
+        threadId: activeThreadId,
+        attachments,
+      });
+    } catch (error) {
+      setUploadError(formatChatSendError(error));
+      setUploading(false);
+      return;
+    }
+
+    // Clear only the exact draft and files accepted by the server. Anything
+    // added or edited while the request was in flight must survive.
+    const shouldResetTextarea = textareaRef.current?.value === submittedDraft;
+    setInput((current) => clearAcceptedChatDraft(current, submittedDraft));
+    setPendingFiles((current) =>
+      removeAcceptedChatFiles(current, submittedFiles),
+    );
+    submittedFiles.forEach((pending) => {
+      if (pending.preview) URL.revokeObjectURL(pending.preview);
+    });
+    if (pendingDraftSendRef.current === pendingDraftSend) {
+      pendingDraftSendRef.current = null;
+    }
+    setUploading(false);
+    if (shouldResetTextarea && textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  }, [
+    input,
+    activeThreadId,
+    sendMutation,
+    pendingFiles,
+    uploadFiles,
+    uploading,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -1953,6 +2065,45 @@ export function ChatSidebar() {
 
       {/* INPUT BAR */}
       <div className="px-3 py-2 border-t border-[var(--chat-border)] shrink-0">
+        {hasActiveExternalExecution && (
+          <div
+            className="mb-2 flex items-start gap-2 rounded-lg border border-rust/25 bg-rust/5 px-2.5 py-2 text-[11px] text-[var(--chat-text)]"
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              className={cn(
+                "mt-1 h-2 w-2 shrink-0 rounded-full",
+                externalCancellationPending
+                  ? "bg-amber-500"
+                  : "bg-rust animate-pulse",
+              )}
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">
+                {activeExecutions.length === 1
+                  ? "Tarea externa activa"
+                  : `${activeExecutions.length} tareas externas activas`}
+              </div>
+              <div className="mt-0.5 truncate text-[var(--chat-text-faint)]">
+                {activeExecutions
+                  .slice(0, 2)
+                  .map(
+                    (execution) =>
+                      `${execution.operation} · ${externalExecutionStatusLabel(
+                        execution.status,
+                        execution.cancelRequestedAt,
+                      )}`,
+                  )
+                  .join(" · ")}
+                {activeExecutions.length > 2
+                  ? ` · +${activeExecutions.length - 2}`
+                  : ""}
+              </div>
+            </div>
+          </div>
+        )}
         {/* Pending file previews */}
         {pendingFiles.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
@@ -1970,8 +2121,24 @@ export function ChatSidebar() {
             {uploading && <span className="text-[10px] text-[var(--chat-text-faint)] animate-pulse self-center">Subiendo...</span>}
           </div>
         )}
-        {uploadError && (
-          <div className="mb-2 text-[11px] text-[var(--chat-danger)]" role="alert">{uploadError}</div>
+        {(uploadError || sendMutation.isError) && (
+          <div className="mb-2 text-[11px] text-[var(--chat-danger)]" role="alert">
+            {uploadError || formatChatSendError(sendMutation.error)}
+          </div>
+        )}
+        {partialCancellation && (
+          <div className="mb-2 text-[11px] text-amber-600" role="status">
+            Se aceptó la detención de {partialCancellation.cancelledCount} de{" "}
+            {partialCancellation.requestedCount} ejecuciones. Las restantes
+            siguen visibles para reintentar.
+          </div>
+        )}
+        {cancelMutation.isError && (
+          <div className="mb-2 text-[11px] text-[var(--chat-danger)]" role="alert">
+            {cancelMutation.error instanceof Error
+              ? cancelMutation.error.message
+              : "No se pudieron detener las ejecuciones activas."}
+          </div>
         )}
         <div className="flex items-end gap-2">
           {/* Clip button */}
@@ -2011,16 +2178,24 @@ export function ChatSidebar() {
           {isAwaitingReply || cancelMutation.isPending ? (
             <button
               onClick={() => {
-                if (activeRun?.id) {
+                if (cancellableRunIds.length > 0) {
                   cancelMutation.mutate({
                     threadId: activeThreadId ?? undefined,
-                    runId: activeRun.id,
+                    runIds: cancellableRunIds,
                   });
                 }
               }}
-              disabled={!activeRun?.id || cancelMutation.isPending}
+              disabled={
+                cancellableRunIds.length === 0 ||
+                cancelMutation.isPending ||
+                cancellationFullyPending
+              }
               className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-              title={t("stop")}
+              title={
+                cancellationFullyPending
+                  ? "Cancelación solicitada"
+                  : t("stop")
+              }
             >
               ⏹
             </button>

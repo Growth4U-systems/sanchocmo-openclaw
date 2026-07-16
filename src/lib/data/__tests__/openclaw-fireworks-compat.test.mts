@@ -7,6 +7,10 @@ import assert from "node:assert/strict";
 const gen = await import("../../../../docker/generate-openclaw-config.js");
 const applyFireworksToolSchemaCompat =
   gen.applyFireworksToolSchemaCompat ?? gen.default?.applyFireworksToolSchemaCompat;
+const applyFireworksGlm52MaxTokens =
+  gen.applyFireworksGlm52MaxTokens ?? gen.default?.applyFireworksGlm52MaxTokens;
+const resolveFireworksGlm52MaxTokens =
+  gen.resolveFireworksGlm52MaxTokens ?? gen.default?.resolveFireworksGlm52MaxTokens;
 const KEYWORDS =
   gen.FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS ?? gen.default?.FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS;
 
@@ -48,4 +52,38 @@ test("is idempotent and never throws on missing/empty providers", () => {
   assert.doesNotThrow(() => applyFireworksToolSchemaCompat(undefined));
   assert.doesNotThrow(() => applyFireworksToolSchemaCompat({}));
   assert.doesNotThrow(() => applyFireworksToolSchemaCompat({ models: [] }));
+});
+
+test("GLM 5.2 always receives an explicit, bounded output-token cap", () => {
+  assert.equal(resolveFireworksGlm52MaxTokens({}), 8192);
+  assert.equal(
+    resolveFireworksGlm52MaxTokens({ FIREWORKS_GLM52_MAX_TOKENS: "4096" }),
+    4096,
+  );
+  for (const value of ["0", "255", "16385", "8192.5", " 8192", "8192x"]) {
+    assert.throws(
+      () =>
+        resolveFireworksGlm52MaxTokens({
+          FIREWORKS_GLM52_MAX_TOKENS: value,
+        }),
+      /FIREWORKS_GLM52_MAX_TOKENS/,
+    );
+  }
+
+  const provider = {
+    models: [
+      {
+        id: "accounts/fireworks/models/glm-5p2",
+        name: "GLM 5.2",
+        maxTokens: 262_144,
+        contextWindow: 1_048_576,
+      },
+      { id: "accounts/fireworks/models/other", maxTokens: 12_345 },
+    ],
+  };
+  assert.equal(applyFireworksGlm52MaxTokens(provider, 8192), true);
+  assert.equal(provider.models[0].maxTokens, 8192);
+  assert.equal(provider.models[0].contextWindow, 1_048_576);
+  assert.equal(provider.models[1].maxTokens, 12_345);
+  assert.equal(applyFireworksGlm52MaxTokens(provider, 8192), false);
 });

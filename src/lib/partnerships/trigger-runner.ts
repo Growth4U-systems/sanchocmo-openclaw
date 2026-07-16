@@ -1,5 +1,10 @@
 import { addMessage } from "@/lib/data/mc-chat";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import {
+  DiscoveryDurableAuthorityError,
+  isDiscoveryLedgerAuthoritative,
+} from "./discovery-execution-policy";
+import { getSearch } from "./discovery-store";
 
 /**
  * Discovery-runner trigger (SAN-328).
@@ -56,17 +61,29 @@ function buildRunnerMessage(input: TriggerDiscoveryRunnerInput): string {
 export async function triggerDiscoveryRunner(
   input: TriggerDiscoveryRunnerInput,
 ): Promise<TriggerDiscoveryRunnerResult> {
+  const search = getSearch(input.slug, input.searchId);
+  if (search && isDiscoveryLedgerAuthoritative(search)) {
+    throw new DiscoveryDurableAuthorityError(
+      "Ledger-owned discovery commands cannot be dispatched to the legacy agent runner",
+    );
+  }
   const threadId = buildRunnerThreadId(input.slug, input.searchId);
   const message = buildRunnerMessage(input);
 
   // Marcador local: aunque el gateway esté caído, el humano ve qué se pidió.
-  addMessage(threadId, "system", "🐴 Pidiendo a Rocinante que ejecute el discovery (scraping real)…");
+  addMessage(
+    threadId,
+    "system",
+    "🐴 Pidiendo a Rocinante que ejecute el discovery (scraping real)…",
+  );
   addMessage(threadId, "user", message);
 
   const payload: InboundMessage = {
     slug: input.slug,
     threadId,
-    threadName: input.title ? `Discovery: ${input.title}` : `Discovery ${input.searchId}`,
+    threadName: input.title
+      ? `Discovery: ${input.title}`
+      : `Discovery ${input.searchId}`,
     text: message,
     userId: "mc-partnerships-trigger",
     userName: "Mission Control",
@@ -82,7 +99,11 @@ export async function triggerDiscoveryRunner(
   try {
     const result = await getRuntime().messaging.sendInbound(payload);
     if (!result.ok) {
-      return { forwardedToGateway: false, threadId, error: `gateway ${result.status}: ${result.raw}` };
+      return {
+        forwardedToGateway: false,
+        threadId,
+        error: `gateway ${result.status}: ${result.raw}`,
+      };
     }
     return { forwardedToGateway: true, threadId };
   } catch (e) {

@@ -61,11 +61,15 @@ function toEffective(payload: YalcModelConfigPayload): EffectiveModelConfig {
 }
 
 /** Config efectiva del cliente; degrada a defaults si Yalc no responde. */
-export async function getEffectiveModelConfig(slug: string): Promise<EffectiveModelConfig> {
+export async function getEffectiveModelConfig(
+  slug: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<EffectiveModelConfig> {
   try {
     const payload = await yalcFetch<YalcModelConfigPayload>(
       resolveYalcConfig(slug),
       "/api/model-config",
+      { signal: options.signal },
     );
     return toEffective(payload);
   } catch (err) {
@@ -92,9 +96,13 @@ export class ModelConfigValidationError extends Error {
  * inválido se ignora y queda el default) — así un `null` puede viajar para
  * borrar un override almacenado.
  */
-export function assertModelConfigPartial(partial: unknown): Record<string, unknown> {
+export function assertModelConfigPartial(
+  partial: unknown,
+): Record<string, unknown> {
   if (!isRecord(partial)) {
-    throw new ModelConfigValidationError("model-config update must be a JSON object");
+    throw new ModelConfigValidationError(
+      "model-config update must be a JSON object",
+    );
   }
   const unknown = Object.keys(partial).filter(
     (key) => !(MODEL_CONFIG_OVERRIDE_KEYS as readonly string[]).includes(key),
@@ -128,7 +136,10 @@ export async function putModelConfigOverrides(
     "/api/model-config",
     {
       method: "PUT",
-      body: { overrides: clean, ...(opts.reset === true ? { reset: true } : {}) },
+      body: {
+        overrides: clean,
+        ...(opts.reset === true ? { reset: true } : {}),
+      },
     },
   );
   return toEffective(payload);
@@ -138,11 +149,14 @@ export async function putModelConfigOverrides(
 function mergeTierArrays(base: unknown[], incoming: unknown[]): unknown[] {
   const byKey = new Map<string, Record<string, unknown>>();
   for (const item of base) {
-    if (isRecord(item) && typeof item.key === "string") byKey.set(item.key, { ...item });
+    if (isRecord(item) && typeof item.key === "string")
+      byKey.set(item.key, { ...item });
   }
   for (const item of incoming) {
     if (!isRecord(item) || typeof item.key !== "string") continue;
-    const merged: Record<string, unknown> = { ...(byKey.get(item.key) ?? { key: item.key }) };
+    const merged: Record<string, unknown> = {
+      ...(byKey.get(item.key) ?? { key: item.key }),
+    };
     for (const [field, value] of Object.entries(item)) {
       if (value === null) delete merged[field];
       else merged[field] = value;
@@ -173,7 +187,10 @@ export function mergeOverrideDocuments(
     }
     const current = out[key];
     if (key === "tiers" && Array.isArray(value)) {
-      const merged = mergeTierArrays(Array.isArray(current) ? current : [], value);
+      const merged = mergeTierArrays(
+        Array.isArray(current) ? current : [],
+        value,
+      );
       if (merged.length > 0) out[key] = merged;
       else delete out[key];
     } else if (isRecord(current) && isRecord(value)) {
@@ -205,7 +222,11 @@ export async function previewModelConfigUpdate(
   const current = await getEffectiveModelConfig(slug);
   const base = opts.reset === true ? {} : current.overrides;
   const wouldStore = mergeOverrideDocuments(base, clean);
-  return { current, wouldStore, configAfter: mergeCreatorModelConfig(wouldStore) };
+  return {
+    current,
+    wouldStore,
+    configAfter: mergeCreatorModelConfig(wouldStore),
+  };
 }
 
 /** Defaults sembrados (para que los consumidores no importen el core a mano). */

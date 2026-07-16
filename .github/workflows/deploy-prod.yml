@@ -17,6 +17,10 @@ on:
       tag:
         description: "Release tag to deploy (e.g. v1.2.3). Leave EMPTY to ship the latest published Release."
         required: false
+      execution_migration_adopt_through:
+        description: "One-time verified adoption prefix (0019–0033); leave empty for normal deploy"
+        required: false
+        default: ""
 
 concurrency:
   group: deploy-production
@@ -187,6 +191,7 @@ jobs:
           ENABLE_YALC_SERVICE: ${{ vars.ENABLE_YALC_SERVICE || '1' }}
           ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
           RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
+          EXECUTION_MIGRATION_ADOPT_THROUGH: ${{ inputs.execution_migration_adopt_through || '' }}
           # YALC ships as a public GHCR image (SAN-135). Override the tag here
           # to pin a version; empty falls back to the compose default (:edge).
           YALC_IMAGE: ${{ vars.YALC_IMAGE }}
@@ -201,6 +206,8 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EXECUTION_MIGRATIONS_DATABASE_URL: ${{ secrets.EXECUTION_MIGRATIONS_DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OD_API_TOKEN: ${{ secrets.OD_API_TOKEN }}
@@ -220,6 +227,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}
           FIREWORKS_ACCOUNT_ID: ${{ secrets.FIREWORKS_ACCOUNT_ID || vars.FIREWORKS_ACCOUNT_ID }}
+          FIREWORKS_GLM52_MAX_TOKENS: ${{ vars.FIREWORKS_GLM52_MAX_TOKENS || '8192' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
@@ -231,8 +239,37 @@ jobs:
           PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS: ${{ vars.PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS || '300000' }}
           PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: ${{ vars.PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES || '500' }}
           PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY: ${{ vars.PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY || '5' }}
+          PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED: ${{ vars.PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED || '0' }}
           PARTNERSHIPS_DISCOVERY_EXECUTION_V2: ${{ vars.PARTNERSHIPS_DISCOVERY_EXECUTION_V2 || 'off' }}
+          PARTNERSHIPS_DISCOVERY_EFFECTS_V2: ${{ vars.PARTNERSHIPS_DISCOVERY_EFFECTS_V2 || 'off' }}
           PARTNERSHIPS_DISCOVERY_V2_SLUGS: ${{ vars.PARTNERSHIPS_DISCOVERY_V2_SLUGS }}
+          PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE: ${{ vars.PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE }}
+          PARTNERSHIPS_DISCOVERY_WORKER_LEASE_MS: ${{ vars.PARTNERSHIPS_DISCOVERY_WORKER_LEASE_MS || '60000' }}
+          PARTNERSHIPS_DISCOVERY_WORKER_POLL_MS: ${{ vars.PARTNERSHIPS_DISCOVERY_WORKER_POLL_MS || '5000' }}
+          PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS: ${{ vars.PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS || '3' }}
+          PARTNERSHIPS_DISCOVERY_SCOPE_RESCAN_MS: ${{ vars.PARTNERSHIPS_DISCOVERY_SCOPE_RESCAN_MS || '30000' }}
+          # Explicit kill-switches: Leads Discovery is outside this candidate.
+          LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED: '0'
+          LEADS_DISCOVERY_EXECUTION_V2: 'off'
+          LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED: ${{ vars.LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED || '0' }}
+          LEADS_SEARCH_EXECUTION_V2: ${{ vars.LEADS_SEARCH_EXECUTION_V2 || 'off' }}
+          LEADS_SEARCH_V2_SLUGS: ${{ vars.LEADS_SEARCH_V2_SLUGS }}
+          LEADS_SEARCH_WORKER_LEASE_MS: ${{ vars.LEADS_SEARCH_WORKER_LEASE_MS || '60000' }}
+          LEADS_SEARCH_WORKER_POLL_MS: ${{ vars.LEADS_SEARCH_WORKER_POLL_MS || '5000' }}
+          LEADS_SEARCH_SCOPE_RESCAN_MS: ${{ vars.LEADS_SEARCH_SCOPE_RESCAN_MS || '30000' }}
+          CHAT_AGENT_TURN_EXECUTION_V1: ${{ vars.CHAT_AGENT_TURN_EXECUTION_V1 || 'off' }}
+          CHAT_AGENT_TURN_V1_SLUGS: ${{ vars.CHAT_AGENT_TURN_V1_SLUGS }}
+          CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED: ${{ vars.CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED || '0' }}
+          CHAT_AGENT_TURN_WORKER_ID: ${{ vars.CHAT_AGENT_TURN_WORKER_ID }}
+          MC_CHAT_COST_GUARD_ENABLED: ${{ vars.MC_CHAT_COST_GUARD_ENABLED || '1' }}
+          MC_CHAT_MAX_PROMPT_TOKENS_AT_START: ${{ vars.MC_CHAT_MAX_PROMPT_TOKENS_AT_START || '140000' }}
+          MC_CHAT_MAX_INPUT_TOKENS_PER_RUN: ${{ vars.MC_CHAT_MAX_INPUT_TOKENS_PER_RUN || '1500000' }}
+          MC_CHAT_MAX_MODEL_CALLS_PER_RUN: ${{ vars.MC_CHAT_MAX_MODEL_CALLS_PER_RUN || '24' }}
+          MC_CHAT_MAX_TOOL_CALLS_PER_RUN: ${{ vars.MC_CHAT_MAX_TOOL_CALLS_PER_RUN || '36' }}
+          MC_CHAT_MAX_RISKY_TOOL_CALLS_PER_RUN: ${{ vars.MC_CHAT_MAX_RISKY_TOOL_CALLS_PER_RUN || '10' }}
+          MC_CHAT_MAX_REPEATED_TOOL_CALLS_PER_RUN: ${{ vars.MC_CHAT_MAX_REPEATED_TOOL_CALLS_PER_RUN || '3' }}
+          MC_CHAT_MAX_SESSION_HISTORY_CALLS_PER_RUN: ${{ vars.MC_CHAT_MAX_SESSION_HISTORY_CALLS_PER_RUN || '1' }}
+          MC_CHAT_MAX_TURN_MS: ${{ vars.MC_CHAT_MAX_TURN_MS || '1800000' }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
           DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
@@ -281,6 +318,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           # ── Variables (non-sensitive config) ─────────────────────────
+          SANCHO_BASE_URL: ${{ vars.SANCHO_BASE_URL || vars.BASE_URL }}
           BASE_URL: ${{ vars.BASE_URL }}
           NEXT_PUBLIC_ENV_LABEL: ${{ vars.NEXT_PUBLIC_ENV_LABEL }}
           NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED: ${{ vars.NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED || '0' }}
@@ -329,6 +367,7 @@ jobs:
               "SLACK_CLIENT_ID", "SLACK_CLIENT_SECRET", "SLACK_SIGNING_SECRET",
               # Tier 2 — System APIs
               "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "FIREWORKS_API_KEY", "FIREWORKS_ACCOUNT_ID",
+              "FIREWORKS_GLM52_MAX_TOKENS",
               "OPENAI_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY", "MINIMAX_API_KEY",
               "BRAVE_API_KEY", "APIFY_API_KEY", "SCRAPECREATORS_API_KEY",
               "FIRECRAWL_API_KEY", "SERPER_API_KEY", "DATAFORSEO_LOGIN", "DATAFORSEO_PASSWORD",
@@ -351,7 +390,7 @@ jobs:
               "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_ANON_KEY",
               "CLOUDFLARE_ACCOUNT_ID", "APIFY_TOKEN",
               # Variables (non-sensitive config)
-              "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED", "NEXTAUTH_URL",
+              "SANCHO_BASE_URL", "BASE_URL", "NEXT_PUBLIC_ENV_LABEL", "NEXT_PUBLIC_GROWIE_SUPPORT_ENABLED", "NEXTAUTH_URL",
               "OD_WEB_URL", "OD_ALLOWED_ORIGINS", "OPEN_DESIGN_IMAGE", "YALC_IMAGE",
               # SAN-455: only set in DEPLOY_FROM_IMAGE mode. Persisting the pin in
               # `.env` keeps a manual `docker compose up -d` on the box on the same
@@ -367,17 +406,79 @@ jobs:
               "YALC_BASE_URL", "SANCHO_REPLY_WEBHOOK_URL",
               "SCRAPECREATORS_TIMEOUT_MS", "PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS",
               "PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES", "PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY",
-              "PARTNERSHIPS_DISCOVERY_EXECUTION_V2", "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
+              "PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED",
+              "PARTNERSHIPS_DISCOVERY_EXECUTION_V2", "PARTNERSHIPS_DISCOVERY_EFFECTS_V2",
+              "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
+              "PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE",
+              "PARTNERSHIPS_DISCOVERY_WORKER_LEASE_MS", "PARTNERSHIPS_DISCOVERY_WORKER_POLL_MS",
+              "PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS", "PARTNERSHIPS_DISCOVERY_SCOPE_RESCAN_MS",
+              "LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED", "LEADS_DISCOVERY_EXECUTION_V2",
+              "LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED",
+              "LEADS_SEARCH_EXECUTION_V2", "LEADS_SEARCH_V2_SLUGS",
+              "LEADS_SEARCH_WORKER_LEASE_MS", "LEADS_SEARCH_WORKER_POLL_MS",
+              "LEADS_SEARCH_SCOPE_RESCAN_MS",
+              "CHAT_AGENT_TURN_EXECUTION_V1", "CHAT_AGENT_TURN_V1_SLUGS",
+              "CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED", "CHAT_AGENT_TURN_WORKER_ID",
+              "MC_CHAT_COST_GUARD_ENABLED", "MC_CHAT_MAX_PROMPT_TOKENS_AT_START",
+              "MC_CHAT_MAX_INPUT_TOKENS_PER_RUN", "MC_CHAT_MAX_MODEL_CALLS_PER_RUN",
+              "MC_CHAT_MAX_TOOL_CALLS_PER_RUN", "MC_CHAT_MAX_RISKY_TOOL_CALLS_PER_RUN",
+              "MC_CHAT_MAX_REPEATED_TOOL_CALLS_PER_RUN", "MC_CHAT_MAX_SESSION_HISTORY_CALLS_PER_RUN",
+              "MC_CHAT_MAX_TURN_MS",
           ]
           out = {k: os.environ[k] for k in KEYS if os.environ.get(k)}
           print(base64.b64encode(json.dumps(out).encode()).decode())
           PY
           )
 
-          scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
+          case "$EXECUTION_MIGRATION_ADOPT_THROUGH" in
+            ""|0019|0020|0021|0022|0023|0024|0025|0026|0027|0028|0029|0030|0031|0032|0033) ;;
+            *) echo "::error::Invalid execution migration adoption prefix"; exit 1 ;;
+          esac
 
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME DEPLOY_FROM_IMAGE=$DEPLOY_FROM_IMAGE SANCHOCMO_IMAGE=$SANCHOCMO_IMAGE bash -s" <<'EOF'
+          # Keep direct/non-pooler credentials out of the persistent runtime
+          # environment. The one-off migrator receives only a base64 value in
+          # this mode-0600 temporary env file and decodes it internally.
+          MIGRATION_ENV_LOCAL=$(mktemp)
+          chmod 600 "$MIGRATION_ENV_LOCAL"
+          trap 'rm -f "$MIGRATION_ENV_LOCAL"' EXIT
+          python3 - <<'PY' > "$MIGRATION_ENV_LOCAL"
+          import base64, os
+          value = (
+              os.environ.get("EXECUTION_MIGRATIONS_DATABASE_URL", "").strip()
+              or os.environ.get("DIRECT_DATABASE_URL", "").strip()
+          )
+          if value:
+              encoded = base64.b64encode(value.encode()).decode()
+              print(encoded)
+          PY
+          MIGRATION_ENV_REMOTE="/tmp/sancho-migration-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.env"
+          MIGRATION_CLASSIFIER_REMOTE="/tmp/sancho-migration-classifier-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.mjs"
+          cleanup_migration_artifacts() {
+            rm -f "$MIGRATION_ENV_LOCAL"
+            ssh "$VPS_USER@$VPS_HOST" "rm -f -- '$MIGRATION_ENV_REMOTE' '$MIGRATION_CLASSIFIER_REMOTE'" >/dev/null 2>&1 || true
+          }
+          trap cleanup_migration_artifacts EXIT
+
+          scp -o StrictHostKeyChecking=no scripts/upsert-env.py "$VPS_USER@$VPS_HOST:/tmp/upsert-env.py"
+          scp -o StrictHostKeyChecking=no "$MIGRATION_ENV_LOCAL" "$VPS_USER@$VPS_HOST:$MIGRATION_ENV_REMOTE"
+          scp -o StrictHostKeyChecking=no scripts/lib/classify-legacy-migration-bundle.mjs "$VPS_USER@$VPS_HOST:$MIGRATION_CLASSIFIER_REMOTE"
+          ssh "$VPS_USER@$VPS_HOST" "chmod 600 '$MIGRATION_ENV_REMOTE' '$MIGRATION_CLASSIFIER_REMOTE'"
+
+          if [ -n "$EXECUTION_MIGRATION_ADOPT_THROUGH" ]; then
+            {
+              echo "### Execution migration adoption request"
+              echo "- Actor: \`$GITHUB_ACTOR\`"
+              echo "- Environment: \`production\`"
+              echo "- Target tag: \`$TAG\`"
+              echo "- Target commit: \`${GIT_COMMIT:-unknown}\`"
+              echo "- Verified prefix requested: \`$EXECUTION_MIGRATION_ADOPT_THROUGH\`"
+              echo "- Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              echo "- Completion evidence: adopted tracking rows with database timestamps plus the successful workflow log."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH TAG=$TAG PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS EXECUTION_MIGRATION_ADOPT_THROUGH=$EXECUTION_MIGRATION_ADOPT_THROUGH MIGRATION_ENV_FILE=$MIGRATION_ENV_REMOTE MIGRATION_CLASSIFIER_FILE=$MIGRATION_CLASSIFIER_REMOTE DEPLOY_ACTOR=$GITHUB_ACTOR DEPLOY_TARGET=$TAG DEPLOY_ENVIRONMENT=production DEPLOY_RUN_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME DEPLOY_FROM_IMAGE=$DEPLOY_FROM_IMAGE SANCHOCMO_IMAGE=$SANCHOCMO_IMAGE bash -s" <<'EOF'
             set -euo pipefail
+            trap 'rm -f -- "$MIGRATION_ENV_FILE" "$MIGRATION_CLASSIFIER_FILE"' EXIT
             cd "$DEPLOY_PATH"
 
             # SAN-445: move (never rm) every untracked working-tree path that
@@ -482,6 +583,17 @@ jobs:
               echo "▶ Upserting envs from GitHub \`production\` Environment…"
               echo "$PAYLOAD_B64" | python3 /tmp/upsert-env.py .env
             fi
+            # Purge values left by any pre-hardening deploy. Direct database
+            # credentials are scoped to the one-off migration container.
+            python3 - <<'PY'
+            from pathlib import Path
+            path = Path(".env")
+            blocked = {"EXECUTION_MIGRATIONS_DATABASE_URL", "DIRECT_DATABASE_URL"}
+            if path.exists():
+                lines = path.read_text().splitlines()
+                kept = [line for line in lines if line.split("=", 1)[0] not in blocked]
+                path.write_text("\n".join(kept) + ("\n" if kept else ""))
+            PY
             ENV_HASH_AFTER=$(env_hash .env)
             ENV_CHANGED=0
             if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
@@ -595,15 +707,107 @@ jobs:
             echo "▶ Ensuring durable agent-run schema…"
             docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:agent-runs" < /dev/null
             echo "▶ Ensuring durable execution-control schema…"
-            docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:execution-control" < /dev/null
+            # 0019–0033 are immutable/checksum-tracked and execute once. An
+            # existing production DB must complete the explicit catalog-verified
+            # `db:migrate:execution-control:adopt` transition before the first
+            # deploy with this runner; deployment never auto-baselines.
+            TRACKED_MIGRATIONS_AVAILABLE=0
+            LEGACY_MIGRATION_BUNDLE_CLASS="not-inspected"
+            run_tracked_execution_migrations() {
+              local mode="$1"
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps \
+                --volume "$MIGRATION_ENV_FILE:/run/secrets/sancho_migration_url_b64:ro" \
+                -e EXECUTION_MIGRATION_MODE="$mode" \
+                -e EXECUTION_MIGRATION_ADOPT_THROUGH="${EXECUTION_MIGRATION_ADOPT_THROUGH:-}" \
+                --entrypoint bash sanchocmo -lc '
+                  set -euo pipefail
+                  unset EXECUTION_MIGRATIONS_DATABASE_URL DIRECT_DATABASE_URL SANCHO_MIGRATION_DATABASE_URL_B64
+                  if [ -s /run/secrets/sancho_migration_url_b64 ]; then
+                    migration_url="$(base64 --decode < /run/secrets/sancho_migration_url_b64)"
+                    [ -n "$migration_url" ] || { echo "Migration database credential decoded empty" >&2; exit 2; }
+                    export EXECUTION_MIGRATIONS_DATABASE_URL="$migration_url"
+                    unset migration_url
+                  fi
+                  cd /app/mc-nextjs
+                  case "$EXECUTION_MIGRATION_MODE" in
+                    apply) exec npm run db:migrate:execution-control ;;
+                    adopt)
+                      case "$EXECUTION_MIGRATION_ADOPT_THROUGH" in
+                        0019|0020|0021|0022|0023|0024|0025|0026|0027|0028|0029|0030|0031|0032|0033) ;;
+                        *) echo "Invalid execution migration adoption prefix" >&2; exit 2 ;;
+                      esac
+                      exec npm run db:migrate:execution-control:adopt -- --through="$EXECUTION_MIGRATION_ADOPT_THROUGH"
+                      ;;
+                    *) echo "Invalid tracked migration mode" >&2; exit 2 ;;
+                  esac
+                ' < /dev/null
+            }
+            if docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint test sanchocmo -f /app/mc-nextjs/scripts/run-execution-control-migrations.mjs < /dev/null; then
+              TRACKED_MIGRATIONS_AVAILABLE=1
+              if [ -n "${EXECUTION_MIGRATION_ADOPT_THROUGH:-}" ]; then
+                echo "▶ Adoption audit: actor=$DEPLOY_ACTOR environment=$DEPLOY_ENVIRONMENT target=$DEPLOY_TARGET prefix=$EXECUTION_MIGRATION_ADOPT_THROUGH run=$DEPLOY_RUN_URL"
+                run_tracked_execution_migrations adopt
+                echo "::notice::Verified execution migration adoption completed for $DEPLOY_ENVIRONMENT through $EXECUTION_MIGRATION_ADOPT_THROUGH"
+              fi
+              run_tracked_execution_migrations apply
+            elif [ -n "${EXECUTION_MIGRATION_ADOPT_THROUGH:-}" ]; then
+              echo "::error::The selected image has no tracked migration capability; explicit adoption cannot run."
+              exit 1
+            else
+              LEGACY_MIGRATION_BUNDLE_CLASS="$(
+                docker compose $COMPOSE_ARGS run -T --rm --no-deps \
+                  --volume "$MIGRATION_CLASSIFIER_FILE:/tmp/classify-legacy-migration-bundle.mjs:ro" \
+                  --entrypoint node sanchocmo \
+                  /tmp/classify-legacy-migration-bundle.mjs /app/mc-nextjs/package.json \
+                  < /dev/null | tail -n 1
+              )"
+              case "$LEGACY_MIGRATION_BUNDLE_CLASS" in
+                safe-pre-execution-control)
+                  echo "▶ Legacy image predates execution-control migrations; its curated deploy bundle remains safe."
+                  ;;
+                unsafe-execution-control-replay)
+                  echo "▶ Legacy image bundle references execution-control-or-later migrations and will not be replayed."
+                  ;;
+                *)
+                  echo "▶ Legacy image migration bundle could not be classified and will fail closed if requested."
+                  ;;
+              esac
+            fi
+            DURABLE_WORKER_BOOT_REQUESTED="$(
+              docker compose $COMPOSE_ARGS config --format json | python3 -c 'import json,sys; environment=json.load(sys.stdin)["services"]["sanchocmo"].get("environment", {}); flags=("PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED","LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED","LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED"); print("1" if any(str(environment.get(flag,"")) == "1" for flag in flags) else "0")'
+            )"
+            if [ "$TRACKED_MIGRATIONS_AVAILABLE" != "1" ] && [ "$DURABLE_WORKER_BOOT_REQUESTED" = "1" ]; then
+              echo "::error::Durable worker boot was requested, but the selected image has no tracked 0032/cutover-gate capability. Set all durable worker boot flags to 0 or deploy a compatible image."
+              exit 1
+            fi
+            if [ "$TRACKED_MIGRATIONS_AVAILABLE" = "1" ]; then
+              echo "▶ Verifying execution-origin cutover before durable admissions/workers…"
+              # Read-only and flag-aware: with every durable worker boot flag
+              # off this is a no-I/O skip. If a flag is `1`, any non-terminal
+              # metadata-era child without exact 0032 authority aborts before
+              # the previous healthy container is replaced.
+              docker compose $COMPOSE_ARGS run -T --rm --no-deps \
+                --entrypoint bash sanchocmo -lc \
+                "cd /app/mc-nextjs && npm run execution:origin-cutover:check" \
+                < /dev/null
+            fi
             if [ "${RUN_DB_MIGRATIONS:-0}" = "1" ]; then
-              echo "▶ Running DB migrations…"
-              # Apply only the curated additive deploy migrations via the
-              # non-destructive single-file runner — mirrors deploy-staging.yml.
+              if [ "$TRACKED_MIGRATIONS_AVAILABLE" = "1" ] || [ "$LEGACY_MIGRATION_BUNDLE_CLASS" = "safe-pre-execution-control" ]; then
+                echo "▶ Running the image's classified-safe legacy DB migration bundle…"
+              # Apply only the remaining curated legacy deploy migrations via
+              # the non-destructive single-file runner — mirrors staging.
+              # Execution-control is absent from this replay bundle and was
+              # handled once above.
               # The repo's historical SQL migrations are not a safe input for
               # `drizzle-kit migrate` (no journal in git; one old migration drops/recreates
               # `tasks`). Redirect stdin so the one-off container can't eat the SSH heredoc.
-              docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:deploy" < /dev/null
+                docker compose $COMPOSE_ARGS run -T --rm --no-deps --entrypoint bash sanchocmo -lc "cd /app/mc-nextjs && npm run db:migrate:deploy" < /dev/null
+              elif [ "$LEGACY_MIGRATION_BUNDLE_CLASS" = "unsafe-execution-control-replay" ]; then
+                echo "▶ Skipping unsafe legacy replay bundle because it references migration 0019 or later."
+              else
+                echo "::error::RUN_DB_MIGRATIONS=1 but the selected image's migration bundle cannot be classified safely."
+                exit 1
+              fi
             fi
             # `build --pull` only refreshes images for services with a
             # `build:` directive (sanchocmo). Services that consume a

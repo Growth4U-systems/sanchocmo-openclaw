@@ -2,7 +2,9 @@ import fs from "fs";
 import path from "path";
 import { BASE, chatReadStateFile } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
+import { listDurableChatDeliveries } from "./mc-chat-durable-delivery";
 import {
+  canonicalThreadId,
   isValidTenantSlug,
   parseThreadId,
   sanitizeShortId,
@@ -254,7 +256,38 @@ function threadFile(threadId: string): string {
 }
 
 export function getThread(threadId: string): ThreadData {
-  return readJSON<ThreadData>(threadFile(threadId), { messages: [] });
+  const thread = readJSON<ThreadData>(threadFile(threadId), { messages: [] });
+  const parsed = parseThreadId(threadId);
+  // Legacy internal callers still use historical/non-canonical ids. Durable
+  // delivery itself is canonical-only, so those reads simply retain the
+  // legacy JSON behavior instead of turning compatibility ids into errors.
+  const durable =
+    parsed &&
+    parsed.slug === parsed.slug.toLowerCase() &&
+    canonicalThreadId(threadId) === threadId
+      ? listDurableChatDeliveries(threadId)
+      : [];
+  if (durable.length === 0) return thread;
+
+  const durableKeys = new Set(durable.map((delivery) => delivery.deliveryKey));
+  // The insert-only sidecar is authoritative for its delivery key. Remove all
+  // legacy copies first so a stale or previously duplicated read/modify/write
+  // cannot erase, rewrite or duplicate the durable result.
+  const messages = (Array.isArray(thread.messages) ? thread.messages : [])
+    .filter(
+      (message) =>
+        !message.deliveryKey || !durableKeys.has(message.deliveryKey),
+    )
+    .concat(durable);
+  messages.sort((left, right) => left.ts - right.ts);
+  return {
+    ...thread,
+    messages: messages.slice(-200),
+    updatedAt: Math.max(
+      thread.updatedAt ?? 0,
+      ...durable.map((message) => message.ts),
+    ),
+  };
 }
 
 export function saveThread(threadId: string, data: ThreadData) {
@@ -490,9 +523,9 @@ export function listThreadsForSlug(slug: string) {
     if (!fs.existsSync(chatDir)) return threads;
     for (const f of fs.readdirSync(chatDir).filter((f) => f.endsWith(".json") && !f.startsWith("_"))) {
       try {
-        const data = JSON.parse(fs.readFileSync(path.join(chatDir, f), "utf-8"));
         const shortId = f.replace(".json", "");
         const tid = slug + ":" + shortId;
+        const data = getThread(tid);
         const msgs = data.messages || [];
         const last = msgs[msgs.length - 1];
         const lastBotTs = getLastBotTs(msgs);

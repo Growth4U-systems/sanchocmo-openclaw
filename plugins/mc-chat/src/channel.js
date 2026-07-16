@@ -25,7 +25,26 @@ import {
 } from "./account.js";
 import { markVisibleDelivery } from "./delivery-state.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
-import { missionControlRunIdFor } from "./runtime-run-state.js";
+import { runtimeRunCallbackAuthorityFor } from "./runtime-run-state.js";
+import { validatedControlPlaneOrigin } from "./chat-turn-authority.js";
+
+const DEFAULT_MC_SERVER_URL = "http://localhost:3000";
+
+function missionControlWebhookUrl(account) {
+  const origin = validatedControlPlaneOrigin(
+    account?.mcServerUrl || DEFAULT_MC_SERVER_URL,
+  );
+  return origin ? `${origin}/api/chat/webhook` : null;
+}
+
+function durableDispatchHeaders(authority) {
+  return authority?.dispatchRunId && authority?.dispatchLeaseToken
+    ? {
+        "X-Sancho-Dispatch-Run-Id": authority.dispatchRunId,
+        "X-Sancho-Dispatch-Lease-Token": authority.dispatchLeaseToken,
+      }
+    : {};
+}
 
 export const mcChatPlugin = createChatChannelPlugin({
   base: createChannelPluginBase({
@@ -105,17 +124,32 @@ export const mcChatPlugin = createChatChannelPlugin({
         const slug = parts[2] || parts[1] || "unknown";
         const threadId = parts.slice(2).join(":") || "unknown";
 
-        const mcUrl = account?.mcServerUrl || "http://localhost:3000";
-        const callbackUrl = `${mcUrl}/api/chat/webhook`;
+        const callbackUrl = missionControlWebhookUrl(account);
         const respondingAgent = params.agentId || "sancho";
-        const missionControlRunId = missionControlRunIdFor(slug, threadId, params.agentId);
+        const callbackAuthority = runtimeRunCallbackAuthorityFor(
+          slug,
+          threadId,
+          params.agentId,
+        );
+        const missionControlRunId = callbackAuthority?.missionControlRunId;
         if (looksLikeToolEcho(text)) {
           console.error(`[mc-chat] dropped tool-echo sendText threadId=${threadId} textLen=${(text || "").length}`);
           return { messageId: `mc-echo-${Date.now()}` };
         }
+        if (!callbackUrl) {
+          console.error("[mc-chat] sendText refused: mcServerUrl is not a valid control-plane origin");
+          return { messageId: `mc-err-${Date.now()}` };
+        }
+        if (!callbackAuthority) {
+          console.error("[mc-chat] sendText refused: active run capability unavailable");
+          return { messageId: `mc-err-${Date.now()}` };
+        }
         const headers = {
           "Content-Type": "application/json",
           ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
+          "X-Mission-Control-Run-Id": callbackAuthority.missionControlRunId,
+          "X-Sancho-Run-Capability": callbackAuthority.runtimeToolCapability,
+          ...durableDispatchHeaders(callbackAuthority),
         };
         const body = JSON.stringify({
           slug,
@@ -135,7 +169,13 @@ export const mcChatPlugin = createChatChannelPlugin({
         for (let i = 0; i < delays.length; i++) {
           if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
           try {
-            const response = await fetch(callbackUrl, { method: "POST", headers, body });
+            const response = await fetch(callbackUrl, {
+              method: "POST",
+              headers,
+              body,
+              redirect: "error",
+              signal: AbortSignal.timeout(8_000),
+            });
             if (response.ok) {
               const result = await response.json().catch(() => ({}));
               markVisibleDelivery(slug, threadId);
@@ -158,9 +198,22 @@ export const mcChatPlugin = createChatChannelPlugin({
         const slug = parts[2] || parts[1] || "unknown";
         const threadId = parts.slice(2).join(":") || "unknown";
 
-        const mcUrl = account?.mcServerUrl || "http://localhost:3000";
-        const callbackUrl = `${mcUrl}/api/chat/webhook`;
-        const missionControlRunId = missionControlRunIdFor(slug, threadId, "sancho");
+        const callbackUrl = missionControlWebhookUrl(account);
+        const callbackAuthority = runtimeRunCallbackAuthorityFor(
+          slug,
+          threadId,
+          "sancho",
+        );
+        const missionControlRunId = callbackAuthority?.missionControlRunId;
+
+        if (!callbackUrl) {
+          console.error("[mc-chat] sendMedia refused: mcServerUrl is not a valid control-plane origin");
+          return;
+        }
+        if (!callbackAuthority) {
+          console.error("[mc-chat] sendMedia refused: active run capability unavailable");
+          return;
+        }
 
         try {
           const response = await fetch(callbackUrl, {
@@ -168,6 +221,9 @@ export const mcChatPlugin = createChatChannelPlugin({
             headers: {
               "Content-Type": "application/json",
               ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
+              "X-Mission-Control-Run-Id": callbackAuthority.missionControlRunId,
+              "X-Sancho-Run-Capability": callbackAuthority.runtimeToolCapability,
+              ...durableDispatchHeaders(callbackAuthority),
             },
             body: JSON.stringify({
               slug,
@@ -178,6 +234,8 @@ export const mcChatPlugin = createChatChannelPlugin({
               agent: "sancho",
               ts: new Date().toISOString(),
             }),
+            redirect: "error",
+            signal: AbortSignal.timeout(8_000),
           });
           if (response.ok) markVisibleDelivery(slug, threadId);
         } catch (err) {
