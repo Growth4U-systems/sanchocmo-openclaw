@@ -296,7 +296,12 @@ values in `.env`, which you can also edit by hand:
   compose up` then starts a `postgres:16-alpine` container alongside the app
   (its data lives in the `postgres_data` volume), and the schema is **created
   automatically on first boot** — no Neon account needed. Meeting Intelligence /
-  POV Bank / Polar work out of the box.
+  POV Bank / Polar work out of the box. The container also **re-syncs the DB
+  role password to `.env`'s `POSTGRES_PASSWORD` on every boot** (SAN-482), so a
+  re-install or a fresh `curl` install that regenerates `.env` while the old
+  `postgres_data` volume survives can't strand auth — Postgres only honours
+  `POSTGRES_PASSWORD` on the *first* init of an empty volume, and this heals the
+  mismatch automatically instead of failing every request with a silent `28P01`.
 - **External / managed** (e.g. Neon, `DB_MODE=external`): leave
   `COMPOSE_PROFILES` empty and set `DATABASE_URL` to your own database. No
   bundled container is started.
