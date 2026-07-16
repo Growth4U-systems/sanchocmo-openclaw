@@ -36,6 +36,11 @@ ENV_EXAMPLE=".env.example"
 INSTANCE_FILE="config/instance.json"
 CLIENTS_FILE="config/clients.json"
 
+# Cómo referirse al CLI en los mensajes: `sancho` lo exporta cuando el comando
+# global está linkeado; si el wizard corre suelto (`bash scripts/wizard.sh`),
+# caemos a `./sancho`.
+SANCHO_CMD="${SANCHO_CMD:-./sancho}"
+
 FORCE=0
 # WIZARD_MODE: quick (default) asks the bare minimum to boot; advanced exposes
 # the full flow. Set via env, --quick/--advanced, or the interactive selector.
@@ -250,7 +255,7 @@ if [ "${#EXISTING[@]}" -gt 0 ] && [ "$FORCE" != "1" ]; then
 fi
 
 say "${B}SanchoCMO — setup wizard${RST}"
-say "${DIM}Generates .env + config/*.json so you can './sancho up'.${RST}"
+say "${DIM}Generates .env + config/*.json so you can '${SANCHO_CMD} up'.${RST}"
 
 # --- Setup mode --------------------------------------------------------------
 # quick (default): ask only what's needed to boot — provider + credential and the
@@ -848,7 +853,7 @@ fi
 # --- Final checklist (E5) ----------------------------------------------------
 say ""
 say "${GRN}${B}✅ Configuration ready.${RST}"
-say "   Start it with:  ${CYN}./sancho up${RST}  →  ${BASE_URL}"
+say "   Start it with:  ${CYN}${SANCHO_CMD} up${RST}  →  ${BASE_URL}"
 if [ "${DB_MODE:-local}" = "local" ]; then
   say "   ${DIM}(bundled Postgres is enabled via COMPOSE_PROFILES=local-db)${RST}"
 fi
@@ -905,28 +910,28 @@ fi
 say ""
 if [ "$ENABLE_YALC" = "1" ]; then
   say "${B}Outreach (YALC) is enabled.${RST}"
-  say "   ${DIM}./sancho starts it automatically.${RST}"
+  say "   ${DIM}${SANCHO_CMD} starts it automatically.${RST}"
   say "   ${DIM}Add your email provider key (e.g. Instantly) in the Outreach cockpit to send.${RST}"
   say ""
 fi
 if [ "$ENABLE_OD" = "1" ]; then
   say "${B}Open Design is enabled.${RST}"
-  say "   ${DIM}./sancho starts it automatically.${RST}"
+  say "   ${DIM}${SANCHO_CMD} starts it automatically.${RST}"
   say "   ${DIM}Web app reachable at ${OD_WEB_URL}.${RST}"
   say ""
 fi
 if [ "$WIZARD_MODE" != "advanced" ]; then
   say "${DIM}Quick setup — admin domain, database, access URL, ports and optional services took defaults.${RST}"
-  say "   Want more control? Re-run:  ${CYN}./sancho reconfigure --advanced${RST}"
+  say "   Want more control? Re-run:  ${CYN}${SANCHO_CMD} reconfigure --advanced${RST}"
   say ""
 fi
 say "${B}Optional integrations${RST} — configure later (all off by default):"
 say "   • Slack          → Mission Control → Settings → APIs"
 if [ "$ENABLE_OD" != "1" ]; then
-  say "   • Open Design     → ${CYN}./sancho install --od${RST} (or re-run wizard with ENABLE_OD=yes)"
+  say "   • Open Design     → ${CYN}${SANCHO_CMD} install --od${RST} (or re-run wizard with ENABLE_OD=yes)"
 fi
 if [ "$ENABLE_YALC" != "1" ]; then
-  say "   • YALC / Outreach → ${CYN}./sancho install --yalc${RST} (or re-run wizard with ENABLE_YALC=yes)"
+  say "   • YALC / Outreach → ${CYN}${SANCHO_CMD} install --yalc${RST} (or re-run wizard with ENABLE_YALC=yes)"
 fi
 say "   • Discord         → set DISCORD_BOT_TOKEN in .env"
 say ""

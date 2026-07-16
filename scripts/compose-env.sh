@@ -277,10 +277,10 @@ wait_until_healthy() {
     phase="$(_boot_phase "$waited")"
     if [ "$tty" = 1 ]; then
       i=$(( (i + 1) % n ))
-      printf '\r\033[K  %s %s… (%ss · detalle en vivo: ./sancho logs)' \
-        "${frames[i]}" "$phase" "$waited"
+      printf '\r\033[K  %s %s… (%ss · detalle en vivo: %s logs)' \
+        "${frames[i]}" "$phase" "$waited" "${SANCHO_CMD:-./sancho}"
     elif [ "$phase" != "$last_phase" ]; then
-      echo "  … ${phase}… (${waited}s · detalle: ./sancho logs)"
+      echo "  … ${phase}… (${waited}s · detalle: ${SANCHO_CMD:-./sancho} logs)"
       last_phase="$phase"
     fi
     sleep 2; waited=$((waited + 2))
