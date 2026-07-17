@@ -29,6 +29,7 @@ test("managed deploys reject legacy images before durable boot", () => {
       "PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED",
       "LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED",
       "LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED",
+      "CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED",
     ]) {
       assert.ok(workflow.includes(flag), `${workflowName}: missing ${flag}`);
     }
@@ -50,7 +51,7 @@ test("release image contains the same checked CLI used by deploy", () => {
   );
 });
 
-test("managed deploys persist model/chat caps and staging defaults rollout to safe-off", () => {
+test("managed deploys persist caps, default safe-off, and purge stale rollout scope", () => {
   for (const workflowName of ["deploy-staging.yml", "deploy-prod.yml"]) {
     const workflow = fs.readFileSync(
       path.join(root, ".github/workflows", workflowName),
@@ -70,17 +71,21 @@ test("managed deploys persist model/chat caps and staging defaults rollout to sa
     ]) {
       assert.ok(workflow.includes(key), `${workflowName}: missing ${key}`);
     }
+    assert.match(workflow, /execution_rollout_configuration:/);
+    assert.match(workflow, /default: safe-off/);
+    assert.match(workflow, /export PARTNERSHIPS_DISCOVERY_EXECUTION_V2=off/);
+    assert.match(workflow, /export CHAT_AGENT_TURN_EXECUTION_V1=off/);
+    for (const staleScopeKey of [
+      "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
+      "PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE",
+      "LEADS_SEARCH_V2_SLUGS",
+      "CHAT_AGENT_TURN_V1_SLUGS",
+    ]) {
+      assert.match(
+        workflow,
+        new RegExp(`blocked\\.update\\([\\s\\S]*${staleScopeKey}`),
+        `${workflowName}: safe-off must purge ${staleScopeKey}`,
+      );
+    }
   }
-
-  const staging = fs.readFileSync(
-    path.join(root, ".github/workflows/deploy-staging.yml"),
-    "utf8",
-  );
-  assert.match(staging, /execution_rollout_configuration:/);
-  assert.match(staging, /default: safe-off/);
-  assert.match(
-    staging,
-    /export PARTNERSHIPS_DISCOVERY_EXECUTION_V2=off/,
-  );
-  assert.match(staging, /export CHAT_AGENT_TURN_EXECUTION_V1=off/);
 });

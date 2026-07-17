@@ -108,8 +108,8 @@ jobs:
           PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS: ${{ vars.PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS || '1' }}
           PARTNERSHIPS_DISCOVERY_SCOPE_RESCAN_MS: ${{ vars.PARTNERSHIPS_DISCOVERY_SCOPE_RESCAN_MS || '30000' }}
           # Explicit kill-switches: Leads Discovery is outside this candidate.
-          LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED: '0'
-          LEADS_DISCOVERY_EXECUTION_V2: 'off'
+          LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED: "0"
+          LEADS_DISCOVERY_EXECUTION_V2: "off"
           LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED: ${{ vars.LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED || '0' }}
           LEADS_SEARCH_EXECUTION_V2: ${{ vars.LEADS_SEARCH_EXECUTION_V2 || 'off' }}
           LEADS_SEARCH_V2_SLUGS: ${{ vars.LEADS_SEARCH_V2_SLUGS }}
@@ -342,7 +342,7 @@ jobs:
               echo "- Completion evidence: adopted tracking rows with database timestamps plus the successful workflow log."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
-          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS EXECUTION_MIGRATION_ADOPT_THROUGH=$EXECUTION_MIGRATION_ADOPT_THROUGH MIGRATION_ENV_FILE=$MIGRATION_ENV_REMOTE MIGRATION_CLASSIFIER_FILE=$MIGRATION_CLASSIFIER_REMOTE DEPLOY_ACTOR=$GITHUB_ACTOR DEPLOY_TARGET=$SHA DEPLOY_ENVIRONMENT=staging DEPLOY_RUN_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_PATH=$DEPLOY_PATH SHA=$SHA PAYLOAD_B64=$PAYLOAD_B64 ENABLE_YALC_SERVICE=$ENABLE_YALC_SERVICE RUN_DB_MIGRATIONS=$RUN_DB_MIGRATIONS EXECUTION_MIGRATION_ADOPT_THROUGH=$EXECUTION_MIGRATION_ADOPT_THROUGH EXECUTION_ROLLOUT_CONFIGURATION=$EXECUTION_ROLLOUT_CONFIGURATION MIGRATION_ENV_FILE=$MIGRATION_ENV_REMOTE MIGRATION_CLASSIFIER_FILE=$MIGRATION_CLASSIFIER_REMOTE DEPLOY_ACTOR=$GITHUB_ACTOR DEPLOY_TARGET=$SHA DEPLOY_ENVIRONMENT=staging DEPLOY_RUN_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID YALC_REPO_TOKEN=$YALC_REPO_TOKEN GHCR_USERNAME=$GHCR_USERNAME bash -s" <<'EOF'
             set -euo pipefail
             trap 'rm -f -- "$MIGRATION_ENV_FILE" "$MIGRATION_CLASSIFIER_FILE"' EXIT
             cd "$DEPLOY_PATH"
@@ -416,9 +416,19 @@ jobs:
             # Remove any values left by a pre-hardening deployment. Direct DB
             # credentials are supplied only to the ephemeral migrator below.
             python3 - <<'PY'
+            import os
             from pathlib import Path
             path = Path(".env")
             blocked = {"EXECUTION_MIGRATIONS_DATABASE_URL", "DIRECT_DATABASE_URL"}
+            if os.environ.get("EXECUTION_ROLLOUT_CONFIGURATION") == "safe-off":
+                blocked.update({
+                    "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
+                    "PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE",
+                    "LEADS_DISCOVERY_V2_SLUGS",
+                    "LEADS_SEARCH_V2_SLUGS",
+                    "CHAT_AGENT_TURN_V1_SLUGS",
+                    "CHAT_AGENT_TURN_WORKER_ID",
+                })
             if path.exists():
                 lines = path.read_text().splitlines()
                 kept = [line for line in lines if line.split("=", 1)[0] not in blocked]
@@ -557,7 +567,7 @@ jobs:
               esac
             fi
             DURABLE_WORKER_BOOT_REQUESTED="$(
-              docker compose $COMPOSE_ARGS config --format json | python3 -c 'import json,sys; environment=json.load(sys.stdin)["services"]["sanchocmo"].get("environment", {}); flags=("PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED","LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED","LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED"); print("1" if any(str(environment.get(flag,"")) == "1" for flag in flags) else "0")'
+              docker compose $COMPOSE_ARGS config --format json | python3 -c 'import json,sys; environment=json.load(sys.stdin)["services"]["sanchocmo"].get("environment", {}); flags=("PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED","LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED","LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED","CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED"); print("1" if any(str(environment.get(flag,"")) == "1" for flag in flags) else "0")'
             )"
             if [ "$TRACKED_MIGRATIONS_AVAILABLE" != "1" ] && [ "$DURABLE_WORKER_BOOT_REQUESTED" = "1" ]; then
               echo "::error::Durable worker boot was requested, but the selected image has no tracked 0032/cutover-gate capability. Set all durable worker boot flags to 0 or deploy a compatible image."
