@@ -1118,19 +1118,21 @@ export function createPartnershipsDiscoveryWorkerHandlerV5(
     DiscoveryWorkerDependencies,
     | "deliverV2ChatCompletion"
     | "credentialProvider"
-    | "yalcAssignEffect"
+    | "prepareEffectDependencies"
     | "yalcAssignEffectDependencies"
   > = {},
 ) {
   const credentials =
     dependencies.credentialProvider ?? createPartnershipsCredentialProvider();
+  const loadFixtures = dependencies.prepareEffectDependencies?.loadFixtures;
   return createPartnershipsDiscoveryHandlerV5({
     resolveScrapeClient: createPartnershipsScrapeClientResolver(credentials),
-    assignEffect:
-      dependencies.yalcAssignEffect ??
-      createPartnershipsYalcAssignEffectV5(
-        dependencies.yalcAssignEffectDependencies,
-      ),
+    // Version-bound effects are never shared across handler versions: v5
+    // always builds its own assign effect from the injected dependencies.
+    assignEffect: createPartnershipsYalcAssignEffectV5(
+      dependencies.yalcAssignEffectDependencies,
+    ),
+    ...(loadFixtures ? { loadFixtures } : {}),
     projectTerminal: async (
       run: ExecutionRun,
       command: PartnershipsDiscoveryCommandV2,

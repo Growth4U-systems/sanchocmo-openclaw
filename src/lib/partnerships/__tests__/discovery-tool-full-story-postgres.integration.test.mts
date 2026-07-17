@@ -524,25 +524,27 @@ test(
       assert.match(discoveryRunId ?? "", /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]*$/);
 
       let fixtureLoads = 0;
-      const prepareEffect = effects.createPartnershipsPrepareAssignmentEffectV2(
-        {
-          loadFixtures: () => {
-            fixtureLoads += 1;
-            return [
-              {
-                handle: "@capilar_story_fixture",
-                email: "fixture@example.test",
-                network: "instagram",
-                followers: 48_000,
-                engagementRatePct: 5.2,
-                signals: { fakeFollowersPct: 0 },
-              },
-            ];
-          },
+      // Injected as version-agnostic dependencies: the worker registry builds
+      // the version-bound effects (and the v5 handler its fixture loader).
+      const prepareEffectDependencies = {
+        loadFixtures: () => {
+          fixtureLoads += 1;
+          return [
+            {
+              handle: "@capilar_story_fixture",
+              email: "fixture@example.test",
+              network: "instagram",
+              followers: 48_000,
+              engagementRatePct: 5.2,
+              signals: { fakeFollowersPct: 0 },
+            },
+          ];
         },
-      );
+      };
       let yalcAssignmentCalls = 0;
-      const yalcAssignEffect = effects.createPartnershipsYalcAssignEffectV2({
+      const yalcAssignEffectDependencies: Parameters<
+        typeof effects.createPartnershipsYalcAssignEffectV5
+      >[0] = {
         transport: async (config, requestPath, input) => {
           yalcAssignmentCalls += 1;
           assert.equal(input.method, "POST");
@@ -576,7 +578,7 @@ test(
             },
           };
         },
-      });
+      };
       const credentialProvider = {
         async resolve(reference: string) {
           assert.equal(reference, `yalc://tenant/${slug}`);
@@ -594,8 +596,8 @@ test(
           repository,
           env,
           workerId: `partnerships-story-${suffix}`,
-          prepareEffect,
-          yalcAssignEffect,
+          prepareEffectDependencies,
+          yalcAssignEffectDependencies,
           credentialProvider,
           deliverV2ChatCompletion: (terminalRun) =>
             completion.deliverPartnershipsDiscoveryChatCompletion(terminalRun, {
@@ -627,8 +629,8 @@ test(
           repository,
           env,
           workerId: `partnerships-story-idle-${suffix}`,
-          prepareEffect,
-          yalcAssignEffect,
+          prepareEffectDependencies,
+          yalcAssignEffectDependencies,
           credentialProvider,
         }),
         false,
@@ -731,11 +733,13 @@ test(
             WHERE "tenant_key" = ${slug}
               AND "parent_agent_run_id" = ${parentAgentRunId}) AS "commandOperation"
       `;
+      // v5 short-step handler: the scrape runs as checkpointed handler steps,
+      // so the discovery run records exactly one durable effect (yalc assign).
       assert.deepEqual(counts, {
         setupRuns: 1,
         discoveryRuns: 1,
-        effectCount: 2,
-        succeededEffects: 2,
+        effectCount: 1,
+        succeededEffects: 1,
         originChildren: 2,
         commandOperation: "partnerships.discovery",
       });

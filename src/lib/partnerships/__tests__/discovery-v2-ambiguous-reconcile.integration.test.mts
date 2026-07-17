@@ -244,23 +244,28 @@ test(
           },
         };
       };
-      const prepareEffect = effects.createPartnershipsPrepareAssignmentEffectV2(
-        {
-          loadFixtures: () => [
-            {
-              handle: "@reconcile_fixture",
-              network: "instagram",
-              followers: 48_000,
-              engagementRatePct: 5.2,
-              signals: { fakeFollowersPct: 0 },
-            },
-          ],
-        },
-      );
-      const assignEffect = effects.createPartnershipsYalcAssignEffectV2({
+      // Injected as version-agnostic dependencies: the worker registry builds
+      // the version-bound effects (and the v5 handler its fixture loader).
+      const prepareEffectDependencies = {
+        loadFixtures: () => [
+          {
+            handle: "@reconcile_fixture",
+            network: "instagram",
+            followers: 48_000,
+            engagementRatePct: 5.2,
+            signals: { fakeFollowersPct: 0 },
+          },
+        ],
+      };
+      const yalcAssignEffectDependencies = {
         transport: transport as never,
-      });
-      assert.equal(assignEffect.safety.kind, "reconcile_before_replay");
+      };
+      assert.equal(
+        effects.createPartnershipsYalcAssignEffectV5(
+          yalcAssignEffectDependencies,
+        ).safety.kind,
+        "reconcile_before_replay",
+      );
       const credentialProvider = {
         async resolve(reference: string) {
           assert.equal(reference, `yalc://tenant/${slug}`);
@@ -277,8 +282,8 @@ test(
         repository,
         env,
         workerId: "partnerships-v2-reconcile-test",
-        prepareEffect,
-        yalcAssignEffect: assignEffect,
+        prepareEffectDependencies,
+        yalcAssignEffectDependencies,
         credentialProvider,
         deliverV2ChatCompletion: async () => {},
       };
