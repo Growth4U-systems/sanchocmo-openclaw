@@ -36,7 +36,6 @@ import {
 import {
   DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION,
   DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION_V2,
-  type DurableExecutionHandlerContractVersion,
 } from "./contract";
 import {
   DurableCancellationPendingError,
@@ -57,7 +56,6 @@ import {
   parseDurableJsonContractValue,
   validateDurableJson,
   type DurableJson,
-  type DurableJsonObject,
 } from "./json-contract";
 import {
   isDurableExecutionWorkerCapacityError,

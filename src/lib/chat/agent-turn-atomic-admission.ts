@@ -70,7 +70,7 @@ function opaqueId(prefix: string, seed?: string): string {
   return `${prefix}_${suffix}`;
 }
 
-function parentRunId(input: CreateAgentRunInput): string {
+function parentRunId(_input: CreateAgentRunInput): string {
   // The partial idempotency index deliberately releases failed/cancelled
   // attempts. A random attempt id therefore matters: reusing a deterministic
   // id would let the primary key keep a failed attempt wedged forever.

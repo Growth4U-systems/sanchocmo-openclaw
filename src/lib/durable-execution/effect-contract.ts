@@ -89,7 +89,7 @@ export interface DurableEffectInvocationContext {
   credentials: CapabilityCredentialProvider;
 }
 
-export interface DurableEffectReconcileContext extends DurableEffectInvocationContext {}
+export type DurableEffectReconcileContext = DurableEffectInvocationContext;
 
 interface DurableEffectDefinitionBase<
   Payload extends DurableJson,

@@ -20,7 +20,7 @@ async function emit(payload: unknown): Promise<void> {
 
 const databaseUrl = requiredEnv("DATABASE_URL");
 const operation = requiredEnv("PROJECTION_CRASH_OPERATION");
-const runId = requiredEnv("PROJECTION_CRASH_RUN_ID");
+requiredEnv("PROJECTION_CRASH_RUN_ID");
 const tenantKey = requiredEnv("PROJECTION_CRASH_TENANT");
 const ledgerSchema = requiredEnv("PROJECTION_LEDGER_SCHEMA");
 const schema = requiredEnv("PROJECTION_CRASH_SCHEMA");

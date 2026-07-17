@@ -21,7 +21,7 @@ import {
   DISCOVERY_EXECUTION_SNAPSHOT_VERSION,
   type DiscoveryExecutionSnapshot,
 } from "./discovery-execution-policy";
-import type { DiscoveryPlan, DiscoveryRunnerStats } from "./discovery-types";
+import type { DiscoveryRunnerStats } from "./discovery-types";
 
 export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2 = 3 as const;
 export const PARTNERSHIPS_PREPARE_EFFECT_STEP =
@@ -198,14 +198,6 @@ function text(value: unknown, max: number, pattern?: RegExp): string {
     throw new Error("invalid string");
   }
   return result;
-}
-
-function optionalText(
-  input: Record<string, unknown>,
-  key: string,
-  max: number,
-): string | undefined {
-  return input[key] === undefined ? undefined : text(input[key], max);
 }
 
 function integer(value: unknown, min: number, max: number): number {

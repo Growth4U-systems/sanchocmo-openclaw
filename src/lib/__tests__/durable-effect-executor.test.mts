@@ -22,8 +22,6 @@ import type {
 import { ExecutionEffectConflictError } from "@/lib/execution-control/types";
 import {
   DurableCancellationPendingError,
-  DurableCancellationStopError,
-  DurableEffectDeadlineExceededError,
   DurableEffectExecutor,
   DurableEffectRetryScheduledError,
   DurableEffectTerminalError,
