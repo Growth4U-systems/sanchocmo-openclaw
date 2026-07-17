@@ -3,7 +3,71 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
+import * as yaml from "js-yaml";
+
 const root = process.cwd();
+
+type DeployWorkflow = {
+  jobs?: Record<
+    string,
+    {
+      steps?: Array<{
+        name?: string;
+        run?: string;
+      }>;
+    }
+  >;
+};
+
+test("managed deploy heredoc terminators are valid after YAML dedent", () => {
+  for (const workflowName of ["deploy-staging.yml", "deploy-prod.yml"]) {
+    const workflow = yaml.load(
+      fs.readFileSync(
+        path.join(root, ".github/workflows", workflowName),
+        "utf8",
+      ),
+    ) as DeployWorkflow;
+
+    for (const job of Object.values(workflow.jobs ?? {})) {
+      for (const step of job.steps ?? []) {
+        if (!step.run) continue;
+        const lines = step.run.split("\n");
+        for (const [lineIndex, line] of lines.entries()) {
+          const openers = line.matchAll(
+            /<<(-?)\s*['"]?([A-Za-z_][A-Za-z0-9_]*)['"]?/g,
+          );
+          for (const opener of openers) {
+            const stripsTabs = opener[1] === "-";
+            const delimiter = opener[2];
+            const terminatorIndex = lines.findIndex(
+              (candidate, candidateIndex) =>
+                candidateIndex > lineIndex && candidate.trim() === delimiter,
+            );
+            assert.notEqual(
+              terminatorIndex,
+              -1,
+              `${workflowName}/${step.name ?? "unnamed"}: heredoc ${delimiter} opened at line ${lineIndex + 1} has no terminator`,
+            );
+            const terminator = lines[terminatorIndex];
+            if (stripsTabs) {
+              assert.match(
+                terminator,
+                new RegExp(`^\\t*${delimiter}$`),
+                `${workflowName}/${step.name ?? "unnamed"}: <<- heredoc ${delimiter} has a space-indented terminator at line ${terminatorIndex + 1}`,
+              );
+            } else {
+              assert.equal(
+                terminator,
+                delimiter,
+                `${workflowName}/${step.name ?? "unnamed"}: heredoc ${delimiter} has an indented terminator at line ${terminatorIndex + 1}`,
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+});
 
 test("managed deploys reject legacy images before durable boot", () => {
   for (const workflowName of ["deploy-staging.yml", "deploy-prod.yml"]) {
