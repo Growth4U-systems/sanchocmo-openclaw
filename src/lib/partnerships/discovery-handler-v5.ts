@@ -29,14 +29,20 @@ import {
   type DiscoveryScrapeProgressRef,
 } from "./discovery-progress-store";
 import {
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
   PARTNERSHIPS_LOCAL_ARTIFACT_STORE,
+  PARTNERSHIPS_SCRAPECREATORS_ORIGIN,
   PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
+  canonicalPartnershipsTargetOrigin,
   partnershipsDiscoveryCommandContractV2,
   partnershipsDiscoveryResultContractV2,
+  partnershipsDiscoveryYalcAssignEffectPolicyV5,
+  partnershipsTargetBindingFingerprint,
   type PartnershipsDiscoveryCommandV2,
   type PartnershipsDiscoveryResultV2,
   type PartnershipsYalcAssignEffectV2,
 } from "./discovery-handler-v2";
+import type { CapabilityCredentialProvider } from "@/lib/durable-execution";
 import { normalizeCandidates } from "./discovery-normalize";
 import { applyDiscoveryPlanGates } from "./discovery-runner";
 import { loadFixtureCandidates } from "./fixtures";
@@ -55,6 +61,7 @@ import {
 } from "./scrapecreators-live";
 import {
   ScrapeCreatorsAtomicError,
+  createScrapeCreatorsAtomicClient,
   type AtomicInstagramPost,
   type AtomicInstagramProfile,
   type AtomicSearchPage,
@@ -82,7 +89,8 @@ import type { DiscoveryPlan, RawDiscoveryCandidate } from "./discovery-types";
  * `context.checkpoint()` after every call. The only external mutation stays a
  * durable effect with receipt + reconcile semantics.
  */
-export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V5 = 5 as const;
+export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V5 =
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5;
 
 const CHECKPOINT_BOUNDS: DurableJsonBounds = Object.freeze({
   maxBytes: 16 * 1024,
@@ -835,4 +843,49 @@ export function createPartnershipsDiscoveryHandlerV5(
       return dependencies.projectTerminal?.(run, command);
     },
   };
+}
+
+/**
+ * Worker-owned scrape client resolution. `execute()` has no credential access
+ * by design, so the worker resolves the frozen command binding here — with the
+ * same target-binding verification the v4 effect performed — and hands the
+ * handler an already-bound per-call client.
+ */
+export function createPartnershipsScrapeClientResolver(
+  credentials: CapabilityCredentialProvider,
+): PartnershipsDiscoveryHandlerV5Dependencies["resolveScrapeClient"] {
+  return async (command) => {
+    const binding = command.scrapeCreators;
+    const resolved = await credentials.resolve(binding.credentialRef);
+    const baseUrl = canonicalPartnershipsTargetOrigin(
+      resolved.baseUrl?.trim() || "",
+    );
+    const fingerprint = partnershipsTargetBindingFingerprint(baseUrl);
+    if (
+      baseUrl !== PARTNERSHIPS_SCRAPECREATORS_ORIGIN ||
+      resolved.targetBindingFingerprint !== fingerprint ||
+      binding.targetBindingFingerprint !== fingerprint
+    ) {
+      throw new Error("ScrapeCreators target binding changed after admission");
+    }
+    const apiKey = resolved.apiKey?.trim();
+    if (!apiKey) {
+      throw new Error("Partnerships capability binding is unavailable");
+    }
+    return createScrapeCreatorsAtomicClient({ apiKey });
+  };
+}
+
+/**
+ * Policy-only v5 handler for admission/preflight fingerprinting. Its scrape
+ * resolver and assign effect fail closed if ever invoked: real binding happens
+ * only in the worker factory.
+ */
+export function createPartnershipsDiscoveryHandlerV5Policy() {
+  return createPartnershipsDiscoveryHandlerV5({
+    resolveScrapeClient: () => {
+      throw new Error("Partnerships v5 scrape capability is not bound");
+    },
+    assignEffect: partnershipsDiscoveryYalcAssignEffectPolicyV5,
+  });
 }

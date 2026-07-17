@@ -29,18 +29,22 @@ import {
 
 export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3 = 3 as const;
 export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2 = 4 as const;
+/** Current short-step handler (SAN-480); v4/v3 stay for run recovery only. */
+export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5 = 5 as const;
 export const PARTNERSHIPS_DISCOVERY_COMMAND_CONTRACT_SCHEMA_VERSION =
   3 as const;
 export type PartnershipsDiscoveryHandlerVersionV2 =
   | typeof PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3
-  | typeof PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2;
+  | typeof PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2
+  | typeof PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5;
 
 export function isPartnershipsDiscoveryHandlerV2Version(
   value: unknown,
 ): value is PartnershipsDiscoveryHandlerVersionV2 {
   return (
     value === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3 ||
-    value === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2
+    value === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2 ||
+    value === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5
   );
 }
 export const PARTNERSHIPS_PREPARE_EFFECT_STEP =
@@ -708,6 +712,16 @@ export const partnershipsDiscoveryEffectPolicyV2 = Object.freeze({
   [PARTNERSHIPS_PREPARE_EFFECT_STEP]: currentPolicyPrepareEffect,
   [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP]: currentPolicyYalcEffect,
 });
+
+/**
+ * Policy-only assign definition for the v5 short-step handler, whose only
+ * durable effect is the Yalc mutation (the read-only scrape runs as
+ * checkpointed handler steps).
+ */
+export const partnershipsDiscoveryYalcAssignEffectPolicyV5 = policyYalcEffect(
+  3,
+  1,
+);
 
 export interface PartnershipsDiscoveryHandlerV2Dependencies {
   projectTerminal?(

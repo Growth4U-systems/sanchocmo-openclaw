@@ -21,17 +21,17 @@ import {
   type DiscoveryExecutionSnapshot,
 } from "./discovery-execution-policy";
 import {
-  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
   PARTNERSHIPS_LOCAL_ARTIFACT_STORE,
   PARTNERSHIPS_PREPARE_CAPABILITY,
   PARTNERSHIPS_SCRAPECREATORS_ORIGIN,
   PARTNERSHIPS_YALC_ASSIGN_CAPABILITY,
   canonicalPartnershipsTargetOrigin,
-  createPartnershipsDiscoveryHandlerV2,
   isPartnershipsDiscoveryHandlerV2Version,
   partnershipsTargetBindingFingerprint,
   type PartnershipsDiscoveryCommandV2,
 } from "./discovery-handler-v2";
+import { createPartnershipsDiscoveryHandlerV5Policy } from "./discovery-handler-v5";
 import {
   resolvePartnershipsDiscoveryRuntimeContract,
   type PartnershipsDiscoveryRuntimeContractEnvironment,
@@ -150,14 +150,15 @@ export const partnershipsDiscoveryCapabilityPolicyV2: DurableCapabilityPolicy =
   Object.freeze({
     mayAdmit: (input: Parameters<DurableCapabilityPolicy["mayAdmit"]>[0]) =>
       isV2Capability(input) &&
-      input.handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+      input.handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
     mayDrain: (input: Parameters<DurableCapabilityPolicy["mayDrain"]>[0]) =>
       isV2Capability(input) ? "allow" : "temporarily_suspended",
   });
 
+/** Admission/preflight registry: only the current (v5) policy handler. */
 export function partnershipsDiscoveryRegistryV2(): DurableExecutionRegistry {
   return new DurableExecutionRegistry().register(
-    createPartnershipsDiscoveryHandlerV2(),
+    createPartnershipsDiscoveryHandlerV5Policy(),
   );
 }
 
@@ -354,7 +355,7 @@ export function partnershipsDiscoveryV2IdempotencyKey(
   attempt: number,
 ): string {
   const normalizedAttempt = Math.max(1, Math.floor(attempt));
-  return `partnerships.discovery:${discoveryExecutionAggregateId(slug, searchId)}:attempt:${normalizedAttempt}:canary:v${PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2}`;
+  return `partnerships.discovery:${discoveryExecutionAggregateId(slug, searchId)}:attempt:${normalizedAttempt}:canary:v${PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5}`;
 }
 
 /**
@@ -388,7 +389,7 @@ export async function admitPartnershipsDiscoveryV2(
       operation: DISCOVERY_EXECUTION_OPERATION,
       mode: "canary",
     },
-    handlerVersion: PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+    handlerVersion: PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
     aggregateType: DISCOVERY_EXECUTION_AGGREGATE,
     aggregateId: discoveryExecutionAggregateId(
       snapshot.slug,
