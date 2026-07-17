@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.8.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.5...v1.8.0) (2026-07-17)
+
+
+### Features
+
+* **executions:** add tenant-scoped ledger inspector (SAN-480) ([e0a18bd](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/e0a18bd59df6ec58b0f156fb3c07379cf7ba7f45))
+* **installer:** Hermes runtime modes in the advanced wizard (bridge/external/command) (SAN-486) ([#1359](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1359)) ([1ca405d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/1ca405deb930639d54615cc5e6b773ff684f69ae))
+* **partnerships:** add shadow execution ledger (SAN-480) ([#1346](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1346)) ([6e9d212](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6e9d212ae9e5e6023bd5d3666b6240d42838b5b7))
+
+
+### Bug Fixes
+
+* **cli:** name the CLI `sancho` in help/messages when linked globally (SAN-483) ([#1353](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1353)) ([352e252](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/352e252f6d18236fac48c51b879ccea91c8308b1))
+* **local-db:** self-heal Postgres role password on boot (SAN-482) ([#1351](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1351)) ([3b62746](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3b62746dc7aebe4fc8e2de5e524cecc39f9f70df))
+* **partnerships:** idempotent discovery creation (SAN-480) ([#1349](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1349)) ([ced19b3](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ced19b30d6ac10b218e40a155d036a1e11969987))
+* **runtime:** run shared boot bootstrap for hermes/external-http, not just openclaw (SAN-485) ([#1358](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1358)) ([580a898](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/580a8983c9912b8974ec95f61454a518e6287377))
+
 ## [1.7.5](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.4...v1.7.5) (2026-07-15)
 
 
