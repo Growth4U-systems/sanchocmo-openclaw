@@ -610,25 +610,25 @@ jobs:
             fi
             # Purge values left by any pre-hardening deploy. Direct database
             # credentials are scoped to the one-off migration container.
-            python3 - <<'PY'
-            import os
-            from pathlib import Path
-            path = Path(".env")
-            blocked = {"EXECUTION_MIGRATIONS_DATABASE_URL", "DIRECT_DATABASE_URL"}
-            if os.environ.get("EXECUTION_ROLLOUT_CONFIGURATION") == "safe-off":
-                blocked.update({
-                    "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
-                    "PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE",
-                    "LEADS_DISCOVERY_V2_SLUGS",
-                    "LEADS_SEARCH_V2_SLUGS",
-                    "CHAT_AGENT_TURN_V1_SLUGS",
-                    "CHAT_AGENT_TURN_WORKER_ID",
-                })
-            if path.exists():
-                lines = path.read_text().splitlines()
-                kept = [line for line in lines if line.split("=", 1)[0] not in blocked]
-                path.write_text("\n".join(kept) + ("\n" if kept else ""))
-            PY
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          path = Path(".env")
+          blocked = {"EXECUTION_MIGRATIONS_DATABASE_URL", "DIRECT_DATABASE_URL"}
+          if os.environ.get("EXECUTION_ROLLOUT_CONFIGURATION") == "safe-off":
+              blocked.update({
+                  "PARTNERSHIPS_DISCOVERY_V2_SLUGS",
+                  "PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE",
+                  "LEADS_DISCOVERY_V2_SLUGS",
+                  "LEADS_SEARCH_V2_SLUGS",
+                  "CHAT_AGENT_TURN_V1_SLUGS",
+                  "CHAT_AGENT_TURN_WORKER_ID",
+              })
+          if path.exists():
+              lines = path.read_text().splitlines()
+              kept = [line for line in lines if line.split("=", 1)[0] not in blocked]
+              path.write_text("\n".join(kept) + ("\n" if kept else ""))
+          PY
             ENV_HASH_AFTER=$(env_hash .env)
             ENV_CHANGED=0
             if [ "$ENV_HASH_BEFORE" != "$ENV_HASH_AFTER" ]; then
