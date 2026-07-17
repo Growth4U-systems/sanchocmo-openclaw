@@ -2,7 +2,9 @@ const OFFICIAL_SCRAPECREATORS_BASE_URL = "https://api.scrapecreators.com";
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_TIMEOUT_MS = 30_000;
 const MAX_SEARCH_RESULTS = 20;
-const MAX_POSTS = 6;
+// Parity with the live scraper's typical posts window (~12); 6 measurably
+// shifted engagement/cadence/CET signals and could flip the audience gate.
+const MAX_POSTS = 12;
 const MAX_NAME_LENGTH = 160;
 const MAX_BIOGRAPHY_LENGTH = 600;
 const MAX_CAPTION_LENGTH = 600;
@@ -62,9 +64,18 @@ export interface AtomicInstagramPost {
   publishedAt?: string;
 }
 
+export interface AtomicSearchPage {
+  profiles: AtomicSearchProfile[];
+  /** Absent when the provider reports no further pages. */
+  nextCursor?: string;
+}
+
 export interface ScrapeCreatorsAtomicClient {
   searchProfilesOnce(query: string): Promise<AtomicSearchProfile[]>;
   searchHashtagOnce(hashtag: string): Promise<AtomicSearchProfile[]>;
+  /** One provider call fetching a single page; the caller owns cursor state. */
+  searchProfilesPage(query: string, cursor?: string): Promise<AtomicSearchPage>;
+  searchHashtagPage(hashtag: string, cursor?: string): Promise<AtomicSearchPage>;
   getProfileOnce(handle: string): Promise<AtomicInstagramProfile>;
   getPostsOnce(handle: string): Promise<AtomicInstagramPost[]>;
 }
@@ -191,6 +202,86 @@ function publishedAt(value: unknown): string | undefined {
   return Number.isFinite(date.getTime()) ? date.toISOString() : undefined;
 }
 
+function cursorFromBody(body: unknown): string | undefined {
+  const root = asRecord(body);
+  const data = asRecord(root.data);
+  const cursor = root.cursor ?? data.cursor;
+  if (typeof cursor === "number" && Number.isFinite(cursor)) {
+    return String(cursor);
+  }
+  const text = compactString(cursor, 512);
+  return text || undefined;
+}
+
+function searchProfilesFromBody(body: unknown): AtomicSearchProfile[] {
+  const seen = new Set<string>();
+  const profiles: AtomicSearchProfile[] = [];
+  for (const value of profileArray(body)) {
+    const item = asRecord(value);
+    const nestedUser = asRecord(item.user);
+    const handle = normalizedHandle(
+      item.username ?? item.handle ?? nestedUser.username,
+    );
+    if (!handle) continue;
+    const key = handle.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const name = compactString(
+      item.full_name ?? item.fullName ?? item.name ?? nestedUser.full_name,
+      MAX_NAME_LENGTH,
+    );
+    const followers = nestedFollowers({ ...item, ...nestedUser });
+    profiles.push({
+      handle,
+      ...(name ? { name } : {}),
+      ...(followers !== undefined ? { followers } : {}),
+    });
+    if (profiles.length >= MAX_SEARCH_RESULTS) break;
+  }
+  return profiles;
+}
+
+function hashtagOwnersFromBody(body: unknown): AtomicSearchProfile[] {
+  const seen = new Set<string>();
+  const profiles: AtomicSearchProfile[] = [];
+  for (const value of postArray(body)) {
+    const owner = asRecord(asRecord(value).owner);
+    const handle = normalizedHandle(owner.username);
+    if (!handle) continue;
+    const key = handle.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const name = compactString(owner.full_name, MAX_NAME_LENGTH);
+    const followers = nestedFollowers(owner);
+    profiles.push({
+      handle,
+      ...(name ? { name } : {}),
+      ...(followers !== undefined ? { followers } : {}),
+    });
+    if (profiles.length >= MAX_SEARCH_RESULTS) break;
+  }
+  return profiles;
+}
+
+function normalizedHashtagInput(hashtag: string): string {
+  const normalized = requiredInput(hashtag, "hashtag")
+    .replace(/^#+/, "")
+    .toLowerCase();
+  if (!/^[a-z0-9_]+$/.test(normalized)) {
+    throw new TypeError("hashtag de Instagram inválido");
+  }
+  return normalized;
+}
+
+function cursorParam(cursor: string | undefined): Record<string, string> {
+  if (cursor === undefined) return {};
+  const normalized = cursor.trim();
+  if (!normalized || normalized.length > 512) {
+    throw new TypeError("cursor de paginación inválido");
+  }
+  return { cursor: normalized };
+}
+
 function errorForStatus(status: number): ScrapeCreatorsAtomicError {
   if (status === 401 || status === 403) {
     return new ScrapeCreatorsAtomicError(
@@ -303,73 +394,54 @@ export function createScrapeCreatorsAtomicClient(
     }
   }
 
+  async function searchProfilesPage(
+    query: string,
+    cursor?: string,
+  ): Promise<AtomicSearchPage> {
+    const normalizedQuery = requiredInput(query, "query");
+    const params = new URLSearchParams({
+      query: normalizedQuery,
+      ...cursorParam(cursor),
+    });
+    const body = await fetchJsonOnce(
+      `/v1/instagram/search/profiles?${params.toString()}`,
+    );
+    const nextCursor = cursorFromBody(body);
+    return {
+      profiles: searchProfilesFromBody(body),
+      ...(nextCursor ? { nextCursor } : {}),
+    };
+  }
+
+  async function searchHashtagPage(
+    hashtag: string,
+    cursor?: string,
+  ): Promise<AtomicSearchPage> {
+    const params = new URLSearchParams({
+      hashtag: normalizedHashtagInput(hashtag),
+      media_type: "all",
+      ...cursorParam(cursor),
+    });
+    const body = await fetchJsonOnce(
+      `/v1/instagram/search/hashtag?${params.toString()}`,
+    );
+    const nextCursor = cursorFromBody(body);
+    return {
+      profiles: hashtagOwnersFromBody(body),
+      ...(nextCursor ? { nextCursor } : {}),
+    };
+  }
+
   return {
+    searchProfilesPage,
+    searchHashtagPage,
+
     async searchProfilesOnce(query) {
-      const normalizedQuery = requiredInput(query, "query");
-      const params = new URLSearchParams({ query: normalizedQuery });
-      const body = await fetchJsonOnce(
-        `/v1/instagram/search/profiles?${params.toString()}`,
-      );
-      const seen = new Set<string>();
-      const profiles: AtomicSearchProfile[] = [];
-      for (const value of profileArray(body)) {
-        const item = asRecord(value);
-        const nestedUser = asRecord(item.user);
-        const handle = normalizedHandle(
-          item.username ?? item.handle ?? nestedUser.username,
-        );
-        if (!handle) continue;
-        const key = handle.toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const name = compactString(
-          item.full_name ?? item.fullName ?? item.name ?? nestedUser.full_name,
-          MAX_NAME_LENGTH,
-        );
-        const followers = nestedFollowers({ ...item, ...nestedUser });
-        profiles.push({
-          handle,
-          ...(name ? { name } : {}),
-          ...(followers !== undefined ? { followers } : {}),
-        });
-        if (profiles.length >= MAX_SEARCH_RESULTS) break;
-      }
-      return profiles;
+      return (await searchProfilesPage(query)).profiles;
     },
 
     async searchHashtagOnce(hashtag) {
-      const normalized = requiredInput(hashtag, "hashtag")
-        .replace(/^#+/, "")
-        .toLowerCase();
-      if (!/^[a-z0-9_]+$/.test(normalized)) {
-        throw new TypeError("hashtag de Instagram inválido");
-      }
-      const params = new URLSearchParams({
-        hashtag: normalized,
-        media_type: "all",
-      });
-      const body = await fetchJsonOnce(
-        `/v1/instagram/search/hashtag?${params.toString()}`,
-      );
-      const seen = new Set<string>();
-      const profiles: AtomicSearchProfile[] = [];
-      for (const value of postArray(body)) {
-        const owner = asRecord(asRecord(value).owner);
-        const handle = normalizedHandle(owner.username);
-        if (!handle) continue;
-        const key = handle.toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const name = compactString(owner.full_name, MAX_NAME_LENGTH);
-        const followers = nestedFollowers(owner);
-        profiles.push({
-          handle,
-          ...(name ? { name } : {}),
-          ...(followers !== undefined ? { followers } : {}),
-        });
-        if (profiles.length >= MAX_SEARCH_RESULTS) break;
-      }
-      return profiles;
+      return (await searchHashtagPage(hashtag)).profiles;
     },
 
     async getProfileOnce(handle) {

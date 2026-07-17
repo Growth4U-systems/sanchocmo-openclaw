@@ -151,6 +151,8 @@ const SEARCH_RESULTS: Record<string, unknown[]> = {
 
 interface FakeClientOptions {
   emptySearches?: boolean;
+  /** Optional paginated fixtures keyed by `kind:term@cursor` (or no @ for page 1). */
+  pages?: Record<string, { profiles: unknown[]; nextCursor?: string }>;
 }
 
 function createFakeScrapeClient(
@@ -160,16 +162,31 @@ function createFakeScrapeClient(
   const bump = (key: string) => {
     totals.set(key, (totals.get(key) ?? 0) + 1);
   };
+  const pageFor = (
+    kind: "profiles" | "hashtag",
+    term: string,
+    cursor: string | undefined,
+    countKey: string,
+  ) => {
+    bump(cursor ? `${countKey}@${cursor}` : countKey);
+    if (options.emptySearches) return { profiles: [] };
+    const pageKey = cursor ? `${kind}:${term}@${cursor}` : `${kind}:${term}`;
+    if (options.pages && options.pages[pageKey]) return options.pages[pageKey];
+    return { profiles: SEARCH_RESULTS[`${kind}:${term}`] ?? [] };
+  };
   return {
     async searchProfilesOnce(query: string) {
-      bump(`search:${query}`);
-      if (options.emptySearches) return [];
-      return SEARCH_RESULTS[`profiles:${query}`] ?? [];
+      return pageFor("profiles", query, undefined, `search:${query}`).profiles;
     },
     async searchHashtagOnce(hashtag: string) {
-      bump(`hashtag:${hashtag}`);
-      if (options.emptySearches) return [];
-      return SEARCH_RESULTS[`hashtag:${hashtag}`] ?? [];
+      return pageFor("hashtag", hashtag, undefined, `hashtag:${hashtag}`)
+        .profiles;
+    },
+    async searchProfilesPage(query: string, cursor?: string) {
+      return pageFor("profiles", query, cursor, `search:${query}`);
+    },
+    async searchHashtagPage(hashtag: string, cursor?: string) {
+      return pageFor("hashtag", hashtag, cursor, `hashtag:${hashtag}`);
     },
     async getProfileOnce(handle: string) {
       bump(`profile:${handle}`);
@@ -434,6 +451,47 @@ test("v5 crash right after a checkpoint: resume repeats nothing", async () => {
   assert.equal(totals.get("hashtag:saludcapilar"), 1);
   assert.equal(totals.get("profile:@dra_pelo"), 1);
   assert.equal(totals.get("profile:@capilar_clinic"), 1);
+  assert.equal(second.effectInvocations.length, 1);
+});
+
+test("v5 pagination: resumes mid-query from the persisted cursor", async () => {
+  const totals = new Map<string, number>();
+  const pages = {
+    "profiles:salud capilar": {
+      profiles: [
+        { handle: "@dra_pelo", name: "Dra. Pelo", followers: 40_000 },
+      ],
+      nextCursor: "c2",
+    },
+    "profiles:salud capilar@c2": {
+      profiles: [{ handle: "@capilar_clinic", followers: 60_000 }],
+    },
+  };
+  const client = createFakeScrapeClient(totals, { pages });
+  const handler = buildHandler(client);
+  const command = handler.command.parse(buildCommand());
+  // Checkpoint 1 = page 1 of the profiles query persisted (cursor c2 saved);
+  // dying there models a process killed mid-pagination.
+  const first = createFakeContext(handler, "run-v5-pages-1", {
+    crashAfterCheckpoint: 1,
+  });
+  await assert.rejects(
+    handler.execute(command, first.context as never),
+    SimulatedCrashError,
+  );
+  assert.equal(totals.get("search:salud capilar"), 1);
+  assert.equal(totals.get("search:salud capilar@c2"), undefined);
+
+  const second = createFakeContext(handler, "run-v5-pages-1", {
+    initialOutput: (first.run as { output: unknown }).output,
+  });
+  const result = await handler.execute(command, second.context as never);
+
+  assert.equal(result.status, "completed");
+  // Page 1 is never re-fetched; the resume continues at the saved cursor.
+  assert.equal(totals.get("search:salud capilar"), 1);
+  assert.equal(totals.get("search:salud capilar@c2"), 1);
+  assert.equal(totals.get("hashtag:saludcapilar"), 1);
   assert.equal(second.effectInvocations.length, 1);
 });
 

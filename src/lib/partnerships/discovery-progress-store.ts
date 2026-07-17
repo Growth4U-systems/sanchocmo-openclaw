@@ -20,7 +20,9 @@ import type { RawDiscoveryCandidate } from "./discovery-types";
  */
 const PROGRESS_SCHEMA_VERSION = 1;
 const PROGRESS_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
-const LOCK_STALE_MS = 30_000;
+const LOCK_STALE_MS = 2_000;
+const MAX_PAGES_PER_QUERY = 8;
+const MAX_CURSOR_LENGTH = 512;
 const MAX_POOL_ENTRIES = 200;
 const MAX_TRACKED_QUERIES = 64;
 const MAX_CANDIDATES = 500;
@@ -50,8 +52,12 @@ export interface DiscoveryScrapePoolEntry {
 
 export interface DiscoveryScrapeProgress {
   schemaVersion: typeof PROGRESS_SCHEMA_VERSION;
-  /** Search step keys (query identity) that completed, unordered set. */
+  /** Query keys whose pagination is exhausted (no more pages will be fetched). */
   searchedQueries: string[];
+  /** Pages fetched so far per query key (monotonic; max-wins on merge). */
+  queryPages: Record<string, number>;
+  /** Next page cursor per query key; null once the provider is exhausted. */
+  queryCursors: Record<string, string | null>;
   /** Deduped candidate pool in first-seen order (`seq` ascending). */
   pool: DiscoveryScrapePoolEntry[];
   /** Handles whose enrichment finished (accepted or rejected). */
@@ -74,6 +80,8 @@ export function emptyDiscoveryScrapeProgress(): DiscoveryScrapeProgress {
   return {
     schemaVersion: PROGRESS_SCHEMA_VERSION,
     searchedQueries: [],
+    queryPages: {},
+    queryCursors: {},
     pool: [],
     attempted: [],
     candidates: [],
@@ -165,6 +173,44 @@ function assertProgressData(value: unknown): DiscoveryScrapeProgress {
     "searchedQueries",
   );
   const attempted = stringArray(data.attempted, MAX_POOL_ENTRIES, "attempted");
+  const queryPages = data.queryPages;
+  if (
+    !queryPages ||
+    typeof queryPages !== "object" ||
+    Array.isArray(queryPages) ||
+    Object.keys(queryPages).length > MAX_TRACKED_QUERIES ||
+    Object.entries(queryPages).some(
+      ([key, pages]) =>
+        !key ||
+        key.length > 512 ||
+        typeof pages !== "number" ||
+        !Number.isSafeInteger(pages) ||
+        pages < 1 ||
+        pages > MAX_PAGES_PER_QUERY,
+    )
+  ) {
+    throw corrupt("Scrape progress queryPages map is invalid");
+  }
+  const queryCursors = data.queryCursors;
+  if (
+    !queryCursors ||
+    typeof queryCursors !== "object" ||
+    Array.isArray(queryCursors) ||
+    Object.keys(queryCursors).length > MAX_TRACKED_QUERIES ||
+    Object.entries(queryCursors).some(
+      ([key, cursor]) =>
+        !key ||
+        key.length > 512 ||
+        !(
+          cursor === null ||
+          (typeof cursor === "string" &&
+            cursor.length > 0 &&
+            cursor.length <= MAX_CURSOR_LENGTH)
+        ),
+    )
+  ) {
+    throw corrupt("Scrape progress queryCursors map is invalid");
+  }
   if (!Array.isArray(data.pool) || data.pool.length > MAX_POOL_ENTRIES) {
     throw corrupt("Scrape progress pool is invalid");
   }
@@ -316,6 +362,17 @@ function mergeInto(
   for (const query of update.searchedQueries ?? []) {
     if (!searchedQueries.includes(query)) searchedQueries.push(query);
   }
+  // Pagination cursors advance monotonically: the writer that has fetched more
+  // pages for a query wins that query's cursor; ties keep the existing value.
+  const queryPages = { ...existing.queryPages };
+  const queryCursors = { ...existing.queryCursors };
+  for (const [key, pages] of Object.entries(update.queryPages ?? {})) {
+    if ((queryPages[key] ?? 0) < pages) {
+      queryPages[key] = pages;
+      const cursor = (update.queryCursors ?? {})[key];
+      if (cursor !== undefined) queryCursors[key] = cursor;
+    }
+  }
   const pool = existing.pool.map((entry) => ({ ...entry }));
   const poolKeys = new Set(pool.map((entry) => entry.handle.toLowerCase()));
   for (const entry of update.pool ?? []) {
@@ -343,6 +400,8 @@ function mergeInto(
   return {
     schemaVersion: PROGRESS_SCHEMA_VERSION,
     searchedQueries,
+    queryPages,
+    queryCursors,
     pool,
     attempted,
     candidates,

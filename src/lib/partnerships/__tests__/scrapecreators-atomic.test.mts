@@ -101,6 +101,40 @@ test("searchHashtagOnce hace un único fetch y extrae owners deduplicados", asyn
   assert.equal(calls.length, 1);
 });
 
+test("las variantes Page propagan el cursor y devuelven nextCursor", async () => {
+  const calls: string[] = [];
+  const fetchImpl = (async (input: string | URL | Request) => {
+    const url = new URL(String(input));
+    calls.push(String(input));
+    if (url.searchParams.get("cursor") === null) {
+      return json({
+        profiles: [{ username: "clinica_a" }],
+        cursor: "next-page-2",
+      });
+    }
+    return json({ profiles: [{ username: "clinica_b" }] });
+  }) as typeof fetch;
+  const client = createScrapeCreatorsAtomicClient({
+    apiKey: "key",
+    fetchImpl,
+  });
+
+  const first = await client.searchProfilesPage("salud capilar");
+  assert.equal(first.nextCursor, "next-page-2");
+  assert.deepEqual(first.profiles, [{ handle: "@clinica_a" }]);
+
+  const second = await client.searchProfilesPage(
+    "salud capilar",
+    first.nextCursor,
+  );
+  assert.equal(second.nextCursor, undefined);
+  assert.deepEqual(second.profiles, [{ handle: "@clinica_b" }]);
+  assert.equal(
+    new URL(calls[1]).searchParams.get("cursor"),
+    "next-page-2",
+  );
+});
+
 test("searchProfilesOnce normaliza, deduplica y limita el resultado persistible", async () => {
   let calls = 0;
   const noisyProfiles = [
@@ -186,8 +220,8 @@ test("getProfileOnce devuelve sólo el perfil compacto normalizado", async () =>
   assert.equal(JSON.stringify(profile).includes("session_token"), false);
 });
 
-test("getPostsOnce compacta seis posts y normaliza métricas, caption y fecha", async () => {
-  const items = Array.from({ length: 8 }, (_, index) => ({
+test("getPostsOnce compacta doce posts y normaliza métricas, caption y fecha", async () => {
+  const items = Array.from({ length: 15 }, (_, index) => ({
     code: `post-${index}`,
     caption: { text: ` Post   ${index} para mujeres ` },
     like_count: String(100 + index),
@@ -203,7 +237,7 @@ test("getPostsOnce compacta seis posts y normaliza métricas, caption y fecha", 
 
   const posts = await client.getPostsOnce("@doctora_capilar");
 
-  assert.equal(posts.length, 6);
+  assert.equal(posts.length, 12);
   assert.deepEqual(posts[0], {
     id: "post-0",
     caption: "Post 0 para mujeres",

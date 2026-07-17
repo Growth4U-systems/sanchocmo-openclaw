@@ -20,6 +20,7 @@ import {
   type DiscoveryAssignmentArtifactData,
 } from "./discovery-execution-artifact";
 import {
+  deleteDiscoveryScrapeProgress,
   emptyDiscoveryScrapeProgress,
   loadDiscoveryScrapeProgress,
   mergeDiscoveryScrapeProgress,
@@ -56,6 +57,7 @@ import {
   ScrapeCreatorsAtomicError,
   type AtomicInstagramPost,
   type AtomicInstagramProfile,
+  type AtomicSearchPage,
   type AtomicSearchProfile,
   type ScrapeCreatorsAtomicClient,
 } from "./scrapecreators-atomic";
@@ -92,7 +94,12 @@ const CHECKPOINT_BOUNDS: DurableJsonBounds = Object.freeze({
 });
 
 const SEARCH_POOL_MULTIPLIER = 3;
-const MAX_POOL_LIMIT = 48;
+/** Aligned with the progress store's MAX_POOL_ENTRIES; mirrors the live
+ * scraper's poolLimit formula so v5 keeps its candidate recall. */
+const MAX_POOL_LIMIT = 200;
+const MAX_SEARCH_PAGES_PER_QUERY = 5;
+const MAX_QUERIES = 24;
+const PROVIDER_RETRY_DELAY_MS = 300;
 
 export type PartnershipsDiscoveryStageV5 =
   | "search"
@@ -262,12 +269,17 @@ export function buildPartnershipsDiscoveryQueriesV5(
   plan: DiscoveryPlan,
 ): DiscoveryQueryV5[] {
   const { profileQueries, hashtags } = buildLiveDiscoveryQueries(plan);
+  // The atomic client rejects terms >200 chars and the progress store bounds
+  // its tracked keys, so oversized/overflowing plans degrade to fewer queries
+  // instead of failing the run mid-scrape.
   return [
     ...profileQueries.map(
       (term): DiscoveryQueryV5 => ({ kind: "profiles", term }),
     ),
     ...hashtags.map((term): DiscoveryQueryV5 => ({ kind: "hashtag", term })),
-  ];
+  ]
+    .filter((query) => query.term.length > 0 && query.term.length <= 200)
+    .slice(0, MAX_QUERIES);
 }
 
 function queryKey(query: DiscoveryQueryV5): string {
@@ -275,10 +287,30 @@ function queryKey(query: DiscoveryQueryV5): string {
 }
 
 function poolLimitFor(target: number): number {
+  // Same shape as the live scraper: min(cap, max(target+25, target*3)).
   return Math.min(
-    Math.max(target * SEARCH_POOL_MULTIPLIER, target + 9),
+    Math.max(target + 25, target * SEARCH_POOL_MULTIPLIER),
     MAX_POOL_LIMIT,
   );
+}
+
+/**
+ * One bounded in-step retry for transient provider errors (parity with the
+ * live scraper's two attempts). Anything beyond this is the durable requeue's
+ * job, so a flaky 429/5xx doesn't silently drop a query or candidate.
+ */
+async function callProviderWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (!(error instanceof ScrapeCreatorsAtomicError) || !error.retryable) {
+      throw error;
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, PROVIDER_RETRY_DELAY_MS),
+    );
+    return fn();
+  }
 }
 
 function toSearchProfile(entry: {
@@ -455,33 +487,60 @@ async function runSearchStage(
 
   for (const query of queries) {
     const key = queryKey(query);
-    if (progress.searchedQueries.includes(key)) continue;
-    if (progress.pool.length >= poolLimit) break;
-    await stopIfCancellationRequested(context, "scrape_search");
-    await context.assertLease();
-    let results: AtomicSearchProfile[];
-    try {
-      // Only the provider call is tolerated per-step; lease/checkpoint/store
-      // failures below must propagate so the runtime keeps its guarantees.
-      results =
-        query.kind === "profiles"
-          ? await client.searchProfilesOnce(query.term)
-          : await client.searchHashtagOnce(query.term);
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      continue;
+    for (;;) {
+      if (progress.searchedQueries.includes(key)) break;
+      if (progress.pool.length >= poolLimit) break;
+      const pagesFetched = progress.queryPages[key] ?? 0;
+      const savedCursor = progress.queryCursors[key];
+      if (pagesFetched >= MAX_SEARCH_PAGES_PER_QUERY || savedCursor === null) {
+        // Exhausted by page budget or by the provider: mark and move on.
+        progress = await persistStepProgress(
+          context,
+          ref,
+          { searchedQueries: [key] },
+          checkpoint,
+          "scrape.search",
+          "partnerships.discovery.scrape_progress",
+        );
+        break;
+      }
+      await stopIfCancellationRequested(context, "scrape_search");
+      await context.assertLease();
+      let page: AtomicSearchPage;
+      try {
+        // Only the provider call is tolerated per-step; lease/checkpoint/store
+        // failures below must propagate so the runtime keeps its guarantees.
+        page = await callProviderWithRetry(() =>
+          query.kind === "profiles"
+            ? client.searchProfilesPage(query.term, savedCursor)
+            : client.searchHashtagPage(query.term, savedCursor),
+        );
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        break;
+      }
+      const entries = searchProfilesFromAtomic(page.profiles)
+        .filter((entry) =>
+          matchesWantedTier(entry.followers, wantedTiers, true),
+        )
+        .map((entry, index) => ({ ...entry, seq: index }));
+      const exhausted = page.nextCursor === undefined;
+      progress = await persistStepProgress(
+        context,
+        ref,
+        {
+          pool: entries,
+          queryPages: { [key]: pagesFetched + 1 },
+          queryCursors: { [key]: page.nextCursor ?? null },
+          ...(exhausted ? { searchedQueries: [key] } : {}),
+        },
+        checkpoint,
+        "scrape.search",
+        "partnerships.discovery.scrape_progress",
+      );
+      if (exhausted) break;
     }
-    const entries = searchProfilesFromAtomic(results)
-      .filter((entry) => matchesWantedTier(entry.followers, wantedTiers, true))
-      .map((entry, index) => ({ ...entry, seq: index }));
-    progress = await persistStepProgress(
-      context,
-      ref,
-      { searchedQueries: [key], pool: entries },
-      checkpoint,
-      "scrape.search",
-      "partnerships.discovery.scrape_progress",
-    );
+    if (progress.pool.length >= poolLimit) break;
   }
 
   if (progress.pool.length === 0 && lastError) throw lastError;
@@ -512,8 +571,12 @@ async function runEnrichStage(
     try {
       // Only the provider calls are tolerated per-step; lease/checkpoint/store
       // failures below must propagate so the runtime keeps its guarantees.
-      profile = await client.getProfileOnce(entry.handle);
-      posts = await client.getPostsOnce(entry.handle);
+      profile = await callProviderWithRetry(() =>
+        client.getProfileOnce(entry.handle),
+      );
+      posts = await callProviderWithRetry(() =>
+        client.getPostsOnce(entry.handle),
+      );
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       continue;
@@ -628,11 +691,20 @@ export function createPartnershipsDiscoveryHandlerV5(
           checkpoint.stage = "qualify";
           await context.checkpoint("qualify", { ...checkpoint });
         }
-        if (checkpoint.stage === "qualify" || checkpoint.stage === "assign") {
-          progress =
-            progress ??
-            loadDiscoveryScrapeProgress(ref) ??
-            emptyDiscoveryScrapeProgress();
+        if (checkpoint.stage === "qualify") {
+          progress = progress ?? loadDiscoveryScrapeProgress(ref);
+          // A checkpoint that recorded accepted candidates but a store with
+          // none means the single-host progress file was lost or replaced:
+          // fail closed as corruption instead of a misleading "no candidates".
+          if (
+            checkpoint.candidateCount > 0 &&
+            (progress?.candidates.length ?? 0) === 0
+          ) {
+            throw new DiscoveryProgressStoreError(
+              "progress_corrupt",
+              "Scrape progress vanished between checkpointed steps",
+            );
+          }
         }
         rawCandidates = (progress ?? emptyDiscoveryScrapeProgress()).candidates;
       } else {
@@ -699,6 +771,13 @@ export function createPartnershipsDiscoveryHandlerV5(
           filtered: qualified.filtered,
         },
       );
+      try {
+        // Scrape progress holds lead PII and its purpose ends with the
+        // committed assignment; the frozen artifact keeps the audited copy.
+        deleteDiscoveryScrapeProgress(ref);
+      } catch {
+        // Best-effort cleanup; retention bounds still apply to leftovers.
+      }
       return {
         status: "completed",
         currentStep: "verify",
