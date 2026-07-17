@@ -10,6 +10,15 @@ if [ -x /opt/sancho-seed/docker/init-home.sh ]; then
   bash /opt/sancho-seed/docker/init-home.sh "$SANCHO_HOME"
 fi
 
+# Runtime-agnostic bootstrap shared with the entrypoint's openclaw path: config
+# symlinks (workspace-sancho/clients.json -> ../config/…), MC_BASE, MC_ADMIN_TOKEN,
+# APIFY_TOKEN. Without this, external-http booted with an empty client list and
+# POST /api/clients/create → ENOENT 500 (SAN-485). SOURCED so its env exports reach
+# the Next.js app started below.
+if [ -f /opt/sancho-seed/docker/bootstrap-common.sh ]; then
+  . /opt/sancho-seed/docker/bootstrap-common.sh "$SANCHO_HOME"
+fi
+
 if [ -z "${SANCHO_EXTERNAL_GATEWAY_URL:-}${SANCHO_EXTERNAL_RUNTIME_URL:-}${HERMES_EXTERNAL_GATEWAY_URL:-}${HERMES_EXTERNAL_BASE_URL:-}${HERMES_EXTERNAL_URL:-}" ]; then
   echo "[external-http boot] ERROR: configure SANCHO_EXTERNAL_GATEWAY_URL (or legacy HERMES_EXTERNAL_GATEWAY_URL)"
   exit 1

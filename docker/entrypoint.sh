@@ -31,82 +31,24 @@ cd /root/.openclaw
 
 OPENCLAW_CONFIG="/root/.openclaw/.openclaw/openclaw.json"
 
-# ===========================================================
-# 0a. ENSURE APIFY_TOKEN (runs every startup)
-# ===========================================================
-# The bundled `apify` skill (and competitor-intelligence's scraping-guide)
-# require the env var APIFY_TOKEN, but deploys provision APIFY_API_KEY. Without
-# APIFY_TOKEN, OpenClaw gates the apify skill out (skill `requires.env`), so
-# agents fall back to web_fetch and primary scraping (Trustpilot/IG/FB ads)
-# never runs. Derive it so the scraper actors are available to every agent.
-# Exported before `openclaw gateway run` so the gateway and its agents inherit it.
-if [ -z "${APIFY_TOKEN:-}" ] && [ -n "${APIFY_API_KEY:-}" ]; then
-  export APIFY_TOKEN="$APIFY_API_KEY"
-  echo "[entrypoint] APIFY_TOKEN derived from APIFY_API_KEY (apify skill enabled)"
-fi
-
-# Agents' bash tool builds content-engine / pov-bank / phase-reporting URLs as
-# `$MC_BASE/api/...`. Without MC_BASE in the sandbox env, `curl "$MC_BASE/api/..."`
-# hits a malformed URL (HTTP 000) and phases never report — research degrades and
-# the UI lies about progress (SAN-241). The content-engine API is served at the
-# site origin (`$BASE_URL/api/...`), NOT under `/mc`, so derive MC_BASE from
-# BASE_URL (NEXTAUTH_URL as a safety net), trailing slash stripped. Exported
-# before `openclaw gateway run` so the gateway and its agents inherit it.
-if [ -z "${MC_BASE:-}" ]; then
-  _mc_base="${BASE_URL:-${NEXTAUTH_URL:-}}"
-  _mc_base="${_mc_base%/}"
-  if [ -n "$_mc_base" ]; then
-    export MC_BASE="$_mc_base"
-    echo "[entrypoint] MC_BASE exported as $MC_BASE (agents → content-engine/pov-bank/phase-reporting)"
-  else
-    echo "[entrypoint] WARNING: BASE_URL/NEXTAUTH_URL unset — MC_BASE not exported; phase-reporting will fail"
-  fi
-fi
-
 # The metrics collector (a separate ESM script in the seed dir) runs the app's
 # TS ingest from the Next app dir via tsx (SAN-318) — tell it where the app is.
 export MC_NEXTJS_DIR="${MC_NEXTJS_DIR:-/app/mc-nextjs}"
 
 # ===========================================================
-# 0. ENSURE CONFIG SYMLINKS (runs every startup)
+# 0. RUNTIME-AGNOSTIC BOOTSTRAP (runs every startup)
 # ===========================================================
-# These files live in config/ (instance-specific, untracked) but the app
-# reads them from workspace-sancho/. `git checkout` during deploy deletes
-# tracked->untracked symlinks, so we re-create them on every container start.
-# Without this, the client list appears empty after every deploy.
-for f in clients.json clients.js dispatch-map.json; do
-  if [ -f "config/$f" ] && [ ! -e "workspace-sancho/$f" ]; then
-    ln -sf "../config/$f" "workspace-sancho/$f"
-    echo "[entrypoint] Linked workspace-sancho/$f -> ../config/$f"
-  fi
-done
-
-# ===========================================================
-# 0a3. ENSURE MC_ADMIN_TOKEN (agent → MC API auth, runs every startup)
-# ===========================================================
-# Operator skills (discovery-plan-builder, discovery-search-runner, …) drive the
-# work by having the agent `curl` Mission Control's OWN API with
-# `-H "x-admin-token: $MC_ADMIN_TOKEN"` — create a search, fetch queued work, POST
-# candidates. MC validates that header against clients.json's adminToken
-# (src/lib/api-middleware.ts resolveAuth: `data.adminToken || env.MC_ADMIN_TOKEN`),
-# but MC_ADMIN_TOKEN is an OPTIONAL env fallback that deploys leave unset and
-# nothing wires it to clients.json → the agent sends an EMPTY header → 403
-# Unauthorized, so the launch + runner silently fail and the chat turn returns no
-# visible reply. Same class as MC_BASE (SAN-241). Mirror MC's precedence
-# (clients.json adminToken first) so the agent's curl always sends the exact token
-# MC checks. Exported before `openclaw gateway run` so the gateway and its agents'
-# bash tool inherit it.
-if [ -f config/clients.json ]; then
-  _mc_admin_token="$(python3 -c "import json; print(json.load(open('config/clients.json')).get('adminToken') or '')" 2>/dev/null || true)"
-  if [ -n "$_mc_admin_token" ]; then
-    export MC_ADMIN_TOKEN="$_mc_admin_token"
-    echo "[entrypoint] MC_ADMIN_TOKEN derived from clients.json adminToken (agent → MC API auth)"
-  elif [ -n "${MC_ADMIN_TOKEN:-}" ]; then
-    echo "[entrypoint] MC_ADMIN_TOKEN from env (clients.json has no adminToken)"
-  else
-    echo "[entrypoint] WARNING: no adminToken in clients.json and MC_ADMIN_TOKEN unset — agent curls to MC API will 403 (discovery launch/runner)"
-  fi
-  unset _mc_admin_token
+# Config symlinks (workspace-sancho/clients.json -> ../config/… so the client
+# list isn't empty and POST /api/clients/create doesn't ENOENT), APIFY_TOKEN,
+# MC_BASE and MC_ADMIN_TOKEN. This lives in docker/bootstrap-common.sh and is
+# SHARED with the hermes / external-http boot scripts so no runtime can boot
+# without it (SAN-485). SOURCED (not exec'd) so its env exports reach
+# `openclaw gateway run` and the Next.js app. cwd is /root/.openclaw here, but the
+# script uses absolute paths under the home arg regardless.
+if [ -f /opt/sancho-seed/docker/bootstrap-common.sh ]; then
+  . /opt/sancho-seed/docker/bootstrap-common.sh /root/.openclaw
+elif [ -f docker/bootstrap-common.sh ]; then
+  . docker/bootstrap-common.sh /root/.openclaw   # source/bind-mount dev mode
 fi
 
 # ===========================================================
