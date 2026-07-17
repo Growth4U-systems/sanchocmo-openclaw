@@ -4,11 +4,39 @@ import path from "path";
  * Base workspace directory — where the legacy data lives.
  * Configurable via MC_WORKSPACE env var.
  */
-export const BASE = process.env.MC_WORKSPACE || path.join(
-  process.env.HOME || "/Users/ragi",
-  ".openclaw",
-  "workspace-sancho"
-);
+export function mcWorkspaceDir(): string {
+  return process.env.MC_WORKSPACE || path.join(
+    process.env.HOME || "/Users/ragi",
+    ".openclaw",
+    "workspace-sancho"
+  );
+}
+
+export const BASE = mcWorkspaceDir();
+
+/**
+ * Install home — the directory that holds the framework assets every runtime
+ * shares (skills/, the workspace-* dirs, …). Product installs set it explicitly:
+ * each docker/runtimes boot.sh exports MC_WORKSPACE=$SANCHO_HOME/workspace-sancho,
+ * so the parent of the MC workspace is SANCHO_HOME everywhere. Deliberately
+ * NOT the active runtime's state.home() — that is per-runtime private state
+ * (e.g. workspace-sancho/_runtime/external-http) and locating install assets
+ * through it emptied the Skills panel when prod switched runtimes (SAN-485).
+ * OPENCLAW_HOME stays honored between the two: existing installs configure
+ * the home through it, and context-pack/control/upload-r2 still read it.
+ */
+export function installHome(): string {
+  return (
+    process.env.SANCHO_HOME ||
+    process.env.OPENCLAW_HOME ||
+    path.dirname(mcWorkspaceDir())
+  );
+}
+
+/** Central skills catalog — install-level, identical under every runtime. */
+export function skillsRoot(): string {
+  return path.join(installHome(), "skills");
+}
 
 export const CLIENTS_FILE = path.join(BASE, "clients.json");
 

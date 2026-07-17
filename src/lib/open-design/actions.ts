@@ -1,7 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { brandDir, BASE } from "@/lib/data/paths";
-import { getRuntime } from "@/lib/runtime";
+import { brandDir, BASE, installHome } from "@/lib/data/paths";
 import {
   odFindProjectByBaseDir,
   odImportFolder,
@@ -11,11 +10,11 @@ import {
 } from "@/lib/open-design/client";
 import type { OdClientConfig, OdProject } from "@/lib/open-design/types";
 
-const MAPPING_FILE = path.join(
-  getRuntime().state.home(),
-  "workspace-maese-pedro",
-  "od-projects.json",
-);
+// workspace-maese-pedro lives in the install home next to workspace-sancho —
+// runtime-agnostic on purpose (SAN-485).
+function mappingFile(): string {
+  return path.join(installHome(), "workspace-maese-pedro", "od-projects.json");
+}
 
 interface MappingShape {
   [slug: string]: Record<string, string>;
@@ -128,7 +127,7 @@ export async function previewOpenDesignProjectImport(
     clientSlug,
     scope: target.scope,
     baseDir: target.baseDir,
-    mappingFile: MAPPING_FILE,
+    mappingFile: mappingFile(),
     applyDesignSystem: options.applyDesignSystem !== false,
     willImportIfMissing: true,
     willPersistMapping: true,
@@ -203,7 +202,7 @@ async function findProjectById(projectId: string, config: OdClientConfig): Promi
 
 async function readMapping(): Promise<MappingShape> {
   try {
-    const raw = await fs.readFile(MAPPING_FILE, "utf8");
+    const raw = await fs.readFile(mappingFile(), "utf8");
     return JSON.parse(raw) as MappingShape;
   } catch {
     return {};
@@ -211,6 +210,7 @@ async function readMapping(): Promise<MappingShape> {
 }
 
 async function writeMapping(mapping: MappingShape): Promise<void> {
-  await fs.mkdir(path.dirname(MAPPING_FILE), { recursive: true });
-  await fs.writeFile(MAPPING_FILE, JSON.stringify(mapping, null, 2) + "\n", "utf8");
+  const file = mappingFile();
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, JSON.stringify(mapping, null, 2) + "\n", "utf8");
 }
