@@ -129,9 +129,9 @@ test("remote capability is exact and completes before the Ledger create", async 
   assert.deepEqual(order, ["preflight", "create"]);
   assert.equal(creates.length, 1);
   assert.equal(creates[0].metadata?.executionContractVersion, 2);
-  assert.equal(creates[0].metadata?.executionHandlerVersion, 3);
+  assert.equal(creates[0].metadata?.executionHandlerVersion, 4);
   assert.equal(creates[0].metadata?.yalcCapabilityVersion, 1);
-  assert.match(creates[0].idempotencyKey, /:canary:v3$/);
+  assert.match(creates[0].idempotencyKey, /:canary:v4$/);
   assert.equal(
     (creates[0].input as Record<string, unknown>).artifactStore,
     "local-persistent-single-host",

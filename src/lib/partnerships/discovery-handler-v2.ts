@@ -22,8 +22,27 @@ import {
   type DiscoveryExecutionSnapshot,
 } from "./discovery-execution-policy";
 import type { DiscoveryRunnerStats } from "./discovery-types";
+import {
+  PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS,
+  PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS,
+} from "./discovery-runtime-contract";
 
-export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2 = 3 as const;
+export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3 = 3 as const;
+export const PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2 = 4 as const;
+export const PARTNERSHIPS_DISCOVERY_COMMAND_CONTRACT_SCHEMA_VERSION =
+  3 as const;
+export type PartnershipsDiscoveryHandlerVersionV2 =
+  | typeof PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3
+  | typeof PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2;
+
+export function isPartnershipsDiscoveryHandlerV2Version(
+  value: unknown,
+): value is PartnershipsDiscoveryHandlerVersionV2 {
+  return (
+    value === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3 ||
+    value === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2
+  );
+}
 export const PARTNERSHIPS_PREPARE_EFFECT_STEP =
   "provider.prepare_assignment" as const;
 export const PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP =
@@ -549,7 +568,7 @@ function contract<T extends DurableJson>(
 }
 
 export const partnershipsDiscoveryCommandContractV2 = contract(
-  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+  PARTNERSHIPS_DISCOVERY_COMMAND_CONTRACT_SCHEMA_VERSION,
   COMMAND_BOUNDS,
   parsePartnershipsDiscoveryCommandV2,
   true,
@@ -608,65 +627,86 @@ export function partnershipsTargetBindingFingerprint(value: string): string {
     .digest("hex");
 }
 
-const policyPrepareEffect: PartnershipsPrepareAssignmentEffectV2 = {
-  step: PARTNERSHIPS_PREPARE_EFFECT_STEP,
-  definitionVersion: 1,
-  capability: PARTNERSHIPS_PREPARE_CAPABILITY,
-  payload: partnershipsPrepareAssignmentPayloadContractV2,
-  receipt: partnershipsPrepareAssignmentReceiptContractV2,
-  safety: { kind: "read_only", retry: "bounded" },
-  retry: {
-    maxAttempts: 3,
-    baseDelayMs: 1_000,
-    maxDelayMs: 30_000,
-    jitter: "full",
-  },
-  timeoutMs: 300_000,
-  async invoke() {
-    throw new Error("Partnerships preparation capability is not bound");
-  },
-  classify: () => ({
-    kind: "definitive_rejection",
-    code: "partnerships_prepare_unbound",
-    retryable: false,
-  }),
-};
+function policyPrepareEffect(
+  definitionVersion: number,
+  maxAttempts: number,
+): PartnershipsPrepareAssignmentEffectV2 {
+  return {
+    step: PARTNERSHIPS_PREPARE_EFFECT_STEP,
+    definitionVersion,
+    capability: PARTNERSHIPS_PREPARE_CAPABILITY,
+    payload: partnershipsPrepareAssignmentPayloadContractV2,
+    receipt: partnershipsPrepareAssignmentReceiptContractV2,
+    safety: { kind: "read_only", retry: "bounded" },
+    retry: {
+      maxAttempts,
+      baseDelayMs: 1_000,
+      maxDelayMs: 30_000,
+      jitter: "full",
+    },
+    timeoutMs: PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS,
+    async invoke() {
+      throw new Error("Partnerships preparation capability is not bound");
+    },
+    classify: () => ({
+      kind: "definitive_rejection",
+      code: "partnerships_prepare_unbound",
+      retryable: false,
+    }),
+  };
+}
 
-const policyYalcEffect: PartnershipsYalcAssignEffectV2 = {
-  step: PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
-  definitionVersion: 1,
-  capability: PARTNERSHIPS_YALC_ASSIGN_CAPABILITY,
-  payload: partnershipsYalcAssignPayloadContractV2,
-  receipt: partnershipsYalcAssignReceiptContractV2,
-  safety: {
-    kind: "reconcile_before_replay",
-    delivery: "at_least_once_attempts",
-    lookup: "by_effect_key",
-    absenceMustBeAuthoritative: true,
-  },
-  retry: {
-    maxAttempts: 3,
-    baseDelayMs: 1_000,
-    maxDelayMs: 30_000,
-    jitter: "full",
-  },
-  timeoutMs: 30_000,
-  async invoke() {
-    throw new Error("Partnerships Yalc capability is not bound");
-  },
-  async reconcile() {
-    return { kind: "unknown" };
-  },
-  classify: () => ({
-    kind: "outcome_unknown",
-    code: "partnerships_yalc_outcome_unknown",
-  }),
-};
+function policyYalcEffect(
+  definitionVersion: number,
+  maxAttempts: number,
+): PartnershipsYalcAssignEffectV2 {
+  return {
+    step: PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
+    definitionVersion,
+    capability: PARTNERSHIPS_YALC_ASSIGN_CAPABILITY,
+    payload: partnershipsYalcAssignPayloadContractV2,
+    receipt: partnershipsYalcAssignReceiptContractV2,
+    safety: {
+      kind: "reconcile_before_replay",
+      delivery: "at_least_once_attempts",
+      lookup: "by_effect_key",
+      absenceMustBeAuthoritative: true,
+    },
+    retry: {
+      maxAttempts,
+      baseDelayMs: 1_000,
+      maxDelayMs: 30_000,
+      jitter: "full",
+    },
+    timeoutMs: PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS,
+    async invoke() {
+      throw new Error("Partnerships Yalc capability is not bound");
+    },
+    async reconcile() {
+      return { kind: "unknown" };
+    },
+    classify: () => ({
+      kind: "outcome_unknown",
+      code: "partnerships_yalc_outcome_unknown",
+    }),
+  };
+}
 
-/** Policy-only definitions used to fingerprint/admit before runtime binding. */
+const legacyPolicyPrepareEffect = policyPrepareEffect(1, 3);
+const legacyPolicyYalcEffect = policyYalcEffect(1, 3);
+const currentPolicyPrepareEffect = policyPrepareEffect(2, 1);
+const currentPolicyYalcEffect = policyYalcEffect(2, 1);
+
+/** Immutable legacy policy retained only for v3 recovery/cancellation. */
+export const partnershipsDiscoveryEffectPolicyV2LegacyV3 = Object.freeze({
+  [PARTNERSHIPS_PREPARE_EFFECT_STEP]: legacyPolicyPrepareEffect,
+  [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP]: legacyPolicyYalcEffect,
+});
+
+/** Policy-only definitions used to fingerprint/admit the current v4 handler. */
 export const partnershipsDiscoveryEffectPolicyV2 = Object.freeze({
-  [PARTNERSHIPS_PREPARE_EFFECT_STEP]: policyPrepareEffect,
-  [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP]: policyYalcEffect,
+  [PARTNERSHIPS_PREPARE_EFFECT_STEP]: currentPolicyPrepareEffect,
+  [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP]: currentPolicyYalcEffect,
 });
 
 export interface PartnershipsDiscoveryHandlerV2Dependencies {
@@ -676,13 +716,11 @@ export interface PartnershipsDiscoveryHandlerV2Dependencies {
   ): Promise<void> | void;
 }
 
-export function createPartnershipsDiscoveryHandlerV2(
+function createPartnershipsDiscoveryHandlerV2ForVersion(
+  version: PartnershipsDiscoveryHandlerVersionV2,
   effects: {
     prepare: PartnershipsPrepareAssignmentEffectV2;
     assign: PartnershipsYalcAssignEffectV2;
-  } = {
-    prepare: policyPrepareEffect,
-    assign: policyYalcEffect,
   },
   dependencies: PartnershipsDiscoveryHandlerV2Dependencies = {},
 ): DurableExecutionHandlerV2<
@@ -698,7 +736,7 @@ export function createPartnershipsDiscoveryHandlerV2(
   return {
     contractVersion: DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION_V2,
     operation: DISCOVERY_EXECUTION_OPERATION,
-    version: PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+    version,
     command: partnershipsDiscoveryCommandContractV2,
     checkpoint: partnershipsDiscoveryCheckpointContractV2,
     result: partnershipsDiscoveryResultContractV2,
@@ -707,7 +745,7 @@ export function createPartnershipsDiscoveryHandlerV2(
       const assignmentEffectKey = durableExecutionEffectKey({
         operation: DISCOVERY_EXECUTION_OPERATION,
         runId: context.run.id,
-        handlerVersion: PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+        handlerVersion: version,
         step: PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
       });
       const prepared = await context.effect(PARTNERSHIPS_PREPARE_EFFECT_STEP, {
@@ -761,6 +799,40 @@ export function createPartnershipsDiscoveryHandlerV2(
       return dependencies.projectTerminal?.(run, command);
     },
   };
+}
+
+export function createPartnershipsDiscoveryHandlerV2(
+  effects: {
+    prepare: PartnershipsPrepareAssignmentEffectV2;
+    assign: PartnershipsYalcAssignEffectV2;
+  } = {
+    prepare: currentPolicyPrepareEffect,
+    assign: currentPolicyYalcEffect,
+  },
+  dependencies: PartnershipsDiscoveryHandlerV2Dependencies = {},
+) {
+  return createPartnershipsDiscoveryHandlerV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+    effects,
+    dependencies,
+  );
+}
+
+export function createPartnershipsDiscoveryHandlerV2LegacyV3(
+  effects: {
+    prepare: PartnershipsPrepareAssignmentEffectV2;
+    assign: PartnershipsYalcAssignEffectV2;
+  } = {
+    prepare: legacyPolicyPrepareEffect,
+    assign: legacyPolicyYalcEffect,
+  },
+  dependencies: PartnershipsDiscoveryHandlerV2Dependencies = {},
+) {
+  return createPartnershipsDiscoveryHandlerV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+    effects,
+    dependencies,
+  );
 }
 
 export function partnershipsCommandSnapshot(

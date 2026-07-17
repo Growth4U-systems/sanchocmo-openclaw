@@ -9,7 +9,8 @@ const googleClientId =
   process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID;
 const googleClientSecret =
   process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-const googleAuthConfigured = Boolean(googleClientId) && Boolean(googleClientSecret);
+const googleAuthConfigured =
+  Boolean(googleClientId) && Boolean(googleClientSecret);
 
 /**
  * NextAuth.js configuration
@@ -36,7 +37,8 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.token) return null;
         const data = loadClientsData();
-        const adminToken = data.adminToken || process.env.MC_ADMIN_TOKEN || null;
+        const adminToken =
+          data.adminToken || process.env.MC_ADMIN_TOKEN || null;
 
         // Check admin token
         if (adminToken && credentials.token === adminToken) {
@@ -51,7 +53,7 @@ export const authOptions: NextAuthOptions = {
         // Check client token
         if (credentials.token.length >= 16) {
           const client = (data.clients || []).find(
-            (c: { mcToken?: string }) => c.mcToken === credentials.token
+            (c: { mcToken?: string }) => c.mcToken === credentials.token,
           );
           if (client) {
             return {
@@ -70,12 +72,15 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
+      if (account?.provider) token.authProvider = account.provider;
       if (user) {
         // On first sign-in, determine role
         if (account?.provider === "google") {
           const email = (user.email || "").toLowerCase();
           const data = loadClientsData();
-          const adminEmails = (data.adminEmails || []).map((e) => e.toLowerCase());
+          const adminEmails = (data.adminEmails || []).map((e) =>
+            e.toLowerCase(),
+          );
           const isAdmin =
             isAdminDomainEmail(email) || adminEmails.includes(email);
           token.role = isAdmin ? "admin" : "client";
@@ -90,7 +95,7 @@ export const authOptions: NextAuthOptions = {
               // Legacy single-client portal by email/url match.
               const client = (data.clients || []).find(
                 (c: { url?: string; email?: string }) =>
-                  c.email === email || c.url?.includes(email.split("@")[0])
+                  c.email === email || c.url?.includes(email.split("@")[0]),
               );
               token.clientSlug = client?.slug || null;
             }
@@ -98,7 +103,8 @@ export const authOptions: NextAuthOptions = {
         } else {
           // Legacy token provider
           token.role = (user as { role?: string }).role || "client";
-          token.clientSlug = (user as { clientSlug?: string }).clientSlug || null;
+          token.clientSlug =
+            (user as { clientSlug?: string }).clientSlug || null;
           token.allowedSlugs = null;
         }
       }
@@ -111,6 +117,8 @@ export const authOptions: NextAuthOptions = {
           token.clientSlug as string | null;
         (session.user as { allowedSlugs?: string[] | null }).allowedSlugs =
           (token.allowedSlugs as string[] | null) ?? null;
+        session.user.authProvider = token.authProvider;
+        session.user.subject = token.sub;
       }
       return session;
     },

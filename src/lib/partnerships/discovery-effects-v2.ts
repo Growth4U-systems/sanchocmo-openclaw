@@ -36,6 +36,7 @@ import {
 import {
   PARTNERSHIPS_LOCAL_ARTIFACT_STORE,
   PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
   PARTNERSHIPS_PREPARE_CAPABILITY,
   PARTNERSHIPS_PREPARE_EFFECT_STEP,
   PARTNERSHIPS_SCRAPECREATORS_ORIGIN,
@@ -48,12 +49,17 @@ import {
   partnershipsYalcAssignPayloadContractV2,
   partnershipsYalcAssignReceiptContractV2,
   type PartnershipsDiscoveryStatsV2,
+  type PartnershipsDiscoveryHandlerVersionV2,
   type PartnershipsPrepareAssignmentEffectV2,
   type PartnershipsPrepareAssignmentPayloadV2,
   type PartnershipsYalcAssignEffectV2,
   type PartnershipsYalcAssignPayloadV2,
   type PartnershipsYalcAssignReceiptV2,
 } from "./discovery-handler-v2";
+import {
+  PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS,
+  PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS,
+} from "./discovery-runtime-contract";
 
 type YalcAssignTransport = (
   config: YalcRuntimeConfig,
@@ -154,11 +160,12 @@ function expectedAssignmentEffectKey(
     PartnershipsPrepareAssignmentPayloadV2,
     "assignmentEffectKey" | "executionRunId"
   >,
+  handlerVersion: PartnershipsDiscoveryHandlerVersionV2,
 ): string {
   const expected = durableExecutionEffectKey({
     operation: DISCOVERY_EXECUTION_OPERATION,
     runId: payload.executionRunId,
-    handlerVersion: PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+    handlerVersion,
     step: PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
   });
   if (payload.assignmentEffectKey !== expected) {
@@ -267,27 +274,30 @@ function assignmentData(
   };
 }
 
-export function createPartnershipsPrepareAssignmentEffectV2(
-  dependencies: PartnershipsPrepareEffectDependencies = {},
+function createPartnershipsPrepareAssignmentEffectV2ForVersion(
+  handlerVersion: PartnershipsDiscoveryHandlerVersionV2,
+  definitionVersion: number,
+  maxAttempts: number,
+  dependencies: PartnershipsPrepareEffectDependencies,
 ): PartnershipsPrepareAssignmentEffectV2 {
   const scrape = dependencies.scrape ?? scrapeLiveDiscoveryCandidates;
   const loadFixtures = dependencies.loadFixtures ?? loadFixtureCandidates;
   return {
     step: PARTNERSHIPS_PREPARE_EFFECT_STEP,
-    definitionVersion: 1,
+    definitionVersion,
     capability: PARTNERSHIPS_PREPARE_CAPABILITY,
     payload: partnershipsPrepareAssignmentPayloadContractV2,
     receipt: partnershipsPrepareAssignmentReceiptContractV2,
     safety: { kind: "read_only", retry: "bounded" },
     retry: {
-      maxAttempts: 3,
+      maxAttempts,
       baseDelayMs: 1_000,
       maxDelayMs: 30_000,
       jitter: "full",
     },
-    timeoutMs: 300_000,
+    timeoutMs: PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS,
     async invoke(payload, context) {
-      expectedAssignmentEffectKey(payload);
+      expectedAssignmentEffectKey(payload, handlerVersion);
       if (payload.command.artifactStore !== PARTNERSHIPS_LOCAL_ARTIFACT_STORE) {
         throw new Error("shared artifact store is not configured");
       }
@@ -327,6 +337,28 @@ export function createPartnershipsPrepareAssignmentEffectV2(
     },
     classify: classifyPrepareError,
   };
+}
+
+export function createPartnershipsPrepareAssignmentEffectV2(
+  dependencies: PartnershipsPrepareEffectDependencies = {},
+): PartnershipsPrepareAssignmentEffectV2 {
+  return createPartnershipsPrepareAssignmentEffectV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+    2,
+    1,
+    dependencies,
+  );
+}
+
+export function createPartnershipsPrepareAssignmentEffectV2LegacyV3(
+  dependencies: PartnershipsPrepareEffectDependencies = {},
+): PartnershipsPrepareAssignmentEffectV2 {
+  return createPartnershipsPrepareAssignmentEffectV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+    1,
+    3,
+    dependencies,
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -487,13 +519,16 @@ function yalcClientFailure(
     : null;
 }
 
-export function createPartnershipsYalcAssignEffectV2(
-  dependencies: PartnershipsYalcAssignEffectDependencies = {},
+function createPartnershipsYalcAssignEffectV2ForVersion(
+  handlerVersion: PartnershipsDiscoveryHandlerVersionV2,
+  definitionVersion: number,
+  maxAttempts: number,
+  dependencies: PartnershipsYalcAssignEffectDependencies,
 ): PartnershipsYalcAssignEffectV2 {
   const transport = dependencies.transport ?? defaultYalcTransport;
   return {
     step: PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
-    definitionVersion: 1,
+    definitionVersion,
     capability: PARTNERSHIPS_YALC_ASSIGN_CAPABILITY,
     payload: partnershipsYalcAssignPayloadContractV2,
     receipt: partnershipsYalcAssignReceiptContractV2,
@@ -504,16 +539,17 @@ export function createPartnershipsYalcAssignEffectV2(
       absenceMustBeAuthoritative: true,
     },
     retry: {
-      maxAttempts: 3,
+      maxAttempts,
       baseDelayMs: 1_000,
       maxDelayMs: 30_000,
       jitter: "full",
     },
-    timeoutMs: 30_000,
+    timeoutMs: PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS,
     async invoke(payload, context) {
       if (
         payload.assignmentEffectKey !== context.effectKey ||
-        expectedAssignmentEffectKey(payload) !== context.effectKey ||
+        expectedAssignmentEffectKey(payload, handlerVersion) !==
+          context.effectKey ||
         payload.artifactStore !== PARTNERSHIPS_LOCAL_ARTIFACT_STORE
       ) {
         throw new Error("Yalc assignment effect identity mismatch");
@@ -619,6 +655,28 @@ export function createPartnershipsYalcAssignEffectV2(
     },
     classify: classifyYalcError,
   };
+}
+
+export function createPartnershipsYalcAssignEffectV2(
+  dependencies: PartnershipsYalcAssignEffectDependencies = {},
+): PartnershipsYalcAssignEffectV2 {
+  return createPartnershipsYalcAssignEffectV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+    2,
+    1,
+    dependencies,
+  );
+}
+
+export function createPartnershipsYalcAssignEffectV2LegacyV3(
+  dependencies: PartnershipsYalcAssignEffectDependencies = {},
+): PartnershipsYalcAssignEffectV2 {
+  return createPartnershipsYalcAssignEffectV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+    1,
+    3,
+    dependencies,
+  );
 }
 
 export const partnershipsPrepareAssignmentEffectV2 =

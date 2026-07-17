@@ -5,7 +5,16 @@ import {
   PARTNERSHIPS_YALC_ASSIGN_CONTRACT_FINGERPRINT,
   PARTNERSHIPS_YALC_ASSIGN_CAPABILITY_VERSION,
 } from "@/lib/partnerships/discovery-admission-v2";
+import { DurableExecutionRegistry } from "@/lib/durable-execution/registry";
+import {
+  createPartnershipsPrepareAssignmentEffectV2,
+  createPartnershipsYalcAssignEffectV2,
+} from "@/lib/partnerships/discovery-effects-v2";
 import { DISCOVERY_LOCAL_ARTIFACT_STORE_ACK } from "@/lib/partnerships/discovery-execution-policy";
+import {
+  createPartnershipsDiscoveryHandlerV2,
+  createPartnershipsDiscoveryHandlerV2LegacyV3,
+} from "@/lib/partnerships/discovery-handler-v2";
 import {
   fetchLiveCanaryReadiness,
   validateLiveCanaryReadiness,
@@ -20,6 +29,8 @@ import {
   inspectPartnershipsYalcCapability,
   inspectStagingCanaryModel,
   inspectStagingCanaryCredentials,
+  resolveStagingCanaryPartnershipsLimits,
+  stagingCanaryLimitEvidence,
   validateCanonicalStagingOrigin,
   validateOpenClawVersion,
   validateStagingDeploymentIdentity,
@@ -95,10 +106,39 @@ function partnershipsEnvironment(tenant = "growth4u"): Environment {
     PARTNERSHIPS_DISCOVERY_EFFECTS_V2: "canary",
     PARTNERSHIPS_DISCOVERY_V2_SLUGS: tenant,
     PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE: DISCOVERY_LOCAL_ARTIFACT_STORE_ACK,
+    PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS: "270000",
+    PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS: "360000",
     PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: "3",
     PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY: "1",
     PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS: "1",
   };
+}
+
+function partnershipsPolicyRegistry(
+  input: {
+    prepareDefinitionVersion?: number;
+    assignMaxAttempts?: number;
+    assignTimeoutMs?: number;
+  } = {},
+): DurableExecutionRegistry {
+  const basePrepare = createPartnershipsPrepareAssignmentEffectV2();
+  const baseAssign = createPartnershipsYalcAssignEffectV2();
+  const prepare = {
+    ...basePrepare,
+    definitionVersion:
+      input.prepareDefinitionVersion ?? basePrepare.definitionVersion,
+  };
+  const assign = {
+    ...baseAssign,
+    retry: {
+      ...baseAssign.retry,
+      maxAttempts: input.assignMaxAttempts ?? baseAssign.retry.maxAttempts,
+    },
+    timeoutMs: input.assignTimeoutMs ?? baseAssign.timeoutMs,
+  };
+  return new DurableExecutionRegistry().register(
+    createPartnershipsDiscoveryHandlerV2({ prepare, assign }),
+  );
 }
 
 function commonCredentials(): Environment {
@@ -313,6 +353,54 @@ test("partnerships canary accepts exact flags plus the single-host artifact ackn
   );
 });
 
+test("partnerships canary evidence is derived from the exact v4 registry policy", () => {
+  const limits = resolveStagingCanaryPartnershipsLimits();
+  assert.deepEqual(limits, {
+    maxCandidates: 3,
+    concurrency: 1,
+    maxWorkerAttempts: 1,
+    liveDiscoveryTimeoutMs: 270_000,
+    handlerTimeoutMs: 360_000,
+    handlerVersion: 4,
+    effectDefinitionVersions: {
+      "provider.prepare_assignment": 2,
+      "yalc.assign_leads": 2,
+    },
+    maxEffectInvocations: 1,
+    effectTimeoutBudgetMs: 330_000,
+  });
+  assert.deepEqual(
+    stagingCanaryLimitEvidence("partnerships").partnerships,
+    limits,
+  );
+});
+
+test("partnerships canary fails closed on handler or effect policy drift", () => {
+  const driftedRegistries = [
+    new DurableExecutionRegistry().register(
+      createPartnershipsDiscoveryHandlerV2LegacyV3(),
+    ),
+    partnershipsPolicyRegistry({ prepareDefinitionVersion: 1 }),
+    partnershipsPolicyRegistry({ assignMaxAttempts: 2 }),
+    partnershipsPolicyRegistry({ assignTimeoutMs: 29_000 }),
+  ];
+
+  for (const partnershipsRegistry of driftedRegistries) {
+    expectCode(
+      () =>
+        validateStagingCanaryConfiguration({
+          surface: "partnerships",
+          tenant: "growth4u",
+          runtimeId: "openclaw",
+          singleHostAttested: true,
+          env: partnershipsEnvironment(),
+          partnershipsRegistry,
+        }),
+      "flags_not_exact",
+    );
+  }
+});
+
 test("partnerships canary accepts only immutable Yalc digest or commit-tag references", () => {
   const immutableImages = [
     `ghcr.io/growth4u-systems/yalc@sha256:${"0".repeat(64)}`,
@@ -372,6 +460,10 @@ test("partnerships canary fails closed for absent, mutable, padded, or malformed
 
 test("partnerships canary fails closed for every absent, relaxed, or conflicting flag", () => {
   const mutations: Array<readonly [string, string | undefined]> = [
+    ["PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS", undefined],
+    ["PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS", "300000"],
+    ["PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS", undefined],
+    ["PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS", "330000"],
     ["PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES", undefined],
     ["PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES", "4"],
     ["PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY", undefined],
@@ -733,9 +825,7 @@ test("OpenClaw version validation distinguishes unsupported from unavailable", (
 
 test("OpenClaw CLI inspection preserves classified failures and redacts execution errors", async () => {
   assert.equal(
-    await inspectOpenClawVersion(
-      async () => "OpenClaw 2026.5.19 (32b0e8f)\n",
-    ),
+    await inspectOpenClawVersion(async () => "OpenClaw 2026.5.19 (32b0e8f)\n"),
     "2026.5.19",
   );
   await expectCodeAsync(
@@ -786,8 +876,7 @@ test("model inspection reports the effective runtime model and enforced cap", as
 test("model inspection falls back to the runtime default but fails closed on cap/key drift", async () => {
   const control = (maxTokens: unknown) => ({
     getAgentEffectiveModel: async () => null,
-    getDefaultModel: async () =>
-      "fireworks/accounts/fireworks/models/glm-5p2",
+    getDefaultModel: async () => "fireworks/accounts/fireworks/models/glm-5p2",
     getConfig: async () => [
       { id: "accounts/fireworks/models/glm-5p2", maxTokens },
     ],
@@ -810,8 +899,7 @@ test("model inspection falls back to the runtime default but fails closed on cap
     "model_cap_unsafe",
   );
   await expectCodeAsync(
-    () =>
-      inspectStagingCanaryModel({ control: control(8192), env: {} }),
+    () => inspectStagingCanaryModel({ control: control(8192), env: {} }),
     "model_credential_missing",
   );
 });

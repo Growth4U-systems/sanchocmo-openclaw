@@ -23,6 +23,7 @@
     "execution:origin-cutover:check": "tsx scripts/verify-execution-origin-cutover.mts",
     "execution:projection:repair": "tsx scripts/repair-terminal-projection.mts",
     "staging:canary:preflight": "tsx scripts/preflight-staging-canary.mts",
+    "partnerships:cancellation:drain": "tsx scripts/drain-partnerships-cancellation.mts",
     "smoke:runtime:claude-code": "node scripts/smoke-cli-runtime.mjs --runtime=claude-code",
     "deploy:prod": "node scripts/deploy-prod.mjs",
     "migrate:media": "tsx scripts/migrate-legacy-media.mts",

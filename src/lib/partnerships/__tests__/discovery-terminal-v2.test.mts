@@ -126,7 +126,7 @@ function run(
   return {
     id: runId,
     tenantKey: "hospital-capilar",
-    idempotencyKey: `partnerships.discovery:${searchId}:canary:v3`,
+    idempotencyKey: `partnerships.discovery:${searchId}:canary:v4`,
     aggregateType: "partnerships.search",
     aggregateId: `hospital-capilar:${searchId}`,
     operation: "partnerships.discovery",
@@ -136,7 +136,7 @@ function run(
     metadata: {
       authority: "execution_ledger_v2",
       executionContractVersion: 2,
-      executionHandlerVersion: 3,
+      executionHandlerVersion: 4,
     },
     output:
       status === "completed"

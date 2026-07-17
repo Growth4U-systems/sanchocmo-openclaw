@@ -1,9 +1,9 @@
 import type { DiscoveryPlan, RawDiscoveryCandidate } from "./discovery-types";
+import { resolvePartnershipsDiscoveryRuntimeContract } from "./discovery-runtime-contract";
 
 const SCRAPECREATORS_BASE = "https://api.scrapecreators.com";
 const DEFAULT_TARGET_CANDIDATES = 40;
 const MAX_TARGET_CANDIDATES = 500;
-const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 const DEFAULT_CONCURRENCY = 5;
 const MAX_SEARCH_PAGES_PER_QUERY = 5;
@@ -329,11 +329,10 @@ function targetCandidates(plan: DiscoveryPlan): number {
 }
 
 function liveDiscoveryDeadline(): number {
-  const timeoutMs = positiveIntFromEnv(
-    "PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS",
-    DEFAULT_TIMEOUT_MS,
+  return (
+    Date.now() +
+    resolvePartnershipsDiscoveryRuntimeContract().liveDiscoveryTimeoutMs
   );
-  return Date.now() + timeoutMs;
 }
 
 function abortReason(signal: AbortSignal): Error {

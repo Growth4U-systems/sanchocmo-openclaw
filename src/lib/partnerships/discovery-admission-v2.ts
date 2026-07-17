@@ -28,9 +28,14 @@ import {
   PARTNERSHIPS_YALC_ASSIGN_CAPABILITY,
   canonicalPartnershipsTargetOrigin,
   createPartnershipsDiscoveryHandlerV2,
+  isPartnershipsDiscoveryHandlerV2Version,
   partnershipsTargetBindingFingerprint,
   type PartnershipsDiscoveryCommandV2,
 } from "./discovery-handler-v2";
+import {
+  resolvePartnershipsDiscoveryRuntimeContract,
+  type PartnershipsDiscoveryRuntimeContractEnvironment,
+} from "./discovery-runtime-contract";
 
 export const PARTNERSHIPS_EFFECTS_V2_ROLLOUT_VALUE = "canary" as const;
 export const PARTNERSHIPS_YALC_ASSIGN_CAPABILITY_VERSION = 1 as const;
@@ -39,7 +44,10 @@ export const PARTNERSHIPS_YALC_ASSIGN_CAPABILITY_PATH =
 export const PARTNERSHIPS_YALC_ASSIGN_CONTRACT_FINGERPRINT =
   "sha256:48f0356308109d75a3559a64e5c28b13c8c7958d4332465e73ab41bd17380b79" as const;
 
-export interface PartnershipsDiscoveryV2Environment extends DiscoveryExecutionEnvironment {
+export interface PartnershipsDiscoveryV2Environment
+  extends
+    DiscoveryExecutionEnvironment,
+    PartnershipsDiscoveryRuntimeContractEnvironment {
   /** Separate from the historical "V2" rollout, whose handler is contract-v1. */
   PARTNERSHIPS_DISCOVERY_EFFECTS_V2?: string;
 }
@@ -131,7 +139,7 @@ function isV2Capability(input: {
     input.scope.operation === DISCOVERY_EXECUTION_OPERATION &&
     input.scope.mode === "canary" &&
     isValidTenantSlug(input.scope.tenantKey) &&
-    input.handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2 &&
+    isPartnershipsDiscoveryHandlerV2Version(input.handlerVersion) &&
     (input.capability === PARTNERSHIPS_PREPARE_CAPABILITY ||
       input.capability === PARTNERSHIPS_YALC_ASSIGN_CAPABILITY)
   );
@@ -140,7 +148,9 @@ function isV2Capability(input: {
 /** Explicit, closed capability allowlist shared by admission and drain. */
 export const partnershipsDiscoveryCapabilityPolicyV2: DurableCapabilityPolicy =
   Object.freeze({
-    mayAdmit: isV2Capability,
+    mayAdmit: (input: Parameters<DurableCapabilityPolicy["mayAdmit"]>[0]) =>
+      isV2Capability(input) &&
+      input.handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
     mayDrain: (input: Parameters<DurableCapabilityPolicy["mayDrain"]>[0]) =>
       isV2Capability(input) ? "allow" : "temporarily_suspended",
   });
@@ -169,6 +179,7 @@ export function partnershipsDiscoveryEffectsV2Requested(
 export function assertPartnershipsDiscoveryV2StaticGate(
   env: PartnershipsDiscoveryV2Environment = process.env as PartnershipsDiscoveryV2Environment,
 ): void {
+  resolvePartnershipsDiscoveryRuntimeContract(env);
   if (!partnershipsDiscoveryEffectsV2Requested(env)) {
     throw new PartnershipsDiscoveryV2GateError("effects_v2_disabled");
   }
