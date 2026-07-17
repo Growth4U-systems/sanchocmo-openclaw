@@ -4,27 +4,27 @@ import path from "path";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { resolveAgentForSkill } from "@/lib/skill-resolver";
 import { parseSkillFrontmatter } from "@/lib/server/skill-frontmatter";
-import { getRuntime } from "@/lib/runtime";
+import { skillsRoot } from "@/lib/data/paths";
 
-// Fase 7 (2026-05-11/12): skills live in `~/.openclaw/skills/` (OpenClaw's
-// built-in managed-skills root, read natively by all agents). The Settings →
-// Skills panel reads from this single central catalog and enriches each entry
-// with its owner agent via SKILL_OWNER_MAP in skill-resolver.ts.
-const SKILLS_ROOT = path.join(
-  getRuntime().state.home(),
-  "skills",
-);
-
-const SKILL_WORKSPACES: Array<{ id: string; label: string; dir: string }> = [
-  {
-    id: "central",
-    label: "Skills (catálogo central)",
-    dir: SKILLS_ROOT,
-  },
-];
+// Fase 7 (2026-05-11/12): skills live in the install's central `skills/`
+// catalog (next to workspace-sancho, seeded by docker/init-home.sh), read
+// natively by all agents. Resolved per-request via skillsRoot() so it holds
+// under every runtime — the active runtime's state home is its private state
+// dir, not where the catalog lives (SAN-485). The Settings → Skills panel
+// reads this single catalog and enriches each entry with its owner agent via
+// SKILL_OWNER_MAP in skill-resolver.ts.
+function skillWorkspaces(): Array<{ id: string; label: string; dir: string }> {
+  return [
+    {
+      id: "central",
+      label: "Skills (catálogo central)",
+      dir: skillsRoot(),
+    },
+  ];
+}
 
 function skillDirFor(skillId: string): { dir: string; workspaceId: string } | null {
-  const candidate = path.join(SKILLS_ROOT, skillId);
+  const candidate = path.join(skillsRoot(), skillId);
   if (fs.existsSync(candidate)) return { dir: candidate, workspaceId: "central" };
   return null;
 }
@@ -109,7 +109,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       file_path: string;
     }> = [];
 
-    for (const ws of SKILL_WORKSPACES) {
+    const workspaces = skillWorkspaces();
+    for (const ws of workspaces) {
       if (!fs.existsSync(ws.dir)) continue;
       for (const entry of fs.readdirSync(ws.dir, { withFileTypes: true })) {
         if (!entry.isDirectory() || entry.name.startsWith(".") || entry.name.startsWith("_")) continue;
@@ -157,7 +158,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return a.name.localeCompare(b.name);
     });
 
-    return res.status(200).json({ skills, workspaces: SKILL_WORKSPACES.map((w) => ({ id: w.id, label: w.label })) });
+    return res.status(200).json({ skills, workspaces: workspaces.map((w) => ({ id: w.id, label: w.label })) });
   }
 
   if (req.method === "POST") {
@@ -171,7 +172,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     let located = skillDirFor(skillId);
     if (!located) {
-      located = { dir: path.join(SKILLS_ROOT, skillId), workspaceId: "central" };
+      located = { dir: path.join(skillsRoot(), skillId), workspaceId: "central" };
     }
     if (!fs.existsSync(located.dir)) {
       fs.mkdirSync(located.dir, { recursive: true });

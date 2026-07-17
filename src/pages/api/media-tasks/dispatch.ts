@@ -14,7 +14,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
-import { getRuntime } from "@/lib/runtime";
+import { installHome } from "@/lib/data/paths";
 
 interface DispatchRequest {
   slug: string;
@@ -28,11 +28,11 @@ interface DispatchRequest {
   source?: string;
 }
 
-const INBOX_DIR = path.join(
-  getRuntime().state.home(),
-  "workspace-maese-pedro",
-  "inbox",
-);
+// workspace-maese-pedro lives in the install home next to workspace-sancho —
+// runtime-agnostic on purpose (SAN-485).
+function inboxDir(): string {
+  return path.join(installHome(), "workspace-maese-pedro", "inbox");
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -50,8 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const taskId = `media-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
   const skill = body.skill ?? "od-generate";
 
-  await fs.mkdir(INBOX_DIR, { recursive: true });
-  const inboxPath = path.join(INBOX_DIR, `${taskId}.json`);
+  const inbox = inboxDir();
+  await fs.mkdir(inbox, { recursive: true });
+  const inboxPath = path.join(inbox, `${taskId}.json`);
 
   const task = {
     taskId,
