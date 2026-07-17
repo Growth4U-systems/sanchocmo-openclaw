@@ -5,7 +5,15 @@ import {
   metricDatesFromSources,
   recomputeMetricKpisAfterIngest,
 } from "@/lib/data/metric-kpi-autorecompute";
-import { ingestDailySnapshot, ingestSourceMetrics, type RawMetric } from "@/lib/data/metrics-snapshots";
+import {
+  ingestDailySnapshot,
+  ingestSourceMetrics,
+  isRealMetricDate,
+  normalizeAttemptedProviderDates,
+  normalizeMetricRestatementScopeInputs,
+  type RawMetric,
+  type MetricRestatementScopeInput,
+} from "@/lib/data/metrics-snapshots";
 
 /**
  * POST /api/metrics/ingest  (admin only)
@@ -18,9 +26,15 @@ import { ingestDailySnapshot, ingestSourceMetrics, type RawMetric } from "@/lib/
  *   { slug, date?, collectedAt?, sources: { <source>: { status, metrics:[...] } } }
  *   { slug, date?, source, metrics:[...] }
  */
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function hasInvalidMetricDate(metrics: unknown): boolean {
+  return Array.isArray(metrics) && metrics.some((metric) => {
+    if (!metric || typeof metric !== "object") return false;
+    const date = (metric as { date?: unknown }).date;
+    return date != null && !isRealMetricDate(date);
+  });
+}
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function metricsIngestHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     res.status(405).json({ error: `Method ${req.method} not allowed` });
@@ -45,10 +59,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         provenance?: string | null;
         quality?: string | null;
         metrics?: RawMetric[];
+        restatedDates?: string[];
+        attemptedDates?: string[];
+        restatedScopes?: MetricRestatementScopeInput[];
       }
     >;
     source?: string;
     metrics?: RawMetric[];
+    attemptedDates?: string[];
+    restatedScopes?: MetricRestatementScopeInput[];
     deleteStale?: boolean;
     recomputeKpis?: boolean;
   };
@@ -60,7 +79,36 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     res.status(400).json({ error: "Missing slug" });
     return;
   }
-  const date = typeof body.date === "string" && DATE_RE.test(body.date) ? body.date : new Date().toISOString().slice(0, 10);
+  if (body.date != null && !isRealMetricDate(body.date)) {
+    res.status(400).json({ error: "date must be a real YYYY-MM-DD calendar date" });
+    return;
+  }
+  const date = body.date ?? new Date().toISOString().slice(0, 10);
+
+  const invalidMetricDate = hasInvalidMetricDate(body.metrics)
+    || Object.values(body.sources ?? {}).some((payload) =>
+      hasInvalidMetricDate(payload?.metrics));
+  if (invalidMetricDate) {
+    res.status(400).json({ error: "metric.date must be a real YYYY-MM-DD calendar date" });
+    return;
+  }
+
+  try {
+    const validatePayload = (payload: {
+      attemptedDates?: string[];
+      restatedScopes?: MetricRestatementScopeInput[];
+    }) => {
+      const attemptedDates = normalizeAttemptedProviderDates(payload.attemptedDates);
+      normalizeMetricRestatementScopeInputs(payload.restatedScopes, attemptedDates);
+    };
+    validatePayload(body);
+    for (const payload of Object.values(body.sources ?? {})) validatePayload(payload ?? {});
+  } catch (error) {
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "Invalid restatement evidence",
+    });
+    return;
+  }
 
   if (typeof body.source === "string" && Array.isArray(body.metrics)) {
     const result = await ingestSourceMetrics(slug, body.source, body.metrics, date, {
@@ -68,13 +116,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       deleteStale,
       provenance: body.provenance,
       quality: body.quality,
+      attemptedDates: body.attemptedDates,
+      restatedScopes: body.restatedScopes,
     });
     const recompute = await recomputeMetricKpisAfterIngest({
       slug,
       date,
       enabled: recomputeEnabled,
       ingest: result,
-      metricDates: metricDatesFromMetrics(body.metrics, date),
+      metricDates: [
+        ...metricDatesFromMetrics(body.metrics, date),
+        ...(body.attemptedDates ?? []),
+        ...(body.restatedScopes ?? []).map((scope) => scope.metricDate),
+      ],
     });
     res.status(200).json({ ...result, recompute });
     return;
@@ -106,4 +160,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.status(400).json({ error: "Provide either { sources } or { source, metrics }" });
 }
 
-export default compose(withErrorHandler, withAuth)(handler);
+export default compose(withErrorHandler, withAuth)(metricsIngestHandler);

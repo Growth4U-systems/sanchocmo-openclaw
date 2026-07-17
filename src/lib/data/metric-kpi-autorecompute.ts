@@ -111,13 +111,27 @@ export function metricDatesFromMetrics(
 }
 
 export function metricDatesFromSources(
-  sources: Record<string, { metrics?: Array<{ date?: string | null }> }> | undefined,
+  sources: Record<string, {
+    metrics?: Array<{ date?: string | null }>;
+    restatedDates?: string[];
+    attemptedDates?: string[];
+    restatedScopes?: Array<{ metricDate?: string | null }>;
+  }> | undefined,
   fallback?: string,
 ): string[] {
   const dates = new Set<string>(metricDatesFromMetrics(undefined, fallback));
   for (const payload of Object.values(sources ?? {})) {
     for (const date of metricDatesFromMetrics(payload.metrics, fallback)) {
       dates.add(date);
+    }
+    for (const date of payload.restatedDates ?? []) {
+      if (DATE_RE.test(date)) dates.add(date);
+    }
+    for (const date of payload.attemptedDates ?? []) {
+      if (DATE_RE.test(date)) dates.add(date);
+    }
+    for (const scope of payload.restatedScopes ?? []) {
+      if (scope.metricDate && DATE_RE.test(scope.metricDate)) dates.add(scope.metricDate);
     }
   }
   return [...dates].sort();
@@ -128,9 +142,11 @@ export function buildMetricKpiAutoRecomputeRanges(args: {
   metricDates?: string[];
   now?: Date;
 }): MetricKpiAutoRecomputeRange[] {
-  const today = isoDay(utcDay(args.now ?? new Date()));
+  const completeDay = isoDay(
+    new Date(utcDay(args.now ?? new Date()).getTime() - DAY_MS),
+  );
   const ranges = DASHBOARD_RANGE_DAYS.map(([label, days]) =>
-    rangeEndingAt(label, days, today),
+    rangeEndingAt(label, days, completeDay),
   );
   const dates = validDates([args.date, ...(args.metricDates ?? [])]);
   if (dates.length) {
@@ -188,7 +204,9 @@ export async function recomputeMetricKpisAfterIngest(
     return skipResult({ reason: "storage-not-configured", trigger, ranges });
   }
   if (!input.ingest.ok) return skipResult({ reason: "ingest-failed", trigger, ranges });
-  if (input.ingest.rows <= 0) return skipResult({ reason: "no-rows", trigger, ranges });
+  if (input.ingest.rows <= 0 && (input.ingest.deleted ?? 0) <= 0) {
+    return skipResult({ reason: "no-rows", trigger, ranges });
+  }
 
   const run = deps.run ?? runMetricKpis;
   const results: RunMetricKpisResult[] = [];
@@ -201,6 +219,7 @@ export async function recomputeMetricKpisAfterIngest(
         range,
         trigger,
         force: input.force !== false,
+        now: input.now,
       });
       results.push(result);
       if (!result.ok) errors.push(result.error || `${range.from}..${range.to} failed`);

@@ -31,7 +31,15 @@ import {
   type IntelligenceItem,
   type ProposalEntry,
 } from "@/lib/data/meeting-intelligence-db";
-import { findMetricoolPostByUrl, getMetricsTimeSeries, getNorthStar, getSurfaceSummary, getTrend } from "@/lib/data/metrics";
+import {
+  findMetricoolPostByUrl,
+  getMetricsTimeSeries,
+  getNorthStar,
+  getSourceScorecards,
+  getSurfaceSummary,
+  getTrend,
+} from "@/lib/data/metrics";
+import { metricCalendarRangeError } from "@/lib/metrics/read-query";
 import {
   addCustomMetric,
   applyDashboardTemplate,
@@ -55,7 +63,10 @@ import {
 import { normalizeAgentSlug } from "@/lib/data/task-execution-contract";
 import { canonicalThreadId } from "@/lib/thread-id";
 import { brandDir, EXEC_PATH } from "@/lib/data/paths";
-import { isSafeFormula } from "@/lib/metrics/dashboard-schema";
+import {
+  formulaValidationMessage,
+  parseDashboardDefinition,
+} from "@/lib/metrics/dashboard-schema";
 import { getContentConfig, updateContentConfig, type ContentConfig } from "@/lib/data/content-config";
 import { approveContentIdea, previewContentIdeaApproval } from "@/lib/data/content-approval";
 import { loadIdeas } from "@/lib/data/ideas";
@@ -4358,30 +4369,46 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     {
       title: "Get Sancho metrics (time-series)",
       description:
-        "Reads a client's metrics from the metric_snapshots time-series. view=series returns buckets; view=surfaces returns latest headline values; view=trend returns current-vs-previous delta; view=northstar returns the metrics-plan North Star/KPIs. Requires metrics:read.",
+        "Reads a client's metrics from the metric_snapshots time-series. view=series returns buckets for one source+metric; view=surfaces returns latest headline values; view=scorecards returns metrics grouped by source; view=trend returns current-vs-previous delta for one source+metric; view=northstar returns the metrics-plan North Star/KPIs. Requires metrics:read.",
       inputSchema: {
         clientSlug: z.string().min(1).describe("Sancho client slug."),
-        view: z.enum(["series", "surfaces", "trend", "northstar"]).default("series").describe("Which view to return."),
+        view: z.enum(["series", "surfaces", "scorecards", "trend", "northstar"]).default("series").describe("Which view to return."),
         source: z.string().optional().describe("Metric source, e.g. meta-ads, ghl, ga4."),
         metric: z.string().optional().describe("Metric name/key."),
         grain: z.enum(["day", "week", "month"]).default("day").describe("Bucket grain for series view."),
-        from: z.string().optional().describe("Inclusive ISO date/time lower bound."),
-        to: z.string().optional().describe("Inclusive ISO date/time upper bound."),
+        from: z.string().optional().describe("Inclusive calendar-date lower bound (YYYY-MM-DD)."),
+        to: z.string().optional().describe("Inclusive calendar-date upper bound (YYYY-MM-DD)."),
       },
     },
     async ({ clientSlug, view, source, metric, grain, from, to }) =>
       runTool(context, "sancho_get_metrics_timeseries", clientSlug, async () => {
         assertClientScope(context, "metrics:read", clientSlug);
+        const dateError = metricCalendarRangeError({ from, to });
+        if (dateError) throw new McpAuthError(400, dateError);
         if (view === "surfaces") return jsonResult(await getSurfaceSummary(clientSlug, { from, to }));
+        if (view === "scorecards") return jsonResult(await getSourceScorecards(clientSlug, { from, to }));
         if (view === "northstar") return jsonResult(getNorthStar(clientSlug));
         if (view === "trend") {
-          if (!source || !metric) throw new McpAuthError(400, "source and metric are required for view=trend");
+          const trendSource = source?.trim();
+          const trendMetric = metric?.trim();
+          if (!trendSource || !trendMetric) throw new McpAuthError(400, "source and metric are required for view=trend");
           if (!from || !to) throw new McpAuthError(400, "from and to are required for view=trend");
-          const trendSource = source;
-          const trendMetric = metric;
+          const trendDateError = metricCalendarRangeError({ from, to }, { requireBoth: true });
+          if (trendDateError) throw new McpAuthError(400, trendDateError);
           return jsonResult(await getTrend(clientSlug, { source: trendSource, metric: trendMetric, from, to }));
         }
-        return jsonResult(await getMetricsTimeSeries(clientSlug, { source, metric, grain, from, to }));
+        const seriesSource = source?.trim();
+        const seriesMetric = metric?.trim();
+        if (!seriesSource || !seriesMetric) {
+          throw new McpAuthError(400, "source and metric are required for view=series");
+        }
+        return jsonResult(await getMetricsTimeSeries(clientSlug, {
+          source: seriesSource,
+          metric: seriesMetric,
+          grain,
+          from,
+          to,
+        }));
       }),
   );
 
@@ -4425,6 +4452,14 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
         } catch {
           throw new McpAuthError(400, "definition must be valid JSON");
         }
+        try {
+          parsed = parseDashboardDefinition(parsed);
+        } catch (error) {
+          throw new McpAuthError(
+            400,
+            `Invalid metrics dashboard definition: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
         if (dryRun !== false || confirm !== true) {
           return jsonResult({
             ok: true,
@@ -4459,8 +4494,9 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
     async ({ clientSlug, label, formula, format, tier, surface, changeNote, dryRun, confirm }) =>
       runTool(context, "sancho_add_custom_metric", clientSlug, async () => {
         assertClientScope(context, "metrics:write", clientSlug);
-        if (!isSafeFormula(formula)) {
-          throw new McpAuthError(400, "Unsafe formula: only source.metric refs, numbers and arithmetic are allowed.");
+        const formulaError = formulaValidationMessage(formula);
+        if (formulaError) {
+          throw new McpAuthError(400, `Invalid metric formula: ${formulaError}`);
         }
         if (dryRun !== false || confirm !== true) {
           return jsonResult({ ok: true, dryRun: true, requiresConfirmation: true, preview: { label, formula, format, tier, surface } });

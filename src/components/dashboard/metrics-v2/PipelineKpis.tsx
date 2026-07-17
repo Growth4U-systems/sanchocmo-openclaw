@@ -36,7 +36,7 @@ export function PipelineKpis({
     { label: "Appts", value: fmt(appointments) },
     { label: "Opps", value: fmt(opportunities) },
     ...(pipelineValue > 0
-      ? [{ label: "Pipeline", value: `€${fmt(pipelineValue)}`, color: "text-sage" }]
+      ? [{ label: "Pipeline", value: `${fmt(pipelineValue)} moneda cuenta`, color: "text-sage" }]
       : []),
   ];
   return (

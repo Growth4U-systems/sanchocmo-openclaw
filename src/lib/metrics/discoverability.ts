@@ -7,8 +7,9 @@
  *
  * Aggregation is computed HERE from the daily entries (so it's correct regardless of
  * any UI-side source rollup): additive metrics (clicks/impressions/sessions/conv)
- * are summed; ratios (ctr/position/engagement) averaged; pagespeed/aeo state read as
- * the latest day. Surfaces stay pure — only own sources, no cross-source.
+ * are summed; ratios are volume-weighted when their companion metric exists;
+ * pagespeed/aeo state is read as the latest day. Surfaces stay pure — only own
+ * sources, no cross-source.
  */
 import type { DiscoverabilityData, DiscoverabilitySeo, DiscoverabilityAi } from "@/components/dashboard/metrics-v2/DiscoverabilitySurface";
 import type { WebSeoKpi } from "@/components/dashboard/metrics-v2/WebSeoKpis";
@@ -42,7 +43,35 @@ function series(entries: DiscoverabilityEntry[], keys: string[], name: string): 
 }
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const avg = (xs: number[]) => (xs.length ? sum(xs) / xs.length : 0);
-const last = (xs: number[]) => (xs.length ? xs[xs.length - 1] : 0);
+const lastOrNull = (xs: number[]) => (xs.length ? xs[xs.length - 1] : null);
+
+function weightedAverage(
+  entries: DiscoverabilityEntry[],
+  keys: string[],
+  valueMetric: string,
+  weightMetric: string,
+): number {
+  const values: number[] = [];
+  let weightedSum = 0;
+  let totalWeight = 0;
+  let complete = true;
+
+  for (const entry of entries) {
+    const source = srcOf(entry, keys);
+    const value = rollup(source, valueMetric);
+    if (value == null) continue;
+    values.push(value);
+    const weight = rollup(source, weightMetric);
+    if (weight == null || !Number.isFinite(weight) || weight < 0) {
+      complete = false;
+      continue;
+    }
+    weightedSum += value * weight;
+    totalWeight += weight;
+  }
+
+  return complete && totalWeight > 0 ? weightedSum / totalWeight : avg(values);
+}
 
 const GA4 = ["ga4", "google-analytics"];
 const GSC = ["gsc", "google-search-console"];
@@ -78,13 +107,23 @@ function buildSeo(entries: DiscoverabilityEntry[]): DiscoverabilitySeo | undefin
 
   const clicks = sum(series(entries, GSC, "clicks"));
   const impressions = sum(series(entries, GSC, "impressions"));
-  const position = avg(series(entries, GSC, "position"));
-  const ctr = avg(series(entries, GSC, "ctr"));
+  const position = weightedAverage(entries, GSC, "position", "impressions");
+  const ctr = weightedAverage(entries, GSC, "ctr", "impressions");
   const sessions = sum(series(entries, GA4, "sessions"));
-  const engagement = avg(series(entries, GA4, "engagementRate"));
+  // GA4 stores engagementRate as a 0..1 ratio; the UI contract is percentage.
+  const engagement = weightedAverage(entries, GA4, "engagementRate", "sessions") * 100;
   const conversions = sum(series(entries, GA4, "conversions"));
-  const perfMobile = last(series(entries, PS, "performance_mobile"));
-  const cwvPass = last(series(entries, PS, "lcp_mobile")) <= 2.5 && last(series(entries, PS, "cls_mobile")) <= 0.1 && last(series(entries, PS, "inp_mobile")) <= 200;
+  const perfMobile = lastOrNull(series(entries, PS, "performance_mobile"));
+  const lcpMobile = lastOrNull(series(entries, PS, "lcp_mobile"));
+  const clsMobile = lastOrNull(series(entries, PS, "cls_mobile"));
+  const inpMobile = lastOrNull(series(entries, PS, "inp_mobile"));
+  const hasLabVitals = [lcpMobile, clsMobile, inpMobile].every(
+    (value) => value != null && Number.isFinite(value),
+  );
+  const labVitalsWithinThresholds = hasLabVitals
+    && lcpMobile! <= 2.5
+    && clsMobile! <= 0.1
+    && inpMobile! <= 200;
 
   const kpis: WebSeoKpi[] = [
     { label: "Clicks", value: intES(clicks), source: "GSC" },
@@ -94,7 +133,15 @@ function buildSeo(entries: DiscoverabilityEntry[]): DiscoverabilitySeo | undefin
     { label: "Sessions", value: kES(sessions), source: "GA4" },
     { label: "Engagement", value: pctES(engagement), source: "GA4" },
     { label: "Conversiones", value: intES(conversions), source: "GA4" },
-    { label: "Core Web Vitals", value: cwvPass ? "✓ Pasa" : "Mejorar", hint: `${Math.round(perfMobile)} móvil`, source: "PageSpeed", health: true },
+    {
+      label: "Lighthouse lab",
+      value: hasLabVitals
+        ? (labVitalsWithinThresholds ? "Dentro de umbrales" : "Revisar")
+        : "Sin datos",
+      hint: perfMobile == null ? undefined : `${Math.round(perfMobile)} móvil`,
+      source: "PageSpeed",
+      health: true,
+    },
   ];
 
   const trend = entries.map((e) => ({ date: e.date, clicks: rollup(srcOf(e, GSC), "clicks") ?? 0, impressions: rollup(srcOf(e, GSC), "impressions") ?? 0 }));
@@ -108,7 +155,7 @@ function buildSeo(entries: DiscoverabilityEntry[]): DiscoverabilitySeo | undefin
       query,
       clicks: r.clicks,
       impressions: r.impressions,
-      ctr: +avg(r.ctr).toFixed(2),
+      ctr: +(r.impressions > 0 ? (r.clicks / r.impressions) * 100 : avg(r.ctr)).toFixed(2),
       position: +cur.toFixed(1),
       deltaPos: +(first - cur).toFixed(1),
       history: pos.map((p) => p.v),
@@ -128,7 +175,11 @@ function buildSeo(entries: DiscoverabilityEntry[]): DiscoverabilitySeo | undefin
       visits: ga?.visits ?? 0,
       position: gs?.pos.length ? +avg(gs.pos.map((p) => p.v)).toFixed(1) : null,
       clicks: gs ? gs.clicks : null,
-      ctr: gs?.ctr.length ? +avg(gs.ctr).toFixed(2) : null,
+      ctr: gs?.ctr.length
+        ? +(gs.impressions > 0
+          ? (gs.clicks / gs.impressions) * 100
+          : avg(gs.ctr)).toFixed(2)
+        : null,
       conversions: ga?.conv ?? 0,
     };
   }).sort((a, b) => b.visits - a.visits);
@@ -156,8 +207,18 @@ function buildSeo(entries: DiscoverabilityEntry[]): DiscoverabilitySeo | undefin
     totalPages: pages.length,
     movers: { up, down },
     health: {
-      cwv: { lcp: last(series(entries, PS, "lcp_mobile")), cls: last(series(entries, PS, "cls_mobile")), inp: last(series(entries, PS, "inp_mobile")) },
-      scores: { mobile: Math.round(perfMobile), desktop: Math.round(last(series(entries, PS, "performance_desktop"))), seo: Math.round(last(series(entries, PS, "seo_mobile"))) },
+      cwv: { lcp: lcpMobile, cls: clsMobile, inp: inpMobile },
+      scores: {
+        mobile: perfMobile == null ? null : Math.round(perfMobile),
+        desktop: (() => {
+          const value = lastOrNull(series(entries, PS, "performance_desktop"));
+          return value == null ? null : Math.round(value);
+        })(),
+        seo: (() => {
+          const value = lastOrNull(series(entries, PS, "seo_mobile"));
+          return value == null ? null : Math.round(value);
+        })(),
+      },
       positionDist,
       totalKeywords: queries.length,
     },

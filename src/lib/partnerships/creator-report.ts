@@ -3,7 +3,7 @@
  *
  * Vive en METRICS (decisión del plan: la conversión es métricas): para cada
  * creator con deal y performance, agrega el funnel real post-activación
- * (posts live → clicks → signups → KYC → first_tx) en una ventana de 30/90
+ * (posts live → clicks → signups → KYC → first_tx) en la ventana seleccionada
  * días y lo compara con lo que predijo la calc:
  *
  *  - CPA real    = coste total (fee + variable×conv) ÷ conversiones.
@@ -61,7 +61,7 @@ export interface CreatorPerformanceRecord {
 
 // ── Shape del report ────────────────────────────────────────────────────────
 
-export type ReportPeriodDays = 30 | 90;
+export type ReportPeriodDays = 1 | 7 | 30 | 90;
 
 export const REPORT_SPARKLINE_BUCKETS = 12;
 
@@ -112,13 +112,15 @@ export interface CreatorReportRow {
 }
 
 export interface CreatorReportTotals {
-  investedEur: number;
+  /** Null when at least one matched deal has no verified fee. */
+  investedEur: number | null;
   postsLive: number;
   clicks: number;
   signups: number;
   kyc: number;
   conversions: number;
-  totalCostEur: number;
+  /** Null when the aggregate cost is incomplete because a fee is unknown. */
+  totalCostEur: number | null;
   cpaRealEur: number | null;
   belowBreakEven: boolean | null;
   roi: number | null;
@@ -137,6 +139,15 @@ export interface CreatorReportFeedback {
   deltas: CreatorReportFeedbackDelta[];
 }
 
+export interface CreatorReportTracking {
+  /** `real` is provider-backed, `demo` is explicitly seeded, and
+   * `unavailable` means the Yalc roster is reachable but no reportable
+   * performance record matched it. */
+  status: "real" | "demo" | "unavailable";
+  sources: PerformanceSource[];
+  recordCount: number;
+}
+
 export interface CreatorReport {
   periodDays: ReportPeriodDays;
   from: string;
@@ -145,12 +156,18 @@ export interface CreatorReport {
   totals: CreatorReportTotals;
   creators: CreatorReportRow[];
   feedback: CreatorReportFeedback;
+  tracking: CreatorReportTracking;
 }
 
 export interface BuildCreatorReportOptions {
   periodDays: ReportPeriodDays;
   /** Referencia temporal de la ventana (default: ahora) — inyectable en tests. */
   now?: Date;
+  /**
+   * Ventana UTC exacta para collectors. La UI sigue usando `periodDays`, pero
+   * los snapshots diarios no pueden depender de la hora a la que corra el job.
+   */
+  exactRange?: { from: Date; to: Date };
   /** CAC objetivo (default: config sembrada de calc-creator-core → 80€). */
   targetCacEur?: number;
 }
@@ -213,8 +230,21 @@ export function buildCreatorReport(
   const targetCacEur =
     options.targetCacEur ?? DEFAULT_CREATOR_MODEL_CONFIG.breakEven.defaultTargetCacEur;
 
-  const toMs = now.getTime();
-  const fromMs = toMs - periodDays * DAY_MS;
+  const exactFromMs = options.exactRange?.from.getTime();
+  const exactToMs = options.exactRange?.to.getTime();
+  const hasExactRange = exactFromMs !== undefined || exactToMs !== undefined;
+  if (
+    hasExactRange &&
+    (!Number.isFinite(exactFromMs) ||
+      !Number.isFinite(exactToMs) ||
+      (exactFromMs as number) > (exactToMs as number))
+  ) {
+    throw new Error("Invalid exact creator-report range");
+  }
+  const toMs = hasExactRange ? (exactToMs as number) : now.getTime();
+  const fromMs = hasExactRange
+    ? (exactFromMs as number)
+    : toMs - periodDays * DAY_MS;
   const bucketMs = (toMs - fromMs) / REPORT_SPARKLINE_BUCKETS;
 
   const leadByHandle = new Map<string, PartnershipLead>();
@@ -224,10 +254,12 @@ export function buildCreatorReport(
   }
 
   const rows: CreatorReportRow[] = [];
+  const matchedTrackingSources = new Set<PerformanceSource>();
 
   for (const record of records) {
     const lead = leadByHandle.get(normalizeHandle(record.handle));
     if (!lead) continue; // sin lead en Yalc no hay deal que reportar
+    matchedTrackingSources.add(record.source);
 
     const liveInWindow = record.posts.filter((post) => {
       if (post.status !== "live") return false;
@@ -322,8 +354,14 @@ export function buildCreatorReport(
   rows.sort((a, b) => b.clicks - a.clicks || a.handle.localeCompare(b.handle));
 
   // ── Totales del programa ──
-  const invested = rows.reduce((sum, row) => sum + (row.feeEur ?? 0), 0);
-  const totalCost = rows.reduce((sum, row) => sum + (row.totalCostEur ?? 0), 0);
+  const hasUnknownFee = rows.some((row) => row.feeEur === null);
+  const hasUnknownTotalCost = rows.some((row) => row.totalCostEur === null);
+  const invested = hasUnknownFee
+    ? null
+    : rows.reduce((sum, row) => sum + (row.feeEur ?? 0), 0);
+  const totalCost = hasUnknownTotalCost
+    ? null
+    : rows.reduce((sum, row) => sum + (row.totalCostEur ?? 0), 0);
   const totals: CreatorReportTotals = {
     investedEur: invested,
     postsLive: rows.reduce((sum, row) => sum + row.postsLive, 0),
@@ -336,7 +374,7 @@ export function buildCreatorReport(
     belowBreakEven: null,
     roi: null,
   };
-  if (totals.conversions > 0 && totalCost > 0) {
+  if (totals.conversions > 0 && totalCost !== null && totalCost > 0) {
     totals.cpaRealEur = totalCost / totals.conversions;
     totals.belowBreakEven = totals.cpaRealEur < targetCacEur;
     totals.roi = (totals.conversions * targetCacEur) / totalCost;
@@ -374,5 +412,14 @@ export function buildCreatorReport(
     totals,
     creators: rows,
     feedback: { note, deltas },
+    tracking: {
+      status: matchedTrackingSources.has("impact")
+        ? "real"
+        : matchedTrackingSources.has("seed")
+          ? "demo"
+          : "unavailable",
+      sources: [...matchedTrackingSources].sort(),
+      recordCount: rows.length,
+    },
   };
 }

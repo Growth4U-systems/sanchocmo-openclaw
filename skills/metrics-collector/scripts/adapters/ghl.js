@@ -4,13 +4,23 @@
  * Uses proper API endpoints with server-side date filtering:
  * - Contacts: POST /contacts/search with filters.dateAdded
  * - Calendar Events: GET /calendars/events with startTime/endTime (epoch ms)
- * - Opportunities: GET /opportunities/search with date/endDate (mm-dd-yyyy)
+ * - Opportunities: current v3 GET /opportunities/search with camelCase filters
  *
  * Auth: Bearer token (Private Integration Token) + locationId.
  * API base: https://services.leadconnectorhq.com
  */
 
+import { pointInTimeMetricDate } from '../adapter-date-range.js';
+
 const BASE_URL = 'https://services.leadconnectorhq.com';
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const GHL_DAILY_METRIC_NAMES = [
+  'newContacts',
+  'appointments',
+  'opportunities',
+  'pipelineValue',
+];
+const GHL_OPTIONAL_SNAPSHOT_METRIC_NAMES = ['pipeline', 'pipelineStage'];
 
 function firstEnv(env, keys) {
   for (const key of keys) {
@@ -20,12 +30,157 @@ function firstEnv(env, keys) {
   return '';
 }
 
+async function requireOk(response, operation) {
+  if (response.ok) return;
+  const detail = await response.text().catch(() => '');
+  throw new Error(
+    `GHL ${operation} HTTP ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
+  );
+}
+
+function requireArray(value, operation, field) {
+  if (!Array.isArray(value)) {
+    throw new Error(`GHL ${operation}: response missing ${field} array`);
+  }
+  return value;
+}
+
+function requireCount(value, operation, field) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`GHL ${operation}: response missing numeric ${field}`);
+  }
+  return parsed;
+}
+
+function requireText(value, operation, field) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`GHL ${operation}: response missing ${field}`);
+  }
+  return value.trim();
+}
+
+function isCalendarDate(value) {
+  if (!ISO_DATE_RE.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function requireIanaTimezone(value) {
+  const timezone = typeof value === 'string' ? value.trim() : '';
+  if (!timezone) return '';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(new Date(0));
+    return timezone;
+  } catch {
+    throw new Error(`GHL: invalid IANA timezone ${timezone}`);
+  }
+}
+
+function timezoneOffsetMs(timestamp, timezone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(timestamp));
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const asUtc = Date.UTC(
+    Number(value.year),
+    Number(value.month) - 1,
+    Number(value.day),
+    Number(value.hour),
+    Number(value.minute),
+    Number(value.second),
+  );
+  return asUtc - Math.floor(timestamp / 1000) * 1000;
+}
+
+function localMidnightUtc(date, timezone) {
+  const [year, month, day] = date.split('-').map(Number);
+  const localTimestamp = Date.UTC(year, month - 1, day);
+  let candidate = localTimestamp;
+  // Offset can change around DST. Re-evaluating against the corrected instant
+  // converges on the UTC instant representing local 00:00 for this calendar day.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    candidate = localTimestamp - timezoneOffsetMs(candidate, timezone);
+  }
+  return candidate;
+}
+
+function nextCalendarDate(date) {
+  return new Date(Date.parse(`${date}T00:00:00.000Z`) + 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}
+
+export function zonedDayBounds(date, timezone) {
+  if (!isCalendarDate(date)) throw new Error(`GHL: invalid calendar day ${date}`);
+  const zone = requireIanaTimezone(timezone);
+  if (!zone) throw new Error('GHL: missing IANA timezone');
+  const fromTs = localMidnightUtc(date, zone);
+  const toTs = localMidnightUtc(nextCalendarDate(date), zone) - 1;
+  return {
+    timezone: zone,
+    fromTs,
+    toTs,
+    fromIso: new Date(fromTs).toISOString(),
+    toIso: new Date(toTs).toISOString(),
+  };
+}
+
+async function resolveLocationTimezone(config, env, slugUpper, locationId, headers) {
+  const configured = requireIanaTimezone(
+    config.timezone
+      || config.timeZone
+      || config.locationTimezone
+      || config._client?.timezone
+      || firstEnv(env, [
+        ...(slugUpper ? [`${slugUpper}_GHL_TIMEZONE`] : []),
+        'GHL_TIMEZONE',
+      ]),
+  );
+  if (configured) return configured;
+
+  const response = await fetch(`${BASE_URL}/locations/${encodeURIComponent(locationId)}`, {
+    headers: { ...headers, Version: 'v3' },
+  });
+  await requireOk(response, 'location timezone');
+  const data = await response.json();
+  const discovered = data?.location?.timezone ?? data?.timezone;
+  try {
+    return requireIanaTimezone(discovered)
+      || (() => { throw new Error('empty timezone'); })();
+  } catch {
+    throw new Error(
+      'GHL location timezone: response missing a valid IANA timezone; set ghl.timezone explicitly',
+    );
+  }
+}
+
+function rethrowCollectionError(area, error) {
+  const message = error instanceof Error ? error.message : String(error);
+  throw new Error(`GHL ${area} collection failed: ${message}`);
+}
+
 /**
- * @param {object} config - { locationId, calendarId? }
+ * @param {object} config - { locationId, timezone?, calendarId? }
  * @param {object} env - { {SLUG}_GHL_API_KEY or GHL_API_KEY }
  * @param {{ from: string, to: string }} dateRange - YYYY-MM-DD
  */
 export async function collect(config, env, dateRange) {
+  if (!isCalendarDate(dateRange.from) || !isCalendarDate(dateRange.to)) {
+    throw new Error(`GHL: invalid date range ${dateRange.from || '?'}..${dateRange.to || '?'}`);
+  }
+  if (dateRange.from !== dateRange.to) {
+    throw new Error('GHL: multi-day ranges are not supported safely; collect one day at a time');
+  }
+  const observationDate = pointInTimeMetricDate(config, dateRange);
+  const includeCurrentState = config._explicitRange !== true;
   const slugUpper = (config._slug || '').toUpperCase().replace(/-/g, '_');
   const locationId =
     config.locationId ||
@@ -59,10 +214,11 @@ export async function collect(config, env, dateRange) {
     'Content-Type': 'application/json',
     Version: '2021-07-28',
   };
+  const opportunityHeaders = { ...headers, Version: 'v3' };
 
   const metrics = [];
-  const fromTs = new Date(dateRange.from).getTime();
-  const toTs = new Date(dateRange.to + 'T23:59:59Z').getTime();
+  const timezone = await resolveLocationTimezone(config, env, slugUpper, locationId, headers);
+  const { fromTs, toTs, fromIso, toIso } = zonedDayBounds(dateRange.from, timezone);
 
   // Helper: mm-dd-yyyy format for opportunities API
   function toMMDDYYYY(isoDate) {
@@ -75,10 +231,11 @@ export async function collect(config, env, dateRange) {
   // ═══════════════════════════════════════════════════════════
   try {
     let newContacts = 0;
-    let totalContacts = 0;
+    let totalContacts = null;
     const channelCounts = {};
     let page = 1;
     let hasMore = true;
+    let usedFallback = false;
 
     while (hasMore && page <= 10) {
       const resp = await fetch(`${BASE_URL}/contacts/search`, {
@@ -93,8 +250,8 @@ export async function collect(config, env, dateRange) {
               field: 'dateAdded',
               operator: 'range',
               value: {
-                gte: `${dateRange.from}T00:00:00Z`,
-                lte: `${dateRange.to}T23:59:59Z`,
+                gte: fromIso,
+                lte: toIso,
               },
             },
           ],
@@ -106,19 +263,25 @@ export async function collect(config, env, dateRange) {
         // Fallback to deprecated GET if POST search not available
         if (resp.status === 400 || resp.status === 422) {
           console.warn(`  ⚠️  GHL contacts/search not available (${resp.status}), falling back to GET`);
-          const fallbackResult = await collectContactsFallback(locationId, headers, fromTs, toTs, dateRange);
+          const fallbackResult = await collectContactsFallback(
+            locationId,
+            headers,
+            fromTs,
+            toTs,
+            { requireTotal: includeCurrentState },
+          );
           newContacts = fallbackResult.newContacts;
           totalContacts = fallbackResult.totalContacts;
           Object.assign(channelCounts, fallbackResult.channelCounts);
+          usedFallback = true;
           hasMore = false;
           break;
         }
-        console.warn(`  ⚠️  GHL contacts ${resp.status}: ${errText}`);
-        break;
+        throw new Error(`GHL contacts/search HTTP ${resp.status}${errText ? `: ${errText.slice(0, 200)}` : ''}`);
       }
 
       const data = await resp.json();
-      const contacts = data.contacts || [];
+      const contacts = requireArray(data.contacts, 'contacts/search', 'contacts');
 
       for (const c of contacts) {
         newContacts++;
@@ -134,28 +297,33 @@ export async function collect(config, env, dateRange) {
       page++;
     }
 
-    try {
+    if (hasMore) {
+      throw new Error('GHL contacts/search exceeded the 1,000-row safety limit; refusing to persist a partial count');
+    }
+
+    if (!usedFallback && includeCurrentState) {
       const totalResp = await fetch(`${BASE_URL}/contacts/search`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ locationId, page: 1, pageLimit: 1 }),
       });
-      if (totalResp.ok) {
-        const totalData = await totalResp.json();
-        totalContacts = totalData.total || totalData.meta?.total || totalContacts;
-      }
-    } catch {}
+      await requireOk(totalResp, 'contacts total');
+      const totalData = await totalResp.json();
+      totalContacts = requireCount(totalData.total ?? totalData.meta?.total, 'contacts total', 'total');
+    }
 
-    metrics.push(
-      { name: 'newContacts', value: newContacts, date: dateRange.from },
-      { name: 'totalContacts', value: totalContacts, date: dateRange.from },
-    );
+    metrics.push({ name: 'newContacts', value: newContacts, date: dateRange.from });
+    if (includeCurrentState) {
+      // All-time totals are current-state snapshots, not historical facts for
+      // the requested repair day.
+      metrics.push({ name: 'totalContacts', value: totalContacts, date: observationDate });
+    }
 
     for (const [channel, count] of Object.entries(channelCounts)) {
       metrics.push({ name: 'newContacts', value: count, date: dateRange.from, dimensions: { channel } });
     }
   } catch (err) {
-    console.warn(`  ⚠️  GHL contacts error: ${err.message}`);
+    rethrowCollectionError('contacts', err);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -170,25 +338,24 @@ export async function collect(config, env, dateRange) {
       headers: { ...headers, Version: '2021-04-15' },
     });
 
-    if (calResp.ok) {
-      const calData = await calResp.json();
-      const calendars = calData.calendars || [];
+    await requireOk(calResp, 'calendars');
+    const calData = await calResp.json();
+    const calendars = requireArray(calData.calendars, 'calendars', 'calendars');
 
-      for (const cal of calendars) {
-        const eventsResp = await fetch(
-          `${BASE_URL}/calendars/events?locationId=${locationId}&calendarId=${cal.id}&startTime=${fromTs}&endTime=${toTs}`,
-          { headers: { ...headers, Version: '2021-04-15' } }
-        );
+    for (const cal of calendars) {
+      const eventsResp = await fetch(
+        `${BASE_URL}/calendars/events?locationId=${locationId}&calendarId=${cal.id}&startTime=${fromTs}&endTime=${toTs}`,
+        { headers: { ...headers, Version: '2021-04-15' } }
+      );
 
-        if (!eventsResp.ok) continue;
-        const eventsData = await eventsResp.json();
-        const events = eventsData.events || [];
+      await requireOk(eventsResp, `calendar events (${cal.id})`);
+      const eventsData = await eventsResp.json();
+      const events = requireArray(eventsData.events, `calendar events (${cal.id})`, 'events');
 
-        for (const e of events) {
-          totalAppointments++;
-          const status = e.appointmentStatus || e.status || 'scheduled';
-          statuses[status] = (statuses[status] || 0) + 1;
-        }
+      for (const e of events) {
+        totalAppointments++;
+        const status = e.appointmentStatus || e.status || 'scheduled';
+        statuses[status] = (statuses[status] || 0) + 1;
       }
     }
 
@@ -197,7 +364,7 @@ export async function collect(config, env, dateRange) {
       metrics.push({ name: 'appointments', value: count, date: dateRange.from, dimensions: { status } });
     }
   } catch (err) {
-    console.warn(`  ⚠️  GHL appointments error: ${err.message}`);
+    rethrowCollectionError('appointments', err);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -210,50 +377,47 @@ export async function collect(config, env, dateRange) {
     let hasMore = true;
 
     while (hasMore && page <= 5) {
-      const url = `${BASE_URL}/opportunities/search?location_id=${locationId}&date=${toMMDDYYYY(dateRange.from)}&endDate=${toMMDDYYYY(dateRange.to)}&status=all&limit=100&page=${page}`;
-      const resp = await fetch(url, { headers });
+      const url = `${BASE_URL}/opportunities/search?locationId=${locationId}&date=${toMMDDYYYY(dateRange.from)}&endDate=${toMMDDYYYY(dateRange.to)}&status=all&limit=100&page=${page}`;
+      const resp = await fetch(url, { headers: opportunityHeaders });
 
-      if (!resp.ok) {
-        console.warn(`  ⚠️  GHL opportunities ${resp.status}`);
-        break;
-      }
+      await requireOk(resp, 'opportunities/search');
 
       const data = await resp.json();
-      const opportunities = data.opportunities || [];
+      const opportunities = requireArray(data.opportunities, 'opportunities/search', 'opportunities');
 
       for (const opp of opportunities) {
         newOpps++;
-        newValue += opp.monetaryValue || 0;
+        newValue += requireCount(opp.monetaryValue ?? 0, 'opportunities/search', 'monetaryValue');
       }
 
       hasMore = opportunities.length === 100;
       page++;
     }
 
-    // Also get totals (all time) for pipeline overview
-    let totalOpps = 0;
-    let totalValue = 0;
-    try {
-      const totalResp = await fetch(`${BASE_URL}/opportunities/search?location_id=${locationId}&status=all&limit=1`, { headers });
-      if (totalResp.ok) {
-        const totalData = await totalResp.json();
-        totalOpps = totalData.meta?.total || 0;
-      }
-    } catch {}
+    if (hasMore) {
+      throw new Error('GHL opportunities/search exceeded the 500-row safety limit; refusing to persist partial totals');
+    }
 
     metrics.push(
       { name: 'opportunities', value: newOpps, date: dateRange.from },
       { name: 'pipelineValue', value: newValue, date: dateRange.from },
-      { name: 'totalOpportunities', value: totalOpps, date: dateRange.from },
     );
+    if (includeCurrentState) {
+      // Current total is deliberately not queried once per historical day.
+      const totalResp = await fetch(`${BASE_URL}/opportunities/search?locationId=${locationId}&status=all&limit=1`, { headers: opportunityHeaders });
+      await requireOk(totalResp, 'opportunities total');
+      const totalData = await totalResp.json();
+      const totalOpps = requireCount(totalData.meta?.total, 'opportunities total', 'meta.total');
+      metrics.push({ name: 'totalOpportunities', value: totalOpps, date: observationDate });
+    }
   } catch (err) {
-    console.warn(`  ⚠️  GHL opportunities error: ${err.message}`);
+    rethrowCollectionError('opportunities', err);
   }
 
   // ═══════════════════════════════════════════════════════════
   // 4. RECENT LEADS (last 15, for dashboard feed)
   // ═══════════════════════════════════════════════════════════
-  try {
+  if (includeCurrentState) try {
     const resp = await fetch(`${BASE_URL}/contacts/search`, {
       method: 'POST',
       headers,
@@ -297,51 +461,105 @@ export async function collect(config, env, dateRange) {
   // ═══════════════════════════════════════════════════════════
   // 5. PIPELINE STAGES (snapshot for dashboard)
   // ═══════════════════════════════════════════════════════════
-  try {
+  let pipelineSnapshotPartial = false;
+  if (includeCurrentState) try {
+    const pipelineMetrics = [];
     const pipesResp = await fetch(`${BASE_URL}/opportunities/pipelines?locationId=${locationId}`, { headers });
-    if (pipesResp.ok) {
-      const pipesData = await pipesResp.json();
-      for (const pipe of pipesData.pipelines || []) {
-        const oppsResp = await fetch(`${BASE_URL}/opportunities/search?location_id=${locationId}&pipeline_id=${pipe.id}&status=all&limit=100`, { headers });
-        if (!oppsResp.ok) continue;
-        const oppsData = await oppsResp.json();
-        const opps = oppsData.opportunities || [];
-
-        const stageCounts = {};
-        const stageNames = {};
-        for (const stage of pipe.stages || []) {
-          stageNames[stage.id] = stage.name;
-          stageCounts[stage.id] = 0;
+    await requireOk(pipesResp, 'opportunities/pipelines');
+    const pipesData = await pipesResp.json();
+    const pipelines = requireArray(pipesData.pipelines, 'opportunities/pipelines', 'pipelines');
+    for (const [pipelineIndex, pipe] of pipelines.entries()) {
+        const operation = `opportunities/pipelines[${pipelineIndex}]`;
+        const pipelineId = requireText(pipe?.id, operation, 'id');
+        const pipelineName = requireText(pipe?.name, operation, 'name');
+        const rawStages = requireArray(pipe?.stages, operation, 'stages');
+        const seenStageIds = new Set();
+        const stages = rawStages.map((stage, stageIndex) => {
+          const stageOperation = `${operation}.stages[${stageIndex}]`;
+          const stageId = requireText(stage?.id, stageOperation, 'id');
+          const stageName = requireText(stage?.name, stageOperation, 'name');
+          if (seenStageIds.has(stageId)) {
+            throw new Error(`GHL ${operation}: duplicate stage id ${stageId}`);
+          }
+          seenStageIds.add(stageId);
+          return { stageId, stageName, stageOrder: stageIndex + 1 };
+        });
+        const opps = [];
+        let page = 1;
+        let hasMore = true;
+        while (hasMore && page <= 5) {
+          const oppsResp = await fetch(
+            `${BASE_URL}/opportunities/search?locationId=${locationId}&pipelineId=${pipelineId}&status=all&limit=100&page=${page}`,
+            { headers: opportunityHeaders },
+          );
+          await requireOk(oppsResp, `pipeline opportunities (${pipelineId})`);
+          const oppsData = await oppsResp.json();
+          const pageRows = requireArray(
+            oppsData.opportunities,
+            `pipeline opportunities (${pipelineId})`,
+            'opportunities',
+          );
+          opps.push(...pageRows);
+          hasMore = pageRows.length === 100;
+          page += 1;
         }
+        if (hasMore) {
+          throw new Error(
+            `GHL pipeline ${pipelineId} exceeded the 500-row safety limit; refusing a partial stage snapshot`,
+          );
+        }
+
+        const stageCounts = Object.fromEntries(stages.map(({ stageId }) => [stageId, 0]));
         for (const opp of opps) {
-          const sid = opp.pipelineStageId;
-          if (sid) stageCounts[sid] = (stageCounts[sid] || 0) + 1;
+          const stageId = requireText(
+            opp?.pipelineStageId,
+            `pipeline opportunities (${pipelineId})`,
+            'pipelineStageId',
+          );
+          if (!seenStageIds.has(stageId)) {
+            throw new Error(
+              `GHL pipeline ${pipelineId}: opportunity references unknown stage ${stageId}`,
+            );
+          }
+          stageCounts[stageId] += 1;
         }
 
-        metrics.push({
+        pipelineMetrics.push({
           name: 'pipeline',
           value: opps.length,
-          date: dateRange.from,
+          date: observationDate,
           dimensions: {
-            pipelineId: pipe.id,
-            pipelineName: pipe.name,
-            stages: (pipe.stages || []).map(s => ({
-              id: s.id,
-              name: s.name,
-              count: stageCounts[s.id] || 0,
-            })),
+            pipelineId,
+            pipelineName,
           },
         });
-      }
+        for (const { stageId, stageName, stageOrder } of stages) {
+          pipelineMetrics.push({
+            name: 'pipelineStage',
+            value: stageCounts[stageId],
+            date: observationDate,
+            dimensions: {
+              pipelineId,
+              pipelineName,
+              stageId,
+              stageName,
+              stageOrder,
+            },
+          });
+        }
     }
+    // Commit the optional snapshot atomically only after every pipeline page
+    // and identity validates, so one failed/truncated pipeline cannot look complete.
+    metrics.push(...pipelineMetrics);
   } catch (err) {
+    pipelineSnapshotPartial = true;
     console.warn(`  ⚠️  GHL pipelines error: ${err.message}`);
   }
 
   // ═══════════════════════════════════════════════════════════
   // 6. RECENT CONVERSATIONS (last 5, for dashboard feed)
   // ═══════════════════════════════════════════════════════════
-  try {
+  if (includeCurrentState) try {
     const resp = await fetch(
       `${BASE_URL}/conversations/search?locationId=${locationId}&limit=5&sortBy=last_message_date&sortOrder=desc`,
       { headers }
@@ -352,7 +570,7 @@ export async function collect(config, env, dateRange) {
         metrics.push({
           name: 'recentConversation',
           value: c.unreadCount || 0,
-          date: dateRange.from,
+          date: observationDate,
           dimensions: {
             contactId: c.contactId || '',
             type: c.type || '',
@@ -367,27 +585,57 @@ export async function collect(config, env, dateRange) {
     console.warn(`  ⚠️  GHL conversations error: ${err.message}`);
   }
 
-  return { source: 'ghl', date: dateRange.from, metrics };
+  return {
+    source: 'ghl',
+    date: dateRange.from,
+    metrics,
+    attemptedDates: [...new Set([
+      dateRange.from,
+      ...(includeCurrentState ? [observationDate] : []),
+    ])].sort(),
+    restatedScopes: [
+      ...GHL_DAILY_METRIC_NAMES.map((metricName) => ({
+        metricDate: dateRange.from,
+        metricName,
+      })),
+      ...(includeCurrentState
+        ? GHL_OPTIONAL_SNAPSHOT_METRIC_NAMES.map((metricName) => ({
+            metricDate: observationDate,
+            metricName,
+          }))
+        : []),
+    ],
+    ...(pipelineSnapshotPartial ? { quality: 'partial' } : {}),
+  };
 }
 
 /**
  * Fallback: GET /contacts/ with client-side date filtering
  * Used if POST /contacts/search is not available
  */
-async function collectContactsFallback(locationId, headers, fromTs, toTs, dateRange) {
+async function collectContactsFallback(
+  locationId,
+  headers,
+  fromTs,
+  toTs,
+  { requireTotal = true } = {},
+) {
   let newContacts = 0;
-  let totalContacts = 0;
+  let totalContacts = null;
   const channelCounts = {};
   let url = `${BASE_URL}/contacts/?locationId=${locationId}&limit=100`;
   let pages = 0;
 
   while (url && pages < 10) {
     const resp = await fetch(url, { headers });
-    if (!resp.ok) break;
+    await requireOk(resp, 'contacts fallback');
     const data = await resp.json();
-    const contacts = data.contacts || [];
-    totalContacts = data.meta?.total || totalContacts;
+    const contacts = requireArray(data.contacts, 'contacts fallback', 'contacts');
+    if (data.meta?.total != null) {
+      totalContacts = requireCount(data.meta.total, 'contacts fallback', 'meta.total');
+    }
 
+    let reachedBeforeRange = false;
     for (const c of contacts) {
       const created = new Date(c.dateAdded || c.createdAt).getTime();
       if (created >= fromTs && created <= toTs) {
@@ -399,11 +647,21 @@ async function collectContactsFallback(locationId, headers, fromTs, toTs, dateRa
         const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
         channelCounts[channel] = (channelCounts[channel] || 0) + 1;
       }
-      if (created < fromTs) { url = null; break; }
+      if (created < fromTs) {
+        reachedBeforeRange = true;
+        break;
+      }
     }
 
-    url = data.meta?.nextPageUrl || null;
+    url = reachedBeforeRange ? null : data.meta?.nextPageUrl || null;
     pages++;
+  }
+
+  if (url) {
+    throw new Error('GHL contacts fallback exceeded the 1,000-row safety limit; refusing to persist a partial count');
+  }
+  if (requireTotal && totalContacts == null) {
+    throw new Error('GHL contacts fallback: response missing numeric meta.total');
   }
 
   return { newContacts, totalContacts, channelCounts };

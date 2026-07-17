@@ -18,7 +18,7 @@ function result(
     range: { from: "2026-06-01", to: "2026-06-28" },
     trigger: "cron",
     force: false,
-    definitionVersion: 1,
+    definitionVersion: 2,
     run: null,
     valuesCount: 2,
     ...overrides,

@@ -84,12 +84,18 @@ const STAT_METRICS: Array<[name: string, field: keyof LemlistCampaignStats]> = [
   ["invitationAccepted", "invitationAccepted"],
 ];
 
-export function lemlistDateWindow(input: string | Date = new Date()): { date: string; startDate: string; endDate: string } {
-  const date = typeof input === "string"
-    ? (DATE_RE.test(input) ? input : new Date(input).toISOString().slice(0, 10))
-    : input.toISOString().slice(0, 10);
+export function lemlistDateWindow(
+  input: string | Date = new Date(Date.now() - DAY_MS),
+): { date: string; startDate: string; endDate: string } {
+  const parsedInput = typeof input === "string" ? new Date(
+    DATE_RE.test(input) ? `${input}T00:00:00.000Z` : input,
+  ) : input;
+  if (Number.isNaN(parsedInput.getTime())) throw new Error(`Invalid Lemlist date: ${String(input)}`);
+  const date = parsedInput.toISOString().slice(0, 10);
+  if (typeof input === "string" && DATE_RE.test(input) && date !== input) {
+    throw new Error(`Invalid Lemlist date: ${input}`);
+  }
   const start = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(start.getTime())) throw new Error(`Invalid Lemlist date: ${String(input)}`);
   const end = new Date(start.getTime() + DAY_MS - 1);
   return { date, startDate: start.toISOString(), endDate: end.toISOString() };
 }
@@ -102,9 +108,16 @@ export function mapLemlistStatsToMetrics(args: {
   date: string;
   campaigns: LemlistCampaign[];
   stats: LemlistCampaignStats[];
+  includeCampaignStock?: boolean;
 }): RawMetric[] {
   const campaignById = new Map(args.campaigns.map((campaign) => [campaign._id, campaign]));
-  const metrics: RawMetric[] = [{ name: "campaigns", value: args.campaigns.length, date: args.date }];
+  const metrics: RawMetric[] = args.includeCampaignStock === false
+    ? []
+    : [{
+      name: "campaigns",
+      value: args.campaigns.filter((campaign) => campaign.status !== "archived").length,
+      date: args.date,
+    }];
   const totals = new Map<string, number>();
 
   for (const stat of args.stats) {
@@ -164,7 +177,14 @@ export async function collectLemlistMetrics(options: CollectLemlistOptions): Pro
     campaignCount: campaigns.length,
     statsCount: statsResult.results.length,
     errors: statsResult.errors,
-    metrics: mapLemlistStatsToMetrics({ date: window.date, campaigns, stats: statsResult.results }),
+    metrics: mapLemlistStatsToMetrics({
+      date: window.date,
+      campaigns,
+      stats: statsResult.results,
+      // Campaign status is current state. Do not fabricate a historical stock,
+      // and do not call a configured subset the account-wide campaign count.
+      includeCampaignStock: options.date == null && explicitIds.length === 0,
+    }),
   };
 }
 
@@ -193,10 +213,13 @@ async function listCollectableCampaigns(args: {
     if (!Array.isArray(page)) throw new Error("Lemlist campaigns response was not an array");
     const collectable = page.filter((campaign) => campaign?._id && isCollectableStatus(campaign.status));
     campaigns.push(...collectable);
-    if (page.length < limit || campaigns.length >= maxCampaigns) break;
+    if (page.length < limit) return campaigns;
+    if (offset + limit >= maxCampaigns) {
+      throw new Error(`Lemlist campaign listing exceeded the ${maxCampaigns}-record safety limit`);
+    }
   }
 
-  return campaigns.slice(0, maxCampaigns);
+  throw new Error(`Lemlist campaign listing exceeded the ${maxCampaigns}-record safety limit`);
 }
 
 async function fetchBatchStats(args: {
@@ -220,8 +243,15 @@ async function fetchBatchStats(args: {
         body: JSON.stringify({ campaignIds, startDate: args.startDate, endDate: args.endDate }),
       },
     });
-    if (Array.isArray(body.results)) results.push(...body.results);
-    if (Array.isArray(body.errors)) errors.push(...body.errors);
+    if (!body || !Array.isArray(body.results)) {
+      throw new Error("Lemlist stats response was missing the results array");
+    }
+    if (Array.isArray(body.errors) && body.errors.length) {
+      throw new Error(
+        `Lemlist stats returned ${body.errors.length} campaign error(s): ${JSON.stringify(body.errors.slice(0, 3))}`,
+      );
+    }
+    results.push(...body.results);
   }
   return { results, errors };
 }
@@ -251,7 +281,9 @@ function normalizeCampaignIds(ids: string[]): string[] {
 
 function isCollectableStatus(status: unknown): boolean {
   if (typeof status !== "string") return true;
-  return status !== "draft" && status !== "archived";
+  // Archived campaigns can still own real activity inside the requested day.
+  // Only drafts, which were never launched, are outside the stats universe.
+  return status !== "draft";
 }
 
 function asFiniteNumber(value: unknown): number | null {

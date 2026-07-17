@@ -24,7 +24,7 @@ const kpis: WebSeoKpi[] = [
   { label: "Sessions", value: "13,0k", delta: "+9%", dir: "up", source: "GA4" },
   { label: "Engagement", value: "58%", delta: "+2pp", dir: "up", source: "GA4" },
   { label: "Conversiones", value: "142", delta: "+11%", dir: "up", source: "GA4" },
-  { label: "Core Web Vitals", value: "Pasa", hint: "74 móvil", dir: "flat", source: "PageSpeed", health: true },
+  { label: "Lighthouse lab", value: "Dentro de umbrales", hint: "74 móvil", dir: "flat", source: "PageSpeed", health: true },
 ];
 const base = { kpis, state: "collecting" as const, client: "example", period: "30d" };
 
@@ -52,7 +52,7 @@ test("WebSeoKpis: connected_pending = credential present, no rows yet (SAN-228)"
   assert.match(m, /Conectado sin datos/);
 });
 
-test("WebSeoKpis: the Core Web Vitals health KPI renders its secondary hint", () => {
+test("WebSeoKpis: the Lighthouse lab health KPI renders its secondary hint", () => {
   assert.match(render(createElement(WebSeoKpis, base)), /74 móvil/);
 });
 

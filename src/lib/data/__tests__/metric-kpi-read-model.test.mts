@@ -9,6 +9,7 @@ const {
   resolvePreviousMetricKpiRange,
   resolveMetricKpiReadRange,
   selectNorthStarKpi,
+  summarizeMetricKpiReadModelQuality,
   toMetricKpiReadModelValue,
 } = (mod as unknown as { default: typeof mod }).default ?? mod;
 
@@ -62,7 +63,7 @@ function run(overrides: Partial<mod.MetricKpiReadModelRun> = {}): mod.MetricKpiR
     id: "mkpir_existing",
     status: "ok",
     trigger: "cron",
-    definitionVersion: 1,
+    definitionVersion: 2,
     valuesCount: 78,
     qualitySummary: { missing: 78 },
     rangeFrom: "2026-05-30",
@@ -77,14 +78,29 @@ test("resolves dashboard range keys into UTC date windows", () => {
   const now = new Date("2026-06-28T12:00:00.000Z");
   assert.deepEqual(resolveMetricKpiReadRange({ range: "30d" }, now), {
     key: "30d",
-    from: "2026-05-30",
-    to: "2026-06-28",
+    from: "2026-05-29",
+    to: "2026-06-27",
   });
   assert.deepEqual(resolveMetricKpiReadRange({ from: "2026-06-01", to: "2026-06-07" }, now), {
     key: "custom",
     from: "2026-06-01",
     to: "2026-06-07",
   });
+});
+
+test("rejects impossible or incomplete custom calendar ranges", () => {
+  assert.throws(
+    () => resolveMetricKpiReadRange({ from: "2026-02-31", to: "2026-03-02" }),
+    /range\.from/,
+  );
+  assert.throws(
+    () => resolveMetricKpiReadRange({ from: "2026-02-28", to: "2026-02-30" }),
+    /range\.to/,
+  );
+  assert.throws(
+    () => resolveMetricKpiReadRange({ from: "2026-02-28" }),
+    /range\.to/,
+  );
 });
 
 test("resolves the immediately previous equivalent KPI window", () => {
@@ -100,10 +116,31 @@ test("resolves the immediately previous equivalent KPI window", () => {
 
 test("formats KPI display values without inventing missing numbers", () => {
   assert.equal(formatMetricKpiValue({ value: null, valueText: null, unit: null }), "-");
+  assert.equal(
+    formatMetricKpiValue({ value: 1234.5, valueText: null, unit: "account_currency" }),
+    "1234,5 moneda cuenta",
+  );
   assert.equal(formatMetricKpiValue({ value: 1234, valueText: null, unit: "currency" }), "1234 €");
   assert.equal(formatMetricKpiValue({ value: 2.45, valueText: null, unit: "ratio" }), "2,45x");
   assert.equal(formatMetricKpiValue({ value: 180, valueText: null, unit: "ms" }), "180 ms");
   assert.equal(formatMetricKpiValue({ value: 44, valueText: "44 leads", unit: null }), "44 leads");
+});
+
+test("KPI summary keeps demo-only explicit and degrades demo mixed with real data", () => {
+  const values = (statuses: mod.MetricKpiQualityStatus[]) =>
+    statuses.map((qualityStatus, index) => ({
+      kpiId: `kpi.${index}`,
+      qualityStatus,
+    })) as mod.MetricKpiReadModelValue[];
+
+  assert.equal(
+    summarizeMetricKpiReadModelQuality(values(["demo", "demo"])).qualityStatus,
+    "demo",
+  );
+  const mixed = summarizeMetricKpiReadModelQuality(values(["demo", "ok", "ok"]));
+  assert.equal(mixed.qualityStatus, "partial");
+  assert.equal(mixed.demo, 1);
+  assert.equal(mixed.ok, 2);
 });
 
 test("adapts persisted KPI rows into client-safe read model values", () => {
@@ -126,7 +163,7 @@ test("adapts persisted KPI rows into client-safe read model values", () => {
     sourceCoverage: 1,
     rangeFrom: "2026-06-01",
     rangeTo: "2026-06-30",
-    definitionVersion: 1,
+    definitionVersion: 2,
     computedAt: new Date("2026-06-30T01:00:00.000Z"),
     createdAt: new Date("2026-06-30T01:00:00.000Z"),
     updatedAt: new Date("2026-06-30T01:00:00.000Z"),
@@ -139,27 +176,27 @@ test("adapts persisted KPI rows into client-safe read model values", () => {
   assert.equal(value.comparison, null);
 });
 
-test("attaches period-over-period comparison without changing persisted KPI rows", () => {
+test("attaches period-over-period comparison to a persisted custom KPI by stable id", () => {
   const currentRow = {
     id: "value_current",
     runId: "run_current",
     slug: "growth4u",
-    kpiId: "web.sessions",
-    label: "Sessions",
-    dashboardBlock: "overview",
-    surface: "web",
-    source: "ga4",
-    metricName: "sessions",
+    kpiId: "custom.cpl",
+    label: "CPL",
+    dashboardBlock: "surface",
+    surface: "paid",
+    source: "custom",
+    metricName: "cpl",
     value: 120,
     valueText: null,
     unit: null,
     qualityStatus: "ok",
-    provenanceLabel: "ga4.sessions",
+    provenanceLabel: "Formula: meta-ads.spend / ghl.newContacts",
     inputRefs: [],
     sourceCoverage: 1,
     rangeFrom: "2026-06-01",
     rangeTo: "2026-06-30",
-    definitionVersion: 1,
+    definitionVersion: 2,
     computedAt: new Date("2026-06-30T01:00:00.000Z"),
     createdAt: new Date("2026-06-30T01:00:00.000Z"),
     updatedAt: new Date("2026-06-30T01:00:00.000Z"),
@@ -183,7 +220,65 @@ test("attaches period-over-period comparison without changing persisted KPI rows
   assert.equal(withComparison.comparison?.previousValue, 100);
   assert.equal(withComparison.comparison?.absoluteDelta, 20);
   assert.equal(withComparison.comparison?.displayDelta, "+20%");
-  assert.equal(withComparison.comparison?.sentiment, "positive");
+  assert.equal(withComparison.comparison?.sentiment, "negative");
+});
+
+test("suppresses period comparison for latest state and formulas that depend on it", () => {
+  const base = {
+    id: "current",
+    kpiId: "pipeline.ghl.contacts",
+    label: "Total contactos GHL",
+    dashboardBlock: "surface",
+    surface: "pipeline",
+    source: "ghl",
+    metricName: "totalContacts",
+    value: 321,
+    valueText: null,
+    displayValue: "321",
+    unit: null,
+    qualityStatus: "ok",
+    provenanceLabel: "ghl.totalContacts",
+    inputRefs: [],
+    sourceCoverage: 1,
+    rangeFrom: "2026-07-16",
+    rangeTo: "2026-07-16",
+    definitionVersion: 8,
+    computedAt: "2026-07-17T08:00:00.000Z",
+    comparison: null,
+  } as mod.MetricKpiReadModelValue;
+  const previous = {
+    ...base,
+    id: "previous",
+    value: 300,
+    displayValue: "300",
+  };
+  assert.equal(
+    attachMetricKpiComparisons(
+      [base],
+      [previous],
+      { from: "2026-07-15", to: "2026-07-15" },
+    )[0]?.comparison,
+    null,
+  );
+
+  const custom = {
+    ...base,
+    kpiId: "custom.contacts_per_session",
+    source: "custom",
+    metricName: "contacts_per_session",
+    inputRefs: [
+      { source: "ghl", metricName: "totalContacts" },
+      { source: "ga4", metricName: "sessions" },
+    ],
+  };
+  assert.equal(
+    attachMetricKpiComparisons(
+      [custom],
+      [{ ...custom, value: 2 }],
+      { from: "2026-07-15", to: "2026-07-15" },
+    )[0]?.comparison,
+    null,
+  );
 });
 
 test("canonicalizes persisted legacy Trust Core labels for the dashboard", () => {
@@ -206,7 +301,7 @@ test("canonicalizes persisted legacy Trust Core labels for the dashboard", () =>
     sourceCoverage: 1,
     rangeFrom: "2026-06-01",
     rangeTo: "2026-06-30",
-    definitionVersion: 1,
+    definitionVersion: 2,
     computedAt: new Date("2026-06-30T01:00:00.000Z"),
     createdAt: new Date("2026-06-30T01:00:00.000Z"),
     updatedAt: new Date("2026-06-30T01:00:00.000Z"),
@@ -215,7 +310,7 @@ test("canonicalizes persisted legacy Trust Core labels for the dashboard", () =>
   assert.equal(value.label, "Demand Engine");
 });
 
-test("selects the dashboard-defined north star over the generic overview KPI", () => {
+test("infers generic meetings but never upgrades appointments to qualified meetings", () => {
   const values = [
     {
       kpiId: "pipeline.ghl.appointments",
@@ -228,7 +323,35 @@ test("selects the dashboard-defined north star over the generic overview KPI", (
     { kpiId: "web.sessions", dashboardBlock: "overview", value: 25 },
   ] as mod.MetricKpiReadModelValue[];
 
-  assert.equal(selectNorthStarKpi(values, { label: "Reuniones cualificadas" })?.kpiId, "pipeline.ghl.appointments");
+  assert.equal(
+    selectNorthStarKpi(values, { label: "Reuniones" })?.kpiId,
+    "pipeline.ghl.appointments",
+  );
+  assert.equal(
+    selectNorthStarKpi(values, { label: "Reuniones cualificadas" }),
+    null,
+  );
+});
+
+test("an explicit North Star reference wins even when its label is more qualified", () => {
+  const values = [
+    {
+      kpiId: "pipeline.ghl.appointments",
+      label: "Reuniones GHL",
+      dashboardBlock: "surface",
+      source: "ghl",
+      metricName: "appointments",
+      value: 10,
+    },
+  ] as mod.MetricKpiReadModelValue[];
+
+  assert.equal(
+    selectNorthStarKpi(values, {
+      kpiRef: "pipeline.ghl.appointments",
+      label: "Reuniones cualificadas",
+    })?.kpiId,
+    "pipeline.ghl.appointments",
+  );
 });
 
 test("returns null for an unmatched dashboard north star instead of inventing a fallback", () => {
@@ -249,7 +372,7 @@ test("read-through computes the requested range when no KPI run exists", async (
 
   const result = await getMetricKpiReadModelReadThrough(
     "growth4u",
-    { range: "30d" },
+    { range: "30d", now: new Date("2026-06-28T12:00:00.000Z") },
     {
       read: async () => reads.shift() ?? readModel({ run: run() }),
       run: async (input) => {
@@ -267,7 +390,7 @@ test("read-through computes the requested range when no KPI run exists", async (
           range: { from: input.range?.from ?? "", to: input.range?.to ?? "" },
           trigger: input.trigger ?? "dashboard:read-through",
           force: input.force === true,
-          definitionVersion: 1,
+          definitionVersion: 2,
           run: null,
           valuesCount: 78,
         };
@@ -293,7 +416,7 @@ test("read-through forces refresh when snapshots changed after the KPI run", asy
 
   const result = await getMetricKpiReadModelReadThrough(
     "growth4u",
-    { range: "30d" },
+    { range: "30d", now: new Date("2026-06-28T12:00:00.000Z") },
     {
       read: async () => (runCalls.length ? refreshed : stale),
       hasSnapshotUpdatesAfter: async () => true,
@@ -307,7 +430,7 @@ test("read-through forces refresh when snapshots changed after the KPI run", asy
           range: { from: input.range?.from ?? "", to: input.range?.to ?? "" },
           trigger: input.trigger ?? "dashboard:read-through",
           force: input.force === true,
-          definitionVersion: 1,
+          definitionVersion: 2,
           run: null,
           valuesCount: 78,
         };
@@ -318,4 +441,112 @@ test("read-through forces refresh when snapshots changed after the KPI run", asy
   assert.equal(runCalls.length, 1);
   assert.equal(runCalls[0]?.force, true);
   assert.equal(result.run?.id, "mkpir_refreshed");
+});
+
+test("read-through refreshes latest quality when the observation day advances", async () => {
+  const stale = readModel({
+    run: run({
+      startedAt: "2026-07-16T08:00:00.000Z",
+      finishedAt: "2026-07-16T08:00:01.000Z",
+    }),
+  });
+  const refreshed = readModel({
+    run: run({
+      id: "mkpir_observation_refreshed",
+      startedAt: "2026-07-17T08:00:00.000Z",
+    }),
+  });
+  const runCalls: Array<{ force?: boolean; now?: Date }> = [];
+
+  const result = await getMetricKpiReadModelReadThrough(
+    "growth4u",
+    { range: "30d", now: new Date("2026-07-17T12:00:00.000Z") },
+    {
+      read: async () => (runCalls.length ? refreshed : stale),
+      hasSnapshotUpdatesAfter: async (_slug, _range, _since, options) => {
+        assert.equal(options.observationAsOf, "2026-07-17");
+        return false;
+      },
+      run: async (input) => {
+        runCalls.push({ force: input.force, now: input.now });
+        return {
+          ok: true,
+          configured: true,
+          skipped: false,
+          slug: input.slug,
+          range: { from: input.range?.from ?? "", to: input.range?.to ?? "" },
+          trigger: input.trigger ?? "dashboard:read-through",
+          force: input.force === true,
+          definitionVersion: 2,
+          run: null,
+          valuesCount: 78,
+        };
+      },
+    },
+  );
+
+  assert.equal(runCalls.length, 1);
+  assert.equal(runCalls[0]?.force, true);
+  assert.equal(runCalls[0]?.now?.toISOString(), "2026-07-17T12:00:00.000Z");
+  assert.equal(result.run?.id, "mkpir_observation_refreshed");
+});
+
+test("read-through computes the active-version previous range for custom KPI comparison", async () => {
+  const custom = {
+    kpiId: "custom.cpl",
+    comparison: null,
+  } as mod.MetricKpiReadModelValue;
+  const compared = {
+    ...custom,
+    comparison: {
+      previousRange: { from: "2026-04-30", to: "2026-05-29" },
+      previousValue: 10,
+      previousDisplayValue: "10 €",
+      absoluteDelta: 2,
+      relativeDelta: 0.2,
+      displayDelta: "+20%",
+      direction: "up",
+      sentiment: "negative",
+    },
+  } as mod.MetricKpiReadModelValue;
+  let reads = 0;
+  const runCalls: Array<{ from?: string | null; to?: string | null; trigger?: string }> = [];
+
+  const result = await getMetricKpiReadModelReadThrough(
+    "growth4u",
+    { range: "30d", now: new Date("2026-06-28T12:00:00.000Z") },
+    {
+      read: async () => {
+        reads += 1;
+        return readModel({ run: run(), values: [reads > 1 ? compared : custom] });
+      },
+      hasSnapshotUpdatesAfter: async () => false,
+      run: async (input) => {
+        runCalls.push({
+          from: input.range?.from,
+          to: input.range?.to,
+          trigger: input.trigger,
+        });
+        return {
+          ok: true,
+          configured: true,
+          skipped: false,
+          slug: input.slug,
+          range: { from: input.range?.from ?? "", to: input.range?.to ?? "" },
+          trigger: input.trigger ?? "dashboard:read-through:comparison",
+          force: false,
+          definitionVersion: 2,
+          run: null,
+          valuesCount: 1,
+        };
+      },
+    },
+  );
+
+  assert.deepEqual(runCalls, [{
+    from: "2026-04-30",
+    to: "2026-05-29",
+    trigger: "dashboard:read-through:comparison",
+  }]);
+  assert.equal(result.values[0]?.comparison?.previousValue, 10);
 });

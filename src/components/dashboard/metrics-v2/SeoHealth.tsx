@@ -2,16 +2,16 @@
  * Discoverability · SEO health (SAN-319 · PR6, slot ⑥ — the surface-specific slot).
  *
  * Pure/presentational. Two own-source panels:
- *  - Core Web Vitals (PageSpeed): LCP / CLS / INP as good→needs-improvement→poor
- *    threshold bars with a marker at the current value + the PageSpeed score chips.
+ *  - Lighthouse laboratory metrics (PageSpeed): LCP / CLS / INP diagnostic
+ *    threshold bars with a marker at the current value + score chips.
  *  - Position distribution (GSC): how many keywords rank in Top 1-3 / 4-10 / 11-50 /
  *    51-100 — the leading "am I climbing?" signal.
  * Both are observed own-source panels. No cross-source here.
  */
 import { DataChip } from "./rigor";
 
-export type SeoCwv = { lcp: number; cls: number; inp: number };
-export type SeoScores = { mobile: number; desktop: number; seo: number };
+export type SeoCwv = { lcp: number | null; cls: number | null; inp: number | null };
+export type SeoScores = { mobile: number | null; desktop: number | null; seo: number | null };
 export type SeoPositionBucket = { bucket: string; count: number };
 
 const CWV = [
@@ -21,7 +21,8 @@ const CWV = [
 ];
 const DIST_COLORS = ["bg-sage", "bg-[var(--cyan)]", "bg-[var(--yellow)]", "bg-aged"];
 
-function scoreCls(v: number) {
+function scoreCls(v: number | null) {
+  if (v == null || !Number.isFinite(v)) return "text-[var(--sc-fg-muted)]";
   return v >= 90 ? "text-sage" : v >= 50 ? "text-ink" : "text-destructive";
 }
 
@@ -36,36 +37,48 @@ export function SeoHealth({
   positionDist: SeoPositionBucket[];
   totalKeywords?: number;
 }) {
-  const passes = CWV.every((m) => cwv[m.key] <= m.good);
+  const hasAllCwv = CWV.every((m) => {
+    const value = cwv[m.key];
+    return value != null && Number.isFinite(value);
+  });
+  const passes = hasAllCwv && CWV.every((m) => cwv[m.key]! <= m.good);
   const distMax = Math.max(...positionDist.map((b) => b.count), 1);
   const total = totalKeywords ?? positionDist.reduce((s, b) => s + b.count, 0);
 
   return (
     <section aria-label="Salud SEO" className="mt-4 grid gap-4 sm:grid-cols-2">
-      {/* Core Web Vitals */}
+      {/* Lighthouse laboratory diagnostics; not a CrUX field assessment. */}
       <div className="rounded-sc-md border-2 border-ink bg-card p-4 shadow-pop-xs">
         <div className="mb-2 flex items-center justify-between">
-          <h4 className="font-heading text-[13px] font-bold text-navy">Core Web Vitals · móvil</h4>
-          <span className={"font-heading text-[11px] font-bold " + (passes ? "text-sage" : "text-destructive")}>
-            {passes ? "✓ Pasa" : "✗ Mejorar"}
+          <h4 className="font-heading text-[13px] font-bold text-navy">Lighthouse laboratorio · móvil</h4>
+          <span className={"font-heading text-[11px] font-bold " + (!hasAllCwv ? "text-[var(--sc-fg-muted)]" : passes ? "text-sage" : "text-destructive")}>
+            {!hasAllCwv ? "Sin datos" : passes ? "Dentro de umbrales" : "Revisar"}
           </span>
         </div>
+        <p className="mt-2 text-[10px] text-[var(--sc-fg-muted)]">
+          Ejecución sintética del pull; no equivale a la evaluación de usuarios reales de CrUX.
+        </p>
         <div className="space-y-2.5">
           {CWV.map((m) => {
             const v = cwv[m.key];
+            const observed = v != null && Number.isFinite(v);
             const pct = (x: number) => Math.max(0, Math.min(100, (x / m.max) * 100));
-            const pass = v <= m.good;
+            const pass = observed && v <= m.good;
             return (
               <div key={m.key}>
                 <div className="flex justify-between text-[11px]">
                   <span className="font-semibold">{m.label}</span>
-                  <span className={pass ? "text-sage" : "text-destructive"}>{m.fmt(v)}</span>
+                  <span className={observed ? (pass ? "text-sage" : "text-destructive") : "text-[var(--sc-fg-muted)]"}>
+                    {observed ? m.fmt(v) : "—"}
+                  </span>
                 </div>
                 <div className="relative mt-1 h-2.5 overflow-hidden rounded-sc-pill border border-ink bg-aged">
                   <span className="absolute inset-y-0 left-0 bg-sage" style={{ width: `${pct(m.good)}%` }} />
                   <span className="absolute inset-y-0 bg-[var(--yellow)]" style={{ left: `${pct(m.good)}%`, width: `${pct(m.ni) - pct(m.good)}%` }} />
                   <span className="absolute inset-y-0 right-0 bg-destructive" style={{ left: `${pct(m.ni)}%` }} />
-                  <span aria-hidden="true" className="absolute inset-y-[-2px] w-[2px] bg-ink" style={{ left: `${pct(v)}%` }} />
+                  {observed && (
+                    <span aria-hidden="true" className="absolute inset-y-[-2px] w-[2px] bg-ink" style={{ left: `${pct(v)}%` }} />
+                  )}
                 </div>
               </div>
             );
@@ -74,7 +87,7 @@ export function SeoHealth({
         <div className="mt-3 flex items-center gap-3 border-t border-border pt-2 text-[12px]">
           {([["móvil", scores.mobile], ["escritorio", scores.desktop], ["SEO", scores.seo]] as const).map(([label, v]) => (
             <span key={label} className="inline-flex items-baseline gap-1">
-              <b className={"font-heading text-[16px] " + scoreCls(v)}>{v}</b>
+              <b className={"font-heading text-[16px] " + scoreCls(v)}>{v ?? "—"}</b>
               <span className="text-[10px] uppercase text-[var(--sc-fg-muted)]">{label}</span>
             </span>
           ))}

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { withAuth, withErrorHandler, compose } from "@/lib/api-middleware";
+import { withSlugAuth, withErrorHandler, compose } from "@/lib/api-middleware";
 import { BASE, integrationsFile } from "@/lib/data/paths";
 import { getDailySnapshots } from "@/lib/data/metrics";
 
@@ -112,4 +112,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.status(200).json(JSON.parse(result));
 }
 
-export default compose(withErrorHandler, withAuth)(handler);
+export default compose(withErrorHandler, withSlugAuth)(handler);

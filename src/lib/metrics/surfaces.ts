@@ -63,7 +63,7 @@ export const SURFACES: SurfaceDef[] = [
     what: "Visitas, qué queries rankean, velocidad del sitio.",
     sources: ["ga4", "google-analytics", "gsc", "google-search-console", "pagespeed"],
     spendMetric: null,
-    requires: { mandatory: ["Google Search Console"], oneOf: ["Google Analytics 4", "PostHog"], optional: ["PageSpeed (auto, solo URL)"] },
+    requires: { mandatory: ["Google Search Console", "Google Analytics 4"], oneOf: [], optional: ["PageSpeed (auto, solo URL)"] },
     how: "Ajustes › APIs: autoriza el Service Account del sistema en GSC + GA4. PageSpeed solo necesita la URL.",
   },
   {
@@ -74,7 +74,7 @@ export const SURFACES: SurfaceDef[] = [
     what: "Activación, dropoff por paso, heatmaps, grabaciones de sesión.",
     sources: ["posthog"],
     spendMetric: null,
-    requires: { mandatory: [], oneOf: ["PostHog", "Eventos GA4 (fallback)"], optional: ["Session recordings", "Feature flags"] },
+    requires: { mandatory: [], oneOf: ["PostHog"], optional: ["Session recordings", "Feature flags"] },
     how: "Ajustes › APIs: PostHog project id + API key.",
   },
   {
@@ -83,10 +83,10 @@ export const SURFACES: SurfaceDef[] = [
     emoji: "📇",
     channel: "prospecting",
     what: "Leads, citas, etapas de pipeline y valor.",
-    sources: ["ghl", "go-high-level", "hubspot", "pipedrive"],
+    sources: ["ghl", "go-high-level"],
     spendMetric: null,
-    requires: { mandatory: [], oneOf: ["GoHighLevel", "HubSpot", "Pipedrive"], optional: ["Mapping de etapas"] },
-    how: "Ajustes › APIs: API key del CRM + locationId; mapear etapas.",
+    requires: { mandatory: [], oneOf: ["GoHighLevel"], optional: ["Mapping de etapas"] },
+    how: "Ajustes › APIs: API key de GoHighLevel + locationId; mapear etapas.",
   },
   {
     key: "paid",
@@ -94,9 +94,9 @@ export const SURFACES: SurfaceDef[] = [
     emoji: "💰",
     channel: "paid-ads",
     what: "Inversión, CTR, CPC, CPL por campaña.",
-    sources: ["meta-ads", "meta_ads", "google_ads", "google-ads", "linkedin_ads", "linkedin-ads", "tiktok_ads", "tiktok-ads"],
+    sources: ["meta-ads", "meta_ads", "google_ads", "google-ads"],
     spendMetric: "spend",
-    requires: { mandatory: [], oneOf: ["Meta Ads", "Google Ads", "LinkedIn Ads"], optional: [] },
+    requires: { mandatory: [], oneOf: ["Meta Ads", "Google Ads"], optional: [] },
     how: "Ajustes › APIs: token + accountId de cada plataforma de ads.",
   },
   {
@@ -115,7 +115,7 @@ export const SURFACES: SurfaceDef[] = [
     name: "Social",
     emoji: "📱",
     channel: "social",
-    what: "Posts, impresiones y engagement por red.",
+    what: "Posts creados en el rango y snapshot acumulado de su rendimiento por red.",
     sources: ["metricool"],
     spendMetric: null,
     requires: { mandatory: ["Metricool"], oneOf: [], optional: ["Multi-cuenta por marca (SAN-162)"] },
@@ -140,7 +140,7 @@ export const SURFACES: SurfaceDef[] = [
  *  Surfaces absent here are "on" as soon as they have any connected source. */
 export const SURFACE_MANDATORY_SOURCES: Partial<Record<SurfaceKey, { allOf?: string[]; anyOf?: string[] }>> = {
   reputation: { allOf: ["trust_score"] },
-  web: { anyOf: ["gsc", "google-search-console"] },
+  web: { allOf: ["gsc", "ga4"] },
   social: { allOf: ["metricool"] },
   partnerships: { anyOf: ["yalc", "creators"] },
 };
@@ -152,9 +152,9 @@ export const SURFACE_MANDATORY_SOURCES: Partial<Record<SurfaceKey, { allOf?: str
 export const SURFACE_API_PROVIDERS: Record<SurfaceKey, string[]> = {
   reputation: [],                                       // Trust Engine — nothing to connect
   web: ["ga4", "gsc"],
-  product: ["posthog", "ga4", "amplitude"],
-  pipeline: ["ghl", "hubspot", "pipedrive"],
-  paid: ["meta_ads", "google_ads", "linkedin_ads", "tiktok_ads"],
+  product: ["posthog"],
+  pipeline: ["ghl"],
+  paid: ["meta_ads", "google_ads"],
   email: ["instantly", "lemlist"],
   social: ["metricool"],
   partnerships: ["yalc"],

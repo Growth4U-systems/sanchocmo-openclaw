@@ -10,6 +10,11 @@
 
 import { GoogleAuth } from 'google-auth-library';
 import { resolveGoogleServiceAccountPath } from './google-auth-path.js';
+import {
+  resolveSheetsConfig,
+  sheetRestatementEvidence,
+  sheetRowsToMetrics,
+} from '../adapter-normalizers.js';
 
 const SA_PATH = resolveGoogleServiceAccountPath(import.meta.url);
 
@@ -19,12 +24,12 @@ const SA_PATH = resolveGoogleServiceAccountPath(import.meta.url);
  * @param {{ from: string, to: string }} dateRange
  */
 export async function collect(config, env, dateRange) {
-  const { spreadsheetId, range } = config;
+  const { spreadsheetId, range } = resolveSheetsConfig(config, env);
   if (!spreadsheetId) {
     throw new Error('Sheets: missing spreadsheetId in integrations.json');
   }
 
-  const sheetRange = range || 'Sheet1!A:Z';
+  const sheetRange = range;
 
   const auth = new GoogleAuth({
     keyFile: SA_PATH,
@@ -51,38 +56,8 @@ export async function collect(config, env, dateRange) {
 
   const data = await response.json();
   const rows = data.values || [];
-  if (rows.length < 2) {
-    return { source: 'sheets', date: dateRange.from, metrics: [] };
-  }
+  const metrics = sheetRowsToMetrics(rows, dateRange);
+  const evidence = sheetRestatementEvidence(rows, dateRange);
 
-  const headers = rows[0].map((h) => h.trim().toLowerCase());
-  const dateCol = headers.indexOf('date');
-  const metrics = [];
-
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    const rowDate = dateCol >= 0 ? row[dateCol] : null;
-
-    // Filter by date range if date column exists
-    if (rowDate) {
-      if (rowDate < dateRange.from || rowDate > dateRange.to) continue;
-    }
-
-    for (let j = 0; j < headers.length; j++) {
-      if (j === dateCol) continue; // Skip date column itself
-      const name = headers[j];
-      const rawVal = row[j];
-      if (rawVal === undefined || rawVal === '') continue;
-
-      const numVal = parseFloat(rawVal.replace?.(/[,%$€]/g, '') || rawVal);
-      metrics.push({
-        name,
-        value: isNaN(numVal) ? rawVal : numVal,
-        date: rowDate || dateRange.from,
-        dimensions: { source: 'manual' },
-      });
-    }
-  }
-
-  return { source: 'sheets', date: dateRange.from, metrics };
+  return { source: 'sheets', date: dateRange.from, metrics, ...evidence };
 }

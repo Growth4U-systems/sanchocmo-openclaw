@@ -8,6 +8,8 @@
  *   node collect.js --slug <client> --all --due     # only sources due today (cadence)
  *   node collect.js --slug <client> --source <adapter>
  *   node collect.js --slug <client> --source ga4 --from 2024-01-01 --to 2024-01-31
+ *   node collect.js --slug <client> --source gsc --from 2024-01-01 --to 2024-03-31 --replace
+ *   node collect.js --slug <client> --source ga4 --from 2024-01-01 --to 2024-01-31 --replace --no-recompute-kpis
  *
  * Runtime storage is DB-only: metrics are ingested into `metric_snapshots`.
  * Historical JSON import/export remains in scripts/metrics, but the collector no
@@ -18,6 +20,17 @@ import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync } from 'node:child_process';
+import {
+  isoDateDaysAgo,
+  resolveCollectionObservationDate,
+  shouldDeleteStale,
+  validateReplaceOptions,
+} from './adapter-date-range.js';
+import {
+  buildCollectedSourcePayload,
+  buildFailedSourcePayload,
+  resolveProviderCollectionAttempt,
+} from './adapter-result.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,8 +52,11 @@ const slug = getArg('slug');
 const sourceFilter = getArg('source');
 const collectAll = hasFlag('all');
 const dueOnly = hasFlag('due'); // collect only sources whose cadence is due today (SAN-300)
+const replaceExisting = hasFlag('replace');
+const recomputeKpis = !hasFlag('no-recompute-kpis');
 const fromDate = getArg('from');
 const toDate = getArg('to');
+const explicitRange = Boolean(fromDate || toDate);
 
 if (!slug) {
   console.error('Usage: node collect.js --slug <client> [--all | --source <name>] [--from YYYY-MM-DD] [--to YYYY-MM-DD]');
@@ -52,18 +68,25 @@ if (!sourceFilter && !collectAll) {
   process.exit(1);
 }
 
+try {
+  validateReplaceOptions({ replace: replaceExisting, sourceFilter, collectAll, fromDate, toDate });
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
+
 // --- Date range ---
 // Default: yesterday (most sources have 1-day lag; GSC adapter adds its own 3-day lag)
-function daysAgo(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().split('T')[0];
-}
-const yesterday = daysAgo(1);
+const yesterday = isoDateDaysAgo(1);
 const dateRange = {
   from: fromDate || yesterday,
   to: toDate || yesterday,
 };
+const collectionStartedAt = new Date().toISOString();
+const pointInTimeDate = resolveCollectionObservationDate(dateRange, {
+  explicitRange,
+  collectedAt: collectionStartedAt,
+});
 
 // --- Load integrations.json ---
 const brandDir = path.join(WORKSPACE, 'brand', slug);
@@ -161,7 +184,7 @@ function hasAnyEnv(...keys) {
 }
 
 // --- Available adapters ---
-const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'sheets', 'posthog', 'pagespeed', 'yalc'];
+const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'lemlist', 'sheets', 'posthog', 'pagespeed', 'yalc'];
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;
@@ -179,7 +202,9 @@ function sourceEntryFor(adapterName) {
       env.CLIENT_URL ||
       env.SITE_URL ||
       env.WEBSITE_URL;
-    if (url || hasAnyEnv('PAGESPEED_API_KEY')) {
+    // An API key alone cannot identify the site to analyse. Do not schedule a
+    // guaranteed failure as a seemingly connected source.
+    if (url) {
       return { status: 'connected', config: { url } };
     }
   }
@@ -254,10 +279,16 @@ async function reconcileDrafts() {
   }
 }
 
-// delete-stale (convergence) runs ONLY on the routine full daily collection —
-// never on a single --source or an explicit --from/--to re-pull, which are
-// partial and would otherwise converge-delete legitimate rows (SAN-300 review).
-const allowDeleteStale = collectAll && !fromDate && !toDate;
+// Convergence is automatic for routine full daily collection. An operator may
+// also request it for one source over an explicit range with --replace, which is
+// useful for repairing a GSC backfill without touching any other provider.
+const allowDeleteStale = shouldDeleteStale({
+  replace: replaceExisting,
+  sourceFilter,
+  collectAll,
+  fromDate,
+  toDate,
+});
 
 async function runCollection() {
   if (dueOnly) {
@@ -275,7 +306,7 @@ async function runCollection() {
 
   const result = {
     slug,
-    collectedAt: new Date().toISOString(),
+    collectedAt: collectionStartedAt,
     dateRange,
     sources: {},
   };
@@ -291,6 +322,11 @@ async function runCollection() {
       _client: clientConfig,
       _mcBaseUrl: MC_BASE,
       _slug: slug,
+      // Current-state measurements (followers, CRM totals/pipeline, PageSpeed,
+      // etc.) use the real collection day. `_explicitRange` lets mixed adapters
+      // omit current-state calls during a historical flow repair.
+      _pointInTimeDate: pointInTimeDate,
+      _explicitRange: explicitRange,
     };
     const status = entry.status || 'not_configured';
     console.log(`\n📊 Collecting: ${adapterName}...`);
@@ -301,31 +337,36 @@ async function runCollection() {
       continue;
     }
 
+    let attempt;
     try {
+      // Resolve the exact provider window before even importing the adapter.
+      // If import/collection fails, the error ledger still points at that same
+      // provider day (not the generic CLI default such as yesterday for GSC).
+      attempt = resolveProviderCollectionAttempt(adapterName, dateRange, {
+        explicitRange,
+      });
       // Dynamic import of adapter
       const adapterModule = await import(`./adapters/${adapterName}.js`);
-      // GSC has ~3 day lag; override date range unless user specified explicit dates
-      let adapterDateRange = dateRange;
-      if (adapterName === 'gsc' && !fromDate) {
-        adapterDateRange = { from: daysAgo(4), to: daysAgo(3) };
-      }
-      const data = await adapterModule.collect(config, env, adapterDateRange);
-      result.sources[adapterName] = {
-        status: 'ok',
-        collectedAt: new Date().toISOString(),
-        metrics: data.metrics || [],
-      };
+      const data = await adapterModule.collect(config, env, attempt.dateRange);
+      result.sources[adapterName] = buildCollectedSourcePayload(
+        data,
+        result.collectedAt,
+        attempt.attemptedDates,
+      );
       console.log(`   ✅ ${(data.metrics || []).length} metrics collected`);
     } catch (err) {
-      result.sources[adapterName] = {
-        status: 'error',
-        error: err.message,
-      };
+      // Resolver failures are caught too; only then do we fall back to the
+      // validated CLI range because no provider-specific attempt existed.
+      result.sources[adapterName] = buildFailedSourcePayload(
+        err,
+        attempt?.attemptedDates,
+        dateRange,
+      );
       console.error(`   ❌ Error: ${err.message}`);
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = result.collectedAt.slice(0, 10);
 
   console.log('\n🗄  JSON snapshot/rolling skipped; metric_snapshots DB is source of truth.');
 
@@ -340,10 +381,9 @@ async function runCollection() {
   // --- Write the daily snapshot into the metric_snapshots time-series ---
   // SAN-300: the DB is the source of truth. `deleteStale` converges the DB to
   // this payload (stale rows for the restated dates removed, GSC-lagged dates
-  // untouched). It's gated to the routine FULL daily collection — a single
-  // --source or an explicit --from/--to re-pull is partial, so it must NOT
-  // converge-delete. DB ingest is required now that the collector no longer
-  // writes JSON snapshots.
+  // untouched). It's gated to the routine FULL daily collection or an explicit,
+  // single-source --replace backfill. DB ingest is required now that the
+  // collector no longer writes JSON snapshots.
   // SAN-318: persist via the app's ingestDailySnapshot (getDb, no HTTP, no admin
   // token). The Next app (tsconfig/node_modules/@/ aliases/scripts) lives in a
   // SEPARATE deploy dir from this collector, so run tsx FROM the app dir and pipe
@@ -351,7 +391,14 @@ async function runCollection() {
   try {
     const appDir = process.env.MC_NEXTJS_DIR || '/app/mc-nextjs';
     const ingestScript = path.join(appDir, 'scripts', 'ingest-metrics.ts');
-    const payload = JSON.stringify({ slug, date: today, collectedAt: result.collectedAt, sources: result.sources, deleteStale: allowDeleteStale });
+    const payload = JSON.stringify({
+      slug,
+      date: today,
+      collectedAt: result.collectedAt,
+      sources: result.sources,
+      deleteStale: allowDeleteStale,
+      recomputeKpis,
+    });
     const out = execFileSync('npx', ['tsx', ingestScript], {
       cwd: appDir, input: payload, encoding: 'utf-8', timeout: 60000, env: { ...process.env },
     });
@@ -360,6 +407,11 @@ async function runCollection() {
     console.error(`❌ Neon persist failed: ${e.stderr || e.message}`);
     process.exitCode = 1;
   }
+
+  // Persist every successful source first, but never report a partially failed
+  // provider run as a successful shell command. Backfill loops can now stop on
+  // the exact day/source that needs operator attention.
+  if (errCount > 0) process.exitCode = 1;
 }
 
 runCollection().catch((err) => {

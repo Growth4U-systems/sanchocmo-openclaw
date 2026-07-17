@@ -56,7 +56,7 @@ export type DiscoverabilityData = { seo?: DiscoverabilitySeo; ai?: Discoverabili
 const SEO_SIGNALS = [
   "«onboarding clientes b2b» cae 3 posiciones (11→14) — revisar contenido",
   "«qué es growth marketing» sube a #18 pero CTR 0,7% — oportunidad de title/meta",
-  "PageSpeed móvil 74 · LCP 2,1s cerca del umbral — vigilar",
+  "Lighthouse lab móvil 74 · LCP 2,1s cerca del umbral — vigilar",
 ];
 const AI_SIGNALS = [
   "Un competidor te cita en 5 prompts donde no apareces — el gap accionable",
@@ -77,7 +77,7 @@ function DiscoverabilityEmpty() {
         <a href="#settings-apis" className="rounded-sc-md border-2 border-ink bg-navy px-3 py-1.5 font-heading text-[12px] font-bold text-white shadow-pop-xs">🔌 Conectar GA4 + GSC</a>
         <a href="#settings-apis" className="rounded-sc-md border-2 border-ink bg-card px-3 py-1.5 font-heading text-[12px] font-bold text-[var(--sc-ink-soft)] shadow-pop-xs">🤖 Conectar visibilidad IA</a>
       </div>
-      <p className="mt-3 text-[11px] text-[var(--sc-fg-muted)]">Al conectar verás las dos pestañas: SEO (queries, páginas con visitas+ranking, Core Web Vitals) y AI (share of voice, citas por motor, prompts).</p>
+      <p className="mt-3 text-[11px] text-[var(--sc-fg-muted)]">Al conectar verás las dos pestañas: SEO (queries, páginas con visitas+ranking, Lighthouse lab) y AI (share of voice, citas por motor, prompts).</p>
     </section>
   );
 }

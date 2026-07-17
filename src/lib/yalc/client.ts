@@ -1,7 +1,12 @@
+import { buildBrandRuntimeEnv } from "@/lib/brand-env";
+import { integrationsFile } from "@/lib/data/paths";
+import { readJSON } from "@/lib/data/json-io";
+
 export interface YalcRuntimeConfig {
   baseUrl: string;
   token?: string;
   slug?: string;
+  tenant?: string;
 }
 
 export class YalcClientError extends Error {
@@ -26,22 +31,60 @@ function envPrefix(slug?: string): string | null {
   return key || null;
 }
 
-export function resolveYalcConfig(slug?: string): YalcRuntimeConfig {
+type YalcEnv = Record<string, string | undefined>;
+
+interface StoredYalcIntegration {
+  config?: Record<string, unknown>;
+}
+
+interface StoredIntegrations {
+  dataSources?: Record<string, StoredYalcIntegration>;
+  yalc?: StoredYalcIntegration;
+}
+
+function nonEmpty(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function storedYalcConfig(slug: string): Record<string, unknown> {
+  const integrations = readJSON<StoredIntegrations>(integrationsFile(slug), {});
+  const entry = integrations.dataSources?.yalc ?? integrations.yalc;
+  return entry?.config && typeof entry.config === "object" ? entry.config : {};
+}
+
+export function resolveYalcConfigFromSources(
+  slug: string | undefined,
+  env: YalcEnv,
+  stored: Record<string, unknown> = {},
+): YalcRuntimeConfig {
   const prefix = envPrefix(slug);
   const baseUrl =
-    (prefix ? process.env[`${prefix}_YALC_BASE_URL`] : undefined) ||
-    process.env.YALC_BASE_URL ||
+    nonEmpty(stored.BASE_URL) ||
+    nonEmpty(stored.baseUrl) ||
+    (prefix ? nonEmpty(env[`${prefix}_YALC_BASE_URL`]) : undefined) ||
+    nonEmpty(env.YALC_BASE_URL) ||
     "http://localhost:3847";
   const token =
-    (prefix ? process.env[`${prefix}_YALC_API_TOKEN`] : undefined) ||
-    process.env.YALC_API_TOKEN ||
+    (prefix ? nonEmpty(env[`${prefix}_YALC_API_TOKEN`]) : undefined) ||
+    nonEmpty(env.YALC_API_TOKEN) ||
     undefined;
+  const tenant = nonEmpty(stored.TENANT) || nonEmpty(stored.tenant) || slug;
 
   return {
     baseUrl: baseUrl.replace(/\/+$/, ""),
     token,
     slug,
+    tenant,
   };
+}
+
+export function resolveYalcConfig(slug?: string): YalcRuntimeConfig {
+  const env = slug ? buildBrandRuntimeEnv(slug) : process.env;
+  return resolveYalcConfigFromSources(
+    slug,
+    env,
+    slug ? storedYalcConfig(slug) : {},
+  );
 }
 
 export function publicYalcConfig(config: YalcRuntimeConfig) {
@@ -60,12 +103,16 @@ export function publicYalcConfig(config: YalcRuntimeConfig) {
  * shows a "set up Outreach" placeholder instead of a wall of unreachable errors.
  */
 export function isYalcConfigured(slug?: string): boolean {
+  const env = slug ? buildBrandRuntimeEnv(slug) : process.env;
+  const stored = slug ? storedYalcConfig(slug) : {};
   const prefix = envPrefix(slug);
   const candidates = [
-    prefix ? process.env[`${prefix}_YALC_BASE_URL`] : undefined,
-    process.env.YALC_BASE_URL,
-    prefix ? process.env[`${prefix}_YALC_API_TOKEN`] : undefined,
-    process.env.YALC_API_TOKEN,
+    stored.BASE_URL,
+    stored.baseUrl,
+    prefix ? env[`${prefix}_YALC_BASE_URL`] : undefined,
+    env.YALC_BASE_URL,
+    prefix ? env[`${prefix}_YALC_API_TOKEN`] : undefined,
+    env.YALC_API_TOKEN,
   ];
   return candidates.some((v) => typeof v === "string" && v.trim() !== "");
 }
@@ -83,7 +130,8 @@ export async function yalcFetch<T = unknown>(
   const url = new URL(path.startsWith("/") ? path : `/${path}`, config.baseUrl);
   // Scope every call to the brand's YALC tenant. Without this the cockpit
   // always hits the `default` tenant, so all brands share one brain/campaigns.
-  if (config.slug) url.searchParams.set("tenant", config.slug);
+  const tenant = config.tenant || config.slug;
+  if (tenant) url.searchParams.set("tenant", tenant);
   const headers: Record<string, string> = {
     Accept: "application/json",
     ...init.headers,

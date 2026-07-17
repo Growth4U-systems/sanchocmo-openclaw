@@ -173,7 +173,7 @@ function utcDay(value: string | undefined): Date {
     now.getUTCFullYear(),
     now.getUTCMonth(),
     now.getUTCDate(),
-  ));
+  ) - DAY_MS);
 }
 
 export function dashboardMetricKpiRanges(asOf?: string): Array<{ from: string; to: string }> {

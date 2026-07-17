@@ -13,13 +13,13 @@ const PSI_CATEGORIES =
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 type StrategyResult = {
-  performance: number;
-  seo: number;
-  accessibility: number;
-  bestPractices: number;
-  lcp: number;
-  cls: number;
-  tbt: number;
+  performance: number | null;
+  seo: number | null;
+  accessibility: number | null;
+  bestPractices: number | null;
+  lcp: number | null;
+  cls: number | null;
+  tbt: number | null;
   opportunities: Array<{ id: string; title: string; savings: number; description?: string }>;
   diagnostics: Array<{ id: string; title: string; score: number }>;
 };
@@ -41,6 +41,36 @@ function resolveClientUrl(slug: string, queryUrl: string | null): string | null 
   // (El fallback a foundation-state.json brand_summary.url murió con el
   // fichero — SAN-183 F5. clients.json es la fuente de la URL del cliente.)
   return queryUrl;
+}
+
+function finiteNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function normalizePageSpeedMeasurements(
+  categories: Record<string, { score?: number | null }> = {},
+  audits: Record<string, { numericValue?: number | null }> = {},
+): Pick<StrategyResult, "performance" | "seo" | "accessibility" | "bestPractices" | "lcp" | "cls" | "tbt"> {
+  const score = (key: string): number | null => {
+    const value = finiteNumber(categories[key]?.score);
+    return value == null ? null : Math.round(value * 100);
+  };
+  const audit = (key: string): number | null => finiteNumber(audits[key]?.numericValue);
+  const lcpMs = audit("largest-contentful-paint");
+  const cls = audit("cumulative-layout-shift");
+  const tbt = audit("total-blocking-time");
+
+  return {
+    performance: score("performance"),
+    seo: score("seo"),
+    accessibility: score("accessibility"),
+    bestPractices: score("best-practices"),
+    lcp: lcpMs == null ? null : Number((lcpMs / 1000).toFixed(1)),
+    cls: cls == null ? null : Number(cls.toFixed(3)),
+    tbt: tbt == null ? null : Math.round(tbt),
+  };
 }
 
 async function fetchPSI(clientUrl: string, strategy: "mobile" | "desktop"): Promise<StrategyResult> {
@@ -88,13 +118,7 @@ async function fetchPSI(clientUrl: string, strategy: "mobile" | "desktop"): Prom
   }
 
   return {
-    performance: Math.round((cats.performance?.score ?? 0) * 100),
-    seo: Math.round((cats.seo?.score ?? 0) * 100),
-    accessibility: Math.round((cats.accessibility?.score ?? 0) * 100),
-    bestPractices: Math.round((cats["best-practices"]?.score ?? 0) * 100),
-    lcp: parseFloat(((audits["largest-contentful-paint"]?.numericValue ?? 0) / 1000).toFixed(1)),
-    cls: parseFloat((audits["cumulative-layout-shift"]?.numericValue ?? 0).toFixed(3)),
-    tbt: Math.round(audits["total-blocking-time"]?.numericValue ?? 0),
+    ...normalizePageSpeedMeasurements(cats, audits),
     opportunities: opportunities.sort((a, b) => b.savings - a.savings).slice(0, 10),
     diagnostics: diagnostics.slice(0, 10),
   };
@@ -110,7 +134,9 @@ async function persistDailyMetrics(slug: string, mobile: StrategyResult, desktop
     { name: "lcp_mobile", value: mobile.lcp, date: today },
     { name: "cls_mobile", value: mobile.cls, date: today },
     { name: "tbt_mobile", value: mobile.tbt, date: today },
-  ];
+  ].filter((metric): metric is { name: string; value: number; date: string } =>
+    typeof metric.value === "number" && Number.isFinite(metric.value),
+  );
   const ingest = await ingestSourceMetrics(slug, "pagespeed", metrics, today, { collectedAt: new Date().toISOString() });
   if (!ingest.ok) {
     throw new Error("metric_snapshots storage is not configured for PageSpeed metrics");

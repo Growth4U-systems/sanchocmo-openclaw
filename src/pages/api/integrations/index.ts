@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE, EXEC_PATH } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
@@ -55,7 +55,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (req.method === "POST") {
     const { slug, source, type, config, secrets } = req.body;
-    if (!slug || !source) {
+    if (typeof slug !== "string" || !slug || typeof source !== "string" || !source) {
       return res.status(400).json({ error: "Missing slug or source" });
     }
 
@@ -116,27 +116,46 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     let testResult: Record<string, unknown> = { status: "pending" };
 
     try {
-      const testOutput = execSync(`node "${testScript}" --slug ${slug} --source ${source}`, {
-        cwd: BASE,
-        timeout: 30000,
-        encoding: "utf-8",
-        env: { ...process.env, MC_WORKSPACE: BASE, PATH: EXEC_PATH },
-      });
+      const testOutput = execFileSync(
+        process.execPath,
+        [testScript, "--slug", slug, "--source", source],
+        {
+          cwd: BASE,
+          timeout: 30000,
+          encoding: "utf-8",
+          env: { ...process.env, MC_WORKSPACE: BASE, PATH: EXEC_PATH },
+        },
+      );
       try { intData = readJSON(intPath, intData); } catch { /* empty */ }
       const updatedEntry = (intData.dataSources || {})[source] || (intData.systemOverrides || {})[source] || {};
-      testResult = { status: updatedEntry.status || "connected", output: testOutput.slice(-300) };
+      if (updatedEntry.status === "connected") {
+        testResult = { status: "connected", output: testOutput.slice(-300) };
+      } else {
+        const error = updatedEntry.lastError || "Connection test did not confirm the provider";
+        updatedEntry.status = "error";
+        updatedEntry.lastTestedAt = new Date().toISOString();
+        updatedEntry.lastError = error;
+        testResult = { status: "error", error };
+      }
     } catch (e) {
       const stdout = ((e as Record<string, unknown>).stdout || "").toString();
       const stderr = ((e as Record<string, unknown>).stderr || "").toString();
       const errorMatch = stdout.match(/\u274c Error \u2014 (.+)/);
-      const realError = errorMatch ? errorMatch[1].trim() : (stderr.slice(0, 200) || stdout.slice(-200) || (e instanceof Error ? e.message : "").slice(0, 200));
+      const extractedError = errorMatch ? errorMatch[1].trim() : (stderr.slice(0, 200) || stdout.slice(-200) || (e instanceof Error ? e.message : "").slice(0, 200));
       try { intData = readJSON(intPath, intData); } catch { /* empty */ }
+      const updatedEntry = (intData.dataSources || {})[source] || (intData.systemOverrides || {})[source];
+      const realError = updatedEntry?.lastError || extractedError;
+      if (updatedEntry) {
+        updatedEntry.status = "error";
+        updatedEntry.lastTestedAt = new Date().toISOString();
+        updatedEntry.lastError = realError;
+      }
       testResult = { status: "error", error: realError };
     }
 
     try { writeJSON(intPath, intData); } catch { /* empty */ }
 
-    return res.status(200).json({ ok: true, testResult });
+    return res.status(200).json({ ok: testResult.status === "connected", testResult });
   }
 
   res.setHeader("Allow", "GET, POST");

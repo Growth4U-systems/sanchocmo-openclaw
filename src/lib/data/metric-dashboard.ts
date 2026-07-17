@@ -8,7 +8,7 @@ import { BASE } from "@/lib/data/paths";
 import { SURFACES, type SurfaceKey } from "@/lib/metrics/surfaces";
 import {
   dashboardDefinitionSchema,
-  isSafeFormula,
+  formulaValidationMessage,
   parseDashboardDefinition,
   type CustomMetric,
   type DashboardDefinition,
@@ -436,7 +436,8 @@ export async function addCustomMetric(
 ): Promise<DashboardRecord> {
   if (!hasDatabase) return NOT_CONFIGURED(slug);
   if (!metric?.label || !metric?.formula) throw new Error("label and formula are required");
-  if (!isSafeFormula(metric.formula)) throw new Error("Unsafe formula: only identifiers, source.metric refs, numbers and arithmetic are allowed");
+  const formulaError = formulaValidationMessage(metric.formula);
+  if (formulaError) throw new Error(`Invalid custom metric formula: ${formulaError}`);
   const current = await getDashboardDefinition(slug);
   const definition = current.definition ?? buildSeedDefinition(slug);
   const id = `cm_${stableId(slug, metric.label)}`;

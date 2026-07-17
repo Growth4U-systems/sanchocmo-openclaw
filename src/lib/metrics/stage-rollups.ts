@@ -6,6 +6,7 @@ import {
 } from "@/lib/metrics/provenance";
 import type { SurfaceKey } from "@/lib/metrics/surfaces";
 import {
+  dedupeCanonicalMetricSnapshots,
   normalizeMetricName,
   normalizeSourceId,
   type ComputedMetricKpiValue,
@@ -58,7 +59,7 @@ export interface ComputedMetricStageRollup {
   range: { from: string; to: string };
 }
 
-export const METRIC_STAGE_ROLLUP_DEFINITION_VERSION = 1;
+export const METRIC_STAGE_ROLLUP_DEFINITION_VERSION = 5;
 
 const DEFAULT_STALE_AFTER_DAYS = 7;
 
@@ -107,15 +108,15 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
   stage("outbound.leads.lemlist", "leads", "Leads", 1, "email", "lemlist", "leads", {
     channel: "outbound",
   }),
-  stage("partnerships.signups", "leads", "Leads", 1, "partnerships", "yalc", "signups", {
+  stage("partnerships.signups", "leads", "Leads", 1, "partnerships", "yalc", "signupsDaily", {
+    metricAliases: ["signups_daily"],
     channel: "partnerships",
-    aggregation: "latest",
-    qualityOverride: "partial",
+    aggregation: "sum",
   }),
-  stage("partnerships.kyc", "qualified", "Cualificados", 2, "partnerships", "yalc", "kyc", {
+  stage("partnerships.kyc", "qualified", "Cualificados", 2, "partnerships", "yalc", "kycDaily", {
+    metricAliases: ["kyc_daily"],
     channel: "partnerships",
-    aggregation: "latest",
-    qualityOverride: "partial",
+    aggregation: "sum",
   }),
   stage("crm.meetings.ghl", "meetings", "Reuniones", 3, "pipeline", "ghl", "appointments", {
     channel: "crm",
@@ -125,15 +126,14 @@ export const DEFAULT_FUNNEL_STAGE_DEFINITIONS: MetricFunnelStageDefinition[] = [
     channel: "outbound",
     qualityOverride: "partial",
   }),
-  stage("crm.deals.ghl", "deals", "Deals", 4, "pipeline", "ghl", "totalOpportunities", {
+  stage("crm.deals.ghl", "deals", "Oportunidades", 4, "pipeline", "ghl", "opportunities", {
     channel: "crm",
-    aggregation: "latest",
+    aggregation: "sum",
   }),
-  stage("partnerships.first_tx", "customers", "Clientes", 5, "partnerships", "yalc", "firstTx", {
-    metricAliases: ["firstTx", "first_tx", "firstTransaction"],
+  stage("partnerships.first_tx", "customers", "Clientes", 5, "partnerships", "yalc", "firstTxDaily", {
+    metricAliases: ["first_tx_daily"],
     channel: "partnerships",
-    aggregation: "latest",
-    qualityOverride: "partial",
+    aggregation: "sum",
   }),
 ];
 
@@ -244,10 +244,23 @@ function ageDays(latestDate: string, to: string): number {
   return Math.floor((toTime - latestTime) / 86_400_000);
 }
 
+function daysInclusive(from: string, to: string): number {
+  const fromTime = new Date(`${from}T00:00:00Z`).getTime();
+  const toTime = new Date(`${to}T00:00:00Z`).getTime();
+  if (
+    !Number.isFinite(fromTime) ||
+    !Number.isFinite(toTime) ||
+    toTime < fromTime
+  )
+    return 1;
+  return Math.floor((toTime - fromTime) / 86_400_000) + 1;
+}
+
 function qualityFor(
   def: MetricFunnelStageDefinition,
   rows: MetricKpiSnapshotInput[],
   rangeTo: string,
+  incompleteCoverage: boolean,
 ): MetricKpiQualityStatus {
   if (rows.some(isDemoRow)) return "demo";
   if (def.qualityOverride === "demo") return "demo";
@@ -263,6 +276,7 @@ function qualityFor(
     .at(-1);
   if (latest && ageDays(latest, rangeTo) > DEFAULT_STALE_AFTER_DAYS)
     return "stale";
+  if (incompleteCoverage) return "partial";
   return "ok";
 }
 
@@ -281,7 +295,7 @@ export function computeMetricStageRollupsFromSnapshots(
   range: { from: string; to: string },
   definitions: MetricFunnelStageDefinition[] = DEFAULT_FUNNEL_STAGE_DEFINITIONS,
 ): ComputedMetricStageRollup[] {
-  const windowRows = rows.filter(
+  const windowRows = dedupeCanonicalMetricSnapshots(rows).filter(
     (row) => row.metricDate >= range.from && row.metricDate <= range.to,
   );
   const out: ComputedMetricStageRollup[] = [];
@@ -302,12 +316,14 @@ export function computeMetricStageRollupsFromSnapshots(
     const selected = rollupRows.length ? rollupRows : matching;
     const byBucket = new Map<string, MetricKpiSnapshotInput[]>();
     const strategy = def.aggregation ?? aggFor(def.source, def.metric);
+    const incompleteCoverage =
+      strategy !== "latest" &&
+      new Set(selected.map((row) => row.metricDate)).size <
+        daysInclusive(range.from, range.to);
     for (const row of selected) {
       const channel = channelFor(def, row);
-      // Stock metrics such as CRM total opportunities represent state at a
-      // point in time. Persist one range-level rollup per channel instead of
-      // one row per day, otherwise the read model would sum snapshots across
-      // the period and show inflated counts.
+      // Point-in-time stock metrics persist one range-level rollup per channel;
+      // period flows persist one row per day for the read model to sum.
       const key =
         strategy === "latest"
           ? `__latest__\u0000${channel}`
@@ -334,7 +350,12 @@ export function computeMetricStageRollupsFromSnapshots(
         source: normalizeSourceId(def.source),
         metricName: normalizeMetricName(def.metric),
         value: reduceRows(def, bucket),
-        qualityStatus: qualityFor(def, bucket, range.to),
+        qualityStatus: qualityFor(
+          def,
+          bucket,
+          range.to,
+          incompleteCoverage,
+        ),
         provenanceLabel: `${def.source}.${def.metric} -> ${def.stageId}`,
         inputRefs: inputRefs(bucket),
         dimensions: { channel },
@@ -361,6 +382,19 @@ function rollupSummaryQuality(
   const observed = new Set(rollups.map((row) => row.stageId));
   const covered = [...coreStages].filter((stageId) => observed.has(stageId));
   if (covered.length < coreStages.size) return "partial";
+  const seriesByStage = new Map<string, Set<string>>();
+  for (const row of rollups) {
+    const series = seriesByStage.get(row.stageId) ?? new Set<string>();
+    series.add(
+      `${row.channel}\u0000${row.source}\u0000${row.metricName}\u0000${row.mapId}`,
+    );
+    seriesByStage.set(row.stageId, series);
+  }
+  // Stage coverage is useful, but two providers can be reporting the same
+  // person. Flag this as partial so callers never interpret coverage as a
+  // deduplicated global funnel.
+  if ([...seriesByStage.values()].some((series) => series.size > 1))
+    return "partial";
   if (rollups.some((row) => row.qualityStatus === "partial")) return "partial";
   if (rollups.some((row) => row.qualityStatus === "stale")) return "stale";
   return "ok";
@@ -398,10 +432,12 @@ export function buildStageRollupsAvailabilityKpi(
     source: definition.source,
     metricName: definition.metric,
     value: stageCount,
-    valueText: rollups.length ? `${stageCount}/${expectedStages} stages` : null,
+    valueText: rollups.length
+      ? `${stageCount}/${expectedStages} observed stages`
+      : null,
     unit: definition.unit,
     qualityStatus: rollupSummaryQuality(rollups),
-    provenanceLabel: "metric_stage_rollups",
+    provenanceLabel: "metric_stage_rollups · provider observations · not cross-provider additive",
     inputRefs: rollupInputRefs(rollups),
     sourceCoverage: Math.min(1, stageCount / expectedStages),
     range,

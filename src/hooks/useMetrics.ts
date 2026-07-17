@@ -26,11 +26,64 @@ export interface SurfaceSummaryEntry {
   connected: boolean;
   sources: string[];
   metrics: Array<{ source: string; metric: string; value: number | null; date: string }>;
+  dataStatus?: "connected_no_data";
 }
 
 export interface SurfaceSummaryResult {
   configured: boolean;
+  complete?: boolean;
   surfaces: SurfaceSummaryEntry[];
+}
+
+export type SurfaceDetailAggregation = "sum" | "avg" | "latest";
+export type SurfaceDetailQuality = "ok" | "partial" | "demo" | "dirty" | "stale";
+
+export interface SurfaceDetailMetric {
+  metric: string;
+  value: number;
+  aggregation: SurfaceDetailAggregation;
+  quality: SurfaceDetailQuality;
+  dimensions: Record<string, string> | null;
+}
+
+export interface SurfaceDetailSource {
+  source: string;
+  metrics: SurfaceDetailMetric[];
+  coverage?: SurfaceDetailCoverage;
+}
+
+export interface SurfaceDetailCoverage {
+  cadence: "daily" | "weekly" | "twice_weekly" | "custom";
+  enabled: boolean;
+  asOf?: string;
+  availableThrough?: string;
+  expectedDates: string[];
+  pendingDates?: string[];
+  observedDates: string[];
+  missingDates: string[];
+  failedDates: string[];
+  ratio: number | null;
+  lastObservedDate: string | null;
+  latestExpectedDate: string | null;
+}
+
+export interface SurfaceDetailCompleteness {
+  rowsRead: number;
+  groups: number;
+  rowLimit: number;
+  groupLimit: number;
+  reason: "row_limit" | "group_limit" | "storage_unconfigured" | null;
+}
+
+/** Range-scoped provider breakdowns for the dedicated surface views. */
+export interface SurfaceDetailResult {
+  configured: boolean;
+  surface: SurfaceKey;
+  from: string;
+  to: string;
+  sources: SurfaceDetailSource[];
+  complete?: boolean;
+  completeness?: SurfaceDetailCompleteness;
 }
 
 export type MetricKpiQualityStatus =
@@ -86,6 +139,8 @@ export interface MetricStageRollupStageValue {
   value: number | null;
   displayValue: string;
   qualityStatus: MetricKpiQualityStatus;
+  aggregationStatus?: "missing" | "single_series" | "non_additive";
+  seriesCount?: number;
   channels: string[];
   sources: string[];
   inputRefsCount: number;
@@ -101,12 +156,15 @@ export interface MetricStageRollupRateValue {
   numerator: number | null;
   denominator: number | null;
   qualityStatus: MetricKpiQualityStatus;
+  calculationStatus?: "missing_inputs" | "identity_not_available";
 }
 
 export interface MetricStageRollupChannelValue {
+  seriesKey?: string;
   channel: string;
+  source?: string;
   label: string;
-  value: number;
+  value: number | null;
   displayValue: string;
   qualityStatus: MetricKpiQualityStatus;
   stages: MetricStageRollupStageValue[];
@@ -122,9 +180,12 @@ export interface MetricStageRollupResult {
     totalRows: number;
     stageCount: number;
     channelCount: number;
+    providerSeriesCount?: number;
     inputRefsCount: number;
     lastComputedAt: string | null;
     source: "metric_stage_rollups";
+    aggregationMode?: "provider_observations";
+    conversionRatesAvailable?: false;
     emptyState: "missing_stage_rollups" | "ready";
     nextAction: string;
   };
@@ -161,7 +222,7 @@ export interface MetricKpiResult {
   stageRollups: MetricStageRollupResult;
 }
 
-export type PartnershipReportPeriodDays = 30 | 90;
+export type PartnershipReportPeriodDays = 1 | 7 | 30 | 90;
 
 export interface PartnershipReportPostRow {
   id: string;
@@ -199,13 +260,13 @@ export interface PartnershipReportCreatorRow {
 }
 
 export interface PartnershipReportTotals {
-  investedEur: number;
+  investedEur: number | null;
   postsLive: number;
   clicks: number;
   signups: number;
   kyc: number;
   conversions: number;
-  totalCostEur: number;
+  totalCostEur: number | null;
   cpaRealEur: number | null;
   belowBreakEven: boolean | null;
   roi: number | null;
@@ -226,6 +287,11 @@ export interface PartnershipReport {
       delta: number;
       next: number | null;
     }>;
+  };
+  tracking: {
+    status: "real" | "demo" | "unavailable";
+    sources: Array<"seed" | "impact">;
+    recordCount: number;
   };
 }
 
@@ -257,12 +323,15 @@ export function useDashboardDefinition(slug: string | null) {
   });
 }
 
-/** Per-surface connection state + latest values from the metric_snapshots store. */
-export function useSurfaceSummary(slug: string | null) {
+/** Per-surface data availability + latest values for the selected dashboard range. */
+export function useSurfaceSummary(slug: string | null, range?: MetricKpiRange) {
   return useQuery<SurfaceSummaryResult>({
-    queryKey: ["metrics-surfaces", slug],
+    queryKey: ["metrics-surfaces", slug, range ?? "default"],
     queryFn: async () => {
-      const res = await fetch(`/api/metrics/timeseries?view=surfaces&slug=${slug}`);
+      const params = new URLSearchParams({ view: "surfaces" });
+      if (slug) params.set("slug", slug);
+      if (range) params.set("range", range);
+      const res = await fetch(`/api/metrics/timeseries?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch surface summary");
       return res.json();
     },
@@ -271,7 +340,32 @@ export function useSurfaceSummary(slug: string | null) {
   });
 }
 
-/** Persisted semantic KPI read model. This endpoint is read-only; cron/manual runner computes the rows. */
+/** Provider-native breakdowns. Disabled until a supported surface is open. */
+export function useSurfaceDetail(
+  slug: string | null,
+  surface: SurfaceKey | null,
+  range: MetricKpiRange,
+) {
+  return useQuery<SurfaceDetailResult>({
+    queryKey: ["metrics-surface-detail", slug, surface, range],
+    queryFn: async () => {
+      if (!slug || !surface) throw new Error("Surface detail requires slug and surface");
+      const params = new URLSearchParams({
+        view: "surface-detail",
+        slug,
+        surface,
+        range,
+      });
+      const res = await fetch(`/api/metrics/timeseries?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch surface detail");
+      return res.json();
+    },
+    enabled: !!slug && !!surface,
+    staleTime: 60_000,
+  });
+}
+
+/** Persisted semantic KPI read model. The API may run a read-through recompute when snapshots changed. */
 export function useMetricKpis(slug: string | null, range: MetricKpiRange) {
   return useQuery<MetricKpiResult>({
     queryKey: ["metrics-kpis", slug, range],
@@ -372,7 +466,7 @@ export interface MetricsHealthResult {
   generatedAt: string;
   sources: SourceHealthItem[];
   cron: { degraded: boolean; reasons: string[] };
-  overall: "ok" | "stale" | "no-data";
+  overall: "ok" | "stale" | "error" | "no-data";
 }
 
 /** Per-source collection health + global cron signal. */

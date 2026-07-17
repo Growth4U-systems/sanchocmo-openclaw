@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import path from "path";
 import fs from "fs";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
@@ -149,7 +149,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   const { slug, apiId, config, secrets, testOnly } = req.body || {};
 
-  if (!slug || !apiId) {
+  if (typeof slug !== "string" || !slug || typeof apiId !== "string" || !apiId) {
     return res.status(400).json({ error: "Missing slug or apiId" });
   }
 
@@ -253,8 +253,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   let testResult: { status: string; output?: string; error?: string };
 
   try {
-    const output = execSync(
-      `node ${testScript} --slug ${slug} --source ${apiId}`,
+    const output = execFileSync(
+      process.execPath,
+      [testScript, "--slug", slug, "--source", apiId],
       {
         cwd: scriptDir,
         timeout: 30_000,
@@ -270,10 +271,16 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       updatedIntegrations.systemOverrides?.[apiId] ||
       null;
 
-    testResult = {
-      status: updatedEntry?.status || "connected",
-      output: output.trim() || undefined,
-    };
+    if (updatedEntry?.status === "connected") {
+      testResult = {
+        status: "connected",
+        output: output.trim() || undefined,
+      };
+    } else {
+      const error = updatedEntry?.lastError || "Connection test did not confirm the provider";
+      writeConnectionTestFailure(slug, apiId, error);
+      testResult = { status: "error", error };
+    }
   } catch (err: unknown) {
     const execErr = err as { stderr?: string; stdout?: string; message?: string };
     const errorMsg = execErr.stderr || execErr.stdout || execErr.message || "Test failed";
@@ -285,10 +292,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
       updatedIntegrations.systemOverrides?.[apiId] ||
       null;
 
-    testResult = {
-      status: updatedEntry?.status || "error",
-      error: errorMsg.toString().trim(),
-    };
+    const error = updatedEntry?.lastError || errorMsg.toString().trim() || "Connection test failed";
+    writeConnectionTestFailure(slug, apiId, error);
+    testResult = { status: "error", error };
   }
 
   return res.status(200).json({
@@ -400,12 +406,14 @@ async function handleYalcProviderPost(
       body: { provider: input.provider, env },
     });
 
-    const ok = result.healthcheck?.ok === true || result.status === "configured";
-    const detail =
-      result.healthcheck?.detail ||
-      result.healthcheck?.status ||
-      result.status ||
-      "YALC provider saved";
+    // "configured" only confirms persistence inside YALC. A provider is
+    // connected only when YALC's own health check explicitly succeeds.
+    const ok = result.healthcheck?.ok === true;
+    const detail = ok
+      ? result.healthcheck?.detail || result.healthcheck?.status || result.status || "YALC provider connected"
+      : result.healthcheck?.detail ||
+        result.healthcheck?.status ||
+        "YALC provider was saved, but its health check was not confirmed";
 
     writeYalcIntegrationState(input.slug, input.apiId, input.provider, {
       status: ok ? "connected" : "error",
@@ -468,6 +476,27 @@ function writeYalcIntegrationState(
     },
     envVars: [],
     yalcProvider: provider,
+  };
+  integrations.updatedAt = new Date().toISOString();
+  writeJSON(intPath, integrations);
+}
+
+function writeConnectionTestFailure(slug: string, apiId: string, error: string) {
+  const intPath = integrationsFile(slug);
+  const integrations = readJSON<IntegrationsData>(intPath, { dataSources: {} });
+  const section = integrations.dataSources?.[apiId]
+    ? "dataSources"
+    : integrations.systemOverrides?.[apiId]
+      ? "systemOverrides"
+      : "dataSources";
+  if (!integrations[section]) integrations[section] = {};
+  const prev = integrations[section]?.[apiId] || {};
+  integrations[section]![apiId] = {
+    ...prev,
+    provider: prev.provider || apiId,
+    status: "error",
+    lastTestedAt: new Date().toISOString(),
+    lastError: error,
   };
   integrations.updatedAt = new Date().toISOString();
   writeJSON(intPath, integrations);
