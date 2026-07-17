@@ -37,6 +37,7 @@ import {
   PARTNERSHIPS_LOCAL_ARTIFACT_STORE,
   PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
   PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
   PARTNERSHIPS_PREPARE_CAPABILITY,
   PARTNERSHIPS_PREPARE_EFFECT_STEP,
   PARTNERSHIPS_SCRAPECREATORS_ORIGIN,
@@ -675,6 +676,18 @@ export function createPartnershipsYalcAssignEffectV2LegacyV3(
     PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
     1,
     3,
+    dependencies,
+  );
+}
+
+/** Bound Yalc mutation for the v5 short-step handler (SAN-480). */
+export function createPartnershipsYalcAssignEffectV5(
+  dependencies: PartnershipsYalcAssignEffectDependencies = {},
+): PartnershipsYalcAssignEffectV2 {
+  return createPartnershipsYalcAssignEffectV2ForVersion(
+    PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
+    3,
+    1,
     dependencies,
   );
 }

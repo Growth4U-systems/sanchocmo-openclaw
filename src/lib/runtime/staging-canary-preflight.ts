@@ -14,14 +14,12 @@ import {
   resolveDiscoveryExecutionPolicy,
 } from "@/lib/partnerships/discovery-execution-policy";
 import {
-  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
-  PARTNERSHIPS_PREPARE_EFFECT_STEP,
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5,
   PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
 } from "@/lib/partnerships/discovery-handler-v2";
 import {
   PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS_DEFAULT,
   PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS_DEFAULT,
-  PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS,
   PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS,
   resolvePartnershipsDiscoveryRuntimeContract,
 } from "@/lib/partnerships/discovery-runtime-contract";
@@ -78,7 +76,7 @@ function partnershipsPolicyNotExact(): never {
   throw new StagingCanaryPreflightError("flags_not_exact");
 }
 
-/** Runtime evidence derived from the same immutable registry used to admit v4. */
+/** Runtime evidence derived from the same immutable registry used to admit v5. */
 export function resolveStagingCanaryPartnershipsLimits(
   registry: DurableExecutionRegistry = partnershipsDiscoveryRegistryV2(),
 ) {
@@ -91,30 +89,25 @@ export function resolveStagingCanaryPartnershipsLimits(
     if (
       handler.contractVersion !==
         DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION_V2 ||
-      handler.version !== PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2
+      handler.version !== PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_V5
     ) {
       partnershipsPolicyNotExact();
     }
-    const expectedSteps = [
-      PARTNERSHIPS_PREPARE_EFFECT_STEP,
-      PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
-    ].sort();
+    // The v5 short-step handler declares exactly one durable effect: the Yalc
+    // mutation. The read-only scrape runs as checkpointed handler steps under
+    // the handler timeout, so it no longer contributes to the effect budget.
+    const expectedSteps = [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP];
     if (
       JSON.stringify(Object.keys(handler.effects).sort()) !==
       JSON.stringify(expectedSteps)
     ) {
       partnershipsPolicyNotExact();
     }
-    const prepare = handler.effects[PARTNERSHIPS_PREPARE_EFFECT_STEP];
     const assign = handler.effects[PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP];
     if (
-      !prepare ||
       !assign ||
-      prepare.definitionVersion !== 2 ||
-      assign.definitionVersion !== 2 ||
-      prepare.retry.maxAttempts !== 1 ||
+      assign.definitionVersion !== 3 ||
       assign.retry.maxAttempts !== 1 ||
-      prepare.timeoutMs !== PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS ||
       assign.timeoutMs !== PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS
     ) {
       partnershipsPolicyNotExact();
@@ -123,24 +116,16 @@ export function resolveStagingCanaryPartnershipsLimits(
       registry,
       DISCOVERY_EXECUTION_OPERATION,
     );
-    if (
-      effectTimeoutBudgetMs !==
-      PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS +
-        PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS
-    ) {
+    if (effectTimeoutBudgetMs !== PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS) {
       partnershipsPolicyNotExact();
     }
     return Object.freeze({
       ...STAGING_CANARY_PARTNERSHIPS_ENV_LIMITS,
       handlerVersion: handler.version,
       effectDefinitionVersions: Object.freeze({
-        [PARTNERSHIPS_PREPARE_EFFECT_STEP]: prepare.definitionVersion,
         [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP]: assign.definitionVersion,
       }),
-      maxEffectInvocations: Math.max(
-        prepare.retry.maxAttempts,
-        assign.retry.maxAttempts,
-      ),
+      maxEffectInvocations: assign.retry.maxAttempts,
       effectTimeoutBudgetMs,
     });
   } catch (error) {

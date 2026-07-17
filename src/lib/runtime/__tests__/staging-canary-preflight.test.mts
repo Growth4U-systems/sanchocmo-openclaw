@@ -14,7 +14,9 @@ import { DISCOVERY_LOCAL_ARTIFACT_STORE_ACK } from "@/lib/partnerships/discovery
 import {
   createPartnershipsDiscoveryHandlerV2,
   createPartnershipsDiscoveryHandlerV2LegacyV3,
+  partnershipsDiscoveryYalcAssignEffectPolicyV5,
 } from "@/lib/partnerships/discovery-handler-v2";
+import { createPartnershipsDiscoveryHandlerV5 } from "@/lib/partnerships/discovery-handler-v5";
 import {
   fetchLiveCanaryReadiness,
   validateLiveCanaryReadiness,
@@ -138,6 +140,31 @@ function partnershipsPolicyRegistry(
   };
   return new DurableExecutionRegistry().register(
     createPartnershipsDiscoveryHandlerV2({ prepare, assign }),
+  );
+}
+
+function partnershipsV5PolicyRegistry(
+  input: {
+    assignMaxAttempts?: number;
+    assignTimeoutMs?: number;
+  } = {},
+): DurableExecutionRegistry {
+  const baseAssign = partnershipsDiscoveryYalcAssignEffectPolicyV5;
+  const assign = {
+    ...baseAssign,
+    retry: {
+      ...baseAssign.retry,
+      maxAttempts: input.assignMaxAttempts ?? baseAssign.retry.maxAttempts,
+    },
+    timeoutMs: input.assignTimeoutMs ?? baseAssign.timeoutMs,
+  };
+  return new DurableExecutionRegistry().register(
+    createPartnershipsDiscoveryHandlerV5({
+      resolveScrapeClient: () => {
+        throw new Error("unbound test policy");
+      },
+      assignEffect: assign,
+    }),
   );
 }
 
@@ -353,7 +380,7 @@ test("partnerships canary accepts exact flags plus the single-host artifact ackn
   );
 });
 
-test("partnerships canary evidence is derived from the exact v4 registry policy", () => {
+test("partnerships canary evidence is derived from the exact v5 registry policy", () => {
   const limits = resolveStagingCanaryPartnershipsLimits();
   assert.deepEqual(limits, {
     maxCandidates: 3,
@@ -361,13 +388,12 @@ test("partnerships canary evidence is derived from the exact v4 registry policy"
     maxWorkerAttempts: 1,
     liveDiscoveryTimeoutMs: 270_000,
     handlerTimeoutMs: 360_000,
-    handlerVersion: 4,
+    handlerVersion: 5,
     effectDefinitionVersions: {
-      "provider.prepare_assignment": 2,
-      "yalc.assign_leads": 2,
+      "yalc.assign_leads": 3,
     },
     maxEffectInvocations: 1,
-    effectTimeoutBudgetMs: 330_000,
+    effectTimeoutBudgetMs: 30_000,
   });
   assert.deepEqual(
     stagingCanaryLimitEvidence("partnerships").partnerships,
@@ -380,9 +406,13 @@ test("partnerships canary fails closed on handler or effect policy drift", () =>
     new DurableExecutionRegistry().register(
       createPartnershipsDiscoveryHandlerV2LegacyV3(),
     ),
+    // Superseded v4 policy shapes now fail closed on the version check.
     partnershipsPolicyRegistry({ prepareDefinitionVersion: 1 }),
     partnershipsPolicyRegistry({ assignMaxAttempts: 2 }),
     partnershipsPolicyRegistry({ assignTimeoutMs: 29_000 }),
+    // Drifted v5 policy shapes fail closed on the effect policy checks.
+    partnershipsV5PolicyRegistry({ assignMaxAttempts: 2 }),
+    partnershipsV5PolicyRegistry({ assignTimeoutMs: 29_000 }),
   ];
 
   for (const partnershipsRegistry of driftedRegistries) {

@@ -90,9 +90,14 @@ import {
   createPartnershipsPrepareAssignmentEffectV2LegacyV3,
   createPartnershipsYalcAssignEffectV2,
   createPartnershipsYalcAssignEffectV2LegacyV3,
+  createPartnershipsYalcAssignEffectV5,
   type PartnershipsPrepareEffectDependencies,
   type PartnershipsYalcAssignEffectDependencies,
 } from "./discovery-effects-v2";
+import {
+  createPartnershipsDiscoveryHandlerV5,
+  createPartnershipsScrapeClientResolver,
+} from "./discovery-handler-v5";
 import {
   PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
   PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
@@ -1103,6 +1108,58 @@ export function createPartnershipsDiscoveryWorkerHandlerV2(
   );
 }
 
+/**
+ * Current short-step handler (SAN-480 v5): the scrape runs as checkpointed
+ * handler steps with a worker-resolved client and the Yalc mutation stays the
+ * only durable effect. v4/v3 remain registered for in-flight run recovery.
+ */
+export function createPartnershipsDiscoveryWorkerHandlerV5(
+  dependencies: Pick<
+    DiscoveryWorkerDependencies,
+    | "deliverV2ChatCompletion"
+    | "credentialProvider"
+    | "prepareEffectDependencies"
+    | "yalcAssignEffectDependencies"
+  > = {},
+) {
+  const credentials =
+    dependencies.credentialProvider ?? createPartnershipsCredentialProvider();
+  const loadFixtures = dependencies.prepareEffectDependencies?.loadFixtures;
+  return createPartnershipsDiscoveryHandlerV5({
+    resolveScrapeClient: createPartnershipsScrapeClientResolver(credentials),
+    // Version-bound effects are never shared across handler versions: v5
+    // always builds its own assign effect from the injected dependencies.
+    assignEffect: createPartnershipsYalcAssignEffectV5(
+      dependencies.yalcAssignEffectDependencies,
+    ),
+    ...(loadFixtures ? { loadFixtures } : {}),
+    projectTerminal: async (
+      run: ExecutionRun,
+      command: PartnershipsDiscoveryCommandV2,
+    ) => {
+      const snapshot = partnershipsCommandSnapshot(command);
+      const search =
+        getSearch(snapshot.slug, snapshot.searchId) ??
+        saveSearch(reconstructSearchProjection(run, snapshot));
+      projectTerminalRun(search, run);
+      const current = getSearch(snapshot.slug, snapshot.searchId);
+      if (
+        !current ||
+        current.executionControl?.runId !== run.id ||
+        searchExecutionGeneration(current) !== snapshot.executionGeneration
+      ) {
+        return;
+      }
+      // Insert-only terminal receipt to the chat; always retried for the
+      // still-current run even if the product projection already persisted.
+      await (
+        dependencies.deliverV2ChatCompletion ??
+        deliverPartnershipsDiscoveryChatCompletion
+      )(run);
+    },
+  });
+}
+
 function registryFor(
   runSearch: typeof runDiscoverySearch,
   repository: ExecutionControlRepository,
@@ -1114,6 +1171,7 @@ function registryFor(
     | "prepareEffectDependencies"
     | "yalcAssignEffectDependencies"
     | "deliverV2ChatCompletion"
+    | "credentialProvider"
   > = {},
   registerV2 = false,
 ): DurableExecutionRegistry {
@@ -1156,6 +1214,7 @@ function registryFor(
         .register(
           createPartnershipsDiscoveryWorkerHandlerV2(prepare, assign, v2),
         )
+        .register(createPartnershipsDiscoveryWorkerHandlerV5(v2))
     : registry;
 }
 
