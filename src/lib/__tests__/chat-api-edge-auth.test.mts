@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { RequestContext } from "../api-middleware";
 
@@ -51,6 +52,10 @@ for (const client of clients) {
 
 const { resetRuntimeForTests } = await import("../runtime");
 resetRuntimeForTests();
+const agentRunsModule = await import("../data/agent-runs");
+const agentRuns =
+  (agentRunsModule as unknown as { default: typeof agentRunsModule }).default ??
+  agentRunsModule;
 const linkRoute = await import("../../pages/api/chat/link-discord");
 const markReadRoute = await import("../../pages/api/chat/mark-read");
 const quickActionsRoute = await import("../../pages/api/chat/quick-actions");
@@ -96,6 +101,7 @@ function request(options: {
   body?: Record<string, unknown>;
   ctx?: RequestContext;
   secret?: string;
+  runAuthority?: { runId: string; capability: string };
 }): NextApiRequest {
   return {
     method: options.method,
@@ -104,9 +110,40 @@ function request(options: {
     headers: {
       host: "example.test",
       ...(options.secret ? { "x-mc-secret": options.secret } : {}),
+      ...(options.runAuthority
+        ? {
+            "x-mission-control-run-id": options.runAuthority.runId,
+            "x-sancho-run-capability": options.runAuthority.capability,
+          }
+        : {}),
     },
     ...(options.ctx ? { ctx: options.ctx } : {}),
   } as unknown as NextApiRequest;
+}
+
+function createRunAuthority(slug: string, threadId = `${slug}:general`) {
+  const capability = "a".repeat(64);
+  const run = agentRuns.createAgentRun({
+    threadId,
+    runtime: "openclaw",
+    agent: "sancho",
+    skill: `${slug}-skill`,
+    skillMode: "auto",
+    input: {
+      slug,
+      threadId,
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      controlDepth: 0,
+      userId: "mc-admin",
+      runtimeToolCapabilitySha256: createHash("sha256")
+        .update(capability)
+        .digest("hex"),
+    },
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  return { runId: run.id, capability };
 }
 
 test("browser chat edge routes reject unauthenticated requests", async () => {
@@ -251,24 +288,45 @@ test("context-pack and webhook fail closed when the runtime secret is absent", a
   }
 });
 
-test("context-pack requires the machine secret and accepts the configured secret", async () => {
+test("context-pack requires transport secret plus exact run capability and derives tenant/skill", async () => {
+  const authority = createRunAuthority("alpha");
   const denied = response();
   await contextPackRoute.contextPackHandler(
-    request({ method: "POST", body: { slug: "alpha", skill: "seo" }, secret: "wrong" }),
+    request({ method: "POST", body: {}, secret: "wrong", runAuthority: authority }),
     denied.res,
   );
   assert.equal(denied.read().statusCode, 403);
 
+  const secretOnly = response();
+  await contextPackRoute.contextPackHandler(
+    request({ method: "POST", body: {}, secret: "edge-secret" }),
+    secretOnly.res,
+  );
+  assert.equal(secretOnly.read().statusCode, 403);
+
   const allowed = response();
   await contextPackRoute.contextPackHandler(
-    request({ method: "POST", body: { slug: "alpha", skill: "seo" }, secret: "edge-secret" }),
+    request({ method: "POST", body: {}, secret: "edge-secret", runAuthority: authority }),
     allowed.res,
   );
   assert.equal(allowed.read().statusCode, 200);
   assert.equal((allowed.read().payload as { slug?: string }).slug, "alpha");
+  assert.equal((allowed.read().payload as { skill?: string }).skill, "alpha-skill");
+
+  const spoofed = response();
+  await contextPackRoute.contextPackHandler(
+    request({
+      method: "POST",
+      body: { slug: "beta", skill: "beta-skill" },
+      secret: "edge-secret",
+      runAuthority: authority,
+    }),
+    spoofed.res,
+  );
+  assert.equal(spoofed.read().statusCode, 400);
 });
 
-test("webhook keeps machine auth but rejects path-shaped tenant input", async () => {
+test("webhook rejects secret-only path-shaped input before any write", async () => {
   const escapedSlug = `../../escaped-${path.basename(tmp)}`;
   const escapedFile = path.resolve(tmp, "brand", escapedSlug, "chat", "general.json");
   const mocked = response();
@@ -280,7 +338,7 @@ test("webhook keeps machine auth but rejects path-shaped tenant input", async ()
     }),
     mocked.res,
   );
-  assert.equal(mocked.read().statusCode, 400);
+  assert.equal(mocked.read().statusCode, 403);
   assert.equal(fs.existsSync(escapedFile), false);
 });
 
@@ -295,6 +353,7 @@ test("send rejects traversal tenants and short ids that sanitize empty before wr
   const alphaGeneral = path.join(tmp, "brand", "alpha", "chat", "general.json");
   const before = fs.readFileSync(alphaGeneral, "utf8");
   const ledger = path.join(tmp, "_system", "agent-runs.json");
+  const ledgerBefore = fs.existsSync(ledger) ? fs.readFileSync(ledger, "utf8") : null;
   try {
     for (const body of [
       {
@@ -318,7 +377,10 @@ test("send rejects traversal tenants and short ids that sanitize empty before wr
     assert.equal(dispatches, 0);
     assert.equal(fs.readFileSync(alphaGeneral, "utf8"), before);
     assert.equal(fs.existsSync(path.join(tmp, "brand", "alpha", "chat", ".json")), false);
-    assert.equal(fs.existsSync(ledger), false);
+    assert.equal(
+      fs.existsSync(ledger) ? fs.readFileSync(ledger, "utf8") : null,
+      ledgerBefore,
+    );
   } finally {
     runtime.messaging.sendInbound = originalSend;
   }

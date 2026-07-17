@@ -27,6 +27,7 @@ const RUN_STATUSES = new Set<ExecutionRunStatus>([
   "queued",
   "running",
   "waiting_approval",
+  "blocked",
   "completed",
   "partial",
   "failed",
@@ -92,6 +93,8 @@ export interface ExecutionRunSummaryView {
   currentStep?: string;
   traceId?: string;
   hasError: boolean;
+  blockedReasonCode?: NonNullable<ExecutionRun["blockedReasonCode"]>;
+  blockedAt?: string;
   createdAt: string;
   startedAt?: string;
   finishedAt?: string;
@@ -214,10 +217,14 @@ function afterSequence(value: string | undefined): number | undefined {
 
 function canonicalIsoTimestamp(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return null;
-  const normalized = new Date(timestamp).toISOString();
-  return normalized === value ? value : null;
+  const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{3,6})Z$/.exec(
+    value,
+  );
+  if (!match) return null;
+  const millisecondIso = `${match[1]}.${match[2].slice(0, 3)}Z`;
+  return new Date(millisecondIso).toISOString() === millisecondIso
+    ? value
+    : null;
 }
 
 function cursorSecret(secret: string): string {
@@ -414,6 +421,10 @@ export function executionRunSummaryView(
       : {}),
     ...(run.traceId ? { traceId: sanitizeInspectorString(run.traceId) } : {}),
     hasError: Boolean(run.error),
+    ...(run.blockedReasonCode
+      ? { blockedReasonCode: run.blockedReasonCode }
+      : {}),
+    ...(run.blockedAt ? { blockedAt: run.blockedAt } : {}),
     createdAt: run.createdAt,
     ...(run.startedAt ? { startedAt: run.startedAt } : {}),
     ...(run.finishedAt ? { finishedAt: run.finishedAt } : {}),

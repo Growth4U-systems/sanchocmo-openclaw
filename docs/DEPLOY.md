@@ -125,6 +125,7 @@ DISCORD_BOT_TOKEN=your_discord_bot_token
 
 # Domain
 BASE_URL=https://your-domain.com
+SANCHO_BASE_URL=https://your-domain.com
 
 # Next.js Mission Control
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.neon.tech/mc
@@ -265,6 +266,7 @@ in the corresponding **GitHub Environment** so the workflow rewrites
 | `OD_WEB_URL` (var) | Environment | `https://od.<env>.example.com` |
 | `OD_ALLOWED_ORIGINS` (var) | Environment | Same as `OD_WEB_URL` (comma-list if more origins are embedding) |
 | `OPEN_DESIGN_IMAGE` (var) | Environment | `ghcr.io/growth4u-systems/od:sanchocmo` (branded trunk) or pin to `:vX.Y.Z` |
+| `SANCHO_BASE_URL` (var) | Environment | Canonical public Sancho origin for control-plane callbacks, for example `https://staging.sanchocmo.ai`. The workflow temporarily derives it from `BASE_URL` when this dedicated variable is absent. |
 | `ANTHROPIC_API_KEY` (secret) | Environment | Anthropic API key for the baked-in `claude` CLI (Settings → Local CLI). Per-tenant deploys should use a per-tenant key so billing is scoped to the client. |
 | `FIREWORKS_API_KEY` (secret) | Environment | Fireworks AI API key. The deploy workflows propagate it to `.env` so Sancho/OpenClaw can use Fireworks models. |
 
@@ -645,6 +647,88 @@ Both environments use the **same secret and variable names** — only the values
 | `DEPLOY_FROM_IMAGE` | **`production` only, optional.** `1` → deploy by pulling the image CI built for the tag. Unset/`0` → build from source on the VPS (current default). See *Deploying prod from the pre-built image* below | `1` or unset |
 
 > **Secrets vs variables, why two?** Secrets are encrypted at rest and masked as `***` in workflow logs — use them for anything sensitive (private keys, tokens). Variables are stored in plain text and shown in logs — use them for non-sensitive config (paths, public URLs). GitHub does not let you put a secret in a `vars.` context or vice versa, so the names above are not interchangeable.
+
+### Durable execution rollout gate
+
+Deploy the Ledger runtime with every admission and worker disabled first. The
+managed workflows write these exact safe defaults when the corresponding
+GitHub Environment variables are absent:
+
+| Surface | Required initial values |
+|---|---|
+| Chat authority | `CHAT_AGENT_TURN_EXECUTION_V1=off`, `CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED=0`, empty `CHAT_AGENT_TURN_V1_SLUGS` |
+| Leads Search | `LEADS_SEARCH_DURABLE_WORKER_BOOT_ENABLED=0`, `LEADS_SEARCH_EXECUTION_V2=off`, empty `LEADS_SEARCH_V2_SLUGS` |
+| Partnerships | `PARTNERSHIPS_DURABLE_WORKER_BOOT_ENABLED=0`, `PARTNERSHIPS_DISCOVERY_EXECUTION_V2=off`, `PARTNERSHIPS_DISCOVERY_EFFECTS_V2=off`, empty `PARTNERSHIPS_DISCOVERY_V2_SLUGS` |
+| Excluded Leads Discovery | `LEADS_DISCOVERY_DURABLE_WORKER_BOOT_ENABLED=0`, `LEADS_DISCOVERY_EXECUTION_V2=off`; this is a kill-switch, not a rollout surface |
+
+Staging deploys additionally default their
+`execution_rollout_configuration` input to `safe-off`. That mode overwrites
+all admission flags to `off` and worker boot flags to `0` in the deployed
+`.env`, even when an old GitHub Environment variable still says `shadow` or
+`canary`. Choose `environment` explicitly only for the subsequent flag-only
+canary deploy; merely leaving stale Environment variables in place can no
+longer activate a push deploy.
+
+Set `SANCHO_BASE_URL` to the canonical public origin. Staging must use
+`https://staging.sanchocmo.ai`; do not use an internal Compose hostname or a URL
+with a path.
+
+Add `EXECUTION_MIGRATIONS_DATABASE_URL` as an environment secret containing a
+direct/non-pooler PostgreSQL URL. `DIRECT_DATABASE_URL` is accepted only as a
+legacy fallback. The workflows transfer that credential to a mode-0600
+temporary file, run the checksum-tracked migrations `0019`–`0033`, and remove
+the file; neither value is persisted in the service `.env`.
+
+For an existing database whose SQL objects predate migration tracking, use the
+manual `execution_migration_adopt_through` workflow input only after verifying
+the catalog against every migration through that exact prefix. Normal deploys
+leave the input empty. Adoption records database timestamps and actor/run
+evidence; it never changes schema and never auto-baselines. Every deploy then
+runs the read-only execution-origin cutover check before replacing the healthy
+container. With all boot flags at `0`, that check is a no-I/O skip.
+
+Activate and verify only one staging surface at a time. Chat must be in canary
+mode for the same exact tenant; the other product worker must remain off. After
+the flag-only deploy, run the preflight inside the deployed container using the
+commit and image digest returned by `/api/health`:
+
+```bash
+docker compose exec sanchocmo bash -lc 'cd /app/mc-nextjs && npm run staging:canary:preflight -- \
+  --surface=leads \
+  --tenant=<exact-tenant-slug> \
+  --single-host-attested \
+  --expected-commit=<40-hex-commit> \
+  --expected-image-digest=sha256:<64-hex-digest>'
+```
+
+Use `--surface=partnerships` only after Leads has passed. Partnerships also
+requires a single-host persistent artifact-store acknowledgement and an
+immutable Yalc image (`@sha256:…` or `:sha-…`). The preflight fails closed on
+runtime drift, mixed surfaces, missing credentials, incomplete tracked
+migrations, a cutover gap, deployment identity mismatch, or Yalc capability
+drift. Its success receipt reports the effective Sancho model and the actual
+provider `maxTokens` ceiling; a missing ceiling, a ceiling above `8192`, or a
+missing credential for that effective provider fails before the user canary.
+For GLM 5.2, set the staging secret `FIREWORKS_API_KEY` and the non-secret
+variable `FIREWORKS_GLM52_MAX_TOKENS=8192`, redeploy, then confirm the receipt
+shows `fireworks/accounts/fireworks/models/glm-5p2` and `8192`. The CLI emits
+`model_credential_missing` when the key is absent, `model_cap_unavailable`
+when the runtime catalog has no enforced ceiling, and `model_cap_unsafe` when
+the ceiling is too high; it never prints the credential.
+
+The staging canary profile is intentionally small. The preflight requires the
+MC chat guard at 40,000 initial prompt tokens, 160,000 cumulative input tokens,
+6 model calls, 8 tool calls, 2 risky calls, 2 repeats, 1 history read and 5
+minutes. Partnerships additionally requires exactly 3 candidate targets,
+concurrency 1 and one worker attempt. A looser GitHub variable fails the
+preflight rather than silently raising spend.
+
+Rollback is flag-first: restore all values in the table to their safe defaults
+and redeploy before changing the application image. Do not roll back or delete
+tracked migration rows; the migrations are additive and remain the database
+floor for older application images. Drain or cancel admitted runs before an
+image rollback, and use `npm run execution:projection:repair` only for an
+operator-reviewed terminal projection repair.
 
 ### Deploying prod from the pre-built image (`DEPLOY_FROM_IMAGE`)
 

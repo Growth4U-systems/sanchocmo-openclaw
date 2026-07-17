@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0021_execution_leases.sql"
+  }
+}

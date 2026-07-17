@@ -5,20 +5,58 @@ import {
   withAuth,
   withErrorHandler,
 } from "@/lib/api-middleware";
-import { getThread, getStatusEntry, getPendingProgress } from "@/lib/data/mc-chat";
-import { getLatestActiveRunAsync } from "@/lib/data/agent-runs";
+import {
+  getThread,
+  getStatusEntry,
+  getPendingProgress,
+} from "@/lib/data/mc-chat";
+import {
+  getLatestActiveRunAsync,
+  listAgentRunsForThreadAsync,
+} from "@/lib/data/agent-runs";
+import {
+  PostgresExecutionControlRepository,
+  type ExecutionOriginControlRepository,
+} from "@/lib/execution-control";
+import {
+  CHAT_EXTERNAL_EXECUTION_PARENT_SCAN_LIMIT,
+  EMPTY_CHAT_EXTERNAL_EXECUTION_PROJECTION,
+  projectActiveExternalExecutions,
+  resolveExternalExecutionParents,
+} from "@/lib/chat/external-execution-projection";
 import { parseThreadId } from "@/lib/thread-id";
-import { getRuntime } from "@/lib/runtime";
+
+export interface ThreadExecutionProjectionDependencies {
+  getLatestActiveRun: typeof getLatestActiveRunAsync;
+  listAgentRunsForThread: typeof listAgentRunsForThreadAsync;
+  createExecutionRepository(): Pick<
+    ExecutionOriginControlRepository,
+    "listRunsByExecutionOriginPage"
+  >;
+}
+
+const defaultExecutionProjectionDependencies: ThreadExecutionProjectionDependencies =
+  {
+    getLatestActiveRun: getLatestActiveRunAsync,
+    listAgentRunsForThread: listAgentRunsForThreadAsync,
+    createExecutionRepository: () => new PostgresExecutionControlRepository(),
+  };
 
 /**
  * GET /api/chat/thread/:threadId
  * Ported from mc-server.js:5301-5314
  * Gets thread messages and current status
  */
-export async function threadHandler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+export async function threadHandler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  executionDependencies: ThreadExecutionProjectionDependencies = defaultExecutionProjectionDependencies,
+) {
+  if (req.method !== "GET")
+    return res.status(405).json({ error: "Method not allowed" });
 
-  const threadId = typeof req.query.threadId === "string" ? req.query.threadId : "";
+  const threadId =
+    typeof req.query.threadId === "string" ? req.query.threadId : "";
   if (!threadId) return res.status(400).json({ error: "Missing threadId" });
   const parsed = parseThreadId(threadId);
   if (!parsed) return res.status(400).json({ error: "Invalid threadId" });
@@ -41,7 +79,11 @@ export async function threadHandler(req: NextApiRequest, res: NextApiResponse) {
     let lastNonUserTs = 0;
     for (let i = thread.messages.length - 1; i >= 0; i--) {
       const m = thread.messages[i];
-      if (m.role !== "user" && m.role !== "system" && typeof m.ts === "number") {
+      if (
+        m.role !== "user" &&
+        m.role !== "system" &&
+        typeof m.ts === "number"
+      ) {
         lastNonUserTs = m.ts;
         break;
       }
@@ -50,7 +92,24 @@ export async function threadHandler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const pendingProgress = getPendingProgress(threadId);
-  const activeRun = await getLatestActiveRunAsync(threadId);
+  const [activeRun, latestRuns] = await Promise.all([
+    executionDependencies.getLatestActiveRun(threadId),
+    executionDependencies.listAgentRunsForThread(
+      threadId,
+      CHAT_EXTERNAL_EXECUTION_PARENT_SCAN_LIMIT,
+    ),
+  ]);
+  const executionParents = resolveExternalExecutionParents(
+    latestRuns,
+    threadId,
+  );
+  const externalExecutionProjection =
+    executionParents.length > 0
+      ? await projectActiveExternalExecutions(
+          { tenantKey: parsed.slug, parentRuns: executionParents },
+          executionDependencies.createExecutionRepository(),
+        )
+      : EMPTY_CHAT_EXTERNAL_EXECUTION_PROJECTION;
 
   res.status(200).json({
     ok: true,
@@ -60,30 +119,24 @@ export async function threadHandler(req: NextApiRequest, res: NextApiResponse) {
     status: liveStatus,
     pendingProgress,
     activeRun: activeRun
-      ? { id: activeRun.id, status: activeRun.status, createdAt: activeRun.createdAt }
+      ? {
+          id: activeRun.id,
+          status: activeRun.status,
+          createdAt: activeRun.createdAt,
+        }
       : null,
+    ...externalExecutionProjection,
   });
 }
 
 const sessionAuthed = compose(withErrorHandler, withAuth)(threadHandler);
-const runtimeAuthed = withErrorHandler(async (req: NextApiRequest, res: NextApiResponse) => {
-  const expected = getRuntime().messaging.getSharedSecret?.();
-  const supplied = Array.isArray(req.headers["x-mc-secret"])
-    ? req.headers["x-mc-secret"][0]
-    : req.headers["x-mc-secret"];
-  if (!expected) return res.status(503).json({ error: "MC_CHAT_SECRET not configured" });
-  if (!supplied || supplied !== expected) return res.status(403).json({ error: "Forbidden" });
-  req.ctx = {
-    isAdmin: true,
-    clientSlug: null,
-    allowedSlugs: null,
-    adminToken: null,
-    portalClient: null,
-  };
-  return threadHandler(req, res);
-});
+const runtimeDisabled = withErrorHandler(
+  async (_req: NextApiRequest, res: NextApiResponse) =>
+    res.status(403).json({ error: "Runtime thread reads are disabled" }),
+);
 
 export default function entry(req: NextApiRequest, res: NextApiResponse) {
-  if (req.headers["x-mc-secret"] !== undefined) return runtimeAuthed(req, res);
+  if (req.headers["x-mc-secret"] !== undefined)
+    return runtimeDisabled(req, res);
   return sessionAuthed(req, res);
 }

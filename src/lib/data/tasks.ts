@@ -9,6 +9,7 @@ import { readJSON, writeJSON, listDir } from "@/lib/data/json-io";
 import { getNextProjectId as getNextProjectIdFromJson } from "@/lib/data/projects";
 import { setTaskStatus as syncTaskStatus } from "@/lib/data/task-status-store";
 import { normalizeTaskStatus } from "@/lib/task-status";
+import { isValidTenantSlug } from "@/lib/thread-id";
 import {
   attachDocumentToContentTask,
   createContentTask,
@@ -55,6 +56,12 @@ export type UnifiedTaskRow = (
 });
 
 type DbTaskRow = typeof tasksTable.$inferSelect;
+
+const ENSURE_PROJECT_LOCK_TIMEOUT_MS = 5_000;
+const ENSURE_PROJECT_LOCK_STALE_MS = 30_000;
+const ensureProjectLockWait = new Int32Array(new SharedArrayBuffer(4));
+const SAFE_TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/;
+const DURABLE_CREATION_KEY = "durable_creation_key";
 
 function dbTasksEnabled() {
   return MC_TASKS_BACKEND === "db";
@@ -427,6 +434,338 @@ export function getChildren(slug: string, parentId: string): Task[] {
 export async function getTask(slug: string, id: string): Promise<Project | Task | ContentTask | null> {
   if (dbTasksEnabled()) return getDbRow(slug, id) as Promise<Project | Task | ContentTask | null>;
   return findTaskByIdAcrossBrand(slug, id)?.task || null;
+}
+
+export interface EnsureProjectInsertOnlyInput {
+  id: string;
+  name: string;
+  category: string;
+  status: Project["status"];
+  owner?: string;
+  description?: string;
+  seedFromTaskSet?: string;
+  /** Immutable owner identity, persisted outside user-editable copy. */
+  idempotencyMarker: string;
+}
+
+export interface EnsureProjectInsertOnlyResult {
+  project: Project;
+  created: boolean;
+}
+
+function durableCreationMarker(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const marker = (value as Record<string, unknown>)[DURABLE_CREATION_KEY];
+  return typeof marker === "string" ? marker : null;
+}
+
+export function taskHasIdempotencyMarker(
+  task: unknown,
+  marker: string,
+): boolean {
+  if (!task || typeof task !== "object" || Array.isArray(task)) return false;
+  return (
+    durableCreationMarker((task as Record<string, unknown>).legacy_extras) ===
+    marker
+  );
+}
+
+function assertEnsuredProjectIdentity(
+  project: Project | UnifiedTaskRow,
+  input: EnsureProjectInsertOnlyInput,
+): void {
+  const record = project as unknown as Record<string, unknown>;
+  if (
+    record.id !== input.id ||
+    (record.type !== undefined && record.type !== "project") ||
+    record.category !== input.category ||
+    durableCreationMarker(record.legacy_extras) !== input.idempotencyMarker
+  ) {
+    throw new Error(
+      `ensureProjectInsertOnly: ${input.id} is owned by another command`,
+    );
+  }
+}
+
+function acquireEnsureProjectLock(
+  projectsRoot: string,
+  id: string,
+): () => void {
+  fs.mkdirSync(projectsRoot, { recursive: true });
+  const lock = path.join(projectsRoot, `.${id}.ensure.lock`);
+  const deadline = Date.now() + ENSURE_PROJECT_LOCK_TIMEOUT_MS;
+  while (true) {
+    try {
+      fs.mkdirSync(lock, { mode: 0o700 });
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      try {
+        if (
+          Date.now() - fs.statSync(lock).mtimeMs >
+          ENSURE_PROJECT_LOCK_STALE_MS
+        ) {
+          fs.rmSync(lock, { recursive: true, force: true });
+          continue;
+        }
+      } catch (statError) {
+        if ((statError as NodeJS.ErrnoException).code === "ENOENT") continue;
+        throw statError;
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(`ensureProjectInsertOnly: timed out locking ${id}`);
+      }
+      Atomics.wait(ensureProjectLockWait, 0, 0, 5);
+    }
+  }
+  return () => fs.rmSync(lock, { recursive: true, force: true });
+}
+
+function writeJsonExclusive(file: string, value: unknown): void {
+  const descriptor = fs.openSync(file, "wx", 0o600);
+  try {
+    fs.writeFileSync(descriptor, JSON.stringify(value, null, 2), "utf8");
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function instantiateEnsuredTaskSet(
+  slug: string,
+  projectId: string,
+  section: string | undefined,
+): TaskCreateInput[] {
+  if (!section) return [];
+  if (!getTaskSet(section)) {
+    throw new Error(
+      `ensureProjectInsertOnly: unknown seedFromTaskSet "${section}"`,
+    );
+  }
+  const tasks = instantiateTaskSet(section, { slug, projectId });
+  for (const task of tasks) applyTaskAnchors(slug, task);
+  return tasks;
+}
+
+/**
+ * Insert-only deterministic project creation for durable workflows. It never
+ * updates an existing project or its seeded tasks. A partial prior creation is
+ * returned as-is so replay cannot erase later operator edits.
+ */
+export async function ensureProjectInsertOnly(
+  slug: string,
+  input: EnsureProjectInsertOnlyInput,
+): Promise<EnsureProjectInsertOnlyResult> {
+  if (!isValidTenantSlug(slug) || !SAFE_TASK_ID_RE.test(input.id)) {
+    throw new Error("ensureProjectInsertOnly: invalid tenant or project id");
+  }
+  if (!input.idempotencyMarker.trim() || input.idempotencyMarker.length > 240) {
+    throw new Error("ensureProjectInsertOnly: invalid idempotency marker");
+  }
+  const legacyExtras = { [DURABLE_CREATION_KEY]: input.idempotencyMarker };
+
+  if (dbTasksEnabled()) {
+    const now = new Date();
+    const sourceKey = dbSourceKey(
+      MC_TASKS_WORKSPACE,
+      slug,
+      "project",
+      input.id,
+    );
+    const created = await db
+      .insert(tasksTable)
+      .values({
+        sourceKey,
+        id: input.id,
+        workspaceSlug: MC_TASKS_WORKSPACE,
+        brandSlug: slug,
+        parentId: null,
+        parentKey: null,
+        type: "project",
+        status: input.status,
+        name: input.name,
+        brief: input.description ?? "",
+        completion: "",
+        executionNotes: "",
+        description: input.description ?? null,
+        category: input.category,
+        owner: input.owner ?? "Sancho",
+        legacyExtras,
+        outputFiles: [],
+        documents: [],
+        attachments: [],
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoNothing({ target: tasksTable.sourceKey })
+      .returning({ sourceKey: tasksTable.sourceKey });
+    const [projectRow] = await db
+      .select()
+      .from(tasksTable)
+      .where(eq(tasksTable.sourceKey, sourceKey))
+      .limit(1);
+    if (!projectRow) {
+      throw new Error(
+        `ensureProjectInsertOnly: ${input.id} disappeared after insert`,
+      );
+    }
+    const project = dbRowToTaskObject(projectRow);
+    assertEnsuredProjectIdentity(project, input);
+
+    if (created.length > 0 && input.seedFromTaskSet) {
+      const seeded = instantiateEnsuredTaskSet(
+        slug,
+        input.id,
+        input.seedFromTaskSet,
+      );
+      for (const task of seeded) {
+        const fields = task as Record<string, unknown>;
+        const taskId = String(task.id);
+        const taskType =
+          typeof fields.type === "string" && fields.type
+            ? fields.type
+            : "execution";
+        const text = (key: string): string | undefined =>
+          typeof fields[key] === "string" ? (fields[key] as string) : undefined;
+        const contractInput = {
+          ...task,
+          id: taskId,
+          type: taskType,
+          brand_slug: slug,
+        };
+        const contract = inferTaskExecutionContract(contractInput, {
+          brandSlug: slug,
+        });
+        const persistedSkills = persistedTaskSkillFields(
+          contractInput,
+          contract,
+        );
+        const childSourceKey = dbSourceKey(
+          MC_TASKS_WORKSPACE,
+          slug,
+          "task",
+          taskId,
+        );
+        const row: typeof tasksTable.$inferInsert = {
+          sourceKey: childSourceKey,
+          id: taskId,
+          workspaceSlug: MC_TASKS_WORKSPACE,
+          brandSlug: slug,
+          parentId: input.id,
+          parentKey: sourceKey,
+          type: taskType,
+          status: text("status") ?? "todo",
+          name: task.name ?? taskId,
+          brief: text("brief") ?? text("description") ?? "",
+          completion:
+            text("completion") ??
+            text("done_criteria") ??
+            text("deliverable") ??
+            "",
+          executionNotes: text("execution_notes") ?? text("approach") ?? "",
+          description: text("description") ?? null,
+          owner: text("owner") ?? "Sancho",
+          agent: contract.agent,
+          skill: persistedSkills.skill,
+          skills: persistedSkills.skills,
+          channel: text("channel") ?? null,
+          deliverable: text("deliverable") ?? null,
+          doneCriteria: text("done_criteria") ?? null,
+          dependsOn:
+            typeof fields.depends_on === "string" ? fields.depends_on : null,
+          inputDocuments: contract.inputDocuments,
+          requiredInputs: contract.requiredInputs,
+          outputDocuments: contract.outputDocuments,
+          mcChatThreadId: text("mc_chat_thread_id") ?? null,
+          outputFiles: Array.isArray(fields.output_files)
+            ? fields.output_files
+            : [],
+          documents: [],
+          attachments: [],
+          legacyExtras,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await db
+          .insert(tasksTable)
+          .values(row)
+          .onConflictDoNothing({ target: tasksTable.sourceKey });
+        const [persistedChild] = await db
+          .select()
+          .from(tasksTable)
+          .where(eq(tasksTable.sourceKey, childSourceKey))
+          .limit(1);
+        if (
+          !persistedChild ||
+          persistedChild.id !== taskId ||
+          persistedChild.parentId !== input.id ||
+          persistedChild.parentKey !== sourceKey ||
+          durableCreationMarker(persistedChild.legacyExtras) !==
+            input.idempotencyMarker
+        ) {
+          throw new Error(
+            `ensureProjectInsertOnly: seeded task ${taskId} is owned by another command`,
+          );
+        }
+      }
+    }
+    return {
+      project: project as unknown as Project,
+      created: created.length > 0,
+    };
+  }
+
+  const projectsRoot = path.join(brandDir(slug), "projects");
+  const release = acquireEnsureProjectLock(projectsRoot, input.id);
+  try {
+    const dir = path.join(projectsRoot, input.id);
+    const projectFile = path.join(dir, "project.json");
+    if (fs.existsSync(projectFile)) {
+      const project = readJSON<Project | null>(projectFile, null);
+      if (!project) {
+        throw new Error(
+          `ensureProjectInsertOnly: ${input.id} has an unreadable receipt`,
+        );
+      }
+      assertEnsuredProjectIdentity(project, input);
+      return { project, created: false };
+    }
+    if (fs.existsSync(dir)) {
+      throw new Error(
+        `ensureProjectInsertOnly: ${input.id} directory exists without an identity receipt`,
+      );
+    }
+    const seeded = instantiateEnsuredTaskSet(
+      slug,
+      input.id,
+      input.seedFromTaskSet,
+    ).map((task) => ({ ...task, legacy_extras: legacyExtras }));
+    fs.mkdirSync(dir, { recursive: false, mode: 0o700 });
+    const project = {
+      id: input.id,
+      slug: input.id,
+      name: input.name,
+      brief: input.description ?? "",
+      completion: "",
+      execution_notes: "",
+      strategy: "",
+      status: input.status,
+      phase: 0,
+      category: input.category,
+      owner: input.owner ?? "Sancho",
+      description: input.description ?? "",
+      legacy_extras: legacyExtras,
+      created_at: new Date().toISOString(),
+      review_date: null,
+    } as Project;
+    // The identity receipt is first. A crash before tasks.json leaves a partial
+    // workspace that replay observes without rewriting.
+    writeJsonExclusive(projectFile, project);
+    writeJsonExclusive(path.join(dir, "tasks.json"), seeded);
+    return { project, created: true };
+  } finally {
+    release();
+  }
 }
 
 export function findTaskByIdAcrossBrand(

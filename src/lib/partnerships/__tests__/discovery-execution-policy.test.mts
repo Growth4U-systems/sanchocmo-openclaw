@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { DEFAULT_CREATOR_MODEL_CONFIG } from "@/lib/calc-creator-core";
 import {
   buildDiscoveryExecutionSnapshot,
+  configuredDiscoveryExecutionSlugs,
   discoveryExecutionAggregateId,
   discoveryExecutionIdempotencyKey,
   resolveDiscoveryExecutionPolicy,
@@ -36,7 +38,7 @@ test("execution rollout is fail-closed for unset, invalid and non-allowlisted co
   );
 });
 
-test("shadow and canary require an explicit normalized slug", () => {
+test("shadow requires a slug; local canary also requires the single-host storage gate", () => {
   assert.deepEqual(
     resolveDiscoveryExecutionPolicy("Hospital-Capilar", {
       PARTNERSHIPS_DISCOVERY_EXECUTION_V2: " SHADOW ",
@@ -49,11 +51,32 @@ test("shadow and canary require an explicit normalized slug", () => {
       PARTNERSHIPS_DISCOVERY_EXECUTION_V2: "on",
       PARTNERSHIPS_DISCOVERY_V2_SLUGS: "hospital-capilar",
     }),
+    {
+      mode: "canary",
+      enabled: false,
+      reason: "artifact_store_not_acknowledged",
+    },
+  );
+  assert.deepEqual(
+    configuredDiscoveryExecutionSlugs({
+      PARTNERSHIPS_DISCOVERY_EXECUTION_V2: "on",
+      PARTNERSHIPS_DISCOVERY_V2_SLUGS: "hospital-capilar",
+    }),
+    [],
+  );
+  assert.deepEqual(
+    resolveDiscoveryExecutionPolicy("hospital-capilar", {
+      PARTNERSHIPS_DISCOVERY_EXECUTION_V2: "on",
+      PARTNERSHIPS_DISCOVERY_V2_SLUGS: "hospital-capilar",
+      PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE: "local-persistent-single-host",
+    }),
     { mode: "canary", enabled: true, reason: "enabled" },
   );
 });
 
 test("snapshot is frozen and excludes chat and assigned-template context", () => {
+  const modelConfig = JSON.parse(JSON.stringify(DEFAULT_CREATOR_MODEL_CONFIG));
+  modelConfig.qualification.threshold = 63;
   const search = {
     id: "ds-1",
     slug: "hospital-capilar",
@@ -62,6 +85,12 @@ test("snapshot is frozen and excludes chat and assigned-template context", () =>
     projectId: "project-1",
     taskId: "task-1",
     threadId: "secret-thread",
+    executionControl: {
+      mode: "canary",
+      admittedAt: "2026-07-15T10:00:00.000Z",
+      generation: 7,
+    },
+    executionModelConfig: modelConfig,
     plan: {
       title: "Creators capilares ES",
       sectors: ["salud capilar"],
@@ -88,9 +117,14 @@ test("snapshot is frozen and excludes chat and assigned-template context", () =>
   const snapshot = buildDiscoveryExecutionSnapshot(search);
   const serialized = JSON.stringify(snapshot);
   assert.doesNotMatch(serialized, /secret-thread|must-not-leak/);
+  assert.equal(snapshot.schemaVersion, 2);
+  assert.equal(snapshot.executionGeneration, 7);
+  assert.equal(snapshot.modelConfig.qualification.threshold, 63);
   assert.equal(snapshot.plan.targetVolume, 20);
   search.plan.sectors[0] = "mutated";
+  modelConfig.qualification.threshold = 99;
   assert.equal(snapshot.plan.sectors[0], "salud capilar");
+  assert.equal(snapshot.modelConfig.qualification.threshold, 63);
 });
 
 test("aggregate and idempotency keys are stable and tenant-scoped", () => {
@@ -100,10 +134,10 @@ test("aggregate and idempotency keys are stable and tenant-scoped", () => {
   );
   assert.equal(
     discoveryExecutionIdempotencyKey("Hospital-Capilar", "ds-1"),
-    "partnerships.discovery:hospital-capilar:ds-1:attempt:1:v1",
+    "partnerships.discovery:hospital-capilar:ds-1:attempt:1:v2",
   );
   assert.equal(
     discoveryExecutionIdempotencyKey("Hospital-Capilar", "ds-1", 3),
-    "partnerships.discovery:hospital-capilar:ds-1:attempt:3:v1",
+    "partnerships.discovery:hospital-capilar:ds-1:attempt:3:v2",
   );
 });

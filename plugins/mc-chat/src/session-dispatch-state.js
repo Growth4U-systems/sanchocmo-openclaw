@@ -27,6 +27,44 @@ export function hasActiveSessionDispatch(sessionKey, opts = {}) {
   return activeDispatches.has(dispatchKeyFor(sessionKey, opts));
 }
 
+/**
+ * Acquire one semantic session lane without creating a process-local backlog.
+ * The lane is installed before invoking the runner, so two same-family turns
+ * cannot both cross the model-dispatch boundary in one event-loop turn.
+ */
+export function tryStartSessionDispatch(sessionKey, runner, opts = {}) {
+  const key = dispatchKeyFor(sessionKey, opts);
+  if (activeDispatches.has(key)) {
+    return { started: false, dispatchKey: key };
+  }
+  const actualSessionKey = typeof sessionKey === "string" && sessionKey.trim()
+    ? sessionKey.trim()
+    : "default";
+  const startedAt = Date.now();
+  const entry = { promise: null, enqueuedAt: startedAt };
+  activeDispatches.set(key, entry);
+  let promise;
+  try {
+    promise = Promise.resolve(runner({
+      sessionKey: actualSessionKey,
+      dispatchKey: key,
+      queued: false,
+      enqueuedAt: startedAt,
+      waitedMs: 0,
+    }));
+  } catch (error) {
+    activeDispatches.delete(key);
+    throw error;
+  }
+  entry.promise = promise;
+  promise
+    .finally(() => {
+      if (activeDispatches.get(key) === entry) activeDispatches.delete(key);
+    })
+    .catch(() => {});
+  return { started: true, dispatchKey: key, promise };
+}
+
 export function enqueueSessionDispatch(sessionKey, runner, opts = {}) {
   const key = dispatchKeyFor(sessionKey, opts);
   const actualSessionKey = typeof sessionKey === "string" && sessionKey.trim() ? sessionKey.trim() : "default";

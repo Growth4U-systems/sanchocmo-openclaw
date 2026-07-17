@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { Readable } from "node:stream";
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import {
   finalizeInboundContext,
@@ -36,13 +37,37 @@ import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js
 import { mcChatCostGuard } from "./cost-guard.js";
 import { buildAttachmentContextBlock } from "./attachments.js";
 import {
-  enqueueSessionDispatch,
-  hasActiveSessionDispatch,
   isStopCommand,
   semanticSessionFamilyKey,
+  tryStartSessionDispatch,
 } from "./session-dispatch-state.js";
-import { registerRuntimeRun } from "./runtime-run-state.js";
+import {
+  acceptRuntimeInbound,
+  claimRuntimeInbound,
+  registerRuntimeRun,
+  releaseRuntimeInbound,
+} from "./runtime-run-state.js";
 import { buildCanonicalHistoryBootstrapIfNeeded } from "./canonical-history.js";
+import {
+  LEADS_SEARCH_START_TOOL,
+  registerLeadsSearchTools,
+} from "./leads-search-tool.js";
+import {
+  PARTNERSHIPS_DISCOVERY_START_TOOL,
+  registerPartnershipsDiscoveryTools,
+} from "./partnerships-discovery-tool.js";
+import { createDurableToolBoundary } from "./durable-tool-boundary.js";
+import {
+  authorizeChatTurnWithControlPlane,
+  matchesConfiguredSecret,
+  validatedControlPlaneOrigin,
+} from "./chat-turn-authority.js";
+import {
+  postDurableTurnAction,
+  safeDurableTurnClaim,
+  startDurableTurnHeartbeat,
+  startDurableTurnWorker,
+} from "./durable-turn-worker.js";
 
 function normalizeOpenAiAuthMode(mode) {
   if (typeof mode !== "string") return null;
@@ -139,6 +164,19 @@ function readCodexAuthInfo(agentId) {
 const CHANNEL_KEY = "mc-chat";
 const DEFAULT_ACCOUNT_ID = "default";
 
+function singleRequestHeader(req, name) {
+  const value = req?.headers?.[name];
+  return Array.isArray(value) ? undefined : value;
+}
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((settle) => {
+    resolve = settle;
+  });
+  return { promise, resolve };
+}
+
 // Strip Discord-style `<URL>` wrappers from outbound bot text.
 // MC chat UI does not parse them — the angle brackets leak into the
 // rendered href so `…/file.md>` 404s. Sancho regresses to this pattern
@@ -160,6 +198,14 @@ export default defineChannelPluginEntry({
 
   registerFull(api) {
     const logger = api.logger;
+    registerLeadsSearchTools(api, { loadConfig });
+    registerPartnershipsDiscoveryTools(api, { loadConfig });
+    const durableToolBoundary = createDurableToolBoundary({
+      ledgerAdmissionTools: [
+        LEADS_SEARCH_START_TOOL,
+        PARTNERSHIPS_DISCOVERY_START_TOOL,
+      ],
+    });
     const registerCostHook = (name, handler, opts = {}) => {
       if (typeof api.on === "function") {
         api.on(name, handler, opts);
@@ -189,7 +235,9 @@ export default defineChannelPluginEntry({
     );
     const beforeToolCallHookRegistered = registerCostHook(
       "before_tool_call",
-      (event, ctx) => mcChatCostGuard.beforeToolCall(event, ctx),
+      (event, ctx) =>
+        durableToolBoundary.beforeToolCall(event, ctx) ??
+        mcChatCostGuard.beforeToolCall(event, ctx),
       { priority: 100, timeoutMs: 1000 },
     );
     registerCostHook(
@@ -199,10 +247,7 @@ export default defineChannelPluginEntry({
     );
 
     // ─── HTTP Route: Inbound webhook from MC Server ───
-    api.registerHttpRoute({
-      path: "/mc-chat/inbound",
-      auth: "plugin",
-      handler: async (req, res) => {
+    const handleInboundRequest = async (req, res) => {
         if (req.method !== "POST") {
           res.statusCode = 405;
           res.end(JSON.stringify({ error: "Method not allowed" }));
@@ -238,57 +283,147 @@ export default defineChannelPluginEntry({
           res.end(JSON.stringify({ error: "MC_CHAT_SECRET not configured" }));
           return true;
         }
+        const controlPlaneOrigin = validatedControlPlaneOrigin(
+          channelCfg?.mcServerUrl,
+        );
+        if (!controlPlaneOrigin) {
+          logger.error(
+            "[mc-chat] Refusing inbound traffic: mcServerUrl is not a valid control-plane origin",
+          );
+          res.statusCode = 503;
+          res.end(JSON.stringify({ error: "MC control-plane URL unavailable" }));
+          return true;
+        }
         const providedSecret = req.headers["x-mc-secret"];
-        if (providedSecret !== expectedSecret) {
+        if (!matchesConfiguredSecret(providedSecret, expectedSecret)) {
           logger.warn("[mc-chat] Invalid shared secret from MC server");
           res.statusCode = 403;
           res.end(JSON.stringify({ error: "Forbidden" }));
           return true;
         }
 
+        const dispatchRunId = singleRequestHeader(
+          req,
+          "x-sancho-dispatch-run-id",
+        );
+        const dispatchLeaseToken = singleRequestHeader(
+          req,
+          "x-sancho-dispatch-lease-token",
+        );
+        const hasDispatchRunId = dispatchRunId !== undefined;
+        const hasDispatchLeaseToken = dispatchLeaseToken !== undefined;
+        const durableTurnClaim = safeDurableTurnClaim(req.durableTurnClaim);
+        if (
+          hasDispatchRunId !== hasDispatchLeaseToken ||
+          Boolean(durableTurnClaim) !== hasDispatchRunId ||
+          (durableTurnClaim &&
+            (durableTurnClaim.dispatchRunId !== dispatchRunId ||
+              durableTurnClaim.leaseToken !== dispatchLeaseToken ||
+              durableTurnClaim.parentAgentRunId !== payload.missionControlRunId ||
+              durableTurnClaim.runtimeToolCapability !==
+                payload.runtimeToolCapability))
+        ) {
+          logger.warn(
+            "[mc-chat] Rejected partial or non-local durable dispatch authority",
+          );
+          res.statusCode = 403;
+          res.end(
+            JSON.stringify({ error: "Invalid durable dispatch authority" }),
+          );
+          return true;
+        }
+
+        const trustedTurn = await authorizeChatTurnWithControlPlane(
+          payload,
+          channelCfg,
+          {
+            ...(durableTurnClaim ? { dispatchRunId, dispatchLeaseToken } : {}),
+          },
+        );
+        if (!trustedTurn) {
+          logger.warn(
+            "[mc-chat] Rejected inbound turn without matching active run authority",
+          );
+          res.statusCode = 403;
+          res.end(
+            JSON.stringify({ error: "Invalid Mission Control turn authority" }),
+          );
+          return true;
+        }
+
+        const inboundAdmission = claimRuntimeInbound(payload.missionControlRunId);
+        if (inboundAdmission === "duplicate_accepted") {
+          res.statusCode = 200;
+          res.end(
+            JSON.stringify({
+              ok: true,
+              duplicate: true,
+              message: "Mission Control turn already admitted",
+            }),
+          );
+          return true;
+        }
+        if (inboundAdmission === "duplicate_pending") {
+          res.statusCode = 409;
+          res.end(
+            JSON.stringify({
+              error: "Mission Control turn admission is still pending",
+              code: "runtime_inbound_pending",
+              retryable: true,
+              retryAfterMs: 2_000,
+            }),
+          );
+          return true;
+        }
+        if (inboundAdmission !== "claimed") {
+          res.statusCode = 503;
+          res.end(
+            JSON.stringify({ error: "Runtime inbound admission unavailable" }),
+          );
+          return true;
+        }
+
         const {
-          slug,
-          threadId,
           missionControlRunId,
+          runtimeToolCapability,
           threadName,
           text,
-          userId,
-          userName,
           linkedTo,
           docPath,
           docKind,
-          skill,
-          primarySkill,
-          skills,
-          scope,
-          skillMode,
-          agent,
-          agentId,
           attachments,
-          isAdmin,
-          senderRole,
-          readOnly,
           channelMode,
           supportContext,
           priorThreadMessages,
+          taskRouteProposal,
+        } = payload;
+        const {
+          slug,
+          threadId,
+          agent,
+          skill,
+          skills,
+          primarySkill,
+          scope,
+          skillMode,
           temporaryAgent,
           controlDepth,
-          taskRouteProposal,
-          _source, // "discord" if relayed from Discord
-        } = payload;
+          isAdmin,
+          senderRole,
+          readOnly,
+          userId,
+          userName,
+          source: _source,
+        } = trustedTurn;
 
         if (!slug || !threadId || !text) {
+          releaseRuntimeInbound(missionControlRunId);
           res.statusCode = 400;
           res.end(JSON.stringify({ error: "Missing required fields: slug, threadId, text" }));
           return true;
         }
 
-        const rawRequestedAgent = typeof agentId === "string" && agentId.trim()
-          ? agentId.trim()
-          : (typeof agent === "string" && agent.trim() ? agent.trim() : "sancho");
-        const requestedAgent = /^[a-z0-9][a-z0-9_-]{0,63}$/i.test(rawRequestedAgent)
-          ? rawRequestedAgent.toLowerCase()
-          : "sancho";
+        const requestedAgent = agent;
         const isTemporarySancho = temporaryAgent === true && requestedAgent === "sancho";
         const isReadOnly = readOnly === true;
         const isControlFollowup = controlDepth === 1 || isReadOnly;
@@ -315,10 +450,17 @@ export default defineChannelPluginEntry({
             "La ejecución fue detenida por el usuario.",
           );
           logger.info(`[mc-chat] stop command processed thread=${threadId} agent=${requestedAgent} cancelled=${cancelled}`);
+          acceptRuntimeInbound(missionControlRunId);
+          const finalText = cancelled
+            ? "Ejecución detenida."
+            : "No había ninguna ejecución activa que detener.";
           res.statusCode = 200;
           res.end(JSON.stringify({
             ok: true,
             cancelled,
+            chatId,
+            finalText,
+            finalAgent: requestedAgent,
             message: cancelled ? "Active turn cancelled" : "No active turn found",
           }));
           return true;
@@ -360,6 +502,10 @@ export default defineChannelPluginEntry({
               contextPackUrl: channelCfg?.contextPackUrl,
               nextServerUrl: channelCfg?.nextServerUrl,
               secret: channelCfg?.sharedSecret,
+              runId: missionControlRunId,
+              capability: runtimeToolCapability,
+              dispatchRunId: durableTurnClaim?.dispatchRunId,
+              dispatchLeaseToken: durableTurnClaim?.leaseToken,
               logger,
             });
             if (pack) {
@@ -418,38 +564,79 @@ export default defineChannelPluginEntry({
         logger.info(`[mc-chat] resolved agent=${requestedAgent} model=${resolvedModel || "default"} session=${sessionKey} dispatchFamily=${dispatchFamilyKey}`);
         const guardRunId = `mc-chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
         const abortController = new AbortController();
+        if (req.durableAbortSignal) {
+          if (req.durableAbortSignal.aborted) {
+            abortController.abort(new Error("Durable worker is stopping"));
+          } else {
+            req.durableAbortSignal.addEventListener(
+              "abort",
+              () =>
+                abortController.abort(new Error("Durable worker is stopping")),
+              { once: true },
+            );
+          }
+        }
         const guardLimits = mcChatCostGuard.limits();
 
-        // Acknowledge receipt immediately — response comes async via outbound callback
-        res.statusCode = 200;
-        res.end(JSON.stringify({
-          ok: true,
-          chatId,
-          message: "Message dispatched to agent",
-        }));
-
-        const queuedBehindActive = hasActiveSessionDispatch(sessionKey, { familyKey: dispatchFamilyKey });
-        if (queuedBehindActive) {
-          logger.warn(`[mc-chat] inbound queued behind active dispatch session=${sessionKey} family=${dispatchFamilyKey} thread=${threadId}`);
-          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
-          const secret = channelCfg?.sharedSecret;
-          fetch(`${mcUrl}/api/chat/webhook`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) },
-            body: JSON.stringify({
-              slug,
-              threadId,
-              ...(missionControlRunId ? { missionControlRunId } : {}),
-              role: "status",
-              text: "⏳ Hay un turno en curso; puse tu mensaje en cola.",
-              agent: requestedAgent || "sancho",
-            }),
-          }).catch(() => {});
+        const admissionBoundary = deferred();
+        let durableHeartbeatStop = () => {};
+        let durableStarted = false;
+        const runTurn = async () => {
+        if (durableTurnClaim && !beforeToolCallHookRegistered) {
+          admissionBoundary.resolve({
+            ok: false,
+            status: 503,
+            code: "durable_tool_boundary_unavailable",
+          });
+          return;
         }
-
-        await enqueueSessionDispatch(sessionKey, async ({ queued, waitedMs, dispatchKey }) => {
-        if (queued) {
-          logger.warn(`[mc-chat] starting queued dispatch session=${sessionKey} family=${dispatchKey} thread=${threadId} waitedMs=${waitedMs}`);
+        const releaseDurableToolBoundary = durableTurnClaim
+          ? durableToolBoundary.registerTurn({
+              runId: guardRunId,
+              sessionKey,
+              readOnly: isReadOnly,
+            })
+          : () => {};
+        if (durableTurnClaim && !releaseDurableToolBoundary) {
+          admissionBoundary.resolve({
+            ok: false,
+            status: 503,
+            code: "durable_tool_boundary_unavailable",
+          });
+          return;
+        }
+        if (durableTurnClaim) {
+          const started = await postDurableTurnAction(
+            "started",
+            durableTurnClaim,
+            channelCfg,
+          );
+          if (!started.ok) {
+            admissionBoundary.resolve({
+              ok: false,
+              status: started.status || 409,
+              code: started.code || "chat_agent_turn_claim_lost",
+            });
+            releaseDurableToolBoundary();
+            return;
+          }
+          durableStarted = true;
+          durableHeartbeatStop = startDurableTurnHeartbeat(
+            durableTurnClaim,
+            channelCfg,
+            {
+              onCancellationRequested: () => {
+                abortController.abort(
+                  new Error("Durable chat turn cancellation was requested"),
+                );
+              },
+              onClaimLost: () => {
+                abortController.abort(
+                  new Error("Durable chat turn lease was lost"),
+                );
+              },
+            },
+          );
         }
 
         // Decide history hydration only after this session reaches the front of
@@ -506,10 +693,15 @@ export default defineChannelPluginEntry({
           threadId,
           agent: requestedAgent,
           missionControlRunId,
+          runtimeToolCapability,
+          dispatchRunId: durableTurnClaim?.dispatchRunId,
+          dispatchLeaseToken: durableTurnClaim?.leaseToken,
+          allowExternalEffects: resolvedSenderId === "mc-admin" && !isReadOnly,
         });
 
         // Dispatch to agent asynchronously
         let runtimeErrorPosted = false;
+        let runtimeErrorPromise = null;
         let visibleReplyPosted = false;
         let turnControlAction = null;
         let temporaryInterventionDispatched = false;
@@ -550,13 +742,33 @@ export default defineChannelPluginEntry({
           // Default to Next.js (port 3000) — it owns chat thread writes since
           // the strangler-fig migration. mc-server.js's /webhook/mc-chat/response
           // is dead code but still proxied through Next's fallback rewrite.
-          const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+          const mcUrl = controlPlaneOrigin;
           const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const threadLinkUrlBase = `${mcUrl}/api/chat/thread`;
           const sendUrl = `${mcUrl}/api/chat/send`;
           const taskRouteUrl = `${mcUrl}/api/tasks/resolve-route`;
           const secret = channelCfg?.sharedSecret;
           const callbackIdentity = missionControlRunId ? { missionControlRunId } : {};
+          const callbackRunAuthorityHeaders = {
+            "X-Mission-Control-Run-Id": missionControlRunId,
+            "X-Sancho-Run-Capability": runtimeToolCapability,
+            ...(durableTurnClaim
+              ? {
+                  "X-Sancho-Dispatch-Run-Id": durableTurnClaim.dispatchRunId,
+                  "X-Sancho-Dispatch-Lease-Token": durableTurnClaim.leaseToken,
+                }
+              : {}),
+          };
+          const parentRunAuthorityHeaders = {
+            "X-Mission-Control-Parent-Run-Id": missionControlRunId,
+            "X-Sancho-Parent-Run-Capability": runtimeToolCapability,
+            ...(durableTurnClaim
+              ? {
+                  "X-Sancho-Dispatch-Run-Id": durableTurnClaim.dispatchRunId,
+                  "X-Sancho-Dispatch-Lease-Token": durableTurnClaim.leaseToken,
+                }
+              : {}),
+          };
           const controlRunId = missionControlRunId || guardRunId;
           const controlIdempotencyKey = (kind, value) => {
             const digest = createHash("sha256")
@@ -568,14 +780,25 @@ export default defineChannelPluginEntry({
           // Retry with exponential backoff for transient Next.js outages
           // (dev server reloads, restarts). On permanent failure the message
           // is logged loudly — Sancho's trajectory still has it for recovery.
-          const postWithRetry = async (url, body, label) => {
-            const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+          const postWithRetry = async (url, body, label, extraHeaders = {}) => {
+            const headers = {
+              "Content-Type": "application/json",
+              ...(secret ? { "X-MC-Secret": secret } : {}),
+              ...callbackRunAuthorityHeaders,
+              ...extraHeaders,
+            };
             const delays = [0, 750, 2250]; // 3 attempts: immediate, +750ms, +2250ms
             let lastErr;
             for (let i = 0; i < delays.length; i++) {
               if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
               try {
-                const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+                const res = await fetch(url, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify(body),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
+                });
                 if (res.ok) return res;
                 lastErr = new Error(`HTTP ${res.status}`);
                 if (res.status >= 400 && res.status < 500) break; // don't retry 4xx
@@ -588,26 +811,29 @@ export default defineChannelPluginEntry({
           };
 
           const postRuntimeError = async (rawError, respondingAgent = requestedAgent || "sancho") => {
-            if (runtimeErrorPosted) return;
+            if (runtimeErrorPromise) return runtimeErrorPromise;
             runtimeErrorPosted = true;
-            const raw = typeof rawError === "string" && rawError.trim()
-              ? rawError
-              : "El runtime terminó sin devolver respuesta visible.";
-            const authInfo = {
-              ...(readCodexAuthInfo(respondingAgent) || {}),
-              anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
-            };
-            const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
-            await postWithRetry(callbackUrl, {
-              slug,
-              threadId,
-              ...callbackIdentity,
-              text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
-              role: "bot",
-              agent: respondingAgent,
-              ts: new Date().toISOString(),
-              ...(errorDetail ? { errorDetail } : {}),
-            }, "Bot runtime-error callback");
+            runtimeErrorPromise = (async () => {
+              const raw = typeof rawError === "string" && rawError.trim()
+                ? rawError
+                : "El runtime terminó sin devolver respuesta visible.";
+              const authInfo = {
+                ...(readCodexAuthInfo(respondingAgent) || {}),
+                anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+              };
+              const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
+              await postWithRetry(callbackUrl, {
+                slug,
+                threadId,
+                ...callbackIdentity,
+                text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
+                role: "bot",
+                agent: respondingAgent,
+                ts: new Date().toISOString(),
+                ...(errorDetail ? { errorDetail } : {}),
+              }, "Bot runtime-error callback");
+            })();
+            return runtimeErrorPromise;
           };
 
           if (turnModelOverride && _source === "growie-support") {
@@ -635,7 +861,7 @@ export default defineChannelPluginEntry({
           });
           let dispatchResult;
           try {
-            dispatchResult = await dispatchInboundMessageWithBufferedDispatcher({
+            const dispatchPromise = dispatchInboundMessageWithBufferedDispatcher({
               ctx: msgCtx,
               cfg,
             // OpenClaw's default sourceReplyDeliveryMode for chatType="channel"
@@ -902,7 +1128,7 @@ export default defineChannelPluginEntry({
                     docKind,
                     attachments,
                     _source,
-                  }, "Temporary Sancho intervention");
+                  }, "Temporary Sancho intervention", parentRunAuthorityHeaders);
                   if (dispatched) {
                     logger.info(`[mc-chat] temporary Sancho intervention dispatched in-place owner=${respondingAgent} thread=${threadId}`);
                   } else {
@@ -955,7 +1181,7 @@ export default defineChannelPluginEntry({
                     brief: routeRequest.brief,
                     confirmCreate: routeRequest.confirmCreate === true,
                     confirmationText: routeRequest.confirmCreate === true ? text : undefined,
-                  }, `Task route→${routeAgent}`);
+                  }, `Task route→${routeAgent}`, parentRunAuthorityHeaders);
                   let routeData = null;
                   if (routeResponse) {
                     try {
@@ -989,7 +1215,7 @@ export default defineChannelPluginEntry({
                       senderRole: senderRole === "admin" ? "admin" : "client",
                       attachments,
                       _source,
-                    }, `Task dispatch→${routeAgent}`);
+                    }, `Task dispatch→${routeAgent}`, parentRunAuthorityHeaders);
                     if (dispatched) {
                       logger.info(`[mc-chat] task routed → ${routeAgent} task=${routeData.taskId || "unknown"} thread=${targetThreadId} action=${routeData.action}`);
                       continue;
@@ -1036,12 +1262,18 @@ export default defineChannelPluginEntry({
             //                      into the bot's final message (visible after reply)
             typingCallbacks: {
               onReplyStart: async () => {
-                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const headers = {
+                  "Content-Type": "application/json",
+                  ...(secret ? { "X-MC-Secret": secret } : {}),
+                  ...callbackRunAuthorityHeaders,
+                };
                 const baseAgent = requestedAgent || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
                   body: JSON.stringify({ slug, threadId, ...callbackIdentity, role: "status", text: "🔄 Sancho está pensando...", agent: baseAgent }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
                 }).catch(() => {});
                 fetch(callbackUrl, {
                   method: "POST",
@@ -1050,13 +1282,19 @@ export default defineChannelPluginEntry({
                     slug, threadId, ...callbackIdentity, role: "progress", agent: baseAgent,
                     event: { kind: "thinking", label: "Pensando…" },
                   }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
                 }).catch(() => {});
               },
             },
             getReplyOptions: {
               onToolStart: async (payload) => {
                 if (!payload?.name) return;
-                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const headers = {
+                  "Content-Type": "application/json",
+                  ...(secret ? { "X-MC-Secret": secret } : {}),
+                  ...callbackRunAuthorityHeaders,
+                };
                 const baseAgent = requestedAgent || "sancho";
                 const toolName = payload.name;
                 const input = payload.input || {};
@@ -1109,6 +1347,8 @@ export default defineChannelPluginEntry({
                   method: "POST",
                   headers,
                   body: JSON.stringify({ slug, threadId, ...callbackIdentity, role: "status", text: label + "...", agent: baseAgent }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
                 }).catch(() => {});
 
                 // Structured progress event (accumulated + sealed)
@@ -1119,6 +1359,8 @@ export default defineChannelPluginEntry({
                     slug, threadId, ...callbackIdentity, role: "progress", agent: baseAgent,
                     event: { kind, label, target },
                   }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
                 }).catch(() => {});
 
                 // Formal handoff message: solo cuando se delega a un agente del equipo SanchoCMO
@@ -1136,16 +1378,24 @@ export default defineChannelPluginEntry({
                       from_agent: baseAgent,
                       to_agent: input.subagent_type,
                     }),
+                    redirect: "error",
+                    signal: AbortSignal.timeout(8_000),
                   }).catch(() => {});
                 }
               },
               onCompactionStart: async () => {
-                const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+                const headers = {
+                  "Content-Type": "application/json",
+                  ...(secret ? { "X-MC-Secret": secret } : {}),
+                  ...callbackRunAuthorityHeaders,
+                };
                 const baseAgent = requestedAgent || "sancho";
                 fetch(callbackUrl, {
                   method: "POST",
                   headers,
                   body: JSON.stringify({ slug, threadId, ...callbackIdentity, role: "status", text: "📦 Compactando contexto...", agent: baseAgent }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
                 }).catch(() => {});
                 fetch(callbackUrl, {
                   method: "POST",
@@ -1154,10 +1404,18 @@ export default defineChannelPluginEntry({
                     slug, threadId, ...callbackIdentity, role: "progress", agent: baseAgent,
                     event: { kind: "tool_call", label: "📦 Compactando contexto" },
                   }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(8_000),
                 }).catch(() => {});
               },
             },
             });
+            admissionBoundary.resolve({
+              ok: true,
+              status: 200,
+              dispatchInvoked: true,
+            });
+            dispatchResult = await dispatchPromise;
           } finally {
             restoreChatEnv();
             restoreBrandEnv();
@@ -1175,15 +1433,41 @@ export default defineChannelPluginEntry({
           } else if (!deliveredFinal && !deliveredBlock && !runtimeErrorPosted) {
             logger.info(`[mc-chat] suppressing empty-dispatch fallback thread=${threadId} visibleReplyPosted=${visibleReplyPosted} deliveredViaChannel=${deliveredViaChannel} result=${JSON.stringify(dispatchResult || {})}`);
           }
+          if (runtimeErrorPromise) await runtimeErrorPromise;
         } catch (err) {
+          admissionBoundary.resolve({
+            ok: durableStarted,
+            status: durableStarted ? 200 : 503,
+            dispatchInvoked: false,
+            code: durableStarted
+              ? "runtime_committed_not_invoked"
+              : "runtime_dispatch_unavailable",
+          });
           logger.error(`[mc-chat] Dispatch error: ${err?.message}`);
           try {
-            if (runtimeErrorPosted) return true;
+            if (runtimeErrorPromise) {
+              await runtimeErrorPromise;
+              return true;
+            }
             runtimeErrorPosted = true;
-            const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
+            const mcUrl = controlPlaneOrigin;
             const callbackUrl = `${mcUrl}/api/chat/webhook`;
             const secret = channelCfg?.sharedSecret;
-            const headers = { "Content-Type": "application/json", ...(secret ? { "X-MC-Secret": secret } : {}) };
+            const callbackRunAuthorityHeaders = {
+              "X-Mission-Control-Run-Id": missionControlRunId,
+              "X-Sancho-Run-Capability": runtimeToolCapability,
+              ...(durableTurnClaim
+                ? {
+                    "X-Sancho-Dispatch-Run-Id": durableTurnClaim.dispatchRunId,
+                    "X-Sancho-Dispatch-Lease-Token": durableTurnClaim.leaseToken,
+                  }
+                : {}),
+            };
+            const headers = {
+              "Content-Type": "application/json",
+              ...(secret ? { "X-MC-Secret": secret } : {}),
+              ...callbackRunAuthorityHeaders,
+            };
             const raw =
               mcChatCostGuard.abortMessageFor(guardRunId, sessionKey) ||
               err?.message ||
@@ -1206,18 +1490,206 @@ export default defineChannelPluginEntry({
                 ts: new Date().toISOString(),
                 ...(errorDetail ? { errorDetail } : {}),
               }),
+              redirect: "error",
+              signal: AbortSignal.timeout(8_000),
             }).catch(() => {});
           } catch {}
         } finally {
+          admissionBoundary.resolve({
+            ok: durableStarted,
+            status: durableStarted ? 200 : 503,
+            dispatchInvoked: false,
+          });
           if (turnTimer) clearTimeout(turnTimer);
           mcChatCostGuard.clearActiveTurn(guardRunId, sessionKey);
+          releaseDurableToolBoundary();
           releaseRuntimeRun();
         }
-        }, { familyKey: dispatchFamilyKey }).promise;
+      };
 
+      let dispatchReceipt;
+      try {
+        dispatchReceipt = tryStartSessionDispatch(sessionKey, runTurn, {
+          familyKey: dispatchFamilyKey,
+        });
+      } catch (error) {
+        releaseRuntimeInbound(missionControlRunId);
+        logger.error(
+          `[mc-chat] failed to reserve dispatch lane: ${error?.message || error}`,
+        );
+        res.statusCode = 503;
+        res.end(
+          JSON.stringify({
+            error: "Runtime dispatch unavailable",
+            code: "runtime_dispatch_unavailable",
+            retryable: true,
+          }),
+        );
         return true;
-      },
+      }
+      if (!dispatchReceipt.started) {
+        releaseRuntimeInbound(missionControlRunId);
+        res.statusCode = 409;
+        res.end(
+          JSON.stringify({
+            error: "Another turn is active for this session",
+            code: "runtime_session_busy",
+            retryable: true,
+            retryAfterMs: 2_000,
+          }),
+        );
+        return true;
+      }
+      void dispatchReceipt.promise.catch(() => {
+        admissionBoundary.resolve({
+          ok: durableStarted,
+          status: durableStarted ? 200 : 503,
+          dispatchInvoked: false,
+          code: durableStarted
+            ? "runtime_committed_not_invoked"
+            : "runtime_dispatch_unavailable",
+        });
+      });
+
+      const admission = await admissionBoundary.promise;
+      if (!admission.ok) {
+        await dispatchReceipt.promise.catch(() => {});
+        releaseRuntimeInbound(missionControlRunId);
+        res.statusCode = admission.status === 409 ? 409 : 503;
+        res.end(
+          JSON.stringify({
+            error: "Runtime dispatch was not admitted",
+            code: admission.code || "runtime_dispatch_unavailable",
+            retryable: true,
+          }),
+        );
+        return true;
+      }
+
+      acceptRuntimeInbound(missionControlRunId);
+      res.statusCode = 200;
+      res.end(
+        JSON.stringify({
+          ok: true,
+          chatId,
+          dispatchInvoked: admission.dispatchInvoked === true,
+          message: "Message dispatched to agent",
+        }),
+      );
+
+      try {
+        await dispatchReceipt.promise;
+        if (durableTurnClaim) {
+          const completionDelays = [0, 250, 750];
+          let cancellationWaitExtended = false;
+          for (
+            let attempt = 0;
+            attempt < completionDelays.length;
+            attempt += 1
+          ) {
+            const delay = completionDelays[attempt];
+            if (delay) {
+              await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+            const completed = await postDurableTurnAction(
+              "complete",
+              durableTurnClaim,
+              channelCfg,
+            );
+            if (completed.ok || completed.status !== 409) break;
+            if (
+              completed.code === "chat_agent_turn_cancellation_pending" &&
+              !cancellationWaitExtended
+            ) {
+              cancellationWaitExtended = true;
+              completionDelays.push(...[2_000, 4_000, 8_000]);
+            }
+          }
+        }
+      } catch (error) {
+        logger.error(
+          `[mc-chat] reserved dispatch failed: ${error?.message || error}`,
+        );
+      } finally {
+        durableHeartbeatStop();
+      }
+
+      return true;
+    };
+    api.registerHttpRoute({
+      path: "/mc-chat/inbound",
+      auth: "plugin",
+      handler: handleInboundRequest,
     });
+
+    const executeDurableClaim = async (claim, channelConfig, options = {}) => {
+      const request = Readable.from([
+        Buffer.from(JSON.stringify(claim.envelope), "utf8"),
+      ]);
+      request.method = "POST";
+      request.headers = {
+        "x-mc-secret": channelConfig.sharedSecret,
+        "x-mission-control-run-id": claim.parentAgentRunId,
+        "x-sancho-run-capability": claim.runtimeToolCapability,
+        "x-sancho-dispatch-run-id": claim.dispatchRunId,
+        "x-sancho-dispatch-lease-token": claim.leaseToken,
+      };
+      request.durableTurnClaim = claim;
+      request.durableAbortSignal = options.signal;
+      let responseBody = "";
+      let responseEnded = false;
+      const response = {
+        statusCode: 200,
+        setHeader() {},
+        end(value = "") {
+          responseBody = typeof value === "string" ? value : String(value);
+          responseEnded = true;
+        },
+      };
+      try {
+        await handleInboundRequest(request, response);
+      } catch (error) {
+        logger.error(
+          `[mc-chat] durable in-process dispatch failed: ${error?.message || error}`,
+        );
+      }
+      let parsed = {};
+      try {
+        parsed = responseBody ? JSON.parse(responseBody) : {};
+      } catch {
+        parsed = {};
+      }
+      return {
+        ok:
+          responseEnded &&
+          response.statusCode >= 200 &&
+          response.statusCode < 300,
+        status: responseEnded ? response.statusCode : 0,
+        code: typeof parsed?.code === "string" ? parsed.code : undefined,
+        dispatchInvoked: parsed?.dispatchInvoked === true,
+      };
+    };
+
+    if (
+      api.registrationMode === "full" &&
+      typeof api.registerService === "function"
+    ) {
+      let stopDurableWorker = async () => {};
+      api.registerService({
+        id: "mc-chat-agent-turn-worker",
+        start() {
+          stopDurableWorker = startDurableTurnWorker({
+            loadConfig,
+            logger,
+            executeClaim: executeDurableClaim,
+            maxConcurrency: 2,
+          });
+        },
+        async stop() {
+          await stopDurableWorker();
+        },
+      });
+    }
 
     // ─── HTTP Route: Health check ───
     api.registerHttpRoute({
@@ -1235,110 +1707,26 @@ export default defineChannelPluginEntry({
       },
     });
 
-    // Discord thread creation endpoint (proxies to message tool)
+    // Discord thread creation remains disabled until the route can receive a
+    // caller-scoped authority proof rather than relying on a shared gateway secret.
     api.registerHttpRoute({
       path: "/mc-chat/create-discord-thread",
       auth: "plugin",
-      handler: async (req, res) => {
-        let body = "";
-        req.on("data", (chunk) => { body += chunk; if (body.length > 100000) req.destroy(); });
-        req.on("end", async () => {
-          try {
-            const { channelId, name, initialMessage } = JSON.parse(body);
-            if (!channelId || !name) {
-              res.statusCode = 400;
-              res.end(JSON.stringify({ error: "Missing channelId or name" }));
-              return;
-            }
-            // Create Discord thread via message tool
-            const result = await tools.message.send({
-              action: "thread-create",
-              channel: "discord",
-              target: `channel:${channelId}`,
-              threadName: name.substring(0, 100),
-              message: initialMessage || `🔗 Thread sincronizado con Mission Control`,
-            });
-            if (result?.result?.threadId) {
-              res.statusCode = 200;
-              res.end(JSON.stringify({
-                ok: true,
-                threadId: result.result.threadId,
-                channelId,
-              }));
-            } else {
-              res.statusCode = 500;
-              res.end(JSON.stringify({ error: "Thread creation failed", details: result }));
-            }
-          } catch (e) {
-            logger.error(`[mc-chat] Discord thread creation error: ${e.message}`);
-            res.statusCode = 500;
-            res.end(JSON.stringify({ error: e.message }));
-          }
-        });
+      handler: async (_req, res) => {
+        res.statusCode = 503;
+        res.end(
+          JSON.stringify({
+            error:
+              "Discord thread creation disabled until scoped authority is implemented",
+          }),
+        );
         return true;
       },
     });
 
-    // Outbound hook: watch Discord messages and relay to MC if thread is linked
-    // NOTE: registerOutboundHook may not exist in all SDK versions — guard it
-    if (typeof api.registerOutboundHook !== "function") {
-      logger.warn("[mc-chat] api.registerOutboundHook not available in this SDK version — Discord↔MC relay disabled");
-    } else {
-    api.registerOutboundHook({
-      provider: "discord",
-      handler: async (msgCtx) => {
-        // Only process messages from threads
-        if (!msgCtx.ThreadId) return;
-        const discordThreadId = msgCtx.ThreadId;
-        // Check if this Discord thread is linked to an MC thread.
-        // Routes migrated to Next.js (/api/chat/*) — single writer for chats.
-        const mcUrl = channelCfg?.mcServerUrl || "http://localhost:3000";
-        const secret = channelCfg?.sharedSecret;
-        let mcThreadId = null;
-        try {
-          const searchRes = await fetch(
-            `${mcUrl}/api/chat/find-by-discord/${encodeURIComponent(discordThreadId)}`,
-            { headers: secret ? { "X-MC-Secret": secret } : {} },
-          );
-          if (searchRes.ok) {
-            const searchData = await searchRes.json();
-            if (searchData.ok && searchData.threadId) {
-              mcThreadId = searchData.threadId;
-            }
-          }
-        } catch {}
-        if (!mcThreadId) return; // Not linked, ignore
-
-        // Check for loop flag
-        if (msgCtx.Body?.includes("[_mc_relay]")) return; // Avoid loop
-
-        // Relay to MC (strip relay marker if present)
-        const slug = mcThreadId.split(":")[0];
-        let text = msgCtx.Body || msgCtx.RawBody || "";
-        text = text.replace(/\|\|?\[_mc_relay\]\|\|?/g, "").trim(); // Remove marker
-        if (!text.trim()) return;
-        try {
-          await fetch(`${mcUrl}/api/chat/send`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(secret ? { "X-MC-Secret": secret } : {}),
-            },
-            body: JSON.stringify({
-              slug,
-              threadId: mcThreadId,
-              text,
-              userName: msgCtx.SenderName || "Discord User",
-              _source: "discord", // Mark source to prevent re-relay
-            }),
-          });
-          logger.info(`[mc-chat] Relayed Discord message from ${discordThreadId} to MC ${mcThreadId}`);
-        } catch (e) {
-          logger.error(`[mc-chat] Discord→MC relay error: ${e.message}`);
-        }
-      },
-    });
-    } // end registerOutboundHook guard
+    logger.warn(
+      "[mc-chat] Discord→MC outbound relay disabled: scoped ingress authority is not implemented",
+    );
 
     logger.info("[mc-chat] Channel plugin registered — webhook at /mc-chat/inbound");
   },

@@ -336,10 +336,43 @@ function liveDiscoveryDeadline(): number {
   return Date.now() + timeoutMs;
 }
 
+function abortReason(signal: AbortSignal): Error {
+  return signal.reason instanceof Error
+    ? signal.reason
+    : new DOMException("Discovery live aborted", "AbortError");
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortReason(signal);
+}
+
+async function abortableDelay(
+  delayMs: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  throwIfAborted(signal);
+  if (!signal) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return;
+  }
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, delayMs);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(abortReason(signal));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
 async function scrapeCreatorsJson(
   path: string,
   apiKey: string,
   deadline: number,
+  signal?: AbortSignal,
 ): Promise<unknown> {
   const requestTimeoutMs = positiveIntFromEnv(
     "SCRAPECREATORS_TIMEOUT_MS",
@@ -347,11 +380,15 @@ async function scrapeCreatorsJson(
   );
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
+    throwIfAborted(signal);
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) {
       throw new Error("Discovery live superó el límite global de 5 minutos");
     }
     const controller = new AbortController();
+    const requestSignal = signal
+      ? AbortSignal.any([controller.signal, signal])
+      : controller.signal;
     const timer = setTimeout(
       () => controller.abort(),
       Math.min(requestTimeoutMs, remainingMs),
@@ -359,7 +396,8 @@ async function scrapeCreatorsJson(
     try {
       const res = await fetch(`${SCRAPECREATORS_BASE}${path}`, {
         headers: { "x-api-key": apiKey },
-        signal: controller.signal,
+        signal: requestSignal,
+        redirect: "error",
       });
       const body = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) {
@@ -397,6 +435,7 @@ async function scrapeCreatorsJson(
       }
       return body;
     } catch (err) {
+      throwIfAborted(signal);
       lastError = err instanceof Error ? err : new Error(String(err));
       const retryable =
         lastError instanceof ScrapeCreatorsRequestError
@@ -411,8 +450,7 @@ async function scrapeCreatorsJson(
         Math.max(retryAfterMs, 250 * attempt),
         Math.max(0, deadline - Date.now()),
       );
-      if (delayMs > 0)
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      if (delayMs > 0) await abortableDelay(delayMs, signal);
     } finally {
       clearTimeout(timer);
     }
@@ -441,6 +479,7 @@ async function collectSearchProfiles(
   apiKey: string,
   target: number,
   deadline: number,
+  signal?: AbortSignal,
 ): Promise<{ profiles: SearchProfile[]; lastError: Error | null }> {
   const queries = buildLiveDiscoveryQueries(plan);
   const wantedTiers = new Set<string>(plan.tiers || []);
@@ -471,6 +510,7 @@ async function collectSearchProfiles(
           `/v1/instagram/search/profiles?${params}`,
           apiKey,
           deadline,
+          signal,
         );
         addProfiles(
           profiles,
@@ -483,6 +523,7 @@ async function collectSearchProfiles(
         seenCursors.add(nextCursor);
         cursor = nextCursor;
       } catch (err) {
+        throwIfAborted(signal);
         lastError = err instanceof Error ? err : new Error(String(err));
         break;
       }
@@ -505,6 +546,7 @@ async function collectSearchProfiles(
           `/v1/instagram/search/hashtag?${params}`,
           apiKey,
           deadline,
+          signal,
         );
         addProfiles(
           profiles,
@@ -517,6 +559,7 @@ async function collectSearchProfiles(
         seenCursors.add(nextCursor);
         cursor = nextCursor;
       } catch (err) {
+        throwIfAborted(signal);
         lastError = err instanceof Error ? err : new Error(String(err));
         break;
       }
@@ -560,8 +603,10 @@ export function supportsLiveDiscovery(plan: DiscoveryPlan): boolean {
 
 export async function scrapeLiveDiscoveryCandidates(
   plan: DiscoveryPlan,
+  options: { signal?: AbortSignal; apiKey?: string } = {},
 ): Promise<RawDiscoveryCandidate[]> {
-  const apiKey = process.env.SCRAPECREATORS_API_KEY || "";
+  throwIfAborted(options.signal);
+  const apiKey = options.apiKey ?? process.env.SCRAPECREATORS_API_KEY ?? "";
   if (!apiKey) throw new Error("SCRAPECREATORS_API_KEY no está configurada");
   const unsupported = unsupportedLiveDiscoveryNetworks(plan);
   if (unsupported.length > 0 || !plan.networks.includes("instagram")) {
@@ -578,6 +623,7 @@ export async function scrapeLiveDiscoveryCandidates(
     apiKey,
     target,
     deadline,
+    options.signal,
   );
   if (profiles.length === 0 && searchError) throw searchError;
 
@@ -596,6 +642,7 @@ export async function scrapeLiveDiscoveryCandidates(
     index < profiles.length && candidates.length < target;
     index += concurrency
   ) {
+    throwIfAborted(options.signal);
     const batch = profiles.slice(index, index + concurrency);
     const enriched = await Promise.all(
       batch.map(async (profile) => {
@@ -608,11 +655,13 @@ export async function scrapeLiveDiscoveryCandidates(
               `/v1/instagram/profile?handle=${handle}`,
               apiKey,
               deadline,
+              options.signal,
             ),
             scrapeCreatorsJson(
               `/v2/instagram/user/posts?handle=${handle}`,
               apiKey,
               deadline,
+              options.signal,
             ),
           ]);
           return computeCandidate(
@@ -628,6 +677,7 @@ export async function scrapeLiveDiscoveryCandidates(
         }
       }),
     );
+    throwIfAborted(options.signal);
 
     for (const candidate of enriched) {
       if (!candidate) continue;

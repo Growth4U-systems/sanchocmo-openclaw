@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql src/db/migrations/0008_comments_v2.sql src/db/migrations/0011_metric_snapshots.sql src/db/migrations/0012_metric_dashboards.sql src/db/migrations/0013_intelligence_engine.sql src/db/migrations/0014_metric_schedule_runs.sql src/db/migrations/0015_metric_semantic_layer.sql src/db/migrations/0017_task_route_proposals.sql"
+  }
+}

@@ -34,6 +34,9 @@ function run(overrides: Partial<ExecutionRun> = {}): ExecutionRun {
     output: { count: 4, email: "private@example.com" },
     error: "Authorization: Bearer secret-token-123456789",
     metadata: { source: "partnerships", apiKey: "sk-private-123456789" },
+    availableAt: "2026-07-15T10:00:00.000Z",
+    claimCount: 0,
+    handlerAttempt: 0,
     createdAt: "2026-07-15T10:00:00.000Z",
     startedAt: "2026-07-15T10:00:01.000Z",
     finishedAt: "2026-07-15T10:00:02.000Z",
@@ -269,7 +272,10 @@ test("opaque list cursor is signed and bound to tenant and filters", async () =>
   const firstHarness = repositoryHarness({
     runsPage: {
       runs: [run()],
-      nextBefore: { createdAt: "2026-07-15T10:00:00.000Z", id: "xrun_01" },
+      nextBefore: {
+        createdAt: "2026-07-15T10:00:00.000123Z",
+        id: "xrun_01",
+      },
     },
   });
   const firstHandler = createExecutionRunsHandler({
@@ -312,7 +318,7 @@ test("opaque list cursor is signed and bound to tenant and filters", async () =>
   );
   assert.equal(second.state.status, 200);
   assert.deepEqual(secondHarness.calls.listRuns[0].before, {
-    createdAt: "2026-07-15T10:00:00.000Z",
+    createdAt: "2026-07-15T10:00:00.000123Z",
     id: "xrun_01",
   });
 

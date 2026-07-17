@@ -100,6 +100,22 @@ function mockResponse() {
   return { res, read: () => ({ statusCode, payload }) };
 }
 
+function adminBrowserRequest(body: Record<string, unknown>): NextApiRequest {
+  return {
+    method: "POST",
+    headers: { host: "localhost:3000" },
+    query: {},
+    body,
+    ctx: {
+      isAdmin: true,
+      clientSlug: null,
+      allowedSlugs: null,
+      adminToken: null,
+      portalClient: null,
+    },
+  } as unknown as NextApiRequest;
+}
+
 test("an outbound ECP click starts YALC directly without invoking the agent gateway", async () => {
   writeFoundationConfig();
   const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
@@ -145,19 +161,14 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
   const threadId = "growth4u:b2b-campaign-new-test";
 
   const optionsResponse = mockResponse();
-  await sendHandler({
-    method: "POST",
-    headers: { "x-mc-secret": "runtime-secret", host: "localhost:3000" },
-    query: {},
-    body: {
+  await sendHandler(adminBrowserRequest({
       slug: "growth4u",
       threadId,
       text: "Quiero crear una campaña B2B por LinkedIn.",
       agent: "rocinante",
       scope: "agent",
       skill: "yalc-operator",
-    },
-  } as unknown as NextApiRequest, optionsResponse.res);
+    }), optionsResponse.res);
 
   assert.equal(optionsResponse.read().statusCode, 200);
   assert.equal(optionsResponse.read().payload.deterministic, true);
@@ -185,21 +196,13 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
 
   const response = mockResponse();
   try {
-    await sendHandler({
-      method: "POST",
-      headers: {
-        "x-mc-secret": "runtime-secret",
-        host: "localhost:3000",
-      },
-      query: {},
-      body: {
+    await sendHandler(adminBrowserRequest({
         slug: "growth4u",
         threadId,
         text: `[ask:outbound_ecp_v1] respuesta: ${selected.label} <!--workflow-option:${selected.id}-->`,
         agent: "rocinante",
         scope: "agent",
-      },
-    } as unknown as NextApiRequest, response.res);
+      }), response.res);
 
     assert.equal(response.read().statusCode, 200);
     assert.equal(response.read().payload.deterministic, true);
@@ -219,18 +222,13 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
     assert.doesNotMatch(selectedUserMessage?.text || "", /workflow-option|\[ask:/);
 
     const invalid = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: { "x-mc-secret": "runtime-secret", host: "localhost:3000" },
-      query: {},
-      body: {
+    await sendHandler(adminBrowserRequest({
         slug: "growth4u",
         threadId,
         text: "[ask:outbound_ecp_v1] respuesta: Inventado <!--workflow-option:not-real-->",
         agent: "rocinante",
         scope: "agent",
-      },
-    } as unknown as NextApiRequest, invalid.res);
+      }), invalid.res);
     assert.equal(invalid.read().statusCode, 200);
     assert.equal(invalid.read().payload.ok, false);
     assert.equal(calls.length, 1, "invalid structured choices must not reach YALC or the agent gateway");
@@ -239,32 +237,22 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
 
     const reusedThreadId = "growth4u:b2b-campaign-new-reused-test";
     const reusedOptions = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: { "x-mc-secret": "runtime-secret", host: "localhost:3000" },
-      query: {},
-      body: {
+    await sendHandler(adminBrowserRequest({
         slug: "growth4u",
         threadId: reusedThreadId,
         text: "Quiero crear una campaña B2B por LinkedIn.",
         agent: "rocinante",
         scope: "agent",
         skill: "yalc-operator",
-      },
-    } as unknown as NextApiRequest, reusedOptions.res);
+      }), reusedOptions.res);
     const reusedSelection = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: { "x-mc-secret": "runtime-secret", host: "localhost:3000" },
-      query: {},
-      body: {
+    await sendHandler(adminBrowserRequest({
         slug: "growth4u",
         threadId: reusedThreadId,
         text: `[ask:outbound_ecp_v1] respuesta: ${selected.label} <!--workflow-option:${selected.id}-->`,
         agent: "rocinante",
         scope: "agent",
-      },
-    } as unknown as NextApiRequest, reusedSelection.res);
+      }), reusedSelection.res);
     assert.equal(reusedSelection.read().statusCode, 200);
     assert.equal(calls.length, 2);
     const reusedMessage = getThread(reusedThreadId).messages.at(-1);
@@ -273,19 +261,14 @@ test("an outbound ECP click starts YALC directly without invoking the agent gate
     assert.equal(reusedMessage?.workflowJob?.campaignId, "campaign-1");
 
     const missingFoundation = mockResponse();
-    await sendHandler({
-      method: "POST",
-      headers: { "x-mc-secret": "runtime-secret", host: "localhost:3000" },
-      query: {},
-      body: {
+    await sendHandler(adminBrowserRequest({
         slug: "missing-client",
         threadId: "missing-client:b2b-campaign-new-test",
         text: "Quiero crear una campaña B2B por LinkedIn.",
         agent: "rocinante",
         scope: "agent",
         skill: "yalc-operator",
-      },
-    } as unknown as NextApiRequest, missingFoundation.res);
+      }), missingFoundation.res);
     assert.equal(missingFoundation.read().statusCode, 200);
     assert.equal(missingFoundation.read().payload.ok, false);
     assert.equal(calls.length, 2, "missing Foundation must fail before YALC or the agent gateway");

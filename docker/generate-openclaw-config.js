@@ -29,6 +29,49 @@ const OPENCLAW_JSON = path.join(OPENCLAW_ROOT, '.openclaw', 'openclaw.json');
 const FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS = [
   'not', 'oneOf', 'pattern', 'minLength', 'maxLength', 'minItems', 'maxItems',
 ];
+const FIREWORKS_GLM52_MODEL_ID = 'accounts/fireworks/models/glm-5p2';
+const DEFAULT_FIREWORKS_GLM52_MAX_TOKENS = 8192;
+const MIN_FIREWORKS_GLM52_MAX_TOKENS = 256;
+const MAX_FIREWORKS_GLM52_MAX_TOKENS = 16384;
+
+/**
+ * GLM's catalog entry is also the provider request ceiling OpenClaw uses.
+ * Keep it deliberately bounded: a typo must not silently turn a small canary
+ * into a 100k+ output request.
+ */
+function resolveFireworksGlm52MaxTokens(env = process.env) {
+  const raw = env.FIREWORKS_GLM52_MAX_TOKENS;
+  if (raw === undefined || raw === null || raw === '') {
+    return DEFAULT_FIREWORKS_GLM52_MAX_TOKENS;
+  }
+  const normalized = String(raw);
+  if (!/^\d+$/.test(normalized)) {
+    throw new Error('FIREWORKS_GLM52_MAX_TOKENS must be an integer');
+  }
+  const value = Number(normalized);
+  if (
+    !Number.isSafeInteger(value) ||
+    value < MIN_FIREWORKS_GLM52_MAX_TOKENS ||
+    value > MAX_FIREWORKS_GLM52_MAX_TOKENS
+  ) {
+    throw new Error(
+      `FIREWORKS_GLM52_MAX_TOKENS must be between ${MIN_FIREWORKS_GLM52_MAX_TOKENS} and ${MAX_FIREWORKS_GLM52_MAX_TOKENS}`,
+    );
+  }
+  return value;
+}
+
+/** UPSERT the output ceiling onto persisted OpenClaw volumes. */
+function applyFireworksGlm52MaxTokens(fireworksProvider, maxTokens) {
+  if (!fireworksProvider || !Array.isArray(fireworksProvider.models)) return false;
+  const model = fireworksProvider.models.find(
+    (candidate) => candidate && candidate.id === FIREWORKS_GLM52_MODEL_ID,
+  );
+  if (!model || typeof model !== 'object') return false;
+  if (model.maxTokens === maxTokens) return false;
+  model.maxTokens = maxTokens;
+  return true;
+}
 
 /**
  * Set `compat.unsupportedToolSchemaKeywords` on every model under the Fireworks
@@ -70,6 +113,7 @@ async function main() {
   // ONLY exists on the Next.js app (:3000), NOT the legacy mc-server.js (:18790).
   // Mirror contextPackUrl: env-overridable, default to the Next server. (SAN-333)
   const mcServerUrl = (process.env.MC_SERVER_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  const glm52MaxTokens = resolveFireworksGlm52MaxTokens(process.env);
 
   // --- Auth profiles ---
   // ANTHROPIC_AUTH_MODE selects how Anthropic inference authenticates:
@@ -177,10 +221,11 @@ async function main() {
   // as `fireworks/accounts/...`.
   const fireworksDefaultModels = [
     {
-      id: 'accounts/fireworks/models/glm-5p2',
+      id: FIREWORKS_GLM52_MODEL_ID,
       name: 'GLM 5.2',
       input: ['text'],
-      contextWindow: 1048576
+      contextWindow: 1048576,
+      maxTokens: glm52MaxTokens
     },
     {
       id: 'accounts/fireworks/models/kimi-k2p6',
@@ -214,6 +259,7 @@ async function main() {
   for (const model of fireworksDefaultModels) {
     if (!fireworksModelIds.has(model.id)) fireworksProvider.models.push(model);
   }
+  applyFireworksGlm52MaxTokens(fireworksProvider, glm52MaxTokens);
   // SAN-345: strip Fireworks-incompatible tool-schema keywords on ALL fireworks
   // models — UPSERTS onto pre-existing entries too (the loop above only seeds
   // new ids), so glm-5p2 already in a redeployed config gets the field.
@@ -445,5 +491,9 @@ if (require.main === module) {
 module.exports = {
   main,
   applyFireworksToolSchemaCompat,
+  applyFireworksGlm52MaxTokens,
+  resolveFireworksGlm52MaxTokens,
+  FIREWORKS_GLM52_MODEL_ID,
+  DEFAULT_FIREWORKS_GLM52_MAX_TOKENS,
   FIREWORKS_UNSUPPORTED_TOOL_SCHEMA_KEYWORDS,
 };

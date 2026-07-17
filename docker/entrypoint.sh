@@ -474,11 +474,19 @@ if changed:
 # the token profile. Static Kimi entries make the provider visible immediately,
 # while dynamic ids like fireworks/accounts/fireworks/models/gpt-oss-120b still
 # resolve at runtime through the provider plugin.
+export FIREWORKS_GLM52_MAX_TOKENS="${FIREWORKS_GLM52_MAX_TOKENS:-8192}"
+if ! [[ "$FIREWORKS_GLM52_MAX_TOKENS" =~ ^[0-9]+$ ]] || \
+   [ "$FIREWORKS_GLM52_MAX_TOKENS" -lt 256 ] || \
+   [ "$FIREWORKS_GLM52_MAX_TOKENS" -gt 16384 ]; then
+  echo "[entrypoint] ERROR: FIREWORKS_GLM52_MAX_TOKENS must be an integer between 256 and 16384"
+  exit 1
+fi
 python3 -c "
-import json
+import json, os
 f='$OPENCLAW_CONFIG'
 c=json.load(open(f))
 changed=False
+glm_max_tokens=int(os.environ['FIREWORKS_GLM52_MAX_TOKENS'])
 auth=c.setdefault('auth',{})
 profiles=auth.setdefault('profiles',{})
 if profiles.get('fireworks:default') != {'provider':'fireworks','mode':'token'}:
@@ -496,6 +504,7 @@ defaults=[
         'name':'GLM 5.2',
         'input':['text'],
         'contextWindow':1048576,
+        'maxTokens':glm_max_tokens,
     },
     {
         'id':'accounts/fireworks/models/kimi-k2p6',
@@ -527,6 +536,11 @@ for model in defaults:
     if model['id'] not in seen:
         p['models'].append(model)
         changed=True
+for model in p['models']:
+    if isinstance(model, dict) and model.get('id') == 'accounts/fireworks/models/glm-5p2':
+        if model.get('maxTokens') != glm_max_tokens:
+            model['maxTokens']=glm_max_tokens
+            changed=True
 for ref, alias in (
     ('fireworks/accounts/fireworks/models/glm-5p2', 'GLM 5.2'),
     ('fireworks/accounts/fireworks/routers/kimi-k2p5-turbo', 'Kimi K2.5 Turbo'),

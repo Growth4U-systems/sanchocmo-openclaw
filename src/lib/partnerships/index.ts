@@ -43,10 +43,16 @@ export type { QualifiedCandidate, QualifyOptions } from "./qualify-enrich";
 export { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
 
 export {
+  assertDiscoverySearchId,
+  assertDiscoveryStoreSlug,
+  advanceSearchExecutionGeneration,
   archiveSearch,
+  DiscoveryStoreValidationError,
   getSearch,
+  isValidDiscoverySearchId,
   isSearchArchived,
   listSearches,
+  listSearchIds,
   newSearchId,
   saveSearch,
   searchFile,
@@ -54,14 +60,28 @@ export {
   searchesDir,
   updateRunnerState,
 } from "./discovery-store";
+export type { DiscoveryStoreValidationCode } from "./discovery-store";
 
 export {
   createDiscoverySearch,
   DiscoveryCommandError,
+  isDiscoverySetupPending,
   DISCOVERY_RUNNER_SKILL,
   DISCOVERY_TASK_TYPE,
 } from "./create-search";
-export type { CreateSearchResult } from "./create-search";
+export type {
+  CreateDiscoverySearchResult,
+  CreateSearchResult,
+} from "./create-search";
+export {
+  getDiscoverySetupAdmissionStatus,
+  DiscoverySetupCommandError,
+} from "./discovery-setup-worker";
+export type {
+  DiscoverySetupPendingResult,
+  DiscoverySetupPublicStatus,
+} from "./discovery-setup-worker";
+export { isDiscoveryLedgerAuthoritative } from "./discovery-execution-policy";
 
 export {
   applyDiscoveryPlanGates,
@@ -77,6 +97,20 @@ export {
   resumeQueuedDiscoverySearches,
 } from "./discovery-jobs";
 export type { EnqueueDiscoverySearchRunOptions } from "./discovery-jobs";
+export {
+  DiscoveryDurableWorkerConfigurationError,
+  DiscoveryRetryConflictError,
+  getCanaryDiscoveryRuntimeReadiness,
+  getCanaryDiscoveryWorkerReadiness,
+  processNextCanaryDiscoveryRun,
+  processNextCanaryDiscoverySetupRun,
+  reconcileCanaryDiscoverySearches,
+  requestDiscoverySearchRun,
+  startCanaryDiscoveryWorkers,
+  stopCanaryDiscoveryWorkers,
+  wakeCanaryDiscoveryWorker,
+  wakeCanaryDiscoverySetupWorker,
+} from "./discovery-durable-worker";
 export {
   buildLiveDiscoveryQueries,
   scrapeLiveDiscoveryCandidates,

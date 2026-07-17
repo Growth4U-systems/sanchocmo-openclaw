@@ -13,8 +13,18 @@ process.env.MC_CHAT_SECRET = "runtime-secret";
 delete process.env.LOCAL_DASHBOARD_BYPASS;
 
 const clients = [
-  { slug: "alpha", name: "Alpha", active: true, mcToken: "alpha-token-1234567890" },
-  { slug: "beta", name: "Beta", active: true, mcToken: "beta-token-12345678901" },
+  {
+    slug: "alpha",
+    name: "Alpha",
+    active: true,
+    mcToken: "alpha-token-1234567890",
+  },
+  {
+    slug: "beta",
+    name: "Beta",
+    active: true,
+    mcToken: "beta-token-12345678901",
+  },
 ];
 fs.writeFileSync(
   path.join(tmp, "clients.json"),
@@ -41,7 +51,8 @@ const threadRoute = await import("../../pages/api/chat/thread/[threadId]");
 const threadsRoute = await import("../../pages/api/chat/threads/[slug]");
 const runsRoute = await import("../../pages/api/chat/runs");
 const docRoute = await import("../../pages/api/chat/doc/[...path]");
-const discordRoute = await import("../../pages/api/chat/find-by-discord/[discordId]");
+const discordRoute =
+  await import("../../pages/api/chat/find-by-discord/[discordId]");
 
 function context(partial: Partial<RequestContext>): RequestContext {
   return {
@@ -75,7 +86,10 @@ function response() {
   return { res, read: () => ({ statusCode, payload, headers }) };
 }
 
-function request(query: NextApiRequest["query"], ctx?: RequestContext): NextApiRequest {
+function request(
+  query: NextApiRequest["query"],
+  ctx?: RequestContext,
+): NextApiRequest {
   return {
     method: "GET",
     query,
@@ -90,11 +104,27 @@ test("chat read routes reject unauthenticated requests", async () => {
     entry: (req: NextApiRequest, res: NextApiResponse) => unknown;
     query: NextApiRequest["query"];
   }> = [
-    { name: "thread", entry: threadRoute.default, query: { threadId: "alpha:general" } },
+    {
+      name: "thread",
+      entry: threadRoute.default,
+      query: { threadId: "alpha:general" },
+    },
     { name: "threads", entry: threadsRoute.default, query: { slug: "alpha" } },
-    { name: "runs", entry: runsRoute.default, query: { threadId: "alpha:general" } },
-    { name: "doc", entry: docRoute.default, query: { path: ["alpha", "docs", "private.md"] } },
-    { name: "discord lookup", entry: discordRoute.default, query: { discordId: "discord-alpha" } },
+    {
+      name: "runs",
+      entry: runsRoute.default,
+      query: { threadId: "alpha:general" },
+    },
+    {
+      name: "doc",
+      entry: docRoute.default,
+      query: { path: ["alpha", "docs", "private.md"] },
+    },
+    {
+      name: "discord lookup",
+      entry: discordRoute.default,
+      query: { discordId: "discord-alpha" },
+    },
   ];
 
   for (const route of cases) {
@@ -111,17 +141,36 @@ test("explicit tenant chat routes reject cross-tenant reads", async () => {
     handler: (req: NextApiRequest, res: NextApiResponse) => unknown;
     query: NextApiRequest["query"];
   }> = [
-    { name: "thread", handler: threadRoute.threadHandler, query: { threadId: "beta:general" } },
-    { name: "threads", handler: threadsRoute.threadsHandler, query: { slug: "beta" } },
-    { name: "runs", handler: runsRoute.runsHandler, query: { threadId: "beta:general" } },
-    { name: "doc", handler: docRoute.chatDocHandler, query: { path: ["beta", "docs", "private.md"] } },
+    {
+      name: "thread",
+      handler: threadRoute.threadHandler,
+      query: { threadId: "beta:general" },
+    },
+    {
+      name: "threads",
+      handler: threadsRoute.threadsHandler,
+      query: { slug: "beta" },
+    },
+    {
+      name: "runs",
+      handler: runsRoute.runsHandler,
+      query: { threadId: "beta:general" },
+    },
+    {
+      name: "doc",
+      handler: docRoute.chatDocHandler,
+      query: { path: ["beta", "docs", "private.md"] },
+    },
   ];
 
   for (const route of cases) {
     const mocked = response();
     await route.handler(request(route.query, alpha), mocked.res);
     assert.equal(mocked.read().statusCode, 403, route.name);
-    assert.equal(JSON.stringify(mocked.read().payload).includes("beta-private"), false);
+    assert.equal(
+      JSON.stringify(mocked.read().payload).includes("beta-private"),
+      false,
+    );
   }
 });
 
@@ -134,7 +183,10 @@ test("Discord lookup searches only authorized tenants", async () => {
     own.res,
   );
   assert.equal(own.read().statusCode, 200);
-  assert.equal((own.read().payload as { threadId?: string }).threadId, "alpha:general");
+  assert.equal(
+    (own.read().payload as { threadId?: string }).threadId,
+    "alpha:general",
+  );
 
   const other = response();
   await discordRoute.findByDiscordHandler(
@@ -145,23 +197,18 @@ test("Discord lookup searches only authorized tenants", async () => {
   assert.equal(JSON.stringify(other.read().payload).includes("beta"), false);
 });
 
-test("trusted runtime reads remain available with the shared secret", async () => {
-  for (const route of [
-    {
-      entry: threadRoute.default,
-      query: { threadId: "alpha:general" },
-    },
-    {
-      entry: discordRoute.default,
-      query: { discordId: "discord-alpha" },
-    },
-  ]) {
-    const mocked = response();
-    const req = request(route.query);
-    req.headers["x-mc-secret"] = "runtime-secret";
-    await route.entry(req, mocked.res);
-    assert.equal(mocked.read().statusCode, 200);
-  }
+test("runtime thread reads fail closed without changing the legacy Discord lookup", async () => {
+  const thread = response();
+  const threadRequest = request({ threadId: "alpha:general" });
+  threadRequest.headers["x-mc-secret"] = "runtime-secret";
+  await threadRoute.default(threadRequest, thread.res);
+  assert.equal(thread.read().statusCode, 403);
+
+  const discord = response();
+  const discordRequest = request({ discordId: "discord-alpha" });
+  discordRequest.headers["x-mc-secret"] = "runtime-secret";
+  await discordRoute.default(discordRequest, discord.res);
+  assert.equal(discord.read().statusCode, 200);
 });
 
 test("thread and document routes reject path-shaped tenant identifiers", async () => {
@@ -192,16 +239,45 @@ test("run history rejects unbounded page sizes", async () => {
     mocked.res,
   );
   assert.equal(mocked.read().statusCode, 400);
-  assert.match(String((mocked.read().payload as { error?: string }).error), /limit/i);
+  assert.match(
+    String((mocked.read().payload as { error?: string }).error),
+    /limit/i,
+  );
 });
 
 test("an authorized caller can read its own thread and document", async () => {
   const alpha = context({ clientSlug: "alpha" });
 
   const thread = response();
-  await threadRoute.threadHandler(request({ threadId: "alpha:general" }, alpha), thread.res);
+  await threadRoute.threadHandler(
+    request({ threadId: "alpha:general" }, alpha),
+    thread.res,
+  );
   assert.equal(thread.read().statusCode, 200);
-  assert.equal(JSON.stringify(thread.read().payload).includes("alpha-private"), true);
+  assert.equal(
+    JSON.stringify(thread.read().payload).includes("alpha-private"),
+    true,
+  );
+  assert.deepEqual(
+    (
+      thread.read().payload as {
+        activeExecutions?: unknown[];
+        activeExecutionParentRunIds?: string[];
+        activeExecutionsParentRunId?: string | null;
+      }
+    ).activeExecutions,
+    [],
+  );
+  assert.deepEqual(
+    (thread.read().payload as { activeExecutionParentRunIds?: string[] })
+      .activeExecutionParentRunIds,
+    [],
+  );
+  assert.equal(
+    (thread.read().payload as { activeExecutionsParentRunId?: string | null })
+      .activeExecutionsParentRunId,
+    null,
+  );
 
   const doc = response();
   await docRoute.chatDocHandler(
@@ -209,7 +285,10 @@ test("an authorized caller can read its own thread and document", async () => {
     doc.res,
   );
   assert.equal(doc.read().statusCode, 200);
-  assert.equal((doc.read().payload as { content?: string }).content, "alpha-document");
+  assert.equal(
+    (doc.read().payload as { content?: string }).content,
+    "alpha-document",
+  );
 });
 
 after(() => {

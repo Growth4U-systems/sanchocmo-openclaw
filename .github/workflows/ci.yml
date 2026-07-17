@@ -12,6 +12,7 @@ concurrency:
 
 env:
   NODE_VERSION: '26'
+  PARTNERSHIPS_DISCOVERY_EFFECTS_V2: "off"
 
 jobs:
   verify:
@@ -42,6 +43,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create disposable integration databases
+        env:
+          ADMIN_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/growie_ci
+        run: |
+          node --input-type=module <<'NODE'
+          import postgres from "postgres";
+          const sql = postgres(process.env.ADMIN_DATABASE_URL, {
+            max: 1,
+            prepare: false,
+          });
+          await sql.unsafe("CREATE DATABASE san480_migration_ci");
+          await sql.unsafe("CREATE DATABASE san480_canary_preflight_ci");
+          await sql.unsafe("CREATE DATABASE san480_chat_send_ci");
+          await sql.unsafe("CREATE DATABASE san480_crash_matrix_ci");
+          await sql.end({ timeout: 5 });
+          NODE
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -55,6 +73,13 @@ jobs:
       - name: Lib tests
         env:
           AGENT_RUNS_TEST_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/growie_ci
+          EXECUTION_ORIGIN_CUTOVER_TEST_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/growie_ci
+          CHAT_AGENT_TURN_SEND_TEST_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/san480_chat_send_ci
+          PARTNERSHIPS_CRASH_MATRIX_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/san480_crash_matrix_ci
+          TRACKED_SQL_MIGRATION_TEST_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/san480_migration_ci
+          TRACKED_SQL_MIGRATION_TEST_ALLOW_DESTRUCTIVE: "1"
+          STAGING_CANARY_PREFLIGHT_TEST_DATABASE_URL: postgresql://growie_ci:growie_ci@127.0.0.1:5432/san480_canary_preflight_ci
+          STAGING_CANARY_PREFLIGHT_TEST_ALLOW_DESTRUCTIVE: "1"
         run: npm run test:lib
 
       # The Mission Control bridge is part of the same user-visible execution

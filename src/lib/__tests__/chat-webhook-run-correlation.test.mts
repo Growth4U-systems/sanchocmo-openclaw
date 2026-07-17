@@ -43,16 +43,47 @@ function mockResponse() {
   return { res, read: () => ({ statusCode, payload }) };
 }
 
+const callbackCapability = "c".repeat(64);
+
+function createCallbackRun(
+  input: Parameters<typeof agentRuns.createAgentRun>[0],
+) {
+  const persisted = input.input && typeof input.input === "object" && !Array.isArray(input.input)
+    ? input.input as Record<string, unknown>
+    : {};
+  const slug = input.threadId.slice(0, input.threadId.indexOf(":"));
+  return agentRuns.createAgentRun({
+    ...input,
+    runtime: "openclaw",
+    input: {
+      ...persisted,
+      slug,
+      threadId: input.threadId,
+      runtimeToolCapabilitySha256: createHash("sha256")
+        .update(callbackCapability)
+        .digest("hex"),
+    },
+  });
+}
+
+function callbackHeaders(runId: string) {
+  return {
+    "x-mc-secret": "callback-secret",
+    "x-mission-control-run-id": runId,
+    "x-sancho-run-capability": callbackCapability,
+  };
+}
+
 test("a late owner callback completes only its exact run and preserves the temporary run state", async () => {
   const threadId = "demo:task-p1-t1";
-  const owner = agentRuns.createAgentRun({
+  const owner = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "rocinante",
     input: { slug: "demo", userText: "owner", senderRole: "client" },
   });
   agentRuns.markAgentRunDispatched(owner.id, threadId);
-  const temporary = agentRuns.createAgentRun({
+  const temporary = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -72,7 +103,7 @@ test("a late owner callback completes only its exact run and preserves the tempo
 
   const req = {
     method: "POST",
-    headers: { "x-mc-secret": "callback-secret" },
+    headers: callbackHeaders(owner.id),
     body: {
       slug: "demo",
       threadId,
@@ -93,7 +124,7 @@ test("a late owner callback completes only its exact run and preserves the tempo
 });
 
 test("a callback run id cannot be replayed onto another thread", async () => {
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId: "demo:one",
     runtime: "external-http",
   });
@@ -101,7 +132,7 @@ test("a callback run id cannot be replayed onto another thread", async () => {
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body: {
         slug: "demo",
         threadId: "demo:two",
@@ -116,9 +147,41 @@ test("a callback run id cannot be replayed onto another thread", async () => {
   assert.equal(agentRuns.getAgentRunById(run.id)?.status, "queued");
 });
 
+test("a wrong callback capability fails before any thread mutation", async () => {
+  const threadId = "demo:wrong-callback-cap";
+  const run = createCallbackRun({
+    threadId,
+    runtime: "openclaw",
+    agent: "sancho",
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  const mocked = mockResponse();
+  await webhookHandler(
+    {
+      method: "POST",
+      headers: {
+        ...callbackHeaders(run.id),
+        "x-sancho-run-capability": "f".repeat(64),
+      },
+      body: {
+        slug: "demo",
+        threadId,
+        missionControlRunId: run.id,
+        text: "forged",
+        agent: "sancho",
+      },
+      query: {},
+    } as unknown as NextApiRequest,
+    mocked.res,
+  );
+  assert.equal(mocked.read().statusCode, 403);
+  assert.equal(chat.getThread(threadId).messages.length, 0);
+  assert.equal(agentRuns.getAgentRunById(run.id)?.status, "running");
+});
+
 test("a retried terminal callback is acknowledged without duplicating the visible reply", async () => {
   const threadId = "demo:idempotent";
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -127,7 +190,7 @@ test("a retried terminal callback is acknowledged without duplicating the visibl
   agentRuns.markAgentRunDispatched(run.id, threadId);
   const request = {
     method: "POST",
-    headers: { "x-mc-secret": "callback-secret" },
+    headers: callbackHeaders(run.id),
     body: {
       slug: "demo",
       threadId,
@@ -153,7 +216,7 @@ test("a retried terminal callback is acknowledged without duplicating the visibl
 
 test("a persisted callback claim on an active run is recovered after a crash", async () => {
   const threadId = "demo:crash-replay";
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -201,7 +264,7 @@ test("a persisted callback claim on an active run is recovered after a crash", a
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body,
       query: {},
     } as unknown as NextApiRequest,
@@ -219,16 +282,16 @@ test("a persisted callback claim on an active run is recovered after a crash", a
   );
 });
 
-test("an uncorrelated legacy callback is UI-only with multiple active runs", async () => {
+test("an uncorrelated legacy callback is rejected with multiple active runs", async () => {
   const threadId = "demo:legacy-ambiguous";
-  const owner = agentRuns.createAgentRun({
+  const owner = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "rocinante",
     input: { slug: "demo", userText: "old request" },
   });
   agentRuns.markAgentRunDispatched(owner.id, threadId);
-  const newer = agentRuns.createAgentRun({
+  const newer = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -252,20 +315,20 @@ test("an uncorrelated legacy callback is UI-only with multiple active runs", asy
     response.res,
   );
 
-  assert.equal(response.read().statusCode, 200);
+  assert.equal(response.read().statusCode, 403);
   assert.equal(agentRuns.getAgentRunById(owner.id)?.status, "running");
   assert.equal(agentRuns.getAgentRunById(newer.id)?.status, "running");
   assert.equal(
     chat
       .getThread(threadId)
       .messages.some((message) => message.text === "late owner result"),
-    true,
+    false,
   );
 });
 
-test("an uncorrelated legacy callback cannot terminalize the sole active run", async () => {
+test("an uncorrelated legacy callback is rejected for the sole active run", async () => {
   const threadId = "demo:legacy-single";
-  const active = agentRuns.createAgentRun({
+  const active = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -289,7 +352,7 @@ test("an uncorrelated legacy callback cannot terminalize the sole active run", a
     response.res,
   );
 
-  assert.equal(response.read().statusCode, 200);
+  assert.equal(response.read().statusCode, 403);
   assert.equal(agentRuns.getAgentRunById(active.id)?.status, "running");
   assert.deepEqual(
     agentRuns.listAgentRunEvents(active.id).map((event) => event.type),
@@ -299,13 +362,13 @@ test("an uncorrelated legacy callback cannot terminalize the sole active run", a
     chat
       .getThread(threadId)
       .messages.some((message) => message.text === "uncorrelated old result"),
-    true,
+    false,
   );
 });
 
 test("a run accepts only one terminal callback", async () => {
   const threadId = "demo:multipart";
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -317,7 +380,7 @@ test("a run accepts only one terminal callback", async () => {
     await webhookHandler(
       {
         method: "POST",
-        headers: { "x-mc-secret": "callback-secret" },
+        headers: callbackHeaders(run.id),
         body: {
           slug: "demo",
           threadId,
@@ -340,9 +403,47 @@ test("a run accepts only one terminal callback", async () => {
   );
 });
 
+test("concurrent terminal callbacks with different fingerprints produce one message", async () => {
+  const threadId = "demo:concurrent-terminal";
+  const run = createCallbackRun({
+    threadId,
+    runtime: "openclaw",
+    agent: "sancho",
+    input: { slug: "demo", userText: "explica" },
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  const send = async (text: string) => {
+    const mocked = mockResponse();
+    await webhookHandler(
+      {
+        method: "POST",
+        headers: callbackHeaders(run.id),
+        body: {
+          slug: "demo",
+          threadId,
+          missionControlRunId: run.id,
+          text,
+          agent: "sancho",
+        },
+        query: {},
+      } as unknown as NextApiRequest,
+      mocked.res,
+    );
+    return mocked.read();
+  };
+  const results = await Promise.all([send("Resultado A"), send("Resultado B")]);
+  assert.deepEqual(results.map((item) => item.statusCode), [200, 200]);
+  assert.equal(
+    results.filter((item) => item.payload.duplicate === true).length,
+    1,
+  );
+  assert.equal(chat.getThread(threadId).messages.length, 1);
+  assert.equal(agentRuns.getAgentRunById(run.id)?.status, "completed");
+});
+
 test("a callback correlated to a cancelled run never becomes a chat message", async () => {
   const threadId = "demo:cancelled";
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -355,7 +456,7 @@ test("a callback correlated to a cancelled run never becomes a chat message", as
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body: {
         slug: "demo",
         threadId,
@@ -395,7 +496,7 @@ test("successful webhook persists causal artifact readback only for a matching f
     "reports",
     "final.md",
   );
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -414,7 +515,7 @@ test("successful webhook persists causal artifact readback only for a matching f
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body: {
         slug: "demo",
         threadId,
@@ -447,7 +548,7 @@ test("successful webhook persists causal artifact readback only for a matching f
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body: {
         slug: "demo",
         threadId,
@@ -499,7 +600,7 @@ test("file_write intent cannot certify a pre-existing stale file", async () => {
   // A near-stale file used to pass via the former five-second tolerance.
   const old = new Date(Date.now() - 4_000);
   fs.utimesSync(output, old, old);
-  const run = agentRuns.createAgentRun({
+  const run = createCallbackRun({
     threadId,
     runtime: "external-http",
     agent: "sancho",
@@ -517,7 +618,7 @@ test("file_write intent cannot certify a pre-existing stale file", async () => {
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body: {
         slug: "demo",
         threadId,
@@ -535,7 +636,7 @@ test("file_write intent cannot certify a pre-existing stale file", async () => {
   await webhookHandler(
     {
       method: "POST",
-      headers: { "x-mc-secret": "callback-secret" },
+      headers: callbackHeaders(run.id),
       body: {
         slug: "demo",
         threadId,

@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "db:migrate:deploy": "node scripts/run-all-migrations.mjs $MIGRATION_GLOB"
+  }
+}

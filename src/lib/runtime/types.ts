@@ -1,12 +1,7 @@
 import type { GrowieThreadHistoryMessage } from "@/lib/support/growie";
 
 export type RuntimeCapability =
-  | "chat"
-  | "cron"
-  | "modelPicker"
-  | "agentRegistry"
-  | "discord"
-  | "slack";
+  "chat" | "cron" | "modelPicker" | "agentRegistry" | "discord" | "slack";
 
 export type RuntimeCapabilities = Record<RuntimeCapability, boolean>;
 
@@ -15,6 +10,14 @@ export interface InboundMessage {
   threadId: string;
   /** Mission Control ledger id echoed by every async runtime callback. */
   missionControlRunId?: string;
+  /**
+   * One-turn bearer capability for runtime-owned tools. Mission Control stores
+   * only its SHA-256 digest; runtimes must keep the raw value out of prompts,
+   * logs, environment variables and callbacks.
+   */
+  runtimeToolCapability?: string;
+  /** Original user text used only for server-side runtime envelope binding. */
+  runtimeAuthorityText?: string;
   /** Request-facing correlation id, also forwarded as X-Request-Id. */
   traceId?: string;
   /** W3C propagation header for runtimes with tracing support. */
@@ -126,7 +129,10 @@ export interface RuntimeJobEndedAt {
 }
 
 export interface RuntimeMessaging {
-  sendInbound(message: InboundMessage, opts?: SendInboundOptions): Promise<SendInboundResult>;
+  sendInbound(
+    message: InboundMessage,
+    opts?: SendInboundOptions,
+  ): Promise<SendInboundResult>;
   cancel(threadId: string, opts?: RuntimeCancelOptions): Promise<void>;
   getSharedSecret?(): string | undefined;
   createChannelThread?(input: unknown): Promise<unknown>;
@@ -156,8 +162,13 @@ export interface RuntimeControl {
   listAgents(): Promise<unknown[]>;
   listAgentsRich(): Promise<unknown[]>;
   getAgentEffectiveModel(agentId: string): Promise<string | null>;
-  getAgentModelAssignment(agentId: string): Promise<RuntimeModelAssignment | null>;
-  setAgentModel(agentId: string, model: RuntimeModelInput | null): Promise<{ updated: boolean }>;
+  getAgentModelAssignment(
+    agentId: string,
+  ): Promise<RuntimeModelAssignment | null>;
+  setAgentModel(
+    agentId: string,
+    model: RuntimeModelInput | null,
+  ): Promise<{ updated: boolean }>;
   hasAnthropicSubscriptionToken(): Promise<boolean>;
   hasAnthropicApiKey(): Promise<boolean>;
   setAnthropicAuthRoute(route: "subscription" | "api"): Promise<void>;

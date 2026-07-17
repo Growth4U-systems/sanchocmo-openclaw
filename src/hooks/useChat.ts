@@ -1,9 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useChatStore } from "@/stores/chat";
 import type { ThreadConfig } from "@/lib/chat-openers";
 import type { ThreadRouting } from "@/lib/runtime/agent-execution-policy";
 import { GROWIE_SUPPORT_THREAD_PREFIX } from "@/lib/support/growie";
+import type { ChatExternalExecutionSummary } from "@/lib/chat/external-execution-contract";
+import {
+  requestChatCancellationBatch,
+  type ChatCancellationBatchResult,
+} from "@/lib/chat/cancel-batch-client";
+import {
+  chatSendCommandFingerprint,
+  chatSendErrorFromPayload,
+  chatSendNetworkError,
+  clearAcceptedChatSendIntent,
+  resolveChatSendIntent,
+  type ChatSendIntent,
+} from "@/lib/chat-send-client";
 
 // ============================================================
 // Chat Hooks — TanStack Query integration for MC Chat system
@@ -120,10 +133,22 @@ export function useThreadMessages(threadId: string | null) {
     status: { text: string; agent?: string; ts: number } | null;
     pendingProgress?: ProgressEvent[];
     activeRun?: { id: string; status: "queued" | "running"; createdAt: string } | null;
+    activeExecutions: ChatExternalExecutionSummary[];
+    activeExecutionParentRunIds: string[];
+    /** Rolling-deploy fallback while older APIs expose only one parent. */
+    activeExecutionsParentRunId: string | null;
   }>({
     queryKey: ["chat", "thread", threadId],
     queryFn: async () => {
-      if (!threadId) return { messages: [], status: null };
+      if (!threadId) {
+        return {
+          messages: [],
+          status: null,
+          activeExecutions: [],
+          activeExecutionParentRunIds: [],
+          activeExecutionsParentRunId: null,
+        };
+      }
       const res = await fetch(`/api/chat/thread/${encodeURIComponent(threadId)}`);
       if (!res.ok) throw new Error("Failed to fetch thread");
       const data = await res.json();
@@ -207,30 +232,70 @@ export function useThreadList(slug: string | null) {
 export function useSendMessage() {
   const qc = useQueryClient();
   const { currentThread, threadMeta, setPolling } = useChatStore();
+  // A retry token is transport state, not UI state. Keeping it in a ref avoids
+  // rerenders while ensuring network/503 retries of the exact command reuse the
+  // server's idempotency claim. A changed command replaces this one intent.
+  const sendIntentRef = useRef<ChatSendIntent | null>(null);
 
   return useMutation({
-    mutationFn: async ({ text, threadId, attachments }: { text: string; threadId?: string; attachments?: { url: string; filename: string; mimeType: string; size: number }[] }) => {
+    mutationFn: async ({
+      text,
+      threadId,
+      attachments,
+    }: {
+      text: string;
+      threadId?: string;
+      attachments?: {
+        url: string;
+        filename: string;
+        mimeType: string;
+        size: number;
+      }[];
+    }) => {
       const tid = threadId || currentThread;
       if (!tid) throw new Error("No thread selected");
       const meta = threadMeta[tid] || {};
       const slug = tid.split(":")[0];
-      const idempotencyKey = globalThis.crypto.randomUUID();
+      const command = {
+        slug,
+        threadId: tid,
+        text,
+        userName: "Admin",
+        ...meta,
+        ...(attachments?.length ? { attachments } : {}),
+      };
+      const intent = resolveChatSendIntent(
+        sendIntentRef.current,
+        chatSendCommandFingerprint(command),
+        () => globalThis.crypto.randomUUID(),
+      );
+      sendIntentRef.current = intent;
 
-      const res = await fetch("/api/chat/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slug,
-          threadId: tid,
-          idempotencyKey,
-          text,
-          userName: "Admin",
-          ...meta,
-          ...(attachments?.length ? { attachments } : {}),
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to send message");
-      return res.json();
+      let res: Response;
+      try {
+        res = await fetch("/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...command,
+            idempotencyKey: intent.idempotencyKey,
+          }),
+        });
+      } catch (error) {
+        throw chatSendNetworkError(error);
+      }
+      if (!res.ok) {
+        const payload: unknown = await res.json().catch(() => null);
+        throw chatSendErrorFromPayload(payload, res.status);
+      }
+      // Any 2xx response is definitive admission, even if its response body is
+      // malformed. Rotate only this exact intent; a concurrent newer command
+      // must retain its own key.
+      sendIntentRef.current = clearAcceptedChatSendIntent(
+        sendIntentRef.current,
+        intent.idempotencyKey,
+      );
+      return res.json().catch(() => ({ ok: true, accepted: true }));
     },
     onSuccess: (_data, vars) => {
       const tid = vars.threadId || currentThread;
@@ -263,22 +328,40 @@ export function useCancelMessage() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ threadId, runId }: { threadId?: string; runId: string }) => {
+    mutationFn: async ({
+      threadId,
+      runIds,
+    }: {
+      threadId?: string;
+      runIds: string[];
+    }): Promise<ChatCancellationBatchResult> => {
       const tid = threadId || currentThread;
       if (!tid) throw new Error("No thread");
       const slug = tid.split(":")[0];
       const agent = threadMeta[tid]?.agent;
 
-      const res = await fetch("/api/chat/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, threadId: tid, runId, ...(agent ? { agent } : {}) }),
+      return requestChatCancellationBatch({
+        slug,
+        threadId: tid,
+        runIds,
+        ...(agent ? { agent } : {}),
       });
-      if (!res.ok) throw new Error("Failed to cancel");
-      return res.json();
     },
-    onSuccess: () => {
-      setPolling(false);
+    onSuccess: (data) => {
+      // A cooperative durable cancellation is not complete until the worker
+      // acknowledges its safe abort point. Keep observing it briefly instead
+      // of presenting a pending request as fully stopped.
+      if (data?.cancellationPending === true) {
+        setPolling(true);
+        setTimeout(() => setPolling(false), 30000);
+      } else {
+        setPolling(false);
+      }
+      qc.invalidateQueries({ queryKey: ["chat", "thread"] });
+    },
+    onError: () => {
+      // Some targets may already have accepted cancellation before another
+      // target failed. Always refresh instead of presenting stale work.
       qc.invalidateQueries({ queryKey: ["chat", "thread"] });
     },
   });

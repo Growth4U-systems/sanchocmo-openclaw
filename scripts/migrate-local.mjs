@@ -1,35 +1,30 @@
 // Apply the clean local baseline (src/db/migrations-local) to a vanilla
 // Postgres at boot. Used ONLY for the bundled local-db (and any other non-Neon
 // Postgres the user points DATABASE_URL at). Neon/managed deployments are
-// skipped — they keep the historical manual apply flow
-// (scripts/apply-sql-migration.mjs) and `MC_TASKS_BACKEND` semantics.
+// skipped here because their workflow invokes the same tracked execution
+// migration runner explicitly before application startup.
 //
 // Runs via drizzle-orm's programmatic migrator (runtime dep), so it does not
 // depend on drizzle-kit being present. Idempotent: Drizzle tracks applied
 // migrations in __drizzle_migrations, so re-runs (and version upgrades that add
 // migrations) are safe.
 //
-// Failure is non-fatal: it logs and exits 0 so the container still boots. DB
-// features degrade (surfaced by the setup checklist / preflight) instead of
-// taking the whole app down.
+// Failure is non-fatal for the local container bootstrap: it logs and exits 0
+// so the container still boots. The tracked runner itself remains fail-closed
+// (no blind baseline or partial migration), and DB features then surface as
+// unavailable through their normal setup/readiness checks.
 
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { executionControlMigrations } from "./lib/execution-control-migration-set.mjs";
+import { runTrackedSqlMigrations } from "./lib/tracked-sql-migrations.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // scripts/ -> repo root -> src/db/migrations-local (resolves regardless of cwd)
 const MIGRATIONS_FOLDER = path.resolve(__dirname, "../src/db/migrations-local");
-// Execution-control is also deployed to managed Postgres through the curated
-// migration runner. Apply that same idempotent SQL locally so both driver paths
-// expose the shadow Ledger without maintaining a second hand-copied schema.
-const EXECUTION_CONTROL_MIGRATIONS = [
-  "0019_execution_control.sql",
-  "0020_execution_tenant_scope.sql",
-].map((file) => path.resolve(__dirname, "../src/db/migrations", file));
-
 const log = (msg) => console.log(`[migrate-local] ${msg}`);
 
 // Plain-JS mirror of src/db/driver-select.ts. Kept in sync by hand — the TS
@@ -73,7 +68,9 @@ async function main() {
         return; // non-fatal
       }
       const waitMs = Math.min(2000, 250 * attempt);
-      log(`Postgres not ready (attempt ${attempt}): ${err.message} — retrying in ${waitMs}ms`);
+      log(
+        `Postgres not ready (attempt ${attempt}): ${err.message} — retrying in ${waitMs}ms`,
+      );
       await new Promise((r) => setTimeout(r, waitMs));
     }
   }
@@ -82,13 +79,17 @@ async function main() {
     const db = drizzle(sql);
     log(`Applying migrations from ${MIGRATIONS_FOLDER} …`);
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-    log("Applying additive execution-control migrations …");
-    for (const migration of EXECUTION_CONTROL_MIGRATIONS) {
-      await sql.file(migration);
-    }
+    log("Applying tracked execution-control migrations …");
+    await runTrackedSqlMigrations({
+      descriptors: executionControlMigrations,
+      client: sql,
+      logger: (message) => log(message),
+    });
     log("Migrations applied (schema up to date).");
   } catch (err) {
-    log(`Migration failed (non-fatal, DB features may be degraded): ${err.message}`);
+    log(
+      `Migration failed (non-fatal, DB features may be degraded): ${err.message}`,
+    );
   } finally {
     await sql.end({ timeout: 5 }).catch(() => {});
   }

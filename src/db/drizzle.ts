@@ -18,6 +18,7 @@ export type { Db };
 export const hasDatabase = Boolean(process.env.DATABASE_URL);
 
 let _db: Db | null = null;
+let _postgresClient: ReturnType<typeof postgres> | null = null;
 
 export function getDb(): Db {
   if (_db) return _db;
@@ -36,9 +37,29 @@ export function getDb(): Db {
     // postgres.js: single connection is plenty for the in-container app; the
     // client lazily opens on first query, mirroring neon-http's behavior. Cast
     // at this boundary to the historical type — see the `Db` note above.
-    _db = drizzlePostgres(postgres(url)) as unknown as Db;
+    _postgresClient = postgres(url);
+    _db = drizzlePostgres(_postgresClient) as unknown as Db;
   }
   return _db;
+}
+
+/**
+ * Release the lazy postgres-js client between integration tests.
+ *
+ * Application code intentionally keeps this singleton alive for the process
+ * lifetime. Tests that exercise the real local-Postgres path must close it
+ * explicitly or postgres-js's connection timer keeps the Node test process
+ * open after all assertions have completed.
+ */
+export async function closeDbForTests(): Promise<void> {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("closeDbForTests cannot run in production");
+  }
+
+  const client = _postgresClient;
+  _postgresClient = null;
+  _db = null;
+  await client?.end({ timeout: 5 });
 }
 
 // Lazy proxy: avoid crashing at import time when DATABASE_URL is unset.

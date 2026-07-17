@@ -4,6 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../src/db/drizzle";
 import { executionRuns } from "../src/db/schema";
 import { PostgresExecutionControlRepository } from "../src/lib/execution-control/postgres";
+import { EXECUTION_COMMAND_CONFLICT_CODE } from "../src/lib/execution-control/types";
 
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) {
@@ -22,7 +23,10 @@ async function main(): Promise<void> {
     idempotencyKey: `${smokeId}:attempt:1`,
     mode: "shadow" as const,
     input: { smokeId },
-    metadata: { source: "smoke-execution-control" },
+    metadata: {
+      source: "smoke-execution-control",
+      executionHandlerVersion: 1,
+    },
     now: createdAt,
   };
 
@@ -32,6 +36,38 @@ async function main(): Promise<void> {
   ]);
   assert.equal(receipts.filter((receipt) => receipt.created).length, 1);
   assert.equal(receipts[0].run.id, receipts[1].run.id);
+  assert.match(receipts[0].run.commandFingerprint ?? "", /^[a-f0-9]{64}$/);
+  const replay = await repository.createRun({
+    ...input,
+    traceId: "smoke-replay-trace",
+    now: new Date(createdAt.getTime() + 1_000),
+  });
+  assert.equal(replay.created, false);
+  assert.equal(replay.run.id, receipts[0].run.id);
+
+  async function assertCommandConflict(promise: Promise<unknown>) {
+    await assert.rejects(
+      promise,
+      (error: unknown) =>
+        error instanceof Error &&
+        (error as { code?: unknown }).code === EXECUTION_COMMAND_CONFLICT_CODE,
+    );
+  }
+  await assertCommandConflict(
+    repository.createRun({
+      ...input,
+      input: { smokeId, drift: true },
+    }),
+  );
+  await assertCommandConflict(
+    repository.createRun({ ...input, mode: "canary" }),
+  );
+  await assertCommandConflict(
+    repository.createRun({
+      ...input,
+      metadata: { ...input.metadata, executionHandlerVersion: 2 },
+    }),
+  );
 
   const crossTenant = await repository.createRun({
     ...input,
@@ -72,10 +108,15 @@ async function main(): Promise<void> {
     /did not persist or resolve an idempotent run/,
   );
   const beforeAdoption = await db
-    .select({ tenantKey: executionRuns.tenantKey })
+    .select({
+      tenantKey: executionRuns.tenantKey,
+      commandFingerprint: executionRuns.commandFingerprint,
+    })
     .from(executionRuns)
     .where(eq(executionRuns.id, legacyRunId));
-  assert.deepEqual(beforeAdoption, [{ tenantKey: null }]);
+  assert.deepEqual(beforeAdoption, [
+    { tenantKey: null, commandFingerprint: null },
+  ]);
 
   const adoptedReceipts = await Promise.all([
     repository.createRun(legacyInput),
@@ -87,10 +128,16 @@ async function main(): Promise<void> {
     adoptedReceipts.every((receipt) => receipt.run.tenantKey === "growth4u"),
   );
   const afterAdoption = await db
-    .select({ id: executionRuns.id, tenantKey: executionRuns.tenantKey })
+    .select({
+      id: executionRuns.id,
+      tenantKey: executionRuns.tenantKey,
+      commandFingerprint: executionRuns.commandFingerprint,
+    })
     .from(executionRuns)
     .where(eq(executionRuns.aggregateId, legacyAggregateId));
-  assert.deepEqual(afterAdoption, [{ id: legacyRunId, tenantKey: "growth4u" }]);
+  assert.equal(afterAdoption[0]?.id, legacyRunId);
+  assert.equal(afterAdoption[0]?.tenantKey, "growth4u");
+  assert.match(afterAdoption[0]?.commandFingerprint ?? "", /^[a-f0-9]{64}$/);
 
   await Promise.all(
     ["page-2", "page-3"].map((suffix) =>
@@ -194,6 +241,7 @@ async function main(): Promise<void> {
       ok: true,
       runId,
       idempotentCreate: true,
+      immutableCommandFingerprint: true,
       staleCasRejected: true,
       terminalRaceSingleWinner: true,
       tenantIsolation: true,

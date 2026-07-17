@@ -51,6 +51,26 @@ function plan(overrides: Partial<DiscoveryPlan> = {}): DiscoveryPlan {
   };
 }
 
+test("live discovery honors an already-aborted durable handler signal", async () => {
+  process.env.SCRAPECREATORS_API_KEY = "test-key";
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls += 1;
+    return json({ success: true, profiles: [] });
+  }) as typeof fetch;
+  const controller = new AbortController();
+  const reason = new Error("durable handler interrupted");
+  controller.abort(reason);
+
+  await assert.rejects(
+    live.scrapeLiveDiscoveryCandidates(plan(), {
+      signal: controller.signal,
+    }),
+    (error: unknown) => error === reason,
+  );
+  assert.equal(calls, 0);
+});
+
 test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y tolera fallos parciales", async () => {
   process.env.SCRAPECREATORS_API_KEY = "test-key";
   process.env.PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY = "5";
@@ -69,8 +89,16 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
         return json({
           success: true,
           profiles: [
-            { username: "clinica_a", full_name: "Clínica A", follower_count: 50_000 },
-            { username: "global_b", full_name: "Global B", follower_count: 60_000 },
+            {
+              username: "clinica_a",
+              full_name: "Clínica A",
+              follower_count: 50_000,
+            },
+            {
+              username: "global_b",
+              full_name: "Global B",
+              follower_count: 60_000,
+            },
             { username: "perfil_error", follower_count: 70_000 },
           ],
           cursor: "2",
@@ -81,7 +109,11 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
         success: true,
         profiles: [
           { username: "global_b", follower_count: 60_000 },
-          { username: "doctor_c", full_name: "Doctor C", follower_count: 80_000 },
+          {
+            username: "doctor_c",
+            full_name: "Doctor C",
+            follower_count: 80_000,
+          },
         ],
         // Cursor repetido: el runner debe cortar y no entrar en bucle.
         cursor: "2",
@@ -94,8 +126,20 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
         return json({
           success: true,
           posts: [
-            { owner: { username: "doctor_c", full_name: "Doctor C", follower_count: 80_000 } },
-            { owner: { username: "salud_d", full_name: "Salud D", follower_count: 90_000 } },
+            {
+              owner: {
+                username: "doctor_c",
+                full_name: "Doctor C",
+                follower_count: 80_000,
+              },
+            },
+            {
+              owner: {
+                username: "salud_d",
+                full_name: "Salud D",
+                follower_count: 90_000,
+              },
+            },
           ],
         });
       }
@@ -115,8 +159,10 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
             username: handle,
             full_name: handle,
             category_name: handle === "clinica_a" ? "Health/Beauty" : undefined,
-            external_url: handle === "clinica_a" ? "https://clinica-a.example" : undefined,
-            business_email: handle === "clinica_a" ? "hola@clinica-a.example" : undefined,
+            external_url:
+              handle === "clinica_a" ? "https://clinica-a.example" : undefined,
+            business_email:
+              handle === "clinica_a" ? "hola@clinica-a.example" : undefined,
             biography: spanish
               ? "Clínica de salud en España para tratamiento capilar con pacientes"
               : "Worldwide beauty creator and hair tips",
@@ -137,14 +183,20 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
             taken_at: 1_783_000_000,
             url: `https://www.instagram.com/p/${handle}-1/`,
             caption: {
-              text: handle === "global_b" ? "hair tips" : "tratamiento de salud para pacientes en España",
+              text:
+                handle === "global_b"
+                  ? "hair tips"
+                  : "tratamiento de salud para pacientes en España",
             },
           },
           {
             like_count: 900,
             comment_count: 40,
             taken_at: 1_782_395_200,
-            caption: handle === "global_b" ? "beauty worldwide" : "clínica capilar con médicos de España",
+            caption:
+              handle === "global_b"
+                ? "beauty worldwide"
+                : "clínica capilar con médicos de España",
           },
         ],
       });
@@ -154,13 +206,17 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
   }) as typeof fetch;
 
   const candidates = await live.scrapeLiveDiscoveryCandidates(plan());
-  assert.deepEqual(candidates.map((candidate) => candidate.handle), ["@clinica_a", "@global_b", "@doctor_c"]);
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.handle),
+    ["@clinica_a", "@global_b", "@doctor_c"],
+  );
   assert.equal(candidates.length, 3, "respeta targetVolume después de gates");
   assert.equal(candidates[0].email, "hola@clinica-a.example");
   assert.deepEqual(candidates[0].customVariables, {
     nombre_perfil: "clinica_a",
     categoria: "Health/Beauty",
-    biografia: "Clínica de salud en España para tratamiento capilar con pacientes",
+    biografia:
+      "Clínica de salud en España para tratamiento capilar con pacientes",
     enlace_bio: "https://clinica-a.example",
     email_publico: "hola@clinica-a.example",
     ultimo_post_texto: "tratamiento de salud para pacientes en España",
@@ -169,13 +225,37 @@ test("live discovery pagina con cursor, agrega sectores+hashtags, deduplica y to
   });
   assert.equal(candidates[0].signals?.fakeFollowersPct, undefined);
   assert.equal(candidates[0].signals?.suspiciousGrowthSpikes, undefined);
-  assert.equal(detailCalls.get("doctor_c"), 1, "deduplica el owner encontrado por query y hashtag");
-  assert.equal(detailCalls.get("perfil_error"), 2, "reintenta un 5xx sin abortar los demás perfiles");
-  assert.ok(urls.some((url) => url.includes("cursor=2")), "consume el cursor oficial");
-  assert.ok(urls.every((url) => !url.includes("page=")), "no usa el parámetro page obsoleto");
-  assert.ok(urls.every((url) => !url.includes("count=")), "no envía parámetros no documentados");
-  assert.ok(urls.some((url) => url.includes("search%2Fhashtag") || url.includes("search/hashtag")));
-  assert.ok(urls.every((url) => !/inteligencia|tecnologia|consultoria/i.test(url)));
+  assert.equal(
+    detailCalls.get("doctor_c"),
+    1,
+    "deduplica el owner encontrado por query y hashtag",
+  );
+  assert.equal(
+    detailCalls.get("perfil_error"),
+    2,
+    "reintenta un 5xx sin abortar los demás perfiles",
+  );
+  assert.ok(
+    urls.some((url) => url.includes("cursor=2")),
+    "consume el cursor oficial",
+  );
+  assert.ok(
+    urls.every((url) => !url.includes("page=")),
+    "no usa el parámetro page obsoleto",
+  );
+  assert.ok(
+    urls.every((url) => !url.includes("count=")),
+    "no envía parámetros no documentados",
+  );
+  assert.ok(
+    urls.some(
+      (url) =>
+        url.includes("search%2Fhashtag") || url.includes("search/hashtag"),
+    ),
+  );
+  assert.ok(
+    urls.every((url) => !/inteligencia|tecnologia|consultoria/i.test(url)),
+  );
 });
 
 test("targetVolume no está fijado en 50 y el cap operativo sigue siendo configurable", async () => {
@@ -194,22 +274,32 @@ test("targetVolume no está fijado en 50 y el cap operativo sigue siendo configu
         ],
       });
     }
-    if (url.pathname === "/v1/instagram/search/hashtag") return json({ success: true, posts: [] });
+    if (url.pathname === "/v1/instagram/search/hashtag")
+      return json({ success: true, posts: [] });
     if (url.pathname === "/v1/instagram/profile") {
       const handle = url.searchParams.get("handle");
       return json({
         success: true,
-        data: { user: { username: handle, biography: "contenido", edge_followed_by: { count: 50_000 } } },
+        data: {
+          user: {
+            username: handle,
+            biography: "contenido",
+            edge_followed_by: { count: 50_000 },
+          },
+        },
       });
     }
-    if (url.pathname === "/v2/instagram/user/posts") return json({ success: true, items: [] });
+    if (url.pathname === "/v2/instagram/user/posts")
+      return json({ success: true, items: [] });
     return json({}, 404);
   }) as typeof fetch;
 
-  const candidates = await live.scrapeLiveDiscoveryCandidates(plan({
-    audienceEsMinPct: undefined,
-    targetVolume: 137,
-  }));
+  const candidates = await live.scrapeLiveDiscoveryCandidates(
+    plan({
+      audienceEsMinPct: undefined,
+      targetVolume: 137,
+    }),
+  );
   assert.equal(candidates.length, 2);
 });
 
@@ -225,22 +315,28 @@ test("targetVolume puede devolver más de diez perfiles", async () => {
     if (url.pathname === "/v1/instagram/search/profiles") {
       return json({ success: true, profiles });
     }
-    if (url.pathname === "/v1/instagram/search/hashtag") return json({ success: true, posts: [] });
+    if (url.pathname === "/v1/instagram/search/hashtag")
+      return json({ success: true, posts: [] });
     if (url.pathname === "/v1/instagram/profile") {
       const handle = url.searchParams.get("handle");
       return json({
         success: true,
-        data: { user: { username: handle, edge_followed_by: { count: 50_000 } } },
+        data: {
+          user: { username: handle, edge_followed_by: { count: 50_000 } },
+        },
       });
     }
-    if (url.pathname === "/v2/instagram/user/posts") return json({ success: true, items: [] });
+    if (url.pathname === "/v2/instagram/user/posts")
+      return json({ success: true, items: [] });
     return json({}, 404);
   }) as typeof fetch;
 
-  const candidates = await live.scrapeLiveDiscoveryCandidates(plan({
-    audienceEsMinPct: undefined,
-    targetVolume: 12,
-  }));
+  const candidates = await live.scrapeLiveDiscoveryCandidates(
+    plan({
+      audienceEsMinPct: undefined,
+      targetVolume: 12,
+    }),
+  );
   assert.equal(candidates.length, 12);
 });
 
@@ -257,30 +353,41 @@ test("audienceEsMinPct aplica el hard gate CET con timestamps reales", async () 
         ],
       });
     }
-    if (url.pathname === "/v1/instagram/search/hashtag") return json({ success: true, posts: [] });
+    if (url.pathname === "/v1/instagram/search/hashtag")
+      return json({ success: true, posts: [] });
     if (url.pathname === "/v1/instagram/profile") {
       const handle = url.searchParams.get("handle");
       return json({
         success: true,
-        data: { user: { username: handle, edge_followed_by: { count: 50_000 } } },
+        data: {
+          user: { username: handle, edge_followed_by: { count: 50_000 } },
+        },
       });
     }
     if (url.pathname === "/v2/instagram/user/posts") {
       const handle = url.searchParams.get("handle");
       return json({
         success: true,
-        items: [{
-          taken_at: handle === "horario_cet"
-            ? "2026-07-01T10:00:00+02:00"
-            : "2026-07-01T03:00:00+02:00",
-        }],
+        items: [
+          {
+            taken_at:
+              handle === "horario_cet"
+                ? "2026-07-01T10:00:00+02:00"
+                : "2026-07-01T03:00:00+02:00",
+          },
+        ],
       });
     }
     return json({}, 404);
   }) as typeof fetch;
 
-  const candidates = await live.scrapeLiveDiscoveryCandidates(plan({ targetVolume: 2 }));
-  assert.deepEqual(candidates.map((candidate) => candidate.handle), ["@horario_cet"]);
+  const candidates = await live.scrapeLiveDiscoveryCandidates(
+    plan({ targetVolume: 2 }),
+  );
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.handle),
+    ["@horario_cet"],
+  );
   assert.equal(candidates[0].signals?.cetAlignmentPct, 100);
 });
 
@@ -288,8 +395,14 @@ test("live server-side rechaza planes mixtos en vez de ignorar redes", async () 
   process.env.SCRAPECREATORS_API_KEY = "test-key";
   const mixed = plan({ networks: ["instagram", "tiktok", "youtube"] });
   assert.equal(live.supportsLiveDiscovery(mixed), false);
-  assert.deepEqual(live.unsupportedLiveDiscoveryNetworks(mixed), ["tiktok", "youtube"]);
-  await assert.rejects(() => live.scrapeLiveDiscoveryCandidates(mixed), /solo soporta Instagram/);
+  assert.deepEqual(live.unsupportedLiveDiscoveryNetworks(mixed), [
+    "tiktok",
+    "youtube",
+  ]);
+  await assert.rejects(
+    () => live.scrapeLiveDiscoveryCandidates(mixed),
+    /solo soporta Instagram/,
+  );
 });
 
 test("buildLiveDiscoveryQueries solo usa el nicho del plan", () => {

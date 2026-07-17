@@ -9,15 +9,21 @@ import { yalcErrorResponse } from "@/lib/yalc/client";
 import {
   createDiscoverySearch,
   DiscoveryCommandError,
+  DiscoverySetupCommandError,
   DiscoveryPlanError,
   enqueueDiscoverySearchRun,
   listSearches,
+  isDiscoverySetupPending,
   resumeQueuedDiscoverySearches,
   runDiscoverySearch,
   supportsLiveDiscovery,
   triggerDiscoveryRunner,
   updateRunnerState,
 } from "@/lib/partnerships";
+import {
+  isDiscoveryLedgerAuthoritative,
+  resolveDiscoveryExecutionPolicy,
+} from "@/lib/partnerships/discovery-execution-policy";
 import {
   observeDiscoveryExecutionDispatch,
   observeDiscoveryExecutionEvent,
@@ -47,7 +53,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!slug) return res.status(400).json({ error: "Missing slug" });
 
   if (req.method === "GET") {
-    const resumed = await resumeQueuedDiscoverySearches(slug);
+    const executionPolicy = resolveDiscoveryExecutionPolicy(slug);
+    // Reads never start product work while the Ledger is authoritative. The
+    // startup poller/replay repair owns recovery in canary mode.
+    const resumed =
+      executionPolicy.enabled && executionPolicy.mode === "canary"
+        ? []
+        : await resumeQueuedDiscoverySearches(slug);
     const statusFilter =
       typeof req.query.status === "string" ? req.query.status.trim() : "";
     const includeArchived =
@@ -74,9 +86,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     threadId?: unknown;
     commandId?: unknown;
   };
-  const allowedRuns = new Set<unknown>([undefined, true, false, "fixtures", "none", "live", "agent"]);
+  const allowedRuns = new Set<unknown>([
+    undefined,
+    true,
+    false,
+    "fixtures",
+    "none",
+    "live",
+    "agent",
+  ]);
   if (!allowedRuns.has(body.run)) {
-    return res.status(400).json({ error: "run must be live, agent, fixtures or none" });
+    return res
+      .status(400)
+      .json({ error: "run must be live, agent, fixtures or none" });
   }
   const executionIntent =
     body.run === true || body.run === "fixtures"
@@ -88,6 +110,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           : body.run === "agent"
             ? "agent"
             : "auto";
+  const executionPolicy = resolveDiscoveryExecutionPolicy(slug);
+  const headerCommandId = Array.isArray(req.headers["idempotency-key"])
+    ? req.headers["idempotency-key"][0]
+    : req.headers["idempotency-key"];
+  const commandId =
+    typeof body.commandId === "string" && body.commandId.trim()
+      ? body.commandId
+      : typeof headerCommandId === "string" && headerCommandId.trim()
+        ? headerCommandId
+        : null;
+  if (
+    executionPolicy.enabled &&
+    executionPolicy.mode === "canary" &&
+    !commandId
+  ) {
+    return res.status(400).json({
+      error:
+        "commandId (o Idempotency-Key) es obligatorio para crear una búsqueda durable.",
+      code: "DISCOVERY_COMMAND_ID_REQUIRED",
+    });
+  }
   try {
     const created = await createDiscoverySearch({
       slug,
@@ -95,9 +138,43 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       // SAN-328: el hilo MC Chat donde la skill construyó el plan, para que la
       // tarjeta de Encuentra reabra esa misma sesión en vez de un hilo nuevo.
       threadId: typeof body.threadId === "string" ? body.threadId : null,
-      commandId: typeof body.commandId === "string" ? body.commandId : null,
+      commandId,
       executionIntent,
     });
+
+    if (isDiscoverySetupPending(created)) {
+      return res.status(202).json({
+        ok: true,
+        accepted: true,
+        ready: false,
+        replayed: created.replayed,
+        setupRunId: created.setupRunId,
+        searchId: created.searchId,
+        status: created.status,
+        statusUrl: created.statusUrl,
+      });
+    }
+
+    if (
+      isDiscoveryLedgerAuthoritative(created.search) ||
+      (executionPolicy.enabled && executionPolicy.mode === "canary")
+    ) {
+      return res.status(created.replayed ? 200 : 201).json({
+        ok: true,
+        replayed: created.replayed,
+        search: created.search,
+        campaignId: created.campaignId,
+        taskId: created.taskId,
+        runner: {
+          mode: "durable",
+          async: executionIntent !== "none",
+          status:
+            executionIntent === "none"
+              ? "waiting_approval"
+              : created.search.runner.status,
+        },
+      });
+    }
 
     // A retried create command is a read of the original receipt. Never
     // enqueue, dispatch or run the same search a second time.
@@ -201,8 +278,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       },
     });
   } catch (err) {
+    if (err instanceof DiscoverySetupCommandError) {
+      return res.status(err.status).json({
+        error: err.message,
+        code: err.code,
+      });
+    }
     if (err instanceof DiscoveryCommandError) {
-      return res.status(err.status).json({ error: err.message, code: "DISCOVERY_COMMAND_CONFLICT" });
+      return res.status(err.status).json({
+        error: err.message,
+        code: err.code,
+      });
     }
     if (err instanceof DiscoveryPlanError) {
       return res.status(400).json({ error: err.message });
