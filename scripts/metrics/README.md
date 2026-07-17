@@ -14,8 +14,9 @@ DATABASE_URL=... npm run compute:metric-kpis -- --slug growth4u --dashboard-rang
 
 Flags: `--slug <slug[,slug]>` or `--all`, `--from` / `--to` (YYYY-MM-DD,
 defaults to the last 30 UTC days), `--dashboard-ranges` (runs `1d`, `7d`,
-`30d`, `90d` ending today), `--as-of YYYY-MM-DD` (pin the dashboard range end
-date), `--force`, `--trigger`, `--json`, `--definition-version`.
+`30d`, `90d` ending on the last complete UTC day — yesterday by default),
+`--as-of YYYY-MM-DD` (pin the dashboard range end date), `--force`, `--trigger`,
+`--json`, `--definition-version`.
 
 The runner writes `metric_kpi_runs` and `metric_kpi_values` through
 `computeMetricKpis(slug, range)`. It is safe for cron retries at the basic
@@ -48,6 +49,65 @@ DATABASE_URL=... npm run backfill:metrics
 Re-mirrors every `brand/<slug>/metrics/<date>.json` into `metric_snapshots`.
 Idempotent (upserts), and runs with delete-stale **off**, so replaying an old
 partial file never removes rows a newer file already corrected.
+
+This command imports legacy JSON for every local tenant; it does **not** call
+provider APIs. Do not use it as the post-deploy provider repair unless those
+files and their provenance have been audited explicitly.
+
+## Provider API repair after deploy
+
+Run inside the application container after the curated migrations have been
+applied. Pin one tenant and exact UTC provider days; never use `--all` with an
+explicit historical range. `TO` is the last complete day (normally yesterday),
+while GSC must stop at its separately verified D-3 availability day.
+
+```bash
+export SLUG=growth4u
+export FROM=2026-04-18
+export TO=2026-07-16
+export GSC_TO=2026-07-14
+
+cd /root/.openclaw/skills/metrics-collector/scripts
+
+for source in ga4 google-ads instantly lemlist sheets yalc; do
+  node collect.js --slug "$SLUG" --source "$source" \
+    --from "$FROM" --to "$TO" --replace --no-recompute-kpis
+done
+
+node collect.js --slug "$SLUG" --source gsc \
+  --from "$FROM" --to "$GSC_TO" --replace --no-recompute-kpis
+
+for source in meta-ads ghl posthog; do
+  while IFS= read -r day; do
+    node collect.js --slug "$SLUG" --source "$source" \
+      --from "$day" --to "$day" --replace --no-recompute-kpis
+  done < <(node -e '
+    for (let day = Date.parse(process.env.FROM + "T00:00:00Z"), end = Date.parse(process.env.TO + "T00:00:00Z"); day <= end; day += 86400000) console.log(new Date(day).toISOString().slice(0, 10));
+  ')
+done
+
+# One final routine pull supplies current-only snapshots once (GHL totals and
+# pipeline, Lemlist active-campaign count, Metricool followers, PageSpeed) and
+# converges the latest complete provider day.
+node collect.js --slug "$SLUG" --all --no-recompute-kpis
+
+cd /app/mc-nextjs
+npm run compute:metric-kpis -- \
+  --slug "$SLUG" --dashboard-ranges --force --trigger post-deploy-backfill
+```
+
+Safety notes:
+
+- GA4 accepts at most 92 days per invocation; split longer repairs.
+- Meta Ads, GHL and PostHog are intentionally day-by-day.
+- Metricool historical repair is blocked: its posts endpoint returns current
+  cumulative counters for posts created in the period, not activity in the
+  period. It is collected only by the final routine pull until a period timeline
+  adapter is validated.
+- PageSpeed is point-in-time and is collected only once in that final pull.
+- A multi-day Sheets repair requires a valid `Date` value on every data row.
+- `--no-recompute-kpis` avoids four dashboard recomputations plus one ingest
+  window per source/day; the final command recomputes exactly `1d/7d/30d/90d`.
 
 ## Ad-hoc analysis with DuckDB (read-only attach)
 
@@ -105,9 +165,11 @@ Flags: `--slug <slug|all>` (default `all`), `--from` / `--to` (YYYY-MM-DD),
 MC_WORKSPACE=workspace-sancho DATABASE_URL=... npm run collect:lemlist -- --slug growth4u
 ```
 
-Reads `brand/<slug>/.env` for `<SLUG>_LEMLIST_API_KEY`, pulls all non-draft,
-non-archived campaigns from Lemlist, calls the batch campaign-stats endpoint for
-one UTC day, and writes source `lemlist` rows into `metric_snapshots`.
+Reads `brand/<slug>/.env` for `<SLUG>_LEMLIST_API_KEY`, pulls every non-draft
+campaign from Lemlist (including archived campaigns that can own real activity),
+calls the batch campaign-stats endpoint for the last complete UTC day, and writes
+source `lemlist` rows into `metric_snapshots`. Current active-campaign stock is
+emitted only by a routine unfiltered run, never by an explicit historical date.
 
 Useful flags:
 

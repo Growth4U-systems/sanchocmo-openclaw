@@ -20,18 +20,22 @@ function scheduleId(slug: string, source: string): string {
   return `mcs_${stableId(slug, source)}`;
 }
 
-/** Sources known for a slug: those with snapshot data ∪ stored overrides. */
+/** Sources known for a slug: snapshot data ∪ stored overrides ∪ collection runs.
+ * Including run-only sources is essential: a provider whose first attempt
+ * failed has no snapshot yet, but its error must still appear in health. */
 export async function listScheduleSources(slug: string): Promise<string[]> {
   if (!hasDatabase) return [];
   await ensureMetricsStorage();
   const database = getDb();
-  const [snapSources, schedRows] = await Promise.all([
+  const [snapSources, schedRows, runSources] = await Promise.all([
     database.selectDistinct({ source: metricSnapshots.source }).from(metricSnapshots).where(eq(metricSnapshots.slug, slug)),
     database.select({ source: metricCollectionSchedule.source }).from(metricCollectionSchedule).where(eq(metricCollectionSchedule.slug, slug)),
+    database.selectDistinct({ source: metricSourceRuns.source }).from(metricSourceRuns).where(eq(metricSourceRuns.slug, slug)),
   ]);
   const set = new Set<string>();
   for (const row of snapSources) set.add(row.source);
   for (const row of schedRows) set.add(row.source);
+  for (const row of runSources) set.add(row.source);
   return [...set].sort();
 }
 
@@ -119,6 +123,24 @@ export interface SourceRun {
   error: string | null;
 }
 
+export function selectLatestSourceRunRows<
+  T extends { source: string; metricDate: string; collectedAt: Date | string | null },
+>(rows: T[]): T[] {
+  const sorted = [...rows].sort((left, right) => {
+    const byDate = String(right.metricDate).localeCompare(String(left.metricDate));
+    if (byDate) return byDate;
+    const leftCollected = left.collectedAt ? new Date(left.collectedAt).getTime() : 0;
+    const rightCollected = right.collectedAt ? new Date(right.collectedAt).getTime() : 0;
+    return rightCollected - leftCollected;
+  });
+  const seen = new Set<string>();
+  return sorted.filter((row) => {
+    if (seen.has(row.source)) return false;
+    seen.add(row.source);
+    return true;
+  });
+}
+
 /** Latest collection-ledger row per source for a slug (for health/monitoring). */
 export async function getLatestSourceRuns(slug: string): Promise<SourceRun[]> {
   if (!hasDatabase) return [];
@@ -136,13 +158,15 @@ export async function getLatestSourceRuns(slug: string): Promise<SourceRun[]> {
       error: metricSourceRuns.error,
     })
     .from(metricSourceRuns)
-    .where(eq(metricSourceRuns.slug, slug))
-    .orderBy(desc(metricSourceRuns.metricDate));
-  const seen = new Set<string>();
+    // Health is about the execution, not historical provider dates attempted by
+    // a backfill. Provider evidence is consumed by range-scoped readers.
+    .where(and(
+      eq(metricSourceRuns.slug, slug),
+      eq(metricSourceRuns.dateBasis, "collection"),
+    ))
+    .orderBy(desc(metricSourceRuns.metricDate), desc(metricSourceRuns.collectedAt));
   const out: SourceRun[] = [];
-  for (const row of rows) {
-    if (seen.has(row.source)) continue;
-    seen.add(row.source);
+  for (const row of selectLatestSourceRunRows(rows)) {
     out.push({
       source: row.source,
       metricDate: String(row.metricDate),

@@ -42,7 +42,7 @@
     "db:migrate:execution-control": "node scripts/run-execution-control-migrations.mjs",
     "db:migrate:execution-control:check": "node scripts/run-execution-control-migrations.mjs --dry-run",
     "db:migrate:execution-control:adopt": "node scripts/run-execution-control-migrations.mjs --adopt",
-    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql src/db/migrations/0008_comments_v2.sql src/db/migrations/0011_metric_snapshots.sql src/db/migrations/0012_metric_dashboards.sql src/db/migrations/0013_intelligence_engine.sql src/db/migrations/0014_metric_schedule_runs.sql src/db/migrations/0015_metric_semantic_layer.sql src/db/migrations/0017_task_route_proposals.sql",
+    "db:migrate:deploy": "node scripts/apply-sql-migration.mjs src/db/migrations/0006_mcp_audit_events.sql src/db/migrations/0007_feedback_insights.sql src/db/migrations/0008_comments_v2.sql src/db/migrations/0011_metric_snapshots.sql src/db/migrations/0012_metric_dashboards.sql src/db/migrations/0013_intelligence_engine.sql src/db/migrations/0014_metric_schedule_runs.sql src/db/migrations/0015_metric_semantic_layer.sql src/db/migrations/0016_metric_stage_rollups.sql src/db/migrations/0017_task_route_proposals.sql src/db/migrations/0034_metric_source_run_date_basis.sql",
     "db:verify": "tsx scripts/verify-migration.ts",
     "backfill:metrics": "tsx scripts/metrics/backfill-metric-snapshots.ts",
     "seed:paid-ads": "tsx scripts/metrics/seed-paid-ads.ts",

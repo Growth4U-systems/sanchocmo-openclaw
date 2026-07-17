@@ -24,7 +24,7 @@ const day = (date: string, mul: number): DiscoverabilityEntry => ({
     ga4: { status: "ok", metrics: [
       { name: "sessions", value: 400 },
       { name: "conversions", value: 5 },
-      { name: "engagementRate", value: 57 },
+      { name: "engagementRate", value: 0.57 },
       { name: "topPage", value: 200, dimensions: { page: "/", conversions: 3 } },
     ] },
     pagespeed: { status: "ok", metrics: [
@@ -50,6 +50,7 @@ test("buildDiscoverabilityData: SEO — sums clicks, builds queries with a posit
   assert.ok(d.seo, "seo present");
   assert.equal(d.seo!.kpis[0].label, "Clicks");
   assert.equal(d.seo!.kpis[0].value, "200"); // 100 + 100
+  assert.equal(d.seo!.kpis.find((kpi) => kpi.label === "Engagement")?.value, "57%");
   const q = d.seo!.queries[0];
   assert.equal(q.query, "injerto");
   assert.equal(q.clicks, 40); // 20 + 20
@@ -68,4 +69,28 @@ test("buildDiscoverabilityData: AI — KPIs + competitors with the primary flagg
 
 test("buildDiscoverabilityData: no entries → empty (surface shows its empty state)", () => {
   assert.deepEqual(buildDiscoverabilityData([]), {});
+});
+
+test("buildDiscoverabilityData: missing lab INP never reports Lighthouse thresholds as complete", () => {
+  const data = buildDiscoverabilityData([
+    {
+      date: "2026-06-01",
+      sources: {
+        ga4: { status: "ok", metrics: [{ name: "sessions", value: 10 }] },
+        pagespeed: {
+          status: "ok",
+          metrics: [
+            { name: "performance_mobile", value: 90 },
+            { name: "lcp_mobile", value: 2.1 },
+            { name: "cls_mobile", value: 0.06 },
+            { name: "tbt_mobile", value: 120 },
+          ],
+        },
+      },
+    },
+  ]);
+
+  const cwvKpi = data.seo?.kpis.find((kpi) => kpi.label === "Lighthouse lab");
+  assert.equal(cwvKpi?.value, "Sin datos");
+  assert.deepEqual(data.seo?.health.cwv, { lcp: 2.1, cls: 0.06, inp: null });
 });

@@ -6,10 +6,19 @@ import {
   type MetricKpiRunLookupOptions,
   type MetricKpiRunRow,
 } from "@/lib/data/metric-kpis";
+import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
+import type { CustomMetric } from "@/lib/metrics/dashboard-schema";
+import { composeMetricKpiDefinitionVersion } from "@/lib/metrics/kpi-definition-version";
 import { METRIC_KPI_DEFINITION_VERSION } from "@/lib/metrics/semantic-kpis";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DEFAULT_RUNNING_TTL_MS = 30 * 60 * 1000;
+
+function isCalendarDate(value: string): boolean {
+  if (!DATE_RE.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
 
 export type MetricKpiRunnerSkipReason =
   | "already-computed"
@@ -26,6 +35,8 @@ export interface RunMetricKpisInput {
   range?: MetricKpiRunnerRangeInput | null;
   trigger?: string;
   force?: boolean;
+  /** Optional semantic-catalogue component. The active dashboard version is
+   * always packed into the persisted effective version separately. */
   definitionVersion?: number;
   runningTtlMs?: number;
   now?: Date;
@@ -53,6 +64,9 @@ export type ComputeMetricKpisFn = (
     to: string;
     trigger: string;
     definitionVersion: number;
+    dashboardVersion: number;
+    customMetrics: CustomMetric[];
+    observationAsOf: string;
   },
 ) => Promise<ComputeMetricKpisResult>;
 
@@ -64,6 +78,7 @@ export type FindMetricKpiRunFn = (
 export interface RunMetricKpisDeps {
   compute?: ComputeMetricKpisFn;
   findRun?: FindMetricKpiRunFn;
+  getDashboard?: typeof getDashboardDefinition;
   now?: () => Date;
 }
 
@@ -75,10 +90,10 @@ export function resolveMetricKpiRunnerRange(
   const from = range?.from?.trim() || fallback.from;
   const to = range?.to?.trim() || fallback.to;
 
-  if (!DATE_RE.test(from)) {
+  if (!isCalendarDate(from)) {
     throw new Error(`Invalid metric KPI range.from: ${from}`);
   }
-  if (!DATE_RE.test(to)) {
+  if (!isCalendarDate(to)) {
     throw new Error(`Invalid metric KPI range.to: ${to}`);
   }
   if (from > to) {
@@ -137,8 +152,16 @@ export async function runMetricKpis(
 
   const trigger = input.trigger?.trim() || "manual";
   const force = input.force === true;
-  const definitionVersion =
+  const semanticDefinitionVersion =
     input.definitionVersion ?? METRIC_KPI_DEFINITION_VERSION;
+  const getDashboard = deps.getDashboard ?? getDashboardDefinition;
+  const dashboard = await getDashboard(slug);
+  const dashboardVersion = dashboard.version;
+  const customMetrics = dashboard.definition?.customMetrics ?? [];
+  const definitionVersion = composeMetricKpiDefinitionVersion(
+    semanticDefinitionVersion,
+    dashboardVersion,
+  );
   const range = resolveMetricKpiRunnerRange(input.range, now);
   const findRun = deps.findRun ?? findMetricKpiRunForRange;
   const compute = deps.compute ?? computeMetricKpis;
@@ -187,8 +210,11 @@ export async function runMetricKpis(
   try {
     const result = await compute(slug, {
       ...range,
+      observationAsOf: now.toISOString().slice(0, 10),
       trigger,
       definitionVersion,
+      dashboardVersion,
+      customMetrics,
     });
     if (!result.configured) {
       return skippedResult({

@@ -3,14 +3,18 @@ import {
   eq,
   gt,
   gte,
+  inArray,
   lte,
+  or,
   sql as dsql,
 } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricSnapshots } from "@/db/schema";
+import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
 import {
   findMetricKpiRunForRange,
   getMetricKpiValues,
+  latestMetricNamesForEvaluation,
   metricKpiStorageConfigured,
   type MetricKpiRunRow,
   type MetricKpiValueRow,
@@ -26,8 +30,14 @@ import {
 } from "@/lib/data/metric-stage-rollups";
 import {
   canonicalMetricKpiLabel,
+  METRIC_KPI_DEFINITIONS,
   METRIC_KPI_DEFINITION_VERSION,
 } from "@/lib/metrics/semantic-kpis";
+import {
+  aggFor,
+  latestMetricNamesForSources,
+} from "@/lib/metrics/aggregation";
+import { composeMetricKpiDefinitionVersion } from "@/lib/metrics/kpi-definition-version";
 import {
   buildMetricStageRollupReadModel,
   type MetricStageRollupReadInput,
@@ -62,6 +72,8 @@ export interface MetricKpiReadModelOptions extends MetricKpiReadRangeInput {
 export interface MetricKpiReadThroughOptions extends MetricKpiReadModelOptions {
   autoCompute?: boolean;
   trigger?: string | null;
+  /** Injectable UTC clock for deterministic as-of invalidation. */
+  now?: Date;
 }
 
 export interface MetricKpiReadThroughDeps {
@@ -166,7 +178,9 @@ function isoDay(date: Date): string {
 
 function parseDate(value: string | null | undefined): string | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  return value;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10) === value ? value : null;
 }
 
 export function resolveMetricKpiReadRange(
@@ -175,7 +189,11 @@ export function resolveMetricKpiReadRange(
 ): MetricKpiReadModel["requestedRange"] {
   const from = parseDate(input.from);
   const to = parseDate(input.to);
-  if (from && to) {
+  const hasCustomFrom = typeof input.from === "string" && input.from.trim().length > 0;
+  const hasCustomTo = typeof input.to === "string" && input.to.trim().length > 0;
+  if (hasCustomFrom || hasCustomTo) {
+    if (!from) throw new Error(`Invalid KPI range.from: ${input.from ?? "missing"}`);
+    if (!to) throw new Error(`Invalid KPI range.to: ${input.to ?? "missing"}`);
     if (from > to) throw new Error(`Invalid KPI range: ${from} is after ${to}`);
     return { key: "custom", from, to };
   }
@@ -185,11 +203,14 @@ export function resolveMetricKpiReadRange(
     : null;
   if (!key) return null;
 
+  // Collectors persist complete provider days (default: yesterday). Ending the
+  // preset on today would manufacture a permanently missing day and mark every
+  // otherwise complete additive KPI as partial.
   const end = Date.UTC(
     now.getUTCFullYear(),
     now.getUTCMonth(),
     now.getUTCDate(),
-  );
+  ) - DAY_MS;
   const start = end - (RANGE_DAYS[key] - 1) * DAY_MS;
   return {
     key,
@@ -255,6 +276,8 @@ export function formatMetricKpiValue(row: Pick<MetricKpiValueRow, "value" | "val
   if (!Number.isFinite(value)) return "-";
 
   switch (row.unit) {
+    case "account_currency":
+      return `${formatNumber(value)} moneda cuenta`;
     case "currency":
       return new Intl.NumberFormat("es-ES", {
         currency: "EUR",
@@ -273,7 +296,10 @@ export function formatMetricKpiValue(row: Pick<MetricKpiValueRow, "value" | "val
   }
 }
 
-function toSummary(values: MetricKpiReadModelValue[], run?: MetricKpiRunRow | null): MetricKpiReadModelSummary {
+export function summarizeMetricKpiReadModelQuality(
+  values: MetricKpiReadModelValue[],
+  run?: MetricKpiRunRow | null,
+): MetricKpiReadModelSummary {
   const counts = {
     ok: 0,
     partial: 0,
@@ -294,7 +320,15 @@ function toSummary(values: MetricKpiReadModelValue[], run?: MetricKpiRunRow | nu
   let qualityStatus: MetricKpiQualityStatus = "missing";
   if (counts.dirty > 0) qualityStatus = "dirty";
   else if (counts.stale > 0) qualityStatus = "stale";
-  else if (counts.demo > 0 && counts.ok === 0) qualityStatus = "demo";
+  else if (
+    counts.demo > 0 &&
+    counts.ok === 0 &&
+    counts.partial === 0 &&
+    counts.missing === 0
+  ) qualityStatus = "demo";
+  // Demo mixed with real/unknown data cannot inherit `ok`: the summary is not
+  // fully production-backed even when every non-demo row is healthy.
+  else if (counts.demo > 0) qualityStatus = "partial";
   else if (counts.partial > 0 || counts.missing > 0) qualityStatus = values.length ? "partial" : "missing";
   else if (counts.ok > 0) qualityStatus = "ok";
 
@@ -312,7 +346,7 @@ function emptyReadModel(args: {
     slug: args.slug,
     requestedRange: args.requestedRange,
     run: null,
-    summary: toSummary([]),
+    summary: summarizeMetricKpiReadModelQuality([]),
     values: [],
     northStar: null,
     stageRollups: args.stageRollups,
@@ -385,7 +419,7 @@ function lowerIsBetter(value: MetricKpiReadModelValue): boolean {
   const haystack = normalizeComparable(
     `${value.kpiId} ${value.label} ${value.metricName ?? ""} ${value.unit ?? ""}`,
   );
-  return /\b(cac|cpa|cpc|cost|coste|position|posicion|lost|perdida|bounce|rebote|lcp|cls|inp|latency|latencia)\b/.test(haystack);
+  return /\b(cac|cpa|cpc|cpl|cost|coste|position|posicion|lost|perdida|bounce|rebote|lcp|cls|inp|latency|latencia)\b/.test(haystack);
 }
 
 function buildComparison(
@@ -466,8 +500,30 @@ export function attachMetricKpiComparisons(
   const previousByKpi = new Map(previousValues.map((value) => [value.kpiId, value]));
   return values.map((value) => ({
     ...value,
-    comparison: buildComparison(value, previousByKpi.get(value.kpiId), previousRange),
+    // `latest` is present state as of the computation day, not a flow attached
+    // to either period. Comparing two cached range runs would therefore mix
+    // observation dates (or compare the same stock twice) and label that delta
+    // as period-over-period. Suppress it, including custom formulas that depend
+    // on a latest reference; additive/rate formulas keep normal comparisons.
+    comparison: usesCurrentStateObservation(value)
+      ? null
+      : buildComparison(value, previousByKpi.get(value.kpiId), previousRange),
   }));
+}
+
+function usesCurrentStateObservation(value: MetricKpiReadModelValue): boolean {
+  if (
+    value.source
+    && value.metricName
+    && aggFor(value.source, value.metricName) === "latest"
+  ) {
+    return true;
+  }
+  return (value.inputRefs ?? []).some((ref) => {
+    const source = typeof ref.source === "string" ? ref.source : null;
+    const metric = typeof ref.metricName === "string" ? ref.metricName : null;
+    return Boolean(source && metric && aggFor(source, metric) === "latest");
+  });
 }
 
 function normalizeComparable(value?: string | null): string {
@@ -483,13 +539,21 @@ function preferPopulated(values: MetricKpiReadModelValue[]): MetricKpiReadModelV
   return values.find((value) => value.value != null) ?? values[0] ?? null;
 }
 
+const QUALIFIED_NORTH_STAR_PATTERN = /cualific|qualif|\bsql\b/;
+
 function northStarMatchesKpi(label: string, kpi: MetricKpiReadModelValue): boolean {
   const haystack = normalizeComparable(`${kpi.kpiId} ${kpi.label} ${kpi.source ?? ""} ${kpi.metricName ?? ""}`);
+  // A qualifier is part of the business outcome, not decorative copy. Never
+  // satisfy "qualified meetings/SQL" with a generic appointments counter.
+  if (
+    QUALIFIED_NORTH_STAR_PATTERN.test(label) &&
+    !QUALIFIED_NORTH_STAR_PATTERN.test(haystack)
+  ) return false;
   if (/meeting|reunion|cita|appointment/.test(label)) {
     return /meeting|reunion|cita|appointment/.test(haystack);
   }
-  if (/lead|contact/.test(label)) {
-    return /lead|contact/.test(haystack);
+  if (/lead|contact|cualific|qualif|\bsql\b/.test(label)) {
+    return /lead|contact|cualific|qualif|\bsql\b/.test(haystack);
   }
   if (/deal|opportunit|oportunidad|proposal|propuesta/.test(label)) {
     return /deal|opportunit|oportunidad|proposal|propuesta/.test(haystack);
@@ -534,6 +598,7 @@ export function selectNorthStarKpi(
 function toStageRollupInput(row: MetricStageRollupRow): MetricStageRollupReadInput {
   return {
     id: row.id,
+    mapId: row.mapId,
     stageId: row.stageId,
     stageLabel: row.stageLabel,
     stageOrder: row.stageOrder,
@@ -557,6 +622,7 @@ async function getStageRollupsForReadModel(
   slug: string,
   requestedRange: MetricKpiReadModel["requestedRange"],
   runId?: string | null,
+  definitionVersion = METRIC_KPI_DEFINITION_VERSION,
 ): Promise<MetricStageRollupReadModel> {
   if (!requestedRange) {
     return buildMetricStageRollupReadModel({
@@ -570,7 +636,7 @@ async function getStageRollupsForReadModel(
     from: requestedRange.from,
     to: requestedRange.to,
     runId,
-    definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+    definitionVersion,
   });
 
   return buildMetricStageRollupReadModel({
@@ -585,6 +651,11 @@ export async function getMetricKpiReadModel(
   opts: MetricKpiReadModelOptions = {},
 ): Promise<MetricKpiReadModel> {
   const requestedRange = resolveMetricKpiReadRange(opts);
+  const dashboard = await getDashboardDefinition(slug);
+  const definitionVersion = composeMetricKpiDefinitionVersion(
+    METRIC_KPI_DEFINITION_VERSION,
+    dashboard.version,
+  );
   const run = opts.runId
     ? null
     : requestedRange
@@ -592,13 +663,14 @@ export async function getMetricKpiReadModel(
         from: requestedRange.from,
         to: requestedRange.to,
         statuses: ["ok"],
-        definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+        definitionVersion,
       })
       : null;
   const stageRollups = await getStageRollupsForReadModel(
     slug,
     requestedRange,
     opts.runId ?? run?.id ?? null,
+    definitionVersion,
   );
 
   if (requestedRange && !run && !opts.runId) {
@@ -612,6 +684,7 @@ export async function getMetricKpiReadModel(
 
   const result = await getMetricKpiValues(slug, {
     dashboardBlock: opts.dashboardBlock ?? undefined,
+    definitionVersion,
     runId: opts.runId ?? run?.id,
     surface: opts.surface ?? undefined,
   });
@@ -623,7 +696,7 @@ export async function getMetricKpiReadModel(
       from: previousRange.from,
       to: previousRange.to,
       statuses: ["ok"],
-      definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+      definitionVersion,
     });
     if (previousRun) {
       const previousResult = await getMetricKpiValues(slug, {
@@ -644,7 +717,7 @@ export async function getMetricKpiReadModel(
     slug,
     requestedRange,
     run: result.run ? toRun(result.run) : null,
-    summary: toSummary(values, result.run),
+    summary: summarizeMetricKpiReadModelQuality(values, result.run),
     values,
     northStar: selectNorthStarKpi(values, opts.northStar),
     stageRollups,
@@ -655,9 +728,32 @@ export async function hasMetricKpiSnapshotUpdatesAfter(
   slug: string,
   range: { from: string; to: string },
   since: Date | string | null | undefined,
+  options: {
+    observationAsOf?: string;
+    latestMetricNames?: ReadonlyArray<string>;
+  } = {},
 ): Promise<boolean> {
   const sinceDate = dateValue(since);
   if (!hasDatabase || !sinceDate) return false;
+  const observationAsOf = options.observationAsOf
+    ?? new Date().toISOString().slice(0, 10);
+  if (!parseDate(observationAsOf)) {
+    throw new RangeError(`Invalid KPI snapshot observationAsOf: ${observationAsOf}`);
+  }
+  const latestMetricNames = [...new Set(options.latestMetricNames ?? [
+    ...latestMetricNamesForEvaluation(METRIC_KPI_DEFINITIONS, []),
+    ...latestMetricNamesForSources(),
+  ])];
+  const flowWindow = and(
+    gte(metricSnapshots.metricDate, range.from),
+    lte(metricSnapshots.metricDate, range.to),
+  );
+  const latestWindow = latestMetricNames.length
+    ? and(
+      inArray(metricSnapshots.metricName, latestMetricNames),
+      lte(metricSnapshots.metricDate, observationAsOf),
+    )
+    : undefined;
 
   const database = getDb();
   const rows = await database
@@ -666,8 +762,7 @@ export async function hasMetricKpiSnapshotUpdatesAfter(
     .where(
       and(
         eq(metricSnapshots.slug, slug),
-        gte(metricSnapshots.metricDate, range.from),
-        lte(metricSnapshots.metricDate, range.to),
+        latestWindow ? or(flowWindow, latestWindow) : flowWindow,
         gt(metricSnapshots.updatedAt, sinceDate),
       ),
     );
@@ -679,12 +774,13 @@ function shouldAutoComputeReadModel(args: {
   model: MetricKpiReadModel;
   opts: MetricKpiReadThroughOptions;
   snapshotsChanged: boolean;
+  observationDayChanged: boolean;
 }): boolean {
   if (args.opts.autoCompute === false) return false;
   if (args.opts.runId) return false;
   if (!args.model.requestedRange) return false;
   if (!args.model.run) return true;
-  return args.snapshotsChanged;
+  return args.snapshotsChanged || args.observationDayChanged;
 }
 
 async function readAfterAutoCompute(args: {
@@ -708,6 +804,8 @@ export async function getMetricKpiReadModelReadThrough(
   const run = deps.run ?? runMetricKpis;
   const hasSnapshotUpdatesAfter =
     deps.hasSnapshotUpdatesAfter ?? hasMetricKpiSnapshotUpdatesAfter;
+  const now = opts.now ?? new Date();
+  const observationAsOf = now.toISOString().slice(0, 10);
 
   const model = await read(slug, opts);
   const snapshotsChanged =
@@ -716,22 +814,62 @@ export async function getMetricKpiReadModelReadThrough(
         slug,
         { from: model.requestedRange.from, to: model.requestedRange.to },
         model.run.finishedAt ?? model.run.startedAt,
+        { observationAsOf },
       )
       : false;
+  const runStartedAt = model.run ? dateValue(model.run.startedAt) : null;
+  const observationDayChanged = Boolean(
+    model.run
+    && (!runStartedAt
+      || runStartedAt.toISOString().slice(0, 10) !== observationAsOf),
+  );
 
-  if (!shouldAutoComputeReadModel({ model, opts, snapshotsChanged })) {
-    return model;
+  let current = model;
+  if (shouldAutoComputeReadModel({
+    model,
+    opts,
+    snapshotsChanged,
+    observationDayChanged,
+  })) {
+    const range = model.requestedRange;
+    if (!range) return model;
+    const result = await run({
+      slug,
+      range: { from: range.from, to: range.to },
+      trigger: opts.trigger?.trim() || "dashboard:read-through",
+      force: snapshotsChanged || observationDayChanged,
+      now,
+    });
+
+    if (!result.ok) return model;
+    current = await readAfterAutoCompute({ read, slug, opts, result });
   }
 
-  const range = model.requestedRange;
-  if (!range) return model;
-  const result = await run({
-    slug,
-    range: { from: range.from, to: range.to },
-    trigger: opts.trigger?.trim() || "dashboard:read-through",
-    force: snapshotsChanged,
-  });
+  // Custom formulas are expected to compare like built-in KPIs. After a new
+  // dashboard version, the previous-period run necessarily has the old cache
+  // key; compute that one range lazily so the first fresh custom KPI does not
+  // remain permanently comparison-less.
+  const needsCustomComparison =
+    opts.autoCompute !== false &&
+    !opts.runId &&
+    current.run != null &&
+    current.requestedRange != null &&
+    current.values.some(
+      (value) =>
+        value.kpiId.startsWith("custom.")
+        && value.comparison === null
+        && !usesCurrentStateObservation(value),
+    );
+  if (!needsCustomComparison || !current.requestedRange) return current;
 
-  if (!result.ok) return model;
-  return readAfterAutoCompute({ read, slug, opts, result });
+  const previousRange = resolvePreviousMetricKpiRange(current.requestedRange);
+  const previousResult = await run({
+    slug,
+    range: previousRange,
+    trigger: `${opts.trigger?.trim() || "dashboard:read-through"}:comparison`,
+    force: false,
+    now,
+  });
+  if (!previousResult.ok) return current;
+  return read(slug, opts);
 }

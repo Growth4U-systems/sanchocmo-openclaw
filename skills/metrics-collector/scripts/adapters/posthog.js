@@ -18,6 +18,14 @@
 
 const DEFAULT_HOST = 'https://us.posthog.com';
 const DEFAULT_ACTIVATION_EVENT = '$identify';
+const POSTHOG_RESTATED_METRICS = [
+  'pageviews',
+  'activation_events',
+  'activation_rate',
+  'north_star_weekly',
+  'funnel_step_reached',
+  'session_recordings',
+];
 
 /** Strip any trailing slash so `${host}/api/...` never doubles up. */
 function normalizeHost(host) {
@@ -43,7 +51,30 @@ async function runQuery(host, projectId, headers, query) {
     throw new Error(`PostHog query ${resp.status}: ${text.slice(0, 200)}`);
   }
   const data = await resp.json();
-  return Array.isArray(data.results) ? data.results : [];
+  if (!Array.isArray(data.results)) {
+    throw new Error('PostHog query: response missing results array');
+  }
+  return data.results;
+}
+
+function countResult(rows, label) {
+  if (
+    !Array.isArray(rows) ||
+    rows.length !== 1 ||
+    !Array.isArray(rows[0]) ||
+    rows[0].length !== 1
+  ) {
+    throw new Error(`PostHog ${label}: ambiguous count result`);
+  }
+  const raw = rows[0][0];
+  if (raw == null || raw === '') {
+    throw new Error(`PostHog ${label}: response missing count result`);
+  }
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error(`PostHog ${label}: invalid count result`);
+  }
+  return value;
 }
 
 /** HogQL-escape a single-quoted string literal. */
@@ -57,6 +88,9 @@ function sqlStr(value) {
  * @param {{ from: string, to: string }} dateRange - YYYY-MM-DD
  */
 export async function collect(config, env, dateRange) {
+  if (dateRange.from !== dateRange.to) {
+    throw new Error('PostHog: multi-day ranges are not supported safely; collect one day at a time');
+  }
   const projectId = config.projectId || config.project_id || config.PROJECT_ID;
   if (!projectId) throw new Error('PostHog: missing projectId in integrations.json');
 
@@ -73,6 +107,7 @@ export async function collect(config, env, dateRange) {
   };
 
   const metrics = [];
+  let optionalQualityPartial = false;
   // HogQL compares against timestamp; include the full `to` day.
   const from = dateRange.from;
   const to = dateRange.to;
@@ -90,7 +125,7 @@ export async function collect(config, env, dateRange) {
       headers,
       `SELECT count() FROM events WHERE event = '$pageview' AND ${where}`,
     );
-    metrics.push({ name: 'pageviews', value: Number(rows?.[0]?.[0]) || 0, date: from });
+    metrics.push({ name: 'pageviews', value: countResult(rows, 'pageviews'), date: from });
   }
 
   // --- Activation events ---
@@ -102,14 +137,20 @@ export async function collect(config, env, dateRange) {
       headers,
       `SELECT count() FROM events WHERE event = '${sqlStr(activationEvent)}' AND ${where}`,
     );
-    const activation = Number(rows?.[0]?.[0]) || 0;
+    const activation = countResult(rows, 'activation events');
     // Roll-up (NO dimensions) so plan funnel steps / KPI formulas referencing
     // `posthog.activation_events` resolve — the resolvers only match no-dimension
     // metrics (a dimensioned-only metric would render "—" despite collected data).
     metrics.push({ name: 'activation_events', value: activation, date: from });
     const pageviews = Number(metrics.find((metric) => metric.name === 'pageviews' && !metric.dimensions)?.value) || 0;
-    metrics.push({ name: 'activation_rate', value: pageviews > 0 ? (activation / pageviews) * 100 : 0, date: from });
+    // 0 / 0 is undefined, not 0%. Keep the additive event counts, but omit the
+    // derived rate until there is a real denominator so the UI renders an honest
+    // missing state instead of a fabricated successful conversion rate.
+    if (pageviews > 0) {
+      metrics.push({ name: 'activation_rate', value: (activation / pageviews) * 100, date: from });
+    }
   } catch (err) {
+    optionalQualityPartial = true;
     console.warn(`  ⚠️  PostHog activation events error: ${err.message}`);
   }
 
@@ -122,8 +163,9 @@ export async function collect(config, env, dateRange) {
         headers,
         `SELECT count() FROM events WHERE event = '${sqlStr(northStarEvent)}' AND ${where}`,
       );
-      metrics.push({ name: 'north_star_weekly', value: Number(rows?.[0]?.[0]) || 0, date: from });
+      metrics.push({ name: 'north_star_weekly', value: countResult(rows, 'north star event'), date: from });
     } catch (err) {
+      optionalQualityPartial = true;
       console.warn(`  ⚠️  PostHog north star event "${northStarEvent}" error: ${err.message}`);
     }
   }
@@ -138,6 +180,11 @@ export async function collect(config, env, dateRange) {
       ? config.funnel_steps
       : [];
   if (funnelSteps.length > 0) {
+    const expectedSteps = funnelSteps.reduce((count, step) => {
+      const stepName = typeof step === 'string' ? step : step?.event || step?.name;
+      return typeof stepName === 'string' && stepName.trim() ? count + 1 : count;
+    }, 0);
+    if (expectedSteps !== funnelSteps.length) optionalQualityPartial = true;
     for (let i = 0; i < funnelSteps.length; i++) {
       const step = funnelSteps[i];
       const stepName = typeof step === 'string' ? step : step?.event || step?.name;
@@ -154,8 +201,8 @@ export async function collect(config, env, dateRange) {
           // the funnel shape (step1 ≥ step2 ≥ …).
           `SELECT count() FROM events WHERE event = '${sqlStr(stepName)}' AND ${where}`,
         );
-        const count = Number(rows?.[0]?.[0]) || 0;
-        // value = the reached count; dimensions are STABLE { step, order } ONLY.
+        const count = countResult(rows, `funnel step "${stepName}"`);
+        // value = the reached count; dimensions are stable config metadata only.
         // Putting the (daily-varying) count in dimensions would make aggregateEntries
         // key each day separately → duplicate per-day funnel rows. The UI derives the
         // per-step dropoff from consecutive reached counts.
@@ -163,9 +210,10 @@ export async function collect(config, env, dateRange) {
           name: 'funnel_step_reached',
           value: count,
           date: from,
-          dimensions: { step: stepName, order: i + 1 },
+          dimensions: { step: stepName, order: i + 1, expectedSteps },
         });
       } catch (err) {
+        optionalQualityPartial = true;
         console.warn(`  ⚠️  PostHog funnel step "${stepName}" error: ${err.message}`);
       }
     }
@@ -185,18 +233,31 @@ export async function collect(config, env, dateRange) {
       // Trust only the endpoint's total `count`. The request uses limit=1, so a
       // `results.length` fallback would cap the value at 1 — skip the metric instead
       // of reporting a wrong number when no count is returned.
-      if (Number.isFinite(data.count)) {
+      if (Number.isSafeInteger(data.count) && data.count >= 0) {
         metrics.push({ name: 'session_recordings', value: data.count, date: from });
       } else {
+        optionalQualityPartial = true;
         console.warn('  ⚠️  PostHog session recordings: no numeric count in response, skipping');
       }
     } else {
+      optionalQualityPartial = true;
       const text = await resp.text().catch(() => '');
       console.warn(`  ⚠️  PostHog session recordings ${resp.status}: ${text.slice(0, 100)}`);
     }
   } catch (err) {
+    optionalQualityPartial = true;
     console.warn(`  ⚠️  PostHog session recordings error: ${err.message}`);
   }
 
-  return { source: 'posthog', date: from, metrics };
+  return {
+    source: 'posthog',
+    date: from,
+    metrics,
+    attemptedDates: [from],
+    restatedScopes: POSTHOG_RESTATED_METRICS.map((metricName) => ({
+      metricDate: from,
+      metricName,
+    })),
+    ...(optionalQualityPartial ? { quality: 'partial' } : {}),
+  };
 }

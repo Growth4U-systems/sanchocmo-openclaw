@@ -22,7 +22,7 @@ const base = {
   totalKeywords: 204,
 };
 
-test("SeoHealth: Core Web Vitals — labels + current values", () => {
+test("SeoHealth: Lighthouse lab — labels + current values", () => {
   const m = render(createElement(SeoHealth, base));
   for (const l of ["LCP", "CLS", "INP"]) assert.match(m, new RegExp(l));
   assert.match(m, /2[.,]1s/);
@@ -30,13 +30,25 @@ test("SeoHealth: Core Web Vitals — labels + current values", () => {
   assert.match(m, /180ms/);
 });
 
-test("SeoHealth: all CWV within 'good' → passes", () => {
-  assert.match(render(createElement(SeoHealth, base)), /Pasa/);
+test("SeoHealth: all lab metrics within thresholds are labelled diagnostically", () => {
+  assert.match(render(createElement(SeoHealth, base)), /Dentro de umbrales/);
+  assert.match(render(createElement(SeoHealth, base)), /no equivale.*CrUX/);
 });
 
-test("SeoHealth: failing CWV (LCP poor) → shows 'Mejorar'", () => {
+test("SeoHealth: lab LCP outside threshold asks for review", () => {
   const m = render(createElement(SeoHealth, { ...base, cwv: { ...base.cwv, lcp: 4.6 } }));
-  assert.match(m, /Mejorar/);
+  assert.match(m, /Revisar/);
+});
+
+test("SeoHealth: missing lab metric shows an honest empty state", () => {
+  const m = render(createElement(SeoHealth, {
+    ...base,
+    cwv: { lcp: 2.1, cls: 0.06, inp: null },
+    scores: { mobile: 90, desktop: null, seo: null },
+  }));
+  assert.match(m, /Sin datos/);
+  assert.doesNotMatch(m, /Dentro de umbrales/);
+  assert.match(m, />—</);
 });
 
 test("SeoHealth: PageSpeed score chips render", () => {

@@ -3866,3 +3866,42 @@ test("task write tools require tasks:write scope", async () => {
     await close();
   }
 });
+
+test("metrics MCP rejects mixed series and malformed calendar ranges", async () => {
+  const { client, close } = await createConnectedClient({
+    id: "operator",
+    scopes: ["metrics:read"],
+    clients: ["alpha"],
+    tokenHash: "x",
+  });
+  try {
+    const unpinned = await client.callTool({
+      name: "sancho_get_metrics_timeseries",
+      arguments: { clientSlug: "alpha", view: "series" },
+    });
+    assert.equal(unpinned.isError, true);
+    assert.match(
+      unpinned.content[0].type === "text" ? unpinned.content[0].text : "",
+      /source and metric/i,
+    );
+
+    const invalidDate = await client.callTool({
+      name: "sancho_get_metrics_timeseries",
+      arguments: {
+        clientSlug: "alpha",
+        view: "trend",
+        source: "gsc",
+        metric: "position",
+        from: "2026-02-30",
+        to: "2026-03-01",
+      },
+    });
+    assert.equal(invalidDate.isError, true);
+    assert.match(
+      invalidDate.content[0].type === "text" ? invalidDate.content[0].text : "",
+      /calendar date/i,
+    );
+  } finally {
+    await close();
+  }
+});

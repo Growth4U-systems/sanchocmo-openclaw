@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { compose, withErrorHandler, withAuth } from "@/lib/api-middleware";
 import { BASE, EXEC_PATH } from "@/lib/data/paths";
 import { readJSON, writeJSON } from "@/lib/data/json-io";
@@ -21,8 +21,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const { slug, source, all } = req.body;
-  if (!slug) {
+  if (typeof slug !== "string" || !slug) {
     return res.status(400).json({ error: "Missing slug" });
+  }
+  if (!all && (typeof source !== "string" || !source)) {
+    return res.status(400).json({ error: "Missing source" });
   }
 
   const testScript = path.join(BASE, "..", "skills", "acquisition-metrics-plan", "scripts", "test-connection.js");
@@ -34,7 +37,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   function runTest(srcId: string): { status: string; error?: string } {
     try {
-      execSync(`node "${testScript}" --slug ${slug} --source ${srcId}`, {
+      execFileSync(process.execPath, [testScript, "--slug", slug, "--source", srcId], {
         cwd: BASE,
         timeout: 30000,
         encoding: "utf-8",
@@ -42,12 +45,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
       try { intData = readJSON(intPath, intData); } catch { /* empty */ }
       const entry = (intData.dataSources || {})[srcId] || (intData.systemOverrides || {})[srcId] || {};
-      return { status: entry.status || "connected" };
+      if (entry.status === "connected") return { status: "connected" };
+      const error = entry.lastError || "Connection test did not confirm the provider";
+      entry.status = "error";
+      entry.lastTestedAt = new Date().toISOString();
+      entry.lastError = error;
+      return { status: "error", error };
     } catch (e) {
-      const realError = extractTestError(e);
+      const extractedError = extractTestError(e);
       try { intData = readJSON(intPath, intData); } catch { /* empty */ }
       const section = (intData.systemOverrides || {})[srcId] ? "systemOverrides" : "dataSources";
+      const entry = intData[section]?.[srcId];
+      const realError = entry?.lastError || extractedError;
       if (intData[section] && intData[section][srcId]) {
+        intData[section][srcId].status = "error";
+        intData[section][srcId].lastTestedAt = new Date().toISOString();
         intData[section][srcId].lastError = realError;
       }
       return { status: "error", error: realError };
@@ -69,7 +81,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   fs.mkdirSync(brandDir, { recursive: true });
   try { writeJSON(intPath, intData); } catch { /* empty */ }
 
-  return res.status(200).json({ ok: true, results });
+  return res.status(200).json({
+    ok: Object.values(results).every((result) => result.status === "connected"),
+    results,
+  });
 }
 
 export default compose(withErrorHandler, withAuth)(handler);

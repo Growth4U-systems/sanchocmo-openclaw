@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricKpiRuns, metricSnapshots } from "@/db/schema";
+import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
 import { ensureMetricsStorage } from "@/lib/data/metrics-snapshots";
 import { getMetricsHealth, type SourceHealth } from "@/lib/data/metrics";
 import {
@@ -15,6 +16,8 @@ import {
   type MetricKpiSnapshotInput,
 } from "@/lib/metrics/semantic-kpis";
 import { SURFACES, type SurfaceKey } from "@/lib/metrics/surfaces";
+import { computeCustomMetricKpisFromSnapshots } from "@/lib/metrics/custom-metric-kpis";
+import { composeMetricKpiDefinitionVersion } from "@/lib/metrics/kpi-definition-version";
 
 type AuditStatus = "ok" | "partial" | "missing" | "stale" | "error" | "dirty";
 type AuditRangeKey = "1d" | "7d" | "30d" | "90d";
@@ -116,7 +119,7 @@ export function resolveMetricsAuditRange(opts: MetricsAuditOptions = {}): Metric
 
   const key = opts.range && opts.range in RANGE_DAYS ? (opts.range as AuditRangeKey) : "30d";
   const now = opts.now ?? new Date();
-  const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - DAY_MS;
   const start = end - (RANGE_DAYS[key] - 1) * DAY_MS;
   return {
     key,
@@ -191,7 +194,11 @@ function surfaceStatus(counts: Record<MetricKpiQualityStatus | "total", number>,
   return counts.ok > 0 ? "ok" : "missing";
 }
 
-async function findPersistedKpiRun(slug: string, range: MetricsAuditRange) {
+async function findPersistedKpiRun(
+  slug: string,
+  range: MetricsAuditRange,
+  definitionVersion: number,
+) {
   const database = getDb();
   const rows = await database
     .select({
@@ -206,7 +213,7 @@ async function findPersistedKpiRun(slug: string, range: MetricsAuditRange) {
         eq(metricKpiRuns.slug, slug),
         eq(metricKpiRuns.rangeFrom, range.from),
         eq(metricKpiRuns.rangeTo, range.to),
-        eq(metricKpiRuns.definitionVersion, METRIC_KPI_DEFINITION_VERSION),
+        eq(metricKpiRuns.definitionVersion, definitionVersion),
       ),
     )
     .orderBy(desc(metricKpiRuns.startedAt))
@@ -244,6 +251,11 @@ export async function getMetricsRuntimeAudit(slug: string, opts: MetricsAuditOpt
   const generatedAt = new Date().toISOString();
   const range = resolveMetricsAuditRange(opts);
   const expectedSources = getExpectedMetricAuditSources();
+  const dashboard = await getDashboardDefinition(slug);
+  const definitionVersion = composeMetricKpiDefinitionVersion(
+    METRIC_KPI_DEFINITION_VERSION,
+    dashboard.version,
+  );
 
   if (!hasDatabase) {
     const health = await getMetricsHealth(slug);
@@ -256,7 +268,7 @@ export async function getMetricsRuntimeAudit(slug: string, opts: MetricsAuditOpt
       sources: [],
       surfaces: [],
       kpis: {
-        definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+        definitionVersion,
         computedFromSnapshots: emptyQualityCounts(),
         persistedRun: null,
       },
@@ -295,7 +307,7 @@ export async function getMetricsRuntimeAudit(slug: string, opts: MetricsAuditOpt
         ),
       ),
     getMetricsHealth(slug),
-    findPersistedKpiRun(slug, range).catch(() => null),
+    findPersistedKpiRun(slug, range, definitionVersion).catch(() => null),
   ]);
 
   const snapshots: MetricKpiSnapshotInput[] = rows.map((row) => ({
@@ -310,7 +322,14 @@ export async function getMetricsRuntimeAudit(slug: string, opts: MetricsAuditOpt
     collectedAt: row.collectedAt,
     ingestRunId: row.ingestRunId,
   }));
-  const computed = computeSemanticKpisFromSnapshots(snapshots, range);
+  const computed = [
+    ...computeSemanticKpisFromSnapshots(snapshots, range),
+    ...computeCustomMetricKpisFromSnapshots(
+      snapshots,
+      range,
+      dashboard.definition?.customMetrics ?? [],
+    ),
+  ];
   const computedCounts = qualityCounts(computed);
   const expectedBySource = new Map(expectedSources.map((source) => [source.source, source]));
   const healthBySource = sourceHealthByCanonical(health.sources);
@@ -407,7 +426,7 @@ export async function getMetricsRuntimeAudit(slug: string, opts: MetricsAuditOpt
     sources,
     surfaces,
     kpis: {
-      definitionVersion: METRIC_KPI_DEFINITION_VERSION,
+      definitionVersion,
       computedFromSnapshots: computedCounts,
       persistedRun,
     },

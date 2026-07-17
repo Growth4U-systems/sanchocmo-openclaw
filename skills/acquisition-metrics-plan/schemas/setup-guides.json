@@ -56,6 +56,41 @@
       }
     ]
   },
+  "pagespeed": {
+    "title": "Google PageSpeed Insights",
+    "difficulty": "baja",
+    "time": "2 min",
+    "steps": [
+      {
+        "title": "Indica la URL pública del sitio",
+        "instructions": "Pega la URL completa que quieres medir, con <code>https://</code>. Sancho comprobará respuestas Lighthouse válidas para móvil y escritorio.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Añade una API Key si necesitas más cuota",
+        "instructions": "La clave de PageSpeed Insights es opcional. Si la añades, debe tener habilitada la PageSpeed Insights API.",
+        "alwaysShow": true
+      }
+    ]
+  },
+  "sheets": {
+    "title": "Google Sheets para métricas manuales",
+    "difficulty": "baja",
+    "time": "3 min",
+    "prereqNote": "Usa el Service Account de Google configurado en Sancho.",
+    "steps": [
+      {
+        "title": "Comparte la hoja con el Service Account",
+        "instructions": "Da permiso de <strong>Lector</strong> al email del Service Account del sistema.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Copia el Spreadsheet ID y el rango",
+        "instructions": "El ID está entre <code>/d/</code> y <code>/edit</code> en la URL. Usa un rango como <code>Metricas!A:Z</code>; la primera columna debe ser una fecha YYYY-MM-DD.",
+        "alwaysShow": true
+      }
+    ]
+  },
   "meta_ads": {
     "title": "Meta Ads (Facebook/Instagram)",
     "difficulty": "media",

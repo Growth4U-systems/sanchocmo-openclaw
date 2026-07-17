@@ -2,9 +2,24 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as mod from "../metric-kpi-runner";
 import type { MetricKpiRunRow } from "../metric-kpis";
+import { METRIC_KPI_DEFINITION_VERSION } from "../../metrics/semantic-kpis";
+import { composeMetricKpiDefinitionVersion } from "../../metrics/kpi-definition-version";
 
 const { resolveMetricKpiRunnerRange, runMetricKpis } =
   (mod as unknown as { default: typeof mod }).default ?? mod;
+
+const DASHBOARD_VERSION = 7;
+const EFFECTIVE_DEFINITION_VERSION = composeMetricKpiDefinitionVersion(
+  METRIC_KPI_DEFINITION_VERSION,
+  DASHBOARD_VERSION,
+);
+const getDashboard = async () => ({
+  configured: true,
+  slug: "growth4u",
+  version: DASHBOARD_VERSION,
+  definition: null,
+  versions: [],
+});
 
 function runRow(overrides: Partial<MetricKpiRunRow> = {}): MetricKpiRunRow {
   const now = new Date("2026-06-28T08:00:00.000Z");
@@ -15,7 +30,7 @@ function runRow(overrides: Partial<MetricKpiRunRow> = {}): MetricKpiRunRow {
     rangeTo: "2026-06-28",
     status: "ok",
     trigger: "cron",
-    definitionVersion: 1,
+    definitionVersion: EFFECTIVE_DEFINITION_VERSION,
     valuesCount: 2,
     qualitySummary: { ok: 2 },
     errors: [],
@@ -26,10 +41,10 @@ function runRow(overrides: Partial<MetricKpiRunRow> = {}): MetricKpiRunRow {
   };
 }
 
-test("defaults to the last 30 UTC days", () => {
+test("defaults to the last 30 complete UTC days", () => {
   assert.deepEqual(
     resolveMetricKpiRunnerRange(null, new Date("2026-06-28T17:30:00.000Z")),
-    { from: "2026-05-30", to: "2026-06-28" },
+    { from: "2026-05-29", to: "2026-06-27" },
   );
 });
 
@@ -46,6 +61,7 @@ test("rejects invalid explicit ranges", () => {
 
 test("skips when an ok run already exists for the same range and definition", async () => {
   let computeCalls = 0;
+  const requestedVersions: number[] = [];
   const existing = runRow({ id: "mkpir_existing", valuesCount: 7 });
 
   const result = await runMetricKpis(
@@ -55,8 +71,11 @@ test("skips when an ok run already exists for the same range and definition", as
       trigger: "cron",
     },
     {
-      findRun: async (_slug, opts) =>
-        opts.statuses?.includes("ok") ? existing : null,
+      getDashboard,
+      findRun: async (_slug, opts) => {
+        requestedVersions.push(opts.definitionVersion ?? -1);
+        return opts.statuses?.includes("ok") ? existing : null;
+      },
       compute: async () => {
         computeCalls++;
         return { configured: true, run: runRow(), values: [] };
@@ -70,6 +89,56 @@ test("skips when an ok run already exists for the same range and definition", as
   assert.equal(result.skipReason, "already-computed");
   assert.equal(result.run?.id, "mkpir_existing");
   assert.equal(result.valuesCount, 7);
+  assert.deepEqual(requestedVersions, [EFFECTIVE_DEFINITION_VERSION]);
+  assert.equal(result.definitionVersion, EFFECTIVE_DEFINITION_VERSION);
+});
+
+test("dashboard version participates in the cache key and custom definitions reach compute", async () => {
+  const requestedVersions: number[] = [];
+  let computeOptions: Parameters<mod.ComputeMetricKpisFn>[1] | null = null;
+  const customMetric = {
+    id: "cpl",
+    label: "CPL",
+    formula: "meta-ads.spend / ghl.newContacts",
+    format: "currency",
+    tier: "diagnostic",
+    surface: "paid",
+  };
+
+  const result = await runMetricKpis(
+    {
+      slug: "growth4u",
+      range: { from: "2026-06-01", to: "2026-06-28" },
+    },
+    {
+      getDashboard: async () => ({
+        configured: true,
+        slug: "growth4u",
+        version: 8,
+        definition: { customMetrics: [customMetric] } as never,
+        versions: [],
+      }),
+      findRun: async (_slug, opts) => {
+        requestedVersions.push(opts.definitionVersion ?? -1);
+        return null;
+      },
+      compute: async (_slug, opts) => {
+        computeOptions = opts;
+        return { configured: true, run: runRow(), values: [] };
+      },
+    },
+  );
+
+  const expected = composeMetricKpiDefinitionVersion(
+    METRIC_KPI_DEFINITION_VERSION,
+    8,
+  );
+  assert.deepEqual(requestedVersions, [expected, expected]);
+  assert.equal(result.definitionVersion, expected);
+  assert.equal(computeOptions?.definitionVersion, expected);
+  assert.equal(computeOptions?.dashboardVersion, 8);
+  assert.deepEqual(computeOptions?.customMetrics, [customMetric]);
+  assert.notEqual(expected, EFFECTIVE_DEFINITION_VERSION);
 });
 
 test("skips a recent running run to make cron retries idempotent", async () => {
@@ -89,6 +158,7 @@ test("skips a recent running run to make cron retries idempotent", async () => {
       now: new Date("2026-06-28T08:00:00.000Z"),
     },
     {
+      getDashboard,
       findRun: async (_slug, opts) =>
         opts.statuses?.includes("running") ? running : null,
       compute: async () => {
@@ -122,6 +192,7 @@ test("recomputes when only a stale running run exists", async () => {
       runningTtlMs: 30 * 60 * 1000,
     },
     {
+      getDashboard,
       findRun: async (_slug, opts) =>
         opts.statuses?.includes("running") ? stale : null,
       compute: async () => {
@@ -151,6 +222,7 @@ test("force bypasses existing ok runs", async () => {
       force: true,
     },
     {
+      getDashboard,
       findRun: async () => runRow({ id: "mkpir_existing" }),
       compute: async () => {
         computeCalls++;
@@ -182,6 +254,7 @@ test("returns a structured error and latest error run when compute fails", async
       range: { from: "2026-06-01", to: "2026-06-28" },
     },
     {
+      getDashboard,
       findRun: async (_slug, opts) =>
         opts.statuses?.includes("error") ? errorRun : null,
       compute: async () => {

@@ -2,7 +2,7 @@
  * Discoverability · SEO sub-tab — KPI scorecards (SAN-319 · PR6).
  *
  * Pure/presentational: the parent (`metrics.tsx` wiring) reads the surface's OWN
- * sources — GA4 (traffic) · GSC (rankings) · PageSpeed (Core Web Vitals) — and
+ * sources — GA4 (traffic) · GSC (rankings) · PageSpeed (Lighthouse lab) — and
  * passes the scorecards in. These are observed metrics, not attributed. The
  * cross-source story (web → cita → pago) is NOT here — it lives in Atribución
  * (PR7). When a credential is present but no rows have landed yet, the surface
@@ -14,7 +14,7 @@ export type WebSeoKpi = {
   label: string;
   /** Pre-formatted display value (locale-formatted by the caller), e.g. "4.820", "11,8", "2,5%". */
   value: string;
-  /** Optional secondary line under the value, e.g. "74 móvil" for Core Web Vitals. */
+  /** Optional secondary line under the value, e.g. "74 móvil" for Lighthouse. */
   hint?: string;
   /** Pre-formatted delta vs the previous period, e.g. "+19%", "−1,2", "+0,3pp". */
   delta?: string;
@@ -22,7 +22,7 @@ export type WebSeoKpi = {
   dir?: "up" | "down" | "flat";
   /** Which own-source the number comes from. */
   source: "GSC" | "GA4" | "PageSpeed";
-  /** Highlight the health KPI (Core Web Vitals) with a leading accent. */
+  /** Highlight the PageSpeed health KPI with a leading accent. */
   health?: boolean;
 };
 

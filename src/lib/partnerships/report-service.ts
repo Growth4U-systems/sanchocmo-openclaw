@@ -16,30 +16,67 @@ import type { PartnershipLead, PartnershipLeadsPayload } from "./types";
 export interface CreatorReportServiceOptions {
   periodDays?: ReportPeriodDays;
   now?: Date;
+  /** Exact UTC window used by the daily metrics collector. */
+  exactRange?: { from: Date; to: Date };
+  /** Explicit local/demo override. Production reporting excludes seed records. */
+  includeDemo?: boolean;
   /** Headers extra hacia Yalc (p.ej. trace del MCP). */
   headers?: Record<string, string>;
 }
 
-export const REPORT_PERIODS: readonly ReportPeriodDays[] = [30, 90];
+export const REPORT_PERIODS: readonly ReportPeriodDays[] = [1, 7, 30, 90];
+const DAY_MS = 86_400_000;
 
-/** Normaliza el query/input de periodo ("30"|"90"|30|90) → 30|90 (default 90). */
+/** Normaliza el query/input al mismo preset diario del dashboard (default 90). */
 export function parseReportPeriod(value: unknown): ReportPeriodDays {
   const num = typeof value === "string" ? Number(value.trim()) : value;
-  return num === 30 ? 30 : 90;
+  return REPORT_PERIODS.includes(num as ReportPeriodDays)
+    ? (num as ReportPeriodDays)
+    : 90;
+}
+
+/** Last N complete UTC calendar days; today is intentionally excluded. */
+export function completeUtcReportRange(
+  periodDays: ReportPeriodDays,
+  now = new Date(),
+): { from: Date; to: Date } {
+  if (!Number.isFinite(now.getTime())) throw new Error("Invalid report reference date");
+  const todayStart = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
+  const toStart = todayStart - DAY_MS;
+  const fromStart = toStart - (periodDays - 1) * DAY_MS;
+  return {
+    from: new Date(fromStart),
+    to: new Date(toStart + DAY_MS - 1),
+  };
+}
+
+export function filterReportPerformance(
+  records: ReturnType<typeof loadPerformance>,
+  includeDemo = false,
+): ReturnType<typeof loadPerformance> {
+  return includeDemo ? records : records.filter((record) => record.source !== "seed");
 }
 
 export async function creatorReportForSlug(
   slug: string,
   options: CreatorReportServiceOptions = {},
 ): Promise<CreatorReport> {
+  const periodDays = options.periodDays ?? 90;
   const config = resolveYalcConfig(slug);
   const payload = (await yalcFetch(config, "/api/leads?type=Partnerships", {
     headers: options.headers,
   })) as PartnershipLeadsPayload;
   const leads: PartnershipLead[] = Array.isArray(payload?.leads) ? payload.leads : [];
-  const records = loadPerformance(slug);
+  const includeDemo = options.includeDemo === true
+    || process.env.PARTNERSHIPS_INCLUDE_DEMO_METRICS === "1";
+  const records = filterReportPerformance(loadPerformance(slug), includeDemo);
   return buildCreatorReport(leads, records, {
-    periodDays: options.periodDays ?? 90,
+    periodDays,
     now: options.now,
+    exactRange: options.exactRange ?? completeUtcReportRange(periodDays, options.now),
   });
 }

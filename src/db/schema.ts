@@ -796,10 +796,11 @@ export const metricCollectionSchedule = pgTable("metric_collection_schedule", {
 ]);
 
 // ============================================================
-// Metric source runs (SAN-300) — collection ledger: exactly one row per
-// (slug, day, source) recording how that tool's collection went (ok/error/
-// skipped), when, and how many rows it wrote/removed. This is the "one row per
-// tool per day" view and the home for health/monitoring once JSON is retired.
+// Metric source runs (SAN-300) — collection ledger. `date_basis=collection`
+// keeps exactly one execution-health row per (slug, day, source); additional
+// `provider` rows record exact attempted provider days for routine pulls and
+// historical backfills. They carry ok/partial/error/skipped/connected_no_data,
+// when the attempt ran, and how many rows it wrote/removed.
 // ============================================================
 
 export const metricSourceRuns = pgTable("metric_source_runs", {
@@ -807,7 +808,11 @@ export const metricSourceRuns = pgTable("metric_source_runs", {
   slug: text("slug").notNull(),
   metricDate: text("metric_date").notNull(),
   source: text("source").notNull(),
-  status: text("status").notNull(), // ok | error | skipped
+  status: text("status").notNull(), // ok | partial | error | skipped | connected_no_data
+  // `collection` is the execution/health day. `provider` is an exact day the
+  // API was asked for, including historical backfills; readers must not apply
+  // the routine provider lag to exact evidence.
+  dateBasis: text("date_basis").notNull().default("collection"),
   collectedAt: timestamp("collected_at"),
   rowCount: integer("row_count").notNull().default(0),
   deletedCount: integer("deleted_count").notNull().default(0),
@@ -818,6 +823,12 @@ export const metricSourceRuns = pgTable("metric_source_runs", {
 }, (table) => [
   index("metric_source_runs_slug_date_idx").on(table.slug, table.metricDate),
   index("metric_source_runs_slug_source_idx").on(table.slug, table.source),
+  index("metric_source_runs_slug_source_basis_date_idx").on(
+    table.slug,
+    table.source,
+    table.dateBasis,
+    table.metricDate,
+  ),
 ]);
 
 // ============================================================

@@ -5,10 +5,13 @@ import {
   useMetricKpis,
   useMetricsHealth,
   usePartnershipReport,
+  useSurfaceDetail,
   useSurfaceSummary,
   type DashboardVersionMeta,
+  type MetricKpiQualityStatus,
   type MetricKpiResult,
   type MetricKpiValue,
+  type MetricsHealthResult,
   type MetricStageRollupChannelValue,
   type MetricStageRollupResult,
   type MetricStageRollupStageValue,
@@ -32,8 +35,15 @@ import {
   type MetricDashboardTab,
   type MetricDataState,
 } from "@/lib/metrics/dashboard-view-model";
-import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
+import type { CustomMetric, DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import { cn } from "@/lib/utils";
+import {
+  PaidSurfacePanel,
+  PipelineSurfacePanel,
+  ProductSurfacePanel,
+  SocialSurfacePanel,
+  WebSurfacePanel,
+} from "./SurfaceDetailPanels";
 
 type DateRange = "1d" | "7d" | "30d" | "90d";
 
@@ -43,6 +53,21 @@ const DATE_RANGES: Array<{ key: DateRange; label: string }> = [
   { key: "30d", label: "30d" },
   { key: "90d", label: "90d" },
 ];
+
+const PARTNERSHIP_PERIODS: Record<DateRange, PartnershipReportPeriodDays> = {
+  "1d": 1,
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
+};
+
+const DEDICATED_DETAIL_SURFACES = new Set<SurfaceKey>([
+  "paid",
+  "pipeline",
+  "product",
+  "social",
+  "web",
+]);
 
 const TAB_ICONS: Record<MetricDashboardTab, string> = {
   overview: "⭐",
@@ -57,24 +82,7 @@ const DEFAULT_FUNNEL_STAGE_LABELS = [
   "Leads",
   "Cualificados",
   "Reuniones",
-  "Deals",
-];
-
-const ATTRIBUTION_MODELS = [
-  "First-touch",
-  "W-shaped",
-  "Last-touch",
-  "Lineal",
-  "Data-driven 🔒",
-];
-
-const CHANNEL_FALLBACKS = [
-  { channel: "paid", label: "Paid", icon: "💰" },
-  { channel: "organic", label: "Organic / SEO", icon: "🌐" },
-  { channel: "email", label: "Email / Outbound", icon: "📧" },
-  { channel: "partnerships", label: "Partnerships", icon: "🤝" },
-  { channel: "social", label: "Social", icon: "📱" },
-  { channel: "direct", label: "Direct", icon: "🔗" },
+  "Oportunidades",
 ];
 
 const SURFACE_COPY: Partial<Record<SurfaceKey, { label: string; icon: string; metric: string }>> = {
@@ -85,7 +93,7 @@ const SURFACE_COPY: Partial<Record<SurfaceKey, { label: string; icon: string; me
   paid: { label: "Paid", icon: "💰", metric: "Spend · CPL · ROAS" },
   email: { label: "Email / Outbound", icon: "📧", metric: "Enviados · replies · reuniones" },
   social: { label: "Social", icon: "📱", metric: "Posts · impresiones · engagement" },
-  partnerships: { label: "Partnerships", icon: "🤝", metric: "Signups · CPA · ROI" },
+  partnerships: { label: "Partnerships", icon: "🤝", metric: "Signups · CPA · ratio a CAC objetivo" },
 };
 
 const TRUST_PILLARS = [
@@ -105,8 +113,11 @@ interface SurfaceCardModel {
   state: MetricDataState;
   sources: string[];
   value: string;
-  delta: string | null;
+  kpi: MetricKpiValue | null;
 }
+
+export type MetricsDashboardLoadState = "loading" | "error" | "empty" | "demo" | "partial" | "ready";
+type DashboardTabModel = (typeof METRIC_DASHBOARD_TABS)[number];
 
 interface FunnelStageModel {
   id: string;
@@ -114,6 +125,9 @@ interface FunnelStageModel {
   displayValue: string;
   value: number | null;
   sources: string[];
+  qualityStatus?: MetricKpiQualityStatus;
+  aggregationStatus?: "missing" | "single_series" | "non_additive";
+  seriesCount?: number;
   cost?: string | null;
 }
 
@@ -123,10 +137,13 @@ interface FunnelRateModel {
   displayValue: string;
   value: number | null;
   leak: boolean;
+  qualityStatus?: MetricKpiQualityStatus;
 }
 
 interface ChannelMatrixRow {
+  id: string;
   channel: string;
+  source: string | null;
   label: string;
   icon: string;
   stages: Array<{
@@ -134,14 +151,14 @@ interface ChannelMatrixRow {
     label: string;
     displayValue: string;
     value: number | null;
-    share: number | null;
-    winner: boolean;
+    qualityStatus?: MetricKpiQualityStatus;
   }>;
   rates: Array<{
     key: string;
     label: string;
     displayValue: string;
     value: number | null;
+    qualityStatus?: MetricKpiQualityStatus;
   }>;
 }
 
@@ -149,28 +166,57 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
   const router = useRouter();
   const [range, setRange] = useState<DateRange>("30d");
   const [localTab, setLocalTab] = useState<MetricDashboardTab>("overview");
-  const [model, setModel] = useState("W-shaped");
   const openChat = useOpenChat();
 
-  const { data: surfacesData } = useSurfaceSummary(slug);
-  const { data: dashboard } = useDashboardDefinition(slug);
-  const { data: health } = useMetricsHealth(slug);
-  const { data: kpiData } = useMetricKpis(slug, range);
+  const surfacesQuery = useSurfaceSummary(slug, range);
+  const dashboardQuery = useDashboardDefinition(slug);
+  const healthQuery = useMetricsHealth(slug);
+  const kpiQuery = useMetricKpis(slug, range);
+  const surfacesData = surfacesQuery.data;
+  const dashboard = dashboardQuery.data;
+  const health = healthQuery.data;
+  const kpiData = kpiQuery.data;
+  const failedHealthSources = healthErrorSources(health);
+  const visibleTabs = useMemo(
+    () => resolveVisibleDashboardTabs(dashboard?.definition),
+    [dashboard?.definition],
+  );
+  const visibleSurfaceOrder = useMemo(
+    () => resolveVisibleSurfaceOrder(dashboard?.definition),
+    [dashboard?.definition],
+  );
+  const qualitySummary = summarizeDashboardMetricQuality(kpiData, surfacesData);
+  const errorCount = [surfacesQuery.error, dashboardQuery.error, healthQuery.error, kpiQuery.error]
+    .filter(Boolean).length;
+  const dataState = resolveMetricsDashboardLoadState({
+    errorCount,
+    hasData: qualitySummary.hasDisplayData,
+    hasRealData: qualitySummary.hasRealData,
+    hasDemoData: qualitySummary.demo > 0,
+    qualityWarningCount: qualitySummary.warning + qualitySummary.missing,
+    loading: [surfacesQuery, dashboardQuery, healthQuery, kpiQuery].some((query) => query.isLoading),
+  });
 
-  const activeTab = normalizeTab(router.query.tab) ?? localTab;
-  const activeSurface = normalizeSurface(router.query.surface);
+  const requestedTab = normalizeTab(router.query.tab) ?? localTab;
+  const activeTab = visibleTabs.some((tab) => tab.key === requestedTab)
+    ? requestedTab
+    : visibleTabs[0]?.key ?? null;
+  const requestedSurface = normalizeSurface(router.query.surface);
+  const activeSurface = requestedSurface && visibleSurfaceOrder.includes(requestedSurface)
+    ? requestedSurface
+    : null;
   const surfaceEntries = useMemo(
     () => indexSurfaceEntries(surfacesData?.surfaces),
     [surfacesData?.surfaces],
   );
   const surfaceCards = useMemo<SurfaceCardModel[]>(
     () =>
-      METRICS_SURFACE_ORDER.flatMap((key) => {
+      visibleSurfaceOrder.flatMap((key) => {
         const def = SURFACES.find((surface) => surface.key === key);
         if (!def) return [];
         return [buildSurfaceCard(def, surfaceEntries[key], surfacesData?.configured, kpiData)];
       }),
-    [kpiData, surfaceEntries, surfacesData?.configured],
+    [kpiData, surfaceEntries, surfacesData?.configured, visibleSurfaceOrder],
   );
   const funnel = useMemo(() => buildFunnelModel(kpiData), [kpiData]);
   const channelRows = useMemo(() => buildChannelRows(kpiData?.stageRollups, funnel.stages), [funnel.stages, kpiData?.stageRollups]);
@@ -215,27 +261,59 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
         <div className="m-head">
           <div>
             <div className="m-title"><span>📈</span><h1>Métricas</h1></div>
-            <div className="m-submeta">{slug} · {rangeLabel(range)} · lead-to-sale</div>
+            <div className="m-submeta">
+              {slug} · {rangeLabel(range)}
+              {dashboard?.definition?.archetype ? ` · ${dashboard.definition.archetype}` : ""}
+            </div>
           </div>
           <div className="m-head-actions">
             <RangePicker value={range} onChange={setRange} />
-            <button type="button" className="m-btn" onClick={() => selectTab("surfaces")}>⚙️ Setup</button>
+            {visibleTabs.some((tab) => tab.key === "surfaces") && (
+              <button type="button" className="m-btn" onClick={() => selectTab("surfaces")}>⚙️ Setup</button>
+            )}
             <VersionsButton versions={dashboard?.versions ?? []} currentVersion={dashboard?.version ?? null} />
             <button type="button" className="m-btn m-btn-rust" onClick={openMerlin}>🔮 Merlin</button>
           </div>
         </div>
 
-        <TabsNav active={activeTab} onSelect={selectTab} />
+        <TabsNav tabs={visibleTabs} active={activeTab} onSelect={selectTab} />
+
+        <DashboardDataStateBanner
+          state={dataState}
+          slug={slug}
+          errorCount={errorCount}
+          demoCount={qualitySummary.demo}
+          warningCount={qualitySummary.warning}
+          missingCount={qualitySummary.missing}
+        />
+
+        {health?.overall === "error" && (
+          <div className="m-inline-alert m-inline-alert-error" role="alert">
+            {failedHealthSources.length
+              ? `Falló la última recolección de ${failedHealthSources.join(" · ")}.`
+              : "La recolección programada está degradada."}
+            {" "}Se conservan los datos anteriores, que pueden estar desactualizados.
+          </div>
+        )}
 
         {health?.overall === "stale" && (
           <div className="m-inline-alert">Los datos pueden estar desactualizados. Ejecuta una corrida diaria controlada antes de activar cron.</div>
         )}
 
-        {activeTab === "surfaces" && activeSurface ? (
+        {dataState === "loading" || dataState === "error" ? (
+          <DashboardUnavailableState state={dataState} />
+        ) : activeTab == null ? (
+          <div className="m-panel m-empty-state" role="status">
+            <div>📊</div>
+            <h3>Sin pestañas visibles</h3>
+            <p>La versión activa del dashboard no tiene vistas habilitadas.</p>
+          </div>
+        ) : activeTab === "surfaces" && activeSurface ? (
           <SurfaceDetailView
             slug={slug}
             range={range}
             surface={activeSurface}
+            dashboardDefinition={dashboard?.definition}
             entry={surfaceEntries[activeSurface]}
             configured={surfacesData?.configured}
             kpiData={kpiData}
@@ -245,10 +323,10 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
           <>
             {activeTab === "overview" && (
               <OverviewView
-                slug={slug}
                 dashboardDefinition={dashboard?.definition}
                 kpiData={kpiData}
                 funnel={funnel}
+                rows={channelRows}
                 surfaceCards={surfaceCards}
                 openSurface={openSurface}
               />
@@ -258,8 +336,6 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
             )}
             {activeTab === "channels" && (
               <ChannelsView
-                model={model}
-                onModelChange={setModel}
                 funnel={funnel}
                 rows={channelRows}
               />
@@ -274,6 +350,164 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
         )}
       </div>
       <MockupStyles />
+    </div>
+  );
+}
+
+export function resolveMetricsDashboardLoadState({
+  loading,
+  errorCount,
+  hasData,
+  hasRealData = hasData,
+  hasDemoData = false,
+  qualityWarningCount = 0,
+}: {
+  loading: boolean;
+  errorCount: number;
+  hasData: boolean;
+  hasRealData?: boolean;
+  hasDemoData?: boolean;
+  qualityWarningCount?: number;
+}): MetricsDashboardLoadState {
+  if (loading && !hasData) return "loading";
+  if (errorCount > 0 && !hasData) return "error";
+  if (!hasData) return "empty";
+  if (hasDemoData && !hasRealData) return "demo";
+  if (errorCount > 0 || qualityWarningCount > 0 || hasDemoData) return "partial";
+  return "ready";
+}
+
+export function resolveVisibleDashboardTabs(
+  definition?: DashboardDefinition | null,
+): DashboardTabModel[] {
+  if (!definition?.tabs.length) return [...METRIC_DASHBOARD_TABS];
+  const defaults = new Map(METRIC_DASHBOARD_TABS.map((tab) => [tab.key, tab]));
+  const seen = new Set<MetricDashboardTab>();
+  const tabs: DashboardTabModel[] = [];
+  for (const configured of [...definition.tabs].sort((a, b) => a.order - b.order)) {
+    const key = normalizeTab(configured.key);
+    const fallback = key ? defaults.get(key) : undefined;
+    if (!key || !fallback || !configured.visible || seen.has(key)) continue;
+    seen.add(key);
+    tabs.push({
+      ...fallback,
+      label: configured.label.trim() || fallback.label,
+    });
+  }
+  return tabs;
+}
+
+export function resolveVisibleSurfaceOrder(
+  definition?: DashboardDefinition | null,
+): SurfaceKey[] {
+  if (!definition?.surfaces.length) return [...METRICS_SURFACE_ORDER];
+  const supported = new Set<SurfaceKey>(METRICS_SURFACE_ORDER);
+  const seen = new Set<SurfaceKey>();
+  const result: SurfaceKey[] = [];
+  for (const configured of [...definition.surfaces].sort((a, b) => a.order - b.order)) {
+    if (!configured.visible || !supported.has(configured.surface) || seen.has(configured.surface)) continue;
+    seen.add(configured.surface);
+    result.push(configured.surface);
+  }
+  return result;
+}
+
+export function healthErrorSources(health?: MetricsHealthResult): string[] {
+  if (!health) return [];
+  return [...new Set(
+    health.sources
+      .filter((source) => source.lastStatus?.toLowerCase() === "error")
+      .map((source) => friendlySource(source.source)),
+  )];
+}
+
+export function summarizeDashboardMetricQuality(
+  kpis?: MetricKpiResult,
+  surfaces?: { surfaces: SurfaceSummaryEntry[] },
+): {
+  demo: number;
+  warning: number;
+  missing: number;
+  hasDisplayData: boolean;
+  hasRealData: boolean;
+} {
+  const values = kpis?.values ?? [];
+  const activeSources = qualitySourceSet(values, surfaces?.surfaces);
+  const relevantValues = values.filter((value) => isRelevantQualityValue(value, activeSources));
+  const displayValues = relevantValues.filter(hasDisplayableKpiValue);
+  const stageQuality = kpis?.stageRollups.available
+    ? kpis.stageRollups.summary.qualityStatus
+    : null;
+  const hasSurfaceData = Boolean(
+    surfaces?.surfaces.some((surface) => surface.metrics.some((metric) => metric.value != null)),
+  );
+  const demo = displayValues.filter((value) => value.qualityStatus === "demo").length
+    + (stageQuality === "demo" ? 1 : 0);
+  const warning = displayValues.filter((value) => isWarningQuality(value.qualityStatus)).length
+    + (stageQuality && isWarningQuality(stageQuality) ? 1 : 0);
+  const missing = relevantValues.filter((value) => value.qualityStatus === "missing").length
+    + (stageQuality === "missing" ? 1 : 0);
+  const hasDisplayStage = Boolean(kpis?.stageRollups.available && stageQuality !== "missing");
+  const hasRealStage = Boolean(
+    kpis?.stageRollups.available && stageQuality !== "missing" && stageQuality !== "demo",
+  );
+  const hasRealSemanticValue = displayValues.some((value) => value.qualityStatus !== "demo");
+  const hasOnlyUnclassifiedSurfaceData = hasSurfaceData && !displayValues.length && !hasDisplayStage;
+  return {
+    demo,
+    warning,
+    missing,
+    hasDisplayData: hasSurfaceData || hasDisplayStage || displayValues.length > 0,
+    // Surface summaries do not expose provenance. Once semantic values exist,
+    // do not let an unclassified raw summary relabel demo-only data as real.
+    hasRealData: hasRealStage || hasRealSemanticValue || hasOnlyUnclassifiedSurfaceData,
+  };
+}
+
+export function DashboardDataStateBanner({
+  state,
+  slug,
+  errorCount = 0,
+  demoCount = 0,
+  warningCount = 0,
+  missingCount = 0,
+}: {
+  state: MetricsDashboardLoadState;
+  slug: string;
+  errorCount?: number;
+  demoCount?: number;
+  warningCount?: number;
+  missingCount?: number;
+}) {
+  const partialDetails = [
+    errorCount ? `${errorCount} ${errorCount === 1 ? "consulta falló" : "consultas fallaron"}` : null,
+    demoCount ? `${demoCount} KPI ${demoCount === 1 ? "es demo" : "son demo"}` : null,
+    warningCount ? `${warningCount} ${warningCount === 1 ? "requiere" : "requieren"} revisión` : null,
+    missingCount ? `${missingCount} ${missingCount === 1 ? "no tiene" : "no tienen"} dato` : null,
+  ].filter(Boolean).join(" · ");
+  const copy: Record<MetricsDashboardLoadState, { label: string; detail: string }> = {
+    loading: { label: "Cargando datos", detail: "Consultando las fuentes de métricas." },
+    error: { label: "Error de carga", detail: "No se pudieron cargar las métricas. Reintenta en unos instantes." },
+    empty: { label: "Sin datos", detail: "No hay valores para este rango. Revisa las fuentes y la última recolección." },
+    demo: { label: "DEMO", detail: "Todos los valores disponibles son de demostración; no proceden de integraciones reales." },
+    partial: { label: "Datos con avisos", detail: `${partialDetails || "La cobertura no es completa"}. Se muestran solo los valores disponibles.` },
+    ready: { label: "Con datos", detail: "Comparando contra el periodo anterior cuando existe." },
+  };
+  return (
+    <div className={cn("m-statebar", `m-data-state-${state}`)} data-state={state}>
+      <span className="m-label">Estado de {slug || "cliente"}:</span>
+      <span className="m-segment-static">{copy[state].label}</span>
+      <span className="m-subtle">{copy[state].detail}</span>
+    </div>
+  );
+}
+
+function DashboardUnavailableState({ state }: { state: "loading" | "error" }) {
+  return (
+    <div className="m-panel m-empty-state" role={state === "error" ? "alert" : "status"}>
+      <div>{state === "loading" ? "⏳" : "⚠️"}</div>
+      <h3>{state === "loading" ? "Cargando métricas" : "No se pudieron cargar las métricas"}</h3>
+      <p>{state === "loading" ? "Esperando la respuesta de las fuentes." : "No se mostrarán cifras hasta recuperar una respuesta válida."}</p>
     </div>
   );
 }
@@ -297,7 +531,7 @@ function RangePicker({
           {item.label}
         </button>
       ))}
-      <button type="button" title="Periodo a medida">📅</button>
+      <button type="button" title="Periodo a medida todavía no disponible" disabled>📅</button>
     </div>
   );
 }
@@ -310,22 +544,24 @@ function VersionsButton({
   currentVersion: number | null;
 }) {
   return (
-    <button type="button" className="m-btn m-btn-navy" title={versions.map((item) => `v${item.version} · ${item.date.slice(0, 10)}`).join("\n")}>
+    <span className="m-btn m-btn-navy" title={versions.map((item) => `v${item.version} · ${item.date.slice(0, 10)}`).join("\n")}>
       🕓 Versiones {currentVersion ? `v${currentVersion}` : ""}
-    </button>
+    </span>
   );
 }
 
 function TabsNav({
+  tabs,
   active,
   onSelect,
 }: {
-  active: MetricDashboardTab;
+  tabs: DashboardTabModel[];
+  active: MetricDashboardTab | null;
   onSelect: (tab: MetricDashboardTab) => void;
 }) {
   return (
     <div className="m-tabs">
-      {METRIC_DASHBOARD_TABS.map((tab) => (
+      {tabs.map((tab) => (
         <button
           key={tab.key}
           type="button"
@@ -340,51 +576,46 @@ function TabsNav({
 }
 
 function OverviewView({
-  slug,
   dashboardDefinition,
   kpiData,
   funnel,
+  rows,
   surfaceCards,
   openSurface,
 }: {
-  slug: string;
   dashboardDefinition?: DashboardDefinition | null;
   kpiData?: MetricKpiResult;
   funnel: ReturnType<typeof buildFunnelModel>;
+  rows: ChannelMatrixRow[];
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
 }) {
   const northStar = selectDashboardNorthStarKpi(kpiData, dashboardDefinition);
   const northStarLabel = dashboardDefinition?.northStar?.label || northStar?.label || "Reuniones cualificadas";
   const economy = buildEconomyCards(kpiData);
-  const objective = targetFor(northStar);
-  const progress = percentOfTarget(northStar?.value, objective);
+  const customMetrics = selectDashboardCustomMetrics(kpiData, dashboardDefinition, null);
+  const objective = northStarTarget(dashboardDefinition);
+  const progress = percentOfTarget(metricNumericValue(northStar), objective);
 
   return (
     <div>
-      <div className="m-statebar">
-        <span className="m-label">Estado del cliente:</span>
-        <span className="m-segment-static">Con datos ({slug})</span>
-        <span className="m-subtle">Comparando contra periodo anterior</span>
-      </div>
-
       <div className="m-panel m-panel-halftone m-hero">
         <div className="m-hero-ns">
           <div className="m-eyebrow">⭐ North Star</div>
           <div className="m-ns-row">
             <div>
-              <div className="m-ns-big">{northStar?.displayValue ?? "-"}</div>
+              <div className="m-ns-big">{displayKpiValue(northStar)}</div>
               <div className="m-ns-label">{northStarLabel}</div>
+              <MetricQualityBadge kpi={northStar} />
             </div>
             <ProgressRing percent={progress} />
           </div>
           <div className="m-ns-meta">
-            <span>Objetivo <b>{formatCompact(objective)}</b></span>
+            <span>Objetivo <b>{objective == null ? "Sin definir" : formatKpiTarget(objective, northStar)}</b></span>
             <DeltaBadge kpi={northStar} />
           </div>
-          <MiniBars tone="navy" values={[56, 64, 72, 68, 81, 88, 83, 92, 96, 100]} />
           <div className="m-levers">
-            <div>Palancas que la mueven</div>
+            <div>Volúmenes observados (sin sumar proveedores)</div>
             {funnel.stages.slice(0, 4).map((stage) => (
               <span key={stage.id} className="m-lever">
                 {stage.label} <b>{stage.displayValue}</b>
@@ -402,15 +633,18 @@ function OverviewView({
                 value={card.value}
                 detail={card.detail}
                 tone={card.tone}
-                delta={card.delta}
+                kpi={card.kpi}
               />
             ))}
           </div>
         </div>
       </div>
 
-      <SectionTitle icon="🪜" title="Embudo unificado" subtitle="cada etapa la alimentan sus superficies" />
+      <CustomMetricPanel metrics={customMetrics} />
+
+      <SectionTitle icon="🪜" title="Volúmenes por etapa y proveedor" subtitle="observaciones separadas; no son un embudo deduplicado" />
       <UnifiedFunnel funnel={funnel} />
+      <ChannelMatrix rows={rows} stages={funnel.stages} />
 
       <SectionTitle icon="🗂️" title="Salud de las superficies" subtitle="cada tarjeta abre su detalle" />
       <SurfaceGrid cards={surfaceCards} onOpen={openSurface} />
@@ -437,42 +671,28 @@ function SurfacesView({
 }
 
 function ChannelsView({
-  model,
-  onModelChange,
   funnel,
   rows,
 }: {
-  model: string;
-  onModelChange: (model: string) => void;
   funnel: ReturnType<typeof buildFunnelModel>;
   rows: ChannelMatrixRow[];
 }) {
   return (
     <div>
       <div className="m-modelbar">
-        <span className="m-label">Modelo de atribución:</span>
-        <div className="m-modelseg">
-          {ATTRIBUTION_MODELS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              disabled={item.includes("🔒")}
-              className={model === item ? "on" : undefined}
-              onClick={() => !item.includes("🔒") && onModelChange(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <span className="m-subtle">W-shaped reparte crédito en las puertas clave del funnel</span>
+        <span className="m-label">Lectura disponible:</span>
+        <span className="m-segment-static">Series por proveedor</span>
+        <span className="m-subtle">No se suman proveedores: un mismo lead puede aparecer en varios sistemas.</span>
       </div>
+
+      <FunnelAggregationNotice visible={funnel.sourceAggregated} />
 
       <CompactFunnel stages={funnel.stages} />
 
-      <SectionTitle icon="📊" title="Matriz canal × etapa" subtitle="contribución de cada canal por etapa" />
+      <SectionTitle icon="📊" title="Matriz proveedor × etapa" subtitle="cada celda conserva el volumen informado por ese proveedor" />
       <ChannelMatrix rows={rows} stages={funnel.stages} />
 
-      <SectionTitle icon="🏆" title="Tabla de contribución" subtitle="canales ordenados por cierre atribuido" />
+      <SectionTitle icon="🧾" title="Inventario de observaciones" subtitle="sin ranking ni porcentaje global entre universos solapados" />
       <ContributionTable rows={rows} />
 
       <div className="m-two-col">
@@ -486,7 +706,7 @@ function ChannelsView({
         </div>
       </div>
 
-      <SectionTitle icon="🔭" title="Señales de atribución" />
+      <SectionTitle icon="🔭" title="Señales por canal" />
       <IntelligenceBridge surface="Channels" />
     </div>
   );
@@ -503,12 +723,13 @@ function ConversionView({
 }) {
   return (
     <div>
-      <SectionTitle icon="🪜" title="Embudo end-to-end" subtitle="el porcentaje entre etapas es el insight principal" />
+      <SectionTitle icon="🪜" title="Conversión pendiente de identidad" subtitle="los volúmenes agregados no permiten deduplicar personas entre proveedores" />
       <div className="m-panel m-pad">
+        <FunnelAggregationNotice visible={funnel.sourceAggregated} />
         <ConversionFunnel funnel={funnel} />
       </div>
 
-      <SectionTitle icon="📊" title="Conversión por canal" subtitle="un gráfico por canal y transición" />
+      <SectionTitle icon="📊" title="Tasas por proveedor" subtitle="solo se publicarán con eventos enlazados a una identidad deduplicada" />
       <ConversionMatrix rows={rows} />
 
       <div className="m-two-col">
@@ -517,7 +738,7 @@ function ConversionView({
           <VelocityPanel />
         </div>
         <div>
-          <SectionTitle icon="🚨" title="Dónde se fuga" />
+          <SectionTitle icon="🚨" title="Fugas no calculables" />
           <LeakPanel funnel={funnel} stageRollups={stageRollups} />
         </div>
       </div>
@@ -539,12 +760,13 @@ function TrendsView({
   const kpis = selectTrendKpis(kpiData, northStar);
   return (
     <div>
-      <div className="m-controlbar">
-        <div className="m-controlgrp"><span>Granularidad</span><div className="m-controlseg"><button>Día</button><button className="on">Semana</button><button>Mes</button></div></div>
-        <div className="m-controlgrp"><span>Comparar con</span><div className="m-controlseg rust"><button className="on">Periodo anterior</button><button>Año pasado</button></div></div>
+      <div className="m-statebar">
+        <span className="m-label">Comparación:</span>
+        <span className="m-segment-static">Periodo anterior</span>
+        <span className="m-subtle">Esta vista muestra totales comparables; la serie por día/semana/mes aún no está disponible.</span>
       </div>
 
-      <SectionTitle icon="⭐" title="North Star en el tiempo" subtitle="serie principal con comparación" />
+      <SectionTitle icon="⭐" title="North Star" subtitle="total del rango y periodo anterior" />
       <TrendHero kpi={northStar} />
 
       <SectionTitle icon="🔢" title="KPIs clave" subtitle="small-multiples para escanear sin mezclar series" />
@@ -563,10 +785,43 @@ function TrendsView({
   );
 }
 
+export function partnershipReportHasTrackedData(
+  report?: PartnershipReport,
+): boolean {
+  const status = report?.tracking?.status;
+  return (status === "real" || status === "demo")
+    && (report?.tracking?.recordCount ?? 0) > 0
+    && (report?.creators.length ?? 0) > 0;
+}
+
+export function partnershipReportHasCompleteFinancials(
+  report?: PartnershipReport,
+): boolean {
+  return report?.totals?.investedEur != null
+    && Number.isFinite(report.totals.investedEur)
+    && report.totals.totalCostEur != null
+    && Number.isFinite(report.totals.totalCostEur);
+}
+
+export function partnershipReportDataState(
+  report: PartnershipReport | undefined,
+  fallback: MetricDataState,
+): MetricDataState {
+  if (!report) return fallback;
+  if (report.tracking?.status === "real" && partnershipReportHasTrackedData(report)) {
+    return partnershipReportHasCompleteFinancials(report) ? "ON" : "PARCIAL";
+  }
+  if (report.tracking?.status === "demo" && partnershipReportHasTrackedData(report)) {
+    return "PARCIAL";
+  }
+  return "CONECTADO SIN SNAPSHOTS";
+}
+
 function SurfaceDetailView({
   slug,
   range,
   surface,
+  dashboardDefinition,
   entry,
   configured,
   kpiData,
@@ -575,6 +830,7 @@ function SurfaceDetailView({
   slug: string;
   range: DateRange;
   surface: SurfaceKey;
+  dashboardDefinition?: DashboardDefinition | null;
   entry?: SurfaceSummaryEntry;
   configured?: boolean;
   kpiData?: MetricKpiResult;
@@ -583,31 +839,71 @@ function SurfaceDetailView({
   const def = SURFACES.find((item) => item.key === surface);
   const config = SURFACE_DETAIL_CONFIGS[surface];
   const copy = SURFACE_COPY[surface];
-  const kpis = selectSurfaceKpis(kpiData, surface);
-  const state = def ? surfaceState(def, entry, configured) : "SIN DATOS";
-  const partnershipPeriod: PartnershipReportPeriodDays = range === "90d" ? 90 : 30;
+  const rendererKpis = useMemo(
+    () => (kpiData?.values ?? [])
+      .filter((kpi) => kpi.surface === surface)
+      .sort((left, right) => scoreKpi(right) - scoreKpi(left)),
+    [kpiData?.values, surface],
+  );
+  const customMetrics = selectDashboardCustomMetrics(kpiData, dashboardDefinition, surface);
+  const builtInKpis = rendererKpis.filter((kpi) => !kpi.kpiId.startsWith("custom."));
+  const rawState = def ? surfaceState(def, entry, configured) : "SIN DATOS";
+  const state = surfaceStateWithKpiQuality(
+    rawState,
+    rendererKpis,
+    entry?.sources,
+    entry?.dataStatus === "connected_no_data",
+  );
+  const sources = [...new Set([
+    ...(entry?.sources ?? []),
+    ...rendererKpis.flatMap(metricLineageSources),
+  ])];
+  const partnershipPeriod = PARTNERSHIP_PERIODS[range];
   const partnershipReport = usePartnershipReport(surface === "partnerships" ? slug : null, partnershipPeriod);
+  const detailSurface = DEDICATED_DETAIL_SURFACES.has(surface) ? surface : null;
+  const surfaceDetail = useSurfaceDetail(detailSurface ? slug : null, detailSurface, range);
+  const hasPartnershipData = partnershipReportHasTrackedData(partnershipReport.data);
+  const effectiveState = surface === "partnerships"
+    ? partnershipReportDataState(partnershipReport.data, state)
+    : state;
+  const effectiveSources = surface === "partnerships"
+    ? hasPartnershipData
+      ? [...new Set([...sources, "yalc"])]
+      : sources.filter((source) => qualitySourceKey(source) !== "yalc")
+    : sources;
   return (
     <div>
       <div className="m-detailbar">
         <button type="button" className="m-back" onClick={onBack}>← Surfaces</button>
         <h2>{copy?.icon ?? def?.emoji} {copy?.label ?? config.label}</h2>
       </div>
+      <div className="m-statebar m-statebar-tight">
+        <span className="m-label">Estado:</span>
+        <span className={cn("m-health-pill", stateClass(effectiveState))}><StatusDot state={effectiveState} />{stateLabel(effectiveState)}</span>
+        <span className="m-subtle">
+          {effectiveSources.length ? `Datos: ${effectiveSources.map(friendlySource).join(" · ")}` : "Sin fuentes con datos recientes"}
+        </span>
+      </div>
       {surface === "reputation" ? (
-        <ReputationSurface kpis={kpis} state={state} />
+        <ReputationSurface kpis={builtInKpis} state={effectiveState} />
       ) : surface === "web" ? (
-        <WebSeoSurface kpis={kpis} state={state} />
+        <WebSurfacePanel kpis={builtInKpis} detail={surfaceDetail.data} isLoading={surfaceDetail.isLoading} hasError={surfaceDetail.isError} />
       ) : surface === "email" ? (
-        <OutboundSurface kpis={kpis} state={state} />
+        <OutboundSurface kpis={builtInKpis} state={effectiveState} sources={effectiveSources} />
       ) : surface === "partnerships" ? (
-        <PartnershipsSurface kpis={kpis} report={partnershipReport.data} reportError={partnershipReport.error} reportLoading={partnershipReport.isLoading} state={state} />
+        <PartnershipsSurface kpis={builtInKpis} report={partnershipReport.data} reportError={partnershipReport.error} reportLoading={partnershipReport.isLoading} state={effectiveState} sources={effectiveSources} />
+      ) : surface === "paid" ? (
+        <PaidSurfacePanel kpis={builtInKpis} detail={surfaceDetail.data} isLoading={surfaceDetail.isLoading} hasError={surfaceDetail.isError} />
       ) : surface === "product" ? (
-        <GenericSurface title="Product" icon="🧪" kpis={kpis} state={state} groups={["Activation", "Retention", "Friction"]} />
+        <ProductSurfacePanel kpis={builtInKpis} detail={surfaceDetail.data} isLoading={surfaceDetail.isLoading} hasError={surfaceDetail.isError} />
       ) : surface === "pipeline" ? (
-        <GenericSurface title="Pipeline / CRM" icon="📇" kpis={kpis} state={state} groups={["Pipeline", "Stage waterfall", "Deal inspection"]} />
+        <PipelineSurfacePanel kpis={builtInKpis} detail={surfaceDetail.data} isLoading={surfaceDetail.isLoading} hasError={surfaceDetail.isError} stageRollups={kpiData?.stageRollups} />
+      ) : surface === "social" ? (
+        <SocialSurfacePanel kpis={builtInKpis} detail={surfaceDetail.data} isLoading={surfaceDetail.isLoading} hasError={surfaceDetail.isError} />
       ) : (
-        <GenericSurface title={copy?.label ?? config.label} icon={copy?.icon ?? def?.emoji ?? "📊"} kpis={kpis} state={state} groups={surfaceGroups(surface)} />
+        <GenericSurface title={copy?.label ?? config.label} icon={copy?.icon ?? def?.emoji ?? "📊"} kpis={builtInKpis} state={effectiveState} groups={surfaceGroups(surface)} />
       )}
+      <CustomMetricPanel metrics={customMetrics} />
     </div>
   );
 }
@@ -625,10 +921,10 @@ function ReputationSurface({
       <div className="m-panel m-surface-hero">
         <div>
           <div className="m-eyebrow">🛡️ Trust Core Global</div>
-          <div className="m-ns-big">{trustCore?.displayValue ?? stateLabel(state)}</div>
+          <div className="m-ns-big">{trustCore ? displayKpiValue(trustCore) : stateLabel(state)}</div>
+          <MetricQualityBadge kpi={trustCore} />
           <DeltaBadge kpi={trustCore} />
         </div>
-        <MiniBars tone="navy" values={[48, 58, 61, 68, 71, 78, 82, 84]} />
       </div>
       <SectionTitle icon="🧱" title="Pilares Trust Core" />
       <div className="m-small-grid">
@@ -637,9 +933,9 @@ function ReputationSurface({
           return (
             <div key={pillar.id} className="m-smcard">
               <div className="m-smh"><div className="m-smn">{pillar.label}</div><DeltaBadge kpi={kpi} /></div>
-              <div className="m-smv"><span>{kpi?.displayValue ?? "-"}</span><small>/100</small></div>
+              <div className="m-smv"><span>{displayKpiValue(kpi)}</span><small>/100</small></div>
+              <MetricQualityBadge kpi={kpi} />
               <p>{pillar.description}</p>
-              <MiniSparkline />
             </div>
           );
         })}
@@ -649,7 +945,7 @@ function ReputationSurface({
   );
 }
 
-function WebSeoSurface({
+export function WebSeoSurface({
   kpis,
   state,
 }: {
@@ -665,55 +961,47 @@ function WebSeoSurface({
     "web.pagespeed_mobile",
     "web.pagespeed_desktop",
   ].map((id) => findKpi(kpis, [id])).filter(Boolean) as MetricKpiValue[];
+  const headlineIds = new Set(headline.map((kpi) => kpi.id));
+  const candidates = [
+    ...headline,
+    ...kpis.filter((kpi) => !headlineIds.has(kpi.id)),
+  ];
+  const orderedHeadline = [
+    ...candidates.filter(hasDisplayableKpiValue),
+    ...candidates.filter((kpi) => !hasDisplayableKpiValue(kpi)),
+  ];
   return (
     <GenericSurface
       title="Web & SEO"
       icon="🌐"
-      kpis={headline.length ? headline : kpis}
+      kpis={orderedHeadline.length ? orderedHeadline : kpis}
       state={state}
       groups={["Google Analytics 4", "Search Console", "PageSpeed"]}
     />
   );
 }
 
-function OutboundSurface({
+export function OutboundSurface({
   kpis,
   state,
+  sources,
 }: {
   kpis: MetricKpiValue[];
   state: MetricDataState;
+  sources: string[];
 }) {
-  const sent = findKpi(kpis, ["outbound.sent", "emails sent", "sent"]);
-  const delivered = findKpi(kpis, ["outbound.delivered", "delivered"]);
-  const opens = findKpi(kpis, ["outbound.opens", "email opens", "opens"]);
-  const replies = findKpi(kpis, ["outbound.replies", "email replies", "replies"]);
-  const positive = findKpi(kpis, ["outbound.positive_replies", "positive replies", "interested"]);
-  const meetings = findKpi(kpis, ["outbound.meetings", "meetings"]);
-  const bounced = findKpi(kpis, ["outbound.bounced", "bounced", "email bounces"]);
-  const unsubscribed = findKpi(kpis, ["outbound.unsubscribed", "unsubscribed", "opt out"]);
-
-  const sentValue = numericValue(sent?.value);
-  const deliveredValue = numericValue(delivered?.value) ?? deriveDelivered(sent, bounced);
-  const opensValue = numericValue(opens?.value);
-  const repliesValue = numericValue(replies?.value);
-  const positiveValue = numericValue(positive?.value);
-  const meetingsValue = numericValue(meetings?.value);
-  const bouncedValue = numericValue(bounced?.value);
-  const unsubValue = numericValue(unsubscribed?.value);
-
-  const replyRateValue = safeRatio(repliesValue, sentValue);
-  const positiveRateValue = safeRatio(positiveValue, sentValue);
-  const openRateValue = safeRatio(opensValue, deliveredValue ?? sentValue);
-  const bounceRateValue = safeRatio(bouncedValue, sentValue);
-  const optOutRateValue = safeRatio(unsubValue, sentValue);
-  const replyRate = formatPercent(replyRateValue);
-  const positiveRate = formatPercent(positiveRateValue);
-  const openRate = formatPercent(openRateValue);
-  const bounceRate = formatPercent(bounceRateValue);
-  const optOutRate = formatPercent(optOutRateValue);
-  const health = outboundHealthScore({ sent: sentValue, bounced: bouncedValue, unsubscribed: unsubValue });
-  const hasInstantly = kpis.some((kpi) => kpi.source === "instantly");
-  const hasLemlist = kpis.some((kpi) => kpi.source === "lemlist");
+  const instantlySent = findKpi(kpis, ["outbound.instantly.sent"]);
+  const instantlyUniqueOpens = findKpi(kpis, ["outbound.instantly.unique_opens"]);
+  const instantlyUniqueReplies = findKpi(kpis, ["outbound.instantly.unique_replies"]);
+  const instantlyOpportunities = findKpi(kpis, ["outbound.instantly.opportunities"]);
+  const lemlistSent = findKpi(kpis, ["outbound.lemlist.sent"]);
+  const lemlistDelivered = findKpi(kpis, ["outbound.lemlist.delivered"]);
+  const lemlistOpens = findKpi(kpis, ["outbound.lemlist.opens"]);
+  const lemlistReplies = findKpi(kpis, ["outbound.lemlist.replies"]);
+  const lemlistPositive = findKpi(kpis, ["outbound.lemlist.positive_replies"]);
+  const lemlistMeetings = findKpi(kpis, ["outbound.lemlist.meetings"]);
+  const lemlistBounced = findKpi(kpis, ["outbound.lemlist.bounced"]);
+  const lemlistUnsubscribed = findKpi(kpis, ["outbound.lemlist.unsubscribed"]);
 
   return (
     <div>
@@ -722,55 +1010,54 @@ function OutboundSurface({
         title="ICP Outreach"
         subtitle="cold email a ICP · Instantly / Lemlist"
         state={state}
-        sources={[
-          { label: "Instantly", on: hasInstantly },
-          { label: "Lemlist", on: hasLemlist },
-        ]}
-        health={health != null ? `Outbound Health ${health}/100` : "Outbound Health sin dato"}
+        sources={sources}
       />
 
       <div className="m-statebar m-statebar-tight">
         <span className="m-label">Vista:</span>
-        <div className="m-vseg"><button type="button" className="on">Resumen</button><button type="button">Campañas</button></div>
+        <span className="m-segment-static">Por proveedor</span>
+        <span className="m-subtle">Los contadores de Instantly y Lemlist se muestran por separado y no se convierten en tasas de cohorte.</span>
       </div>
 
-      <SectionTitle icon="📨" title="KPIs de outbound" subtitle="reply · positive · meetings" />
+      <SectionTitle icon="📨" title="Instantly" subtitle="contadores diarios del proveedor" />
       <div className="m-kpi-grid">
-        <SurfaceKpiTile label="Enviados" value={metricDisplay(sent)} kpi={sent} />
-        <SurfaceKpiTile label="Reply rate" value={replyRate} kpi={replies} tone="hero" detail={metricDisplay(replies)} />
-        <SurfaceKpiTile label="Positive reply" value={positiveRate} kpi={positive} tone="hero" detail={metricDisplay(positive)} />
-        <SurfaceKpiTile label="Meetings booked" value={metricDisplay(meetings)} kpi={meetings} tone="hero" detail="North Star de outbound" />
-        <SurfaceKpiTile label="Bounce rate" value={bounceRate} kpi={bounced} tone="gate" detail="<3% sano" inverse />
-        <SurfaceKpiTile label="Open rate" value={openRate} kpi={opens} muted detail="Apple MPP puede inflar opens" />
-        <SurfaceKpiTile label="Opt-out" value={optOutRate} kpi={unsubscribed} inverse />
-        <SurfaceKpiTile label="Spam complaint" value="Sin dato" tone="gate" detail="<0,1% sano" muted />
+        <SurfaceKpiTile label="Envíos" value={metricDisplay(instantlySent)} kpi={instantlySent} />
+        <SurfaceKpiTile label="Aperturas únicas" value={metricDisplay(instantlyUniqueOpens)} kpi={instantlyUniqueOpens} muted detail="Apple MPP puede afectar la señal" />
+        <SurfaceKpiTile label="Replies únicos" value={metricDisplay(instantlyUniqueReplies)} kpi={instantlyUniqueReplies} tone="hero" />
+        <SurfaceKpiTile label="Oportunidades reportadas" value={metricDisplay(instantlyOpportunities)} kpi={instantlyOpportunities} />
       </div>
 
-      <SectionTitle icon="📈" title="Tendencia" subtitle="enviados, replies y meetings del rango" />
+      <SectionTitle icon="📨" title="Lemlist" subtitle="mensajes y leads reportados por el proveedor" />
+      <div className="m-kpi-grid">
+        <SurfaceKpiTile label="Mensajes enviados" value={metricDisplay(lemlistSent)} kpi={lemlistSent} />
+        <SurfaceKpiTile label="Mensajes entregados" value={metricDisplay(lemlistDelivered)} kpi={lemlistDelivered} />
+        <SurfaceKpiTile label="Aperturas reportadas" value={metricDisplay(lemlistOpens)} kpi={lemlistOpens} muted detail="Volumen; no se infiere unicidad" />
+        <SurfaceKpiTile label="Replies reportados" value={metricDisplay(lemlistReplies)} kpi={lemlistReplies} detail="Volumen; no se infiere continuidad" />
+        <SurfaceKpiTile label="Leads interesados" value={metricDisplay(lemlistPositive)} kpi={lemlistPositive} tone="hero" />
+        <SurfaceKpiTile label="Reuniones reservadas" value={metricDisplay(lemlistMeetings)} kpi={lemlistMeetings} tone="hero" />
+        <SurfaceKpiTile label="Mensajes rebotados" value={metricDisplay(lemlistBounced)} kpi={lemlistBounced} tone="gate" />
+        <SurfaceKpiTile label="Leads desuscritos" value={metricDisplay(lemlistUnsubscribed)} kpi={lemlistUnsubscribed} />
+      </div>
+
+      <SectionTitle icon="📈" title="Tendencia observada" subtitle="series separadas por proveedor; no es un funnel" />
       <MultiLinePanel
         legends={[
-          { label: "Enviados", color: "navy" },
-          { label: "Replies", color: "rust" },
-          { label: "Meetings", color: "sage" },
+          { label: "Instantly · envíos", color: "navy" },
+          { label: "Lemlist · envíos", color: "rust" },
+          { label: "Lemlist · reuniones", color: "sage" },
         ]}
         lines={[
-          sparkFromKpi(sent),
-          sparkFromKpi(replies),
-          sparkFromKpi(meetings),
+          sparkFromKpi(instantlySent),
+          sparkFromKpi(lemlistSent),
+          sparkFromKpi(lemlistMeetings),
         ]}
       />
 
-      <SectionTitle icon="🪜" title="Funnel de secuencia" subtitle="enviado → entregado → abierto → reply → positivo → reunión" />
-      <SequenceFunnel
-        steps={[
-          { label: "Enviados", value: sentValue, displayValue: metricDisplay(sent), width: 100, color: "navy", note: "base" },
-          { label: "Entregados", value: deliveredValue, displayValue: numberDisplay(deliveredValue), width: ratioPercent(deliveredValue, sentValue), color: "navy-soft", note: ratioDisplay(deliveredValue, sentValue) },
-          { label: "Abiertos", value: opensValue, displayValue: numberDisplay(opensValue), width: ratioPercent(opensValue, deliveredValue ?? sentValue), color: "sage-soft", note: openRate, flag: "MPP" },
-          { label: "Reply", value: repliesValue, displayValue: numberDisplay(repliesValue), width: ratioPercent(repliesValue, sentValue), color: "rust", note: replyRate },
-          { label: "Positivo", value: positiveValue, displayValue: numberDisplay(positiveValue), width: ratioPercent(positiveValue, repliesValue), color: "rust-dark", note: ratioDisplay(positiveValue, repliesValue) },
-          { label: "Reunión", value: meetingsValue, displayValue: numberDisplay(meetingsValue), width: ratioPercent(meetingsValue, positiveValue ?? repliesValue), color: "sage", note: ratioDisplay(meetingsValue, positiveValue ?? repliesValue) },
-        ]}
-      />
+      <SectionTitle icon="🧭" title="Lectura de los contadores" subtitle="volúmenes observados, no una cohorte secuencial" />
+      <div className="m-panel m-pad m-empty-breakdown">
+        <div>No se infiere continuidad entre pasos</div>
+        <p>Envíos, aperturas, replies, interesados y reuniones son contadores independientes de cada API. Sin identificadores de persona/campaña enlazados no se calcula drop-off ni conversión entre ellos.</p>
+      </div>
 
       <div className="m-two-col">
         <div>
@@ -783,33 +1070,15 @@ function OutboundSurface({
         </div>
       </div>
 
-      <SectionTitle icon="⚡" title="Movimientos" subtitle="solo señales accionables cuando existan datos suficientes" />
-      <MoversPanel
-        items={buildOutboundMovers({ bounceRateValue, optOutRateValue, replyRateValue, meetingsValue, health })}
-        empty="Sin movimientos detectados para outbound en este rango."
-      />
+      <div className="m-statebar m-statebar-tight">
+        <span className="m-label">Ratios:</span>
+        <span className="m-subtle">No disponibles: las APIs reportan actividad del rango, pero no prueban que aperturas, replies o entregas pertenezcan a los envíos del mismo rango. Se necesita un join por campaña/destinatario antes de calcular conversión.</span>
+      </div>
 
-      <SectionTitle icon="🛡️" title="Salud · Deliverability" subtitle="si deliverability falla, engagement deja de ser interpretable" />
-      <DeliverabilityPanel
-        score={health}
-        rows={[
-          { label: "Bounce rate", value: bounceRate, marker: markerFromRate(bouncedValue, sentValue, 0.05, true) },
-          { label: "Opt-out", value: optOutRate, marker: markerFromRate(unsubValue, sentValue, 0.02, true) },
-          { label: "Open rate", value: openRate, marker: markerFromRate(opensValue, deliveredValue ?? sentValue, 0.35, false) },
-          { label: "Spam complaint", value: "Sin dato", marker: null },
-        ]}
-      />
-
-      <SectionTitle icon="🔁" title="Contribución al embudo" subtitle="outbound aporta replies positivos y reuniones" />
-      <ContributionStrip
-        steps={[
-          { label: "Enviados", value: metricDisplay(sent) },
-          { label: "Replies", value: numberDisplay(repliesValue), rate: replyRate },
-          { label: "Positivos", value: numberDisplay(positiveValue), rate: ratioDisplay(positiveValue, repliesValue) },
-          { label: "Reuniones", value: numberDisplay(meetingsValue), lead: true, rate: ratioDisplay(meetingsValue, positiveValue ?? repliesValue) },
-        ]}
-        note={`Outbound aporta ${numberDisplay(meetingsValue)} reuniones al funnel.`}
-      />
+      <div className="m-statebar m-statebar-tight">
+        <span className="m-label">Atribución:</span>
+        <span className="m-subtle">Las reuniones de Lemlist no se suman al funnel global sin un join de identidad verificable.</span>
+      </div>
 
       <SectionTitle icon="🔭" title="Señales de esta superficie" />
       <IntelligenceBridge surface="Email / Outbound" />
@@ -823,15 +1092,18 @@ function PartnershipsSurface({
   reportError,
   reportLoading,
   state,
+  sources,
 }: {
   kpis: MetricKpiValue[];
   report?: PartnershipReport;
   reportError?: unknown;
   reportLoading?: boolean;
   state: MetricDataState;
+  sources: string[];
 }) {
   const [openHandle, setOpenHandle] = useState<string | null>(null);
-  const hasYalc = !!report || kpis.some((kpi) => kpi.source === "yalc");
+  const hasTrackedData = partnershipReportHasTrackedData(report);
+  const hasYalc = hasTrackedData || kpis.some((kpi) => kpi.source === "yalc");
   const creators = report?.creators ?? [];
   const totals = report?.totals;
   const valueGenerated = totals && report ? totals.conversions * report.targetCacEur : null;
@@ -842,13 +1114,18 @@ function PartnershipsSurface({
       <SurfaceSubhead
         icon="🤝"
         title="Partnerships"
-        subtitle="creators · CPA real vs break-even · ROI"
+        subtitle="creators · CPA vs break-even · ratio a CAC objetivo"
         state={state}
-        sources={[
-          { label: "Yalc", on: hasYalc },
-          { label: "Creators", on: creators.length > 0 },
-        ]}
-        health={report ? `${report.periodDays} días · CAC objetivo ${formatCurrencyEur(report.targetCacEur)}` : "Reporte por creator"}
+        sources={hasYalc ? [...new Set([...sources, "yalc"])] : sources}
+        health={report?.tracking?.status === "unavailable"
+          ? "Yalc conectado · tracking real pendiente"
+          : report?.tracking?.status === "real" && !partnershipReportHasCompleteFinancials(report)
+            ? "Tracking real · fee pendiente en uno o más deals"
+          : report?.tracking?.status === "demo"
+            ? `${report.periodDays} días · datos demo explícitos`
+            : report
+              ? `${report.periodDays} días · CAC objetivo ${formatCurrencyEur(report.targetCacEur)}`
+              : "Reporte por creator"}
       />
 
       {reportLoading && <div className="m-panel m-pad m-empty">Cargando reporte de Partnerships...</div>}
@@ -857,22 +1134,22 @@ function PartnershipsSurface({
           No se pudo cargar el reporte de Partnerships.
         </div>
       )}
-      {!reportLoading && !reportError && (!report || !totals || creators.length === 0) && (
+      {!reportLoading && !reportError && (!report || !totals || !hasTrackedData || creators.length === 0) && (
         <div className="m-panel m-empty-state">
           <div>🤝</div>
-          <h3>Partnerships sin reporting de creators</h3>
-          <p>Se enciende cuando Yalc tenga creators con deal y performance en la ventana.</p>
+          <h3>Partnerships conectado, sin performance verificable</h3>
+          <p>Yalc responde, pero todavía no hay tracking real de creators con deal en esta ventana.</p>
         </div>
       )}
 
-      {report && totals && creators.length > 0 && (
+      {report && totals && hasTrackedData && creators.length > 0 && (
         <>
           <SectionTitle icon="💶" title="Economía y funnel" subtitle="CPA real vs break-even y funnel clicks → signups → KYC → 1ª transacción" />
           <div className="m-kpi-grid">
-            <SurfaceKpiTile label="Invertido" value={formatCurrencyEur(totals.investedEur)} tone="navy" detail="fees + variable" />
-            <SurfaceKpiTile label="CPA real · 1ª TX" value={totals.cpaRealEur == null ? "-" : formatCurrencyEur(totals.cpaRealEur)} tone={totals.belowBreakEven ? "good" : "bad"} detail={`break-even ${formatCurrencyEur(report.targetCacEur)}`} inverse />
-            <SurfaceKpiTile label="Value generado" value={formatCurrencyEur(valueGenerated)} tone="good" detail="conversiones × CAC objetivo" />
-            <SurfaceKpiTile label="ROI" value={roiDisplay(totals.roi)} tone={totals.roi != null && totals.roi >= 1 ? "good" : "bad"} detail="break-even 1,0x" />
+            <SurfaceKpiTile label="Fees totales de deals" value={formatCurrencyEur(totals.investedEur)} tone="navy" detail={totals.investedEur == null ? "fee pendiente en uno o más deals" : "no atribuidos al periodo"} />
+            <SurfaceKpiTile label="CPA · 1ª TX del rango" value={totals.cpaRealEur == null ? "-" : formatCurrencyEur(totals.cpaRealEur)} tone={totals.belowBreakEven == null ? "navy" : totals.belowBreakEven ? "good" : "bad"} detail={`fees totales ÷ conversiones del rango · objetivo ${formatCurrencyEur(report.targetCacEur)}`} />
+            <SurfaceKpiTile label="Valor a CAC objetivo" value={formatCurrencyEur(valueGenerated)} tone="navy" detail="umbral derivado: conversiones × CAC objetivo; no es revenue" />
+            <SurfaceKpiTile label="Ratio a CAC objetivo" value={roiDisplay(totals.roi)} tone={totals.roi == null ? "navy" : totals.roi >= 1 ? "good" : "bad"} detail="(conversiones del rango × CAC objetivo) ÷ fees totales; no es ROI financiero" />
             <SurfaceKpiTile label="Clicks" value={formatCompact(totals.clicks)} />
             <SurfaceKpiTile label="Signups" value={formatCompact(totals.signups)} detail={`CR ${ratioDisplay(totals.signups, totals.clicks)}`} />
             <SurfaceKpiTile label="KYC aprobado" value={formatCompact(totals.kyc)} tone="cyan" detail={`${ratioDisplay(totals.kyc, totals.signups)} aprob.`} />
@@ -882,7 +1159,7 @@ function PartnershipsSurface({
           <SectionTitle icon="📈" title="Tendencia" subtitle="clicks agregados de creators en la ventana" />
           <MultiLinePanel legends={[{ label: "Clicks", color: "navy" }]} lines={[sumCreatorSparklines(creators)]} />
 
-          <SectionTitle icon="🏆" title="Leaderboard por creator" subtitle="ordenado por ROI y CPA contra break-even" />
+          <SectionTitle icon="🏆" title="Leaderboard por creator" subtitle="ordenado por ratio a CAC objetivo y CPA contra break-even" />
           <CreatorLeaderboard
             creators={sortedCreators}
             targetCac={report.targetCacEur}
@@ -936,10 +1213,10 @@ function GenericSurface({
       <div className="m-panel m-surface-hero">
         <div>
           <div className="m-eyebrow">{icon} {title}</div>
-          <div className="m-ns-big">{kpis[0]?.displayValue ?? stateLabel(state)}</div>
+          <div className="m-ns-big">{kpis[0] ? displayKpiValue(kpis[0]) : stateLabel(state)}</div>
           <p>{kpis[0]?.label ?? "Sin datos para este rango"}</p>
+          <MetricQualityBadge kpi={kpis[0]} />
         </div>
-        <MiniBars tone="navy" values={[32, 44, 40, 52, 64, 58, 76, 82]} />
       </div>
       <div className="m-small-grid">
         {(kpis.length ? kpis.slice(0, 6) : groups.map((group) => ({
@@ -950,8 +1227,8 @@ function GenericSurface({
         } as MetricKpiValue))).map((kpi) => (
           <div key={kpi.id} className="m-smcard">
             <div className="m-smh"><div className="m-smn">{kpi.label}</div><DeltaBadge kpi={kpi.comparison ? kpi : null} /></div>
-            <div className="m-smv"><span>{kpi.displayValue}</span></div>
-            <MiniSparkline />
+            <div className="m-smv"><span>{displayKpiValue(kpi)}</span></div>
+            <MetricQualityBadge kpi={kpi} />
           </div>
         ))}
       </div>
@@ -960,32 +1237,95 @@ function GenericSurface({
   );
 }
 
-function UnifiedFunnel({ funnel }: { funnel: ReturnType<typeof buildFunnelModel> }) {
+export interface DashboardCustomMetricModel {
+  definition: CustomMetric;
+  kpi: MetricKpiValue | null;
+}
+
+function customMetricTierLabel(tier?: string): string {
+  switch (tier?.trim().toLowerCase()) {
+    case "north-star":
+    case "primary":
+      return "North Star";
+    case "leading":
+      return "Leading";
+    case "lagging":
+      return "Lagging";
+    case "diagnostic":
+      return "Diagnóstico";
+    default:
+      return tier?.trim() || "Personalizada";
+  }
+}
+
+export function CustomMetricPanel({
+  metrics,
+}: {
+  metrics: DashboardCustomMetricModel[];
+}) {
+  if (!metrics.length) return null;
+  return (
+    <>
+      <SectionTitle
+        icon="🧮"
+        title="Métricas personalizadas"
+        subtitle="fórmulas de la versión activa del dashboard"
+      />
+      <div className="m-small-grid" data-custom-metrics>
+        {metrics.map(({ definition, kpi }) => (
+          <div key={definition.id} className="m-smcard">
+            <div className="m-smh">
+              <div className="m-smn">{definition.label}</div>
+              <DeltaBadge kpi={kpi} />
+            </div>
+            <div className="m-smv"><span>{displayKpiValue(kpi)}</span></div>
+            {kpi ? (
+              <MetricQualityBadge kpi={kpi} />
+            ) : (
+              <QualityStatusBadge status="missing" provenance={`Formula: ${definition.formula}`} />
+            )}
+            <p>
+              {customMetricTierLabel(definition.tier)}
+              {definition.format ? ` · ${definition.format}` : ""}
+              {" · "}{definition.formula}
+            </p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+export function UnifiedFunnel({ funnel }: { funnel: ReturnType<typeof buildFunnelModel> }) {
   return (
     <div className="m-panel m-pad">
+      <FunnelAggregationNotice visible={funnel.sourceAggregated} />
       <div className="m-funnel">
         {funnel.stages.map((stage, index) => (
           <div key={stage.id} className="m-funnel-item">
-            <button type="button" className={cn("m-fstage", index === 3 && "star", index === funnel.stages.length - 1 && "final")}>
+            <div className={cn("m-fstage", index === funnel.stages.length - 1 && "final")}>
               <span>{stage.label}</span>
               <b>{stage.displayValue}</b>
+              <QualityStatusBadge status={stage.qualityStatus} provenance={stage.sources.map(friendlySource).join(" · ")} />
               {stage.cost && <small>{stage.cost}</small>}
               <div>{stage.sources.slice(0, 4).map((source) => <i key={source}>{sourceIcon(source)}</i>)}</div>
-            </button>
-            {funnel.rates[index] && (
-              <div className={cn("m-frate", funnel.rates[index].leak && "leak")}>
-                <span>{funnel.rates[index].displayValue}</span>
-                <i>→</i>
-              </div>
-            )}
+            </div>
           </div>
         ))}
       </div>
       <div className="m-funnel-foot">
-        <span>Conversión total <b>{funnel.totalConversion}</b></span>
-        <span>Revenue <b>{funnel.revenue}</b></span>
-        <span>ROAS <b>{funnel.roas}</b></span>
+        <span>Sin total global: los proveedores pueden observar a la misma persona.</span>
       </div>
+    </div>
+  );
+}
+
+function FunnelAggregationNotice({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <div className="m-aggregation-notice" role="note">
+      Volúmenes separados por proveedor. No se suman ni se convierten en tasas,
+      fugas o conversión global sin una identidad deduplicada.
     </div>
   );
 }
@@ -999,19 +1339,14 @@ function ConversionFunnel({ funnel }: { funnel: ReturnType<typeof buildFunnelMod
             <div className={cn("m-cstage", index === funnel.stages.length - 1 && "last")}>
               <span>{stage.label}</span>
               <b>{stage.displayValue}</b>
+              <QualityStatusBadge status={stage.qualityStatus} provenance={stage.sources.map(friendlySource).join(" · ")} />
             </div>
-            {funnel.rates[index] && (
-              <div className={cn("m-cconv", funnel.rates[index].leak && "leak")}>
-                <span>{funnel.rates[index].displayValue}</span>
-                <small>{dropoffLabel(funnel.rates[index].value)}</small>
-              </div>
-            )}
           </div>
         ))}
       </div>
       <div className="m-funnel-foot">
-        <span>Conversión total <b>{funnel.totalConversion}</b></span>
-        <span>{funnel.deals} deals desde {funnel.sessions} sessions</span>
+        <span>Conversión total no calculada.</span>
+        <span>Se necesitan eventos enlazados por persona y transición.</span>
       </div>
     </div>
   );
@@ -1023,7 +1358,7 @@ function CompactFunnel({ stages }: { stages: FunnelStageModel[] }) {
       {stages.map((stage, index) => (
         <span key={stage.id}>
           <b>{stage.label} {stage.displayValue}</b>
-          {index < stages.length - 1 && <i>→</i>}
+          {index < stages.length - 1 && <i>·</i>}
         </span>
       ))}
     </div>
@@ -1037,6 +1372,13 @@ function SurfaceGrid({
   cards: SurfaceCardModel[];
   onOpen: (surface: SurfaceKey) => void;
 }) {
+  if (!cards.length) {
+    return (
+      <div className="m-panel m-pad m-empty">
+        La versión activa del dashboard no tiene surfaces visibles.
+      </div>
+    );
+  }
   return (
     <div className="m-surface-grid">
       {cards.map((card) => (
@@ -1048,13 +1390,16 @@ function SurfaceGrid({
         >
           <div className="m-surf-head">
             <span><i>{card.icon}</i>{card.label}</span>
-            <StatusDot state={card.state} />
+            <span className="m-surf-status"><StatusDot state={card.state} />{stateLabel(card.state)}</span>
           </div>
           <div className="m-surf-value">{card.value}</div>
+          <MetricQualityBadge kpi={card.kpi} />
           <div className="m-surf-meta">{card.description}</div>
+          <div className="m-surf-sources">
+            {card.sources.length ? `Datos: ${card.sources.map(friendlySource).join(" · ")}` : "Sin fuentes con datos recientes"}
+          </div>
           <div className="m-surf-foot">
-            <MiniBars tone="navy" values={[24, 36, 48, 44, 60, 76]} />
-            {card.delta && <span className="m-chip up">▲ {card.delta}</span>}
+            <DeltaBadge kpi={card.kpi} />
           </div>
         </button>
       ))}
@@ -1062,37 +1407,36 @@ function SurfaceGrid({
   );
 }
 
-function ChannelMatrix({
+export function ChannelMatrix({
   rows,
   stages,
 }: {
   rows: ChannelMatrixRow[];
   stages: FunnelStageModel[];
 }) {
-  const matrixRows = rows.length ? rows : fallbackChannelRows(stages);
+  if (!rows.length) {
+    return <div className="m-panel m-pad m-empty">Sin desglose por canal para este rango.</div>;
+  }
   return (
     <div className="m-panel m-table-panel">
       <table className="m-matrix">
         <thead>
           <tr>
-            <th className="chan">Canal</th>
+            <th className="chan">Proveedor · canal</th>
             {stages.map((stage) => <th key={stage.id}>{stage.label}</th>)}
           </tr>
         </thead>
         <tbody>
-          {matrixRows.map((row) => (
-            <tr key={row.channel}>
+          {rows.map((row) => (
+            <tr key={row.id}>
               <td className="chan"><span>{row.icon}</span>{row.label}</td>
               {stages.map((stage, index) => {
                 const cell = row.stages[index];
                 return (
-                  <td key={`${row.channel}-${stage.id}`}>
-                    <div
-                      className={cn("m-mcell", cell?.winner && "win")}
-                      style={heatStyle(cell?.share)}
-                    >
+                  <td key={`${row.id}-${stage.id}`}>
+                    <div className="m-mcell">
                       {cell?.displayValue ?? "-"}
-                      <span>{cell?.share != null ? `${Math.round(cell.share * 100)}%` : "-"}</span>
+                      <QualityStatusBadge status={cell?.qualityStatus} />
                     </div>
                   </td>
                 );
@@ -1109,38 +1453,29 @@ function ContributionTable({ rows }: { rows: ChannelMatrixRow[] }) {
   if (!rows.length) {
     return (
       <div className="m-panel m-pad m-empty">
-        Sin contribución atribuida para este rango.
+        Sin observaciones por proveedor para este rango.
       </div>
     );
   }
-  const contrib = rows.map((row) => {
-    const leads = row.stages[1]?.value ?? null;
-    const deals = row.stages[row.stages.length - 1]?.value ?? null;
-    const totalLeads = rows.reduce((sum, item) => sum + (item.stages[1]?.value ?? 0), 0);
-    return {
-      row,
-      leads,
-      deals,
-      share: leads != null && totalLeads > 0 ? leads / totalLeads : null,
-    };
-  }).sort((a, b) => (b.deals ?? 0) - (a.deals ?? 0));
-  const maxShare = Math.max(...contrib.map((item) => item.share ?? 0), 0.01);
   return (
     <div className="m-panel m-table-panel">
       <table className="m-ct">
         <thead>
-          <tr><th>Canal</th><th>Leads atrib.</th><th>Deals</th><th>% del total</th><th>Δ</th></tr>
+          <tr><th>Proveedor · canal</th><th>Observaciones disponibles</th><th>Lectura</th></tr>
         </thead>
         <tbody>
-          {contrib.map((item, index) => (
-            <tr key={item.row.channel} className={index === 0 ? "win" : undefined}>
-              <td><span className="m-chan2"><i>{item.row.icon}</i>{item.row.label}{index === 0 && <b>GANADOR</b>}</span></td>
-              <td className="num">{item.leads != null ? formatCompact(item.leads) : "-"}</td>
-              <td className="num">{item.deals != null ? formatCompact(item.deals) : "-"}</td>
-              <td><div className="m-share"><span style={{ width: `${Math.round(((item.share ?? 0) / maxShare) * 100)}%` }} /><b>{item.share != null ? `${Math.round(item.share * 100)}%` : "-"}</b></div></td>
-              <td><span className="m-chip up">▲ {index === 0 ? "+4pp" : "+1pp"}</span></td>
+          {rows.map((row) => {
+            const observations = row.stages.filter((stage) => stage.value != null);
+            return (
+            <tr key={row.id}>
+              <td><span className="m-chan2"><i>{row.icon}</i>{row.label}</span></td>
+              <td>{observations.length
+                ? observations.map((stage) => `${stage.label}: ${stage.displayValue}`).join(" · ")
+                : "-"}</td>
+              <td>Serie independiente; no aditiva</td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -1148,8 +1483,24 @@ function ContributionTable({ rows }: { rows: ChannelMatrixRow[] }) {
 }
 
 function ConversionMatrix({ rows }: { rows: ChannelMatrixRow[] }) {
-  const matrixRows = rows.length ? rows : fallbackChannelRows([]);
-  const labels = ["Sesión→Lead", "Lead→Cualif.", "Cualif→Reunión", "Reunión→Deal"];
+  if (!rows.length) {
+    return <div className="m-panel m-pad m-empty">Sin tasas de conversión por canal para este rango.</div>;
+  }
+  const maxRates = Math.max(...rows.map((row) => row.rates.length), 0);
+  if (maxRates === 0) {
+    return <div className="m-panel m-pad m-empty">Sin transiciones calculables por canal para este rango.</div>;
+  }
+  if (rows.every((row) => row.rates.every((rate) => rate.value == null))) {
+    return (
+      <div className="m-panel m-pad m-empty">
+        Sin tasas calculables: se necesita enlazar cada transición a una identidad
+        deduplicada dentro del mismo proveedor y rango.
+      </div>
+    );
+  }
+  const labels = Array.from({ length: maxRates }, (_, index) =>
+    rows.find((row) => row.rates[index])?.rates[index]?.label ?? `Transición ${index + 1}`,
+  );
   return (
     <div className="m-panel m-table-panel">
       <table className="m-cmtx">
@@ -1157,12 +1508,12 @@ function ConversionMatrix({ rows }: { rows: ChannelMatrixRow[] }) {
           <tr><th>Canal</th>{labels.map((label) => <th key={label}>{label}</th>)}</tr>
         </thead>
         <tbody>
-          {matrixRows.slice(0, 6).map((row) => (
-            <tr key={row.channel}>
+          {rows.slice(0, 6).map((row) => (
+            <tr key={row.id}>
               <td><span>{row.icon}</span>{row.label}</td>
               {labels.map((label, index) => {
                 const rate = row.rates[index];
-                return <td key={label}><div className={rate?.value == null ? "na" : undefined} style={conversionHeatStyle(rate?.value)}>{rate?.displayValue ?? "-"}</div></td>;
+                return <td key={label}><div className={rate?.value == null ? "na" : undefined} style={conversionHeatStyle(rate?.value)}>{rate?.displayValue ?? "-"}<QualityStatusBadge status={rate?.qualityStatus} /></div></td>;
               })}
             </tr>
           ))}
@@ -1173,84 +1524,25 @@ function ConversionMatrix({ rows }: { rows: ChannelMatrixRow[] }) {
 }
 
 function ModelComparison({ rows }: { rows: ChannelMatrixRow[] }) {
-  if (!rows.length) {
-    return (
-      <div className="m-panel m-pad m-empty">
-        Sin comparación de modelos. Requiere atribución por canal.
-      </div>
-    );
-  }
-  const items = rows.slice(0, 5);
   return (
-    <div className="m-panel m-pad">
-      {items.map((row, index) => {
-        const share = row.stages[1]?.share ?? 0.1;
-        return (
-          <div key={row.channel} className="m-cmprow">
-            <span>{row.label}</span>
-            <div>
-              <CompareBar label="1er" value={Math.max(0.08, share + (index % 2 ? 0.1 : -0.03))} tone="cyan" />
-              <CompareBar label="W" value={share} tone="navy" />
-              <CompareBar label="últ" value={Math.max(0.06, share + (index % 2 ? -0.05 : 0.07))} tone="rust" />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function CompareBar({ label, value, tone }: { label: string; value: number; tone: "cyan" | "navy" | "rust" }) {
-  return (
-    <div className="m-cmpbar">
-      <span>{label}</span>
-      <i><b className={tone} style={{ width: `${Math.round(Math.min(1, value) * 100)}%` }} /></i>
-      <strong>{Math.round(value * 100)}%</strong>
+    <div className="m-panel m-pad m-empty">
+      Sin comparación de modelos. Las {rows.length} series por proveedor no contienen crédito first-touch, W-shaped o last-touch.
     </div>
   );
 }
 
 function JourneysPanel({ rows }: { rows: ChannelMatrixRow[] }) {
-  if (!rows.length) {
-    return (
-      <div className="m-panel m-pad m-empty">
-        Sin journeys individuales. Requiere eventos por lead/deal.
-      </div>
-    );
-  }
-  const visible = rows.slice(0, 5);
   return (
-    <div className="m-panel m-pad">
-      {visible.map((row, index) => (
-        <div key={row.channel} className="m-journey">
-          <div>
-            <span>{row.icon} {row.label}</span><i>→</i><span>📧 Email</span><i>→</i><span>🏆 Deal</span>
-          </div>
-          <b>{Math.max(1, 5 - index)} deals</b>
-        </div>
-      ))}
+    <div className="m-panel m-pad m-empty">
+      Sin journeys individuales. Las {rows.length} filas disponibles son agregados por canal y no permiten reconstruir recorridos por registro.
     </div>
   );
 }
 
 function VelocityPanel() {
-  const rows = [
-    ["< 24h", 8],
-    ["1-7 días", 22],
-    ["8-30 días", 41],
-    ["> 30 días", 29],
-  ] as const;
   return (
-    <div className="m-panel m-pad">
-      <div className="m-lag">
-        {rows.map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <i><b style={{ width: `${Math.round((value / 41) * 100)}%` }} /></i>
-            <strong>{value}%</strong>
-          </div>
-        ))}
-      </div>
+    <div className="m-panel m-pad m-empty">
+      Sin datos de velocidad. Se necesitan timestamps por lead y transición de etapa.
     </div>
   );
 }
@@ -1262,7 +1554,7 @@ function LeakPanel({
   funnel: ReturnType<typeof buildFunnelModel>;
   stageRollups?: MetricStageRollupResult;
 }) {
-  const rates = funnel.rates.filter((rate) => rate.value != null).sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
+  const rates = funnel.rates.filter((rate) => rate.leak).sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
   const leaks = rates.slice(0, 3);
   if (!leaks.length) {
     return <div className="m-panel m-pad m-empty">Sin fuga calculable. {stageRollups?.summary.nextAction ?? "Aún faltan datos suficientes por etapa."}</div>;
@@ -1273,7 +1565,6 @@ function LeakPanel({
         <div key={`${rate.from}-${rate.to}`} className="m-leak">
           <span className={index === 0 ? "red" : "amber"} />
           <div><b>{rate.from} → {rate.to}: {rate.displayValue}</b><small>{dropoffLabel(rate.value)} de caída relativa</small></div>
-          <button type="button">Ver →</button>
         </div>
       ))}
     </div>
@@ -1281,18 +1572,16 @@ function LeakPanel({
 }
 
 function TrendHero({ kpi }: { kpi: MetricKpiValue | null }) {
-  const current = numericValue(kpi?.value) ?? 22;
-  const points = [14, 13, 15, 16, 15, 17, 18, 17, 19, 20, 21, Math.max(1, current)];
   return (
     <div className="m-panel m-trend-hero">
       <div className="m-trend-top">
         <div>
           <span>⭐ North Star</span>
-          <div><b>{kpi?.displayValue ?? "-"}</b><small>{kpi?.label ?? "Reuniones cualificadas"}</small><DeltaBadge kpi={kpi} /></div>
+          <div><b>{displayKpiValue(kpi)}</b><small>{kpi?.label ?? "Reuniones cualificadas"}</small><DeltaBadge kpi={kpi} /><MetricQualityBadge kpi={kpi} /></div>
         </div>
-        <div><i className="line" /> Este periodo <i className="dash" /> Periodo anterior</div>
+        <div>Periodo anterior: <b>{kpi?.comparison?.previousDisplayValue ?? "-"}</b></div>
       </div>
-      <LineChart points={points} />
+      <div className="m-empty">Sin serie temporal en este read model; se muestra solo la comparación de totales.</div>
     </div>
   );
 }
@@ -1310,28 +1599,17 @@ function SmallTrendCard({ kpi, fallback }: { kpi?: MetricKpiValue | null; fallba
   return (
     <div className="m-smcard">
       <div className="m-smh"><div className="m-smn"><span>{fallback.icon}</span>{kpi?.label ?? fallback.label}</div><DeltaBadge kpi={kpi ?? null} /></div>
-      <div className="m-smv"><span>{kpi?.displayValue ?? fallback.value}</span><small>{fallback.unit}</small></div>
-      <MiniSparkline />
-      <div className="m-smfoot">abrir →</div>
+      <div className="m-smv"><span>{kpi ? displayKpiValue(kpi) : fallback.value}</span>{!kpi && <small>{fallback.unit}</small>}</div>
+      <MetricQualityBadge kpi={kpi} />
+      <div className="m-smfoot">Total del rango</div>
     </div>
   );
 }
 
 function MarkersPanel() {
-  const markers = [
-    ["🚀", "Lanzamiento campaña", "Nueva tanda de creatividades + landing", "hace 10 sem"],
-    ["💲", "Cambio de pricing", "Menos leads, más cualificados", "hace 6 sem"],
-    ["🔧", "Fix tracking", "Sessions vuelven a contarse bien", "hace 2 sem"],
-  ] as const;
   return (
-    <div className="m-panel m-pad">
-      {markers.map(([icon, title, subtitle, when]) => (
-        <div key={title} className="m-marker">
-          <span>{icon}</span>
-          <div><b>{title}</b><small>{subtitle}</small></div>
-          <i>{when}</i>
-        </div>
-      ))}
+    <div className="m-panel m-pad m-empty">
+      Sin hitos registrados para este periodo. Las anotaciones aparecerán cuando exista una fuente de eventos.
     </div>
   );
 }
@@ -1343,14 +1621,8 @@ function IntelligenceBridge({ surface }: { surface: string }) {
         <span>🔭</span>
         <div>
           <b>Señales de {surface}</b>
-          <small>Cuando Intelligence detecte cambios relevantes, aparecerán aquí.</small>
+          <small>Sin señales calculadas para este rango. Cuando Intelligence detecte cambios relevantes, aparecerán aquí.</small>
         </div>
-        <button type="button">Abrir Intelligence →</button>
-      </div>
-      <div className="m-ipreview">
-        <div><i>↗</i><span>Canal o superficie con mayor mejora</span></div>
-        <div><i>⚠️</i><span>Etapa con caída relevante</span></div>
-        <div><i>🔒</i><span>Alertas desbloqueadas con señales reales</span></div>
       </div>
     </div>
   );
@@ -1361,23 +1633,23 @@ function MetricCard({
   value,
   detail,
   tone,
-  delta,
+  kpi,
 }: {
   label: string;
   value: string;
   detail: string;
   tone: "navy" | "rust" | "sage" | "cyan";
-  delta: string | null;
+  kpi?: MetricKpiValue | null;
 }) {
   return (
     <div className={`m-ecard ${tone}`}>
       <div>{label}</div>
-      <b>{value}</b>
+      <b>{kpi ? displayKpiValue(kpi) : value}</b>
       <div>
-        {delta ? <span className="m-chip up">▲ {delta}</span> : <span className="m-chip flat">-</span>}
-        <MiniBars tone="navy" values={[70, 84, 78, 92, 96, 100]} />
+        <DeltaBadge kpi={kpi} />
       </div>
       <small>{detail}</small>
+      <MetricQualityBadge kpi={kpi} />
     </div>
   );
 }
@@ -1387,21 +1659,29 @@ function SurfaceSubhead({
   title,
   subtitle,
   state,
+  sources,
   health,
 }: {
   icon: string;
   title: string;
   subtitle: string;
   state: MetricDataState;
-  sources: Array<{ label: string; on: boolean }>;
+  sources: string[];
   health?: string;
 }) {
-  const statusText = state === "ON" ? health : stateLabel(state);
   return (
     <div className="m-surface-subhead">
       <h2><span>{icon}</span>{title}</h2>
       <span className="m-subhead-sub">{subtitle}</span>
-      {statusText && <span className={cn("m-health-pill", state !== "ON" && stateClass(state))}>{statusText}</span>}
+      <div className="m-subhead-state">
+        <span className={cn("m-health-pill", stateClass(state))}>
+          <StatusDot state={state} />{stateLabel(state)}
+        </span>
+        {health && <span className="m-health-context">{health}</span>}
+        <span className="m-subhead-sources">
+          {sources.length ? `Datos: ${sources.map(friendlySource).join(" · ")}` : "Sin fuentes con datos recientes"}
+        </span>
+      </div>
     </div>
   );
 }
@@ -1410,18 +1690,18 @@ function SurfaceKpiTile({
   label,
   value,
   kpi,
+  qualityKpi,
   tone,
   detail,
   muted,
-  inverse,
 }: {
   label: string;
   value: string;
   kpi?: MetricKpiValue | null;
+  qualityKpi?: MetricKpiValue | null;
   tone?: "hero" | "gate" | "muted" | "good" | "bad" | "navy" | "cyan";
   detail?: string;
   muted?: boolean;
-  inverse?: boolean;
 }) {
   return (
     <div className={cn("m-skpi", tone, muted && "muted")}>
@@ -1429,10 +1709,10 @@ function SurfaceKpiTile({
         <span>{label}</span>
         {detail && <i>{detail}</i>}
       </div>
-      <div className="m-skpi-value">{value}</div>
+      <div className="m-skpi-value">{kpi ? displayKpiValue(kpi, "Sin dato") : value}</div>
       <div className="m-skpi-foot">
-        {kpi ? <DeltaBadge kpi={kpi} inverse={inverse} /> : <span className="m-chip flat">-</span>}
-        <MiniBars tone={tone === "cyan" ? "cyan" : tone === "good" || tone === "hero" ? "sage" : "navy"} values={sparkHeightsFromValue(numericValue(kpi?.value))} />
+        {kpi ? <DeltaBadge kpi={kpi} /> : <span className="m-chip flat">-</span>}
+        <MetricQualityBadge kpi={qualityKpi ?? kpi} />
       </div>
     </div>
   );
@@ -1502,49 +1782,6 @@ function MultiLineChart({
   );
 }
 
-interface SequenceStep {
-  label: string;
-  value: number | null;
-  displayValue: string;
-  width: number;
-  color: "navy" | "navy-soft" | "sage-soft" | "rust" | "rust-dark" | "sage";
-  note: string;
-  flag?: string;
-}
-
-function SequenceFunnel({ steps }: { steps: SequenceStep[] }) {
-  const colorMap: Record<SequenceStep["color"], string> = {
-    navy: "#1E3A5F",
-    "navy-soft": "#33506E",
-    "sage-soft": "#7A8A4A",
-    rust: "#C45D35",
-    "rust-dark": "#A34A28",
-    sage: "#4A5D23",
-  };
-  return (
-    <div className="m-panel m-pad">
-      <div className="m-seq-funnel">
-        {steps.map((step) => (
-          <div key={step.label} className="m-seq-row">
-            <span className="m-seq-name">{step.label}{step.flag && <i>{step.flag}</i>}</span>
-            <div className="m-seq-track">
-              <span
-                style={{
-                  width: `${Math.max(step.value == null ? 0 : 8, Math.min(100, step.width))}%`,
-                  background: colorMap[step.color],
-                }}
-              >
-                {step.displayValue}
-              </span>
-            </div>
-            <span className="m-seq-note">{step.note}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function EmptyBreakdownPanel({ text }: { text: string }) {
   return (
     <div className="m-panel m-pad m-empty-breakdown">
@@ -1559,7 +1796,6 @@ interface MoverItem {
   icon: string;
   title: string;
   subtitle: string;
-  action: string;
 }
 
 function MoversPanel({ items, empty }: { items: MoverItem[]; empty: string }) {
@@ -1570,37 +1806,8 @@ function MoversPanel({ items, empty }: { items: MoverItem[]; empty: string }) {
         <div key={item.title} className="m-mover">
           <span className={cn("m-mover-icon", item.tone)}>{item.icon}</span>
           <div><b>{item.title}</b><small>{item.subtitle}</small></div>
-          <button type="button">{item.action}</button>
         </div>
       ))}
-    </div>
-  );
-}
-
-function DeliverabilityPanel({
-  score,
-  rows,
-}: {
-  score: number | null;
-  rows: Array<{ label: string; value: string; marker: number | null }>;
-}) {
-  return (
-    <div className="m-panel m-deliv">
-      <div className="m-deliv-score">
-        <div className="m-deliv-ring" style={{ background: `conic-gradient(var(--sage) 0% ${score ?? 0}%, var(--aged) ${score ?? 0}% 100%)` }}>
-          <span>{score ?? "-"}</span><small>/100</small>
-        </div>
-        <b>{score == null ? "Sin score" : score >= 80 ? "Sano" : score >= 65 ? "Vigilar" : "Riesgo"}</b>
-      </div>
-      <div className="m-thresholds">
-        {rows.map((row) => (
-          <div key={row.label} className="m-threshold-row">
-            <span>{row.label}</span>
-            <i><b className="g" /><b className="a" /><b className="r" />{row.marker != null && <em style={{ left: `${row.marker}%` }} />}</i>
-            <strong>{row.value}</strong>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1648,12 +1855,12 @@ function CreatorLeaderboard({
         <thead>
           <tr>
             <th>Creator</th>
-            <th className="r">Invertido</th>
+            <th className="r">Fee total</th>
             <th className="r">Clicks</th>
             <th className="r">Signups</th>
             <th className="r">1ª TX</th>
             <th className="r">CPA</th>
-            <th className="r">ROI</th>
+            <th className="r">Ratio CAC obj.</th>
             <th className="r">EPC</th>
           </tr>
         </thead>
@@ -1669,7 +1876,7 @@ function CreatorLeaderboard({
                   <td className="r">{formatCompact(creator.clicks)}</td>
                   <td className="r">{formatCompact(creator.signups)}</td>
                   <td className="r">{formatCompact(creator.conversions)}</td>
-                  <td className="r"><span className={cn("m-heat", creator.belowBreakEven ? "good" : "bad")}>{creator.cpaRealEur == null ? "-" : formatCurrencyEur(creator.cpaRealEur)}</span></td>
+                  <td className="r"><span className={cn("m-heat", creator.belowBreakEven == null ? undefined : creator.belowBreakEven ? "good" : "bad")}>{creator.cpaRealEur == null ? "-" : formatCurrencyEur(creator.cpaRealEur)}</span></td>
                   <td className="r"><b>{roiDisplay(creator.roi)}</b></td>
                   <td className="r">{formatCurrencyEur(epcForCreator(creator, targetCac))}</td>
                 </tr>
@@ -1781,7 +1988,7 @@ function DecisionColumn({
         {items.length ? items.map((item) => (
           <div key={item.handle} className="m-rwrow">
             <b>{item.handle}</b>
-            <span>ROI {roiDisplay(item.roi)} · CPA {item.cpaRealEur == null ? "-" : formatCurrencyEur(item.cpaRealEur)}</span>
+            <span>Ratio CAC obj. {roiDisplay(item.roi)} · CPA {item.cpaRealEur == null ? "-" : formatCurrencyEur(item.cpaRealEur)}</span>
           </div>
         )) : <div className="m-empty">Sin creators.</div>}
       </div>
@@ -1807,73 +2014,188 @@ function SectionTitle({
   );
 }
 
-function ProgressRing({ percent }: { percent: number }) {
+function ProgressRing({ percent }: { percent: number | null }) {
   const radius = 40;
   const circumference = Math.PI * 2 * radius;
-  const safe = Math.max(0, Math.min(100, percent));
+  const safe = percent == null ? 0 : Math.max(0, Math.min(100, percent));
   return (
-    <svg width="88" height="88" viewBox="0 0 96 96" className="m-ring">
+    <svg
+      width="88"
+      height="88"
+      viewBox="0 0 96 96"
+      className="m-ring"
+      role="img"
+      aria-label={percent == null ? "Objetivo sin definir" : `${Math.round(safe)}% del objetivo`}
+    >
       <circle cx="48" cy="48" r={radius} fill="none" stroke="#E8DCC8" strokeWidth="9" />
-      <circle
-        cx="48"
-        cy="48"
-        r={radius}
-        fill="none"
-        stroke="#C45D35"
-        strokeWidth="9"
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={circumference - (circumference * safe) / 100}
-        transform="rotate(-90 48 48)"
-      />
-      <text x="48" y="54" textAnchor="middle" fontFamily="Space Grotesk" fontWeight="700" fontSize="21" fill="#1E3A5F">{Math.round(safe)}%</text>
+      {percent != null && (
+        <circle
+          cx="48"
+          cy="48"
+          r={radius}
+          fill="none"
+          stroke="#C45D35"
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference - (circumference * safe) / 100}
+          transform="rotate(-90 48 48)"
+        />
+      )}
+      <text x="48" y="54" textAnchor="middle" fontFamily="Space Grotesk" fontWeight="700" fontSize="21" fill="#1E3A5F">
+        {percent == null ? "—" : `${Math.round(safe)}%`}
+      </text>
     </svg>
   );
 }
 
-function MiniBars({ tone = "navy", values }: { tone?: "navy" | "sage" | "cyan"; values: number[] }) {
-  return (
-    <div className={`m-bars ${tone}`}>
-      {values.map((value, index) => <span key={index} style={{ height: `${value}%` }} />)}
-    </div>
+const QUALITY_SEVERITY: Record<MetricKpiQualityStatus, number> = {
+  ok: 0,
+  partial: 1,
+  stale: 2,
+  dirty: 3,
+  demo: 4,
+  missing: 5,
+};
+
+function isWarningQuality(status: MetricKpiQualityStatus): boolean {
+  return status === "partial" || status === "dirty" || status === "stale";
+}
+
+function hasDisplayableKpiValue(kpi: MetricKpiValue): boolean {
+  return kpi.qualityStatus !== "missing" && (kpi.value != null || Boolean(kpi.valueText));
+}
+
+const PLACEHOLDER_KPI_IDS = new Set([
+  "channels.attribution_results",
+  "conversion.stage_rollups",
+  "trends.annotations",
+]);
+
+function qualitySourceKey(source: string): string {
+  const normalized = normalizeComparable(source);
+  const aliases: Record<string, string> = {
+    "go high level": "ghl",
+    "google ads": "google ads",
+    "google analytics": "ga4",
+    "google search console": "gsc",
+    "meta ads": "meta ads",
+    creators: "yalc",
+    "trust core": "trust score",
+    "trust engine": "trust score",
+  };
+  return aliases[normalized] ?? normalized;
+}
+
+function qualitySourceSet(
+  kpis: MetricKpiValue[],
+  surfaces: SurfaceSummaryEntry[] = [],
+  observedSources: string[] = [],
+): Set<string> {
+  const sources = new Set<string>();
+  const add = (source: string) => sources.add(qualitySourceKey(source));
+  for (const source of observedSources) add(source);
+  for (const surface of surfaces) {
+    for (const source of surface.sources) add(source);
+    for (const metric of surface.metrics) add(metric.source);
+  }
+  for (const kpi of kpis.filter(hasDisplayableKpiValue)) {
+    for (const source of metricLineageSources(kpi)) add(source);
+  }
+  return sources;
+}
+
+function isRelevantQualityValue(
+  kpi: MetricKpiValue,
+  activeSources: Set<string>,
+): boolean {
+  if (hasDisplayableKpiValue(kpi)) return true;
+  if (PLACEHOLDER_KPI_IDS.has(kpi.kpiId)) return false;
+  return metricLineageSources(kpi)
+    .some((source) => activeSources.has(qualitySourceKey(source)));
+}
+
+function worstKpiQuality(
+  kpis: MetricKpiValue[],
+  activeSources = qualitySourceSet(kpis),
+): MetricKpiQualityStatus | null {
+  return worstQualityStatus(
+    kpis
+      .filter((kpi) => isRelevantQualityValue(kpi, activeSources))
+      .map((kpi) => kpi.qualityStatus),
   );
 }
 
-function MiniSparkline() {
-  return <LineChart compact points={[12, 16, 14, 20, 24, 22, 27, 30]} />;
+function worstQualityStatus(
+  statuses: Array<MetricKpiQualityStatus | null | undefined>,
+): MetricKpiQualityStatus | null {
+  return statuses.reduce<MetricKpiQualityStatus | null>((worst, status) => {
+    if (!status) return worst;
+    if (!worst) return status;
+    return QUALITY_SEVERITY[status] > QUALITY_SEVERITY[worst] ? status : worst;
+  }, null);
 }
 
-function LineChart({ points, compact }: { points: number[]; compact?: boolean }) {
-  const width = compact ? 220 : 920;
-  const height = compact ? 46 : 250;
-  const padX = compact ? 5 : 40;
-  const padTop = compact ? 5 : 30;
-  const padBottom = compact ? 5 : 34;
-  const max = Math.max(...points, 1);
-  const min = Math.min(...points, 0);
-  const span = max - min || 1;
-  const coords = points.map((point, index) => {
-    const x = padX + (index / Math.max(1, points.length - 1)) * (width - padX * 2);
-    const y = padTop + (1 - (point - min) / span) * (height - padTop - padBottom);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-  const area = `${padX},${height - padBottom} ${coords.join(" ")} ${width - padX},${height - padBottom}`;
+export function metricQualityCopy(status: MetricKpiQualityStatus): {
+  label: string;
+  detail: string;
+  tone: "demo" | "warn" | "missing" | "ok";
+} {
+  if (status === "demo") return { label: "DEMO", detail: "Dato de demostración; no procede de una integración real.", tone: "demo" };
+  if (status === "dirty") return { label: "REVISAR", detail: "La fuente marcó este dato para revisión.", tone: "warn" };
+  if (status === "stale") return { label: "ATRASADO", detail: "Este dato está fuera de su cadencia de actualización.", tone: "warn" };
+  if (status === "partial") return { label: "PARCIAL", detail: "El cálculo tiene cobertura incompleta.", tone: "warn" };
+  if (status === "missing") return { label: "SIN DATO", detail: "No existe un valor válido para este KPI y rango.", tone: "missing" };
+  return { label: "VERIFICADO", detail: "Dato disponible con cobertura completa.", tone: "ok" };
+}
+
+export function displayKpiValue(kpi?: MetricKpiValue | null, fallback = "-"): string {
+  if (!kpi || kpi.qualityStatus === "missing" || !hasDisplayableKpiValue(kpi)) return fallback;
+  return kpi.displayValue;
+}
+
+function metricNumericValue(kpi?: MetricKpiValue | null): number | null {
+  if (!kpi || kpi.qualityStatus === "missing") return null;
+  return numericValue(kpi.value);
+}
+
+export function MetricQualityBadge({ kpi }: { kpi?: MetricKpiValue | null }) {
+  if (!kpi) return null;
+  const provenance = kpi.provenanceLabel || [kpi.source, kpi.metricName].filter(Boolean).join(" · ");
+  return <QualityStatusBadge status={kpi.qualityStatus} provenance={provenance} />;
+}
+
+function QualityStatusBadge({
+  status,
+  provenance,
+}: {
+  status?: MetricKpiQualityStatus | null;
+  provenance?: string | null;
+}) {
+  if (!status || status === "ok") return null;
+  const quality = metricQualityCopy(status);
   return (
-    <svg className={compact ? "m-spark" : "m-chart"} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-      <polygon points={area} fill="rgba(74,93,35,.10)" />
-      <polyline points={coords.join(" ")} fill="none" stroke="#4A5D23" strokeWidth={compact ? 2.5 : 3} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={coords[coords.length - 1]?.split(",")[0]} cy={coords[coords.length - 1]?.split(",")[1]} r={compact ? 3.4 : 5} fill="#4A5D23" stroke="#1A1A2E" strokeWidth="1.5" />
-    </svg>
+    <span
+      className={cn("m-quality-badge", quality.tone)}
+      title={[quality.detail, provenance ? `Origen: ${provenance}` : null].filter(Boolean).join(" ")}
+    >
+      {quality.label}
+    </span>
   );
 }
 
-function DeltaBadge({ kpi, inverse }: { kpi?: MetricKpiValue | null; inverse?: boolean }) {
+export function deltaTone(kpi?: MetricKpiValue | null): "up" | "down" | "flat" {
+  if (kpi?.comparison?.sentiment === "positive") return "up";
+  if (kpi?.comparison?.sentiment === "negative") return "down";
+  return "flat";
+}
+
+function DeltaBadge({ kpi }: { kpi?: MetricKpiValue | null }) {
+  if (kpi?.qualityStatus === "missing") return <span className="m-chip flat">-</span>;
   const delta = kpi?.comparison?.displayDelta;
   if (!delta) return <span className="m-chip flat">-</span>;
-  const positive = inverse ? kpi.comparison?.sentiment === "negative" : kpi.comparison?.sentiment === "positive";
-  const negative = inverse ? kpi.comparison?.sentiment === "positive" : kpi.comparison?.sentiment === "negative";
   return (
-    <span className={cn("m-chip", positive ? "up" : negative ? "down" : "flat")}>
+    <span className={cn("m-chip", deltaTone(kpi))}>
       {kpi.comparison?.direction === "down" ? "▼" : kpi.comparison?.direction === "up" ? "▲" : "•"} {delta}
     </span>
   );
@@ -1895,9 +2217,9 @@ function KpiComparisonTable({ kpis }: { kpis: MetricKpiValue[] }) {
           <tbody>
             {uniqueKpis.map((kpi) => (
               <tr key={kpi.id}>
-                <td>{kpi.label}</td>
-                <td className="num">{kpi.displayValue}</td>
-                <td className="num">{kpi.comparison?.previousDisplayValue ?? "-"}</td>
+                <td>{kpi.label} <MetricQualityBadge kpi={kpi} /></td>
+                <td className="num">{displayKpiValue(kpi)}</td>
+                <td className="num">{kpi.qualityStatus === "missing" ? "-" : (kpi.comparison?.previousDisplayValue ?? "-")}</td>
                 <td><DeltaBadge kpi={kpi} /></td>
               </tr>
             ))}
@@ -1918,31 +2240,32 @@ function dedupeKpis(kpis: MetricKpiValue[]): MetricKpiValue[] {
   });
 }
 
-function buildFunnelModel(data?: MetricKpiResult) {
+export function buildFunnelModel(data?: MetricKpiResult) {
   const stageRollups = data?.stageRollups;
   const stages = stageRollups?.available
     ? stageRollups.stages.map((stage) => stageToModel(stage))
     : fallbackFunnelStages(data);
-  const rates = stageRollups?.available
-    ? buildRatesFromRollups(stageRollups)
-    : buildRatesFromStages(stages);
-  const sessions = stages[0]?.displayValue ?? "-";
-  const deals = stages[stages.length - 1]?.displayValue ?? "-";
-  const totalConversion = stages[0]?.value && stages[stages.length - 1]?.value != null
-    ? formatPercent((stages[stages.length - 1].value ?? 0) / stages[0].value)
-    : "-";
-  const revenue = findKpi(data?.values ?? [], ["revenue", "revenue generado"])?.displayValue ?? "-";
-  const roas = findKpi(data?.values ?? [], ["roas"])?.displayValue ?? "-";
-  return { stages, rates, sessions, deals, totalConversion, revenue, roas };
+  return {
+    stages,
+    // Aggregated provider observations have no shared person identity. Keep
+    // transitions explicitly unavailable even if an older API payload still
+    // contains a percentage.
+    rates: buildUnavailableRates(stages),
+    totalConversion: "-",
+    sourceAggregated: stageRollups?.available === true,
+  };
 }
 
 function stageToModel(stage: MetricStageRollupStageValue): FunnelStageModel {
   return {
     id: stage.stageId,
     label: stage.label,
-    displayValue: stage.displayValue,
-    value: numericValue(stage.value),
+    displayValue: stage.qualityStatus === "missing" ? "-" : stage.displayValue,
+    value: stage.qualityStatus === "missing" ? null : numericValue(stage.value),
     sources: stage.sources,
+    qualityStatus: stage.qualityStatus,
+    aggregationStatus: stage.aggregationStatus,
+    seriesCount: stage.seriesCount,
   };
 }
 
@@ -1952,105 +2275,91 @@ function fallbackFunnelStages(data?: MetricKpiResult): FunnelStageModel[] {
     return {
       id: normalizeComparable(label).replace(/\s+/g, "_"),
       label,
-      displayValue: kpi?.displayValue ?? "-",
-      value: numericValue(kpi?.value),
+      displayValue: displayKpiValue(kpi),
+      value: metricNumericValue(kpi),
       sources: kpi?.source ? [kpi.source] : [],
-      cost: label === "Leads" ? findKpi(data?.values ?? [], ["cpl", "cost per lead"])?.displayValue : null,
+      qualityStatus: kpi?.qualityStatus,
+      cost: label === "Leads" ? displayKpiValue(findKpi(data?.values ?? [], ["cpl", "cost per lead"]), "") || null : null,
     };
   });
 }
 
-function buildRatesFromRollups(stageRollups: MetricStageRollupResult): FunnelRateModel[] {
-  const rates = stageRollups.rates.map((rate) => ({
-    from: rate.fromLabel,
-    to: rate.toLabel,
-    displayValue: rate.displayValue,
-    value: numericValue(rate.value),
-    leak: false,
-  }));
-  const valid = rates.filter((rate) => rate.value != null);
-  const min = Math.min(...valid.map((rate) => rate.value ?? 1));
-  return rates.map((rate) => ({ ...rate, leak: rate.value != null && rate.value <= min }));
-}
-
-function buildRatesFromStages(stages: FunnelStageModel[]): FunnelRateModel[] {
-  const rates = stages.slice(0, -1).map((stage, index) => {
+function buildUnavailableRates(stages: FunnelStageModel[]): FunnelRateModel[] {
+  return stages.slice(0, -1).map((stage, index) => {
     const next = stages[index + 1];
-    const value = stage.value && next.value != null ? next.value / stage.value : null;
     return {
       from: stage.label,
       to: next.label,
-      displayValue: value != null ? formatPercent(value) : "-",
-      value,
+      displayValue: "-",
+      value: null,
       leak: false,
+      qualityStatus: stage.value != null && next.value != null
+        ? "partial"
+        : "missing",
     };
   });
-  const valid = rates.filter((rate) => rate.value != null);
-  const min = Math.min(...valid.map((rate) => rate.value ?? 1));
-  return rates.map((rate) => ({ ...rate, leak: rate.value != null && rate.value <= min }));
 }
 
-function buildChannelRows(stageRollups: MetricStageRollupResult | undefined, stages: FunnelStageModel[]): ChannelMatrixRow[] {
+export function buildChannelRows(stageRollups: MetricStageRollupResult | undefined, stages: FunnelStageModel[]): ChannelMatrixRow[] {
   if (!stageRollups?.available) return [];
-  const columnTotals = stages.map((stage) => {
-    const rollupStage = stageRollups.stages.find((item) => item.stageId === stage.id || item.label === stage.label);
-    return rollupStage?.value ?? 0;
-  });
-  const columnMax = stages.map((stage) =>
-    Math.max(
-      ...stageRollups.channels.map((channel) =>
-        channel.stages.find((item) => item.stageId === stage.id || item.label === stage.label)?.value ?? 0,
-      ),
-      0,
-    ),
-  );
-  return stageRollups.channels.map((channel) => channelToRow(channel, stages, columnTotals, columnMax));
+  return stageRollups.channels.map((channel) => channelToRow(channel, stages));
 }
 
 function channelToRow(
   channel: MetricStageRollupChannelValue,
   stages: FunnelStageModel[],
-  columnTotals: number[],
-  columnMax: number[],
 ): ChannelMatrixRow {
+  const inferredSources = uniqueStrings(
+    channel.stages.flatMap((stage) => stage.sources.map(sourceFromMetricRef)),
+  );
+  const source = channel.source ?? (inferredSources.length === 1 ? inferredSources[0] : null);
+  const providerSeparated = Boolean(source);
   return {
+    id: channel.seriesKey ?? `${channel.channel}:${source ?? (inferredSources.join("+") || "unknown")}`,
     channel: channel.channel,
-    label: channel.label,
+    source,
+    label: source
+      ? `${channel.label} · ${friendlySource(source)}`
+      : `${channel.label} · ${inferredSources.length || "varios"} proveedores sin separar`,
     icon: channelIcon(channel.channel, channel.label),
-    stages: stages.map((stage, index) => {
+    stages: stages.map((stage) => {
       const value = channel.stages.find((item) => item.stageId === stage.id || item.label === stage.label);
-      const numeric = numericValue(value?.value);
+      const valueSources = uniqueStrings((value?.sources ?? []).map(sourceFromMetricRef));
+      const safeProviderSeries = providerSeparated || valueSources.length <= 1;
+      const numeric = value?.qualityStatus === "missing" || !safeProviderSeries
+        ? null
+        : numericValue(value?.value);
       return {
         stageId: stage.id,
         label: stage.label,
-        displayValue: value?.displayValue ?? "-",
+        displayValue: !safeProviderSeries && valueSources.length > 1
+          ? `${valueSources.length} series sin sumar`
+          : value?.qualityStatus === "missing"
+            ? "-"
+            : (value?.displayValue ?? "-"),
         value: numeric,
-        share: numeric != null && columnTotals[index] > 0 ? numeric / columnTotals[index] : null,
-        winner: numeric != null && numeric === columnMax[index] && numeric > 0,
+        qualityStatus: !safeProviderSeries ? "partial" : value?.qualityStatus,
       };
     }),
     rates: channel.rates.map((rate) => ({
       key: `${rate.fromStageId}-${rate.toStageId}`,
       label: `${rate.fromLabel}→${rate.toLabel}`,
-      displayValue: rate.displayValue,
-      value: numericValue(rate.value),
+      displayValue: "-",
+      value: null,
+      qualityStatus: rate.qualityStatus === "missing" ? "missing" : "partial",
     })),
   };
 }
 
-function fallbackChannelRows(stages: FunnelStageModel[]): ChannelMatrixRow[] {
-  return CHANNEL_FALLBACKS.map((channel) => ({
-    ...channel,
-    stages: stages.map((stage) => ({
-      stageId: stage.id,
-      label: stage.label,
-      displayValue: "-",
-      value: null,
-      share: null,
-      winner: false,
-    })),
-    rates: [],
-  }));
+function sourceFromMetricRef(value: string): string {
+  const separator = value.indexOf(".");
+  return separator > 0 ? value.slice(0, separator) : value;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))].sort((left, right) =>
+    left.localeCompare(right),
+  );
 }
 
 function buildSurfaceCard(
@@ -2062,23 +2371,32 @@ function buildSurfaceCard(
   const copy = SURFACE_COPY[def.key];
   const kpis = selectSurfaceKpis(kpiData, def.key);
   const primary =
-    kpis.find((kpi) => kpi.value != null || !!kpi.valueText) ??
+    kpis.find(hasDisplayableKpiValue) ??
     entry?.metrics?.find((metric) => metric.value != null);
+  const primaryKpi = "displayValue" in (primary ?? {}) ? primary as MetricKpiValue : null;
   const rawState = surfaceState(def, entry, configured);
-  const state =
-    rawState === "CONECTADO SIN SNAPSHOTS" && kpis.some((kpi) => kpi.value != null || !!kpi.valueText)
-      ? "ON"
-      : rawState;
-  const value = "displayValue" in (primary ?? {}) ? (primary as MetricKpiValue).displayValue : primary?.value != null ? formatCompact(primary.value) : stateValue(state);
+  const state = surfaceStateWithKpiQuality(
+    rawState,
+    kpis,
+    entry?.sources,
+    entry?.dataStatus === "connected_no_data",
+  );
+  const sources = [...new Set([
+    ...(entry?.sources ?? []),
+    ...kpis.flatMap(metricLineageSources),
+  ])];
+  const value = primaryKpi
+    ? displayKpiValue(primaryKpi)
+    : (primary?.value != null ? formatCompact(primary.value) : stateValue(state));
   return {
     key: def.key,
     icon: copy?.icon ?? def.emoji,
     label: copy?.label ?? SURFACE_DETAIL_CONFIGS[def.key].label,
     description: copy?.metric ?? def.what,
     state,
-    sources: entry?.sources ?? [],
+    sources,
     value,
-    delta: kpis[0]?.comparison?.displayDelta ?? null,
+    kpi: primaryKpi,
   };
 }
 
@@ -2089,10 +2407,10 @@ function buildEconomyCards(data?: MetricKpiResult) {
   const revenue = findKpi(values, ["revenue", "revenue generado", "ingresos"]);
   const roas = findKpi(values, ["roas", "roi"]);
   return [
-    { label: "💸 Inversión", value: investment?.displayValue ?? "-", detail: sourceMetricLabel(investment), tone: "navy" as const, delta: investment?.comparison?.displayDelta ?? null },
-    { label: "🎯 CAC", value: cac?.displayValue ?? "-", detail: sourceMetricLabel(cac), tone: "rust" as const, delta: cac?.comparison?.displayDelta ?? null },
-    { label: "💰 Revenue generado", value: revenue?.displayValue ?? "-", detail: sourceMetricLabel(revenue), tone: "sage" as const, delta: revenue?.comparison?.displayDelta ?? null },
-    { label: "📈 ROAS", value: roas?.displayValue ?? "-", detail: sourceMetricLabel(roas), tone: "cyan" as const, delta: roas?.comparison?.displayDelta ?? null },
+    { label: investment ? `💸 ${investment.label}` : "💸 Sin KPI blended de inversión", value: displayKpiValue(investment), detail: sourceMetricLabel(investment), tone: "navy" as const, kpi: investment },
+    { label: cac ? `🎯 ${cac.label}` : "🎯 Sin KPI blended de CAC", value: displayKpiValue(cac), detail: sourceMetricLabel(cac), tone: "rust" as const, kpi: cac },
+    { label: revenue ? `💰 ${revenue.label}` : "💰 Sin KPI blended de revenue", value: displayKpiValue(revenue), detail: sourceMetricLabel(revenue), tone: "sage" as const, kpi: revenue },
+    { label: roas ? `📈 ${roas.label}` : "📈 Sin KPI blended de ROAS", value: displayKpiValue(roas), detail: sourceMetricLabel(roas), tone: "cyan" as const, kpi: roas },
   ];
 }
 
@@ -2121,7 +2439,40 @@ function selectSurfaceKpis(data: MetricKpiResult | undefined, surface: SurfaceKe
     .sort((a, b) => scoreKpi(b) - scoreKpi(a));
 }
 
-function selectDashboardNorthStarKpi(
+function customMetricSurface(surface?: string): SurfaceKey | null {
+  const normalized = surface?.trim().toLowerCase();
+  return normalized && SURFACES.some((item) => item.key === normalized)
+    ? (normalized as SurfaceKey)
+    : null;
+}
+
+export function selectDashboardCustomMetrics(
+  data?: MetricKpiResult,
+  dashboardDefinition?: DashboardDefinition | null,
+  surface: SurfaceKey | null = null,
+): DashboardCustomMetricModel[] {
+  const values = new Map(
+    (data?.values ?? [])
+      .filter((value) => value.kpiId.startsWith("custom."))
+      .map((value) => [value.kpiId, value]),
+  );
+  return (dashboardDefinition?.customMetrics ?? [])
+    .filter((definition) => customMetricSurface(definition.surface) === surface)
+    .map((definition) => ({
+      definition,
+      kpi: values.get(`custom.${definition.id}`) ?? null,
+    }));
+}
+
+function metricLineageSources(kpi: MetricKpiValue): string[] {
+  const inputSources = (kpi.inputRefs ?? [])
+    .map((ref) => ref.source)
+    .filter((source): source is string => typeof source === "string" && Boolean(source.trim()));
+  if (kpi.source === "custom" && inputSources.length) return [...new Set(inputSources)];
+  return kpi.source ? [kpi.source] : inputSources;
+}
+
+export function selectDashboardNorthStarKpi(
   data?: MetricKpiResult,
   dashboardDefinition?: DashboardDefinition | null,
 ): MetricKpiValue | null {
@@ -2149,10 +2500,16 @@ function selectDashboardNorthStarKpi(
   return data?.northStar ?? null;
 }
 
+const QUALIFIED_NORTH_STAR_PATTERN = /cualific|qualif|\bsql\b/;
+
 function northStarMatchesKpi(label: string, kpi: MetricKpiValue): boolean {
   const haystack = normalizeComparable(`${kpi.kpiId} ${kpi.label} ${kpi.source ?? ""} ${kpi.metricName ?? ""}`);
+  if (
+    QUALIFIED_NORTH_STAR_PATTERN.test(label) &&
+    !QUALIFIED_NORTH_STAR_PATTERN.test(haystack)
+  ) return false;
   if (/meeting|reunion|cita|appointment/.test(label)) return /meeting|reunion|cita|appointment/.test(haystack);
-  if (/lead|contact/.test(label)) return /lead|contact/.test(haystack);
+  if (/lead|contact|cualific|qualif|\bsql\b/.test(label)) return /lead|contact|cualific|qualif|\bsql\b/.test(haystack);
   if (/deal|opportunit|oportunidad|proposal|propuesta/.test(label)) return /deal|opportunit|oportunidad|proposal|propuesta/.test(haystack);
   if (/revenue|gmv|venta|sales|ingreso/.test(label)) return /revenue|gmv|venta|sales|ingreso|value/.test(haystack);
   return false;
@@ -2186,10 +2543,10 @@ function findKpi(kpis: MetricKpiValue[], candidates: string[]): MetricKpiValue |
 function funnelCandidates(label: string): string[] {
   const comparable = normalizeComparable(label);
   if (comparable.includes("session")) return ["sessions", "ga4.sessions", "web.sessions"];
-  if (comparable.includes("lead")) return ["leads", "newContacts", "pipeline.ghl.contacts"];
+  if (comparable.includes("lead")) return ["leads", "newContacts", "pipeline.ghl.new_contacts"];
   if (comparable.includes("cual")) return ["qualified", "sql", "cualificados"];
   if (comparable.includes("reunion")) return ["meetings", "appointments", "reuniones"];
-  if (comparable.includes("deal")) return ["deals", "opportunities", "closed won"];
+  if (comparable.includes("oportun") || comparable.includes("deal")) return ["opportunities", "deals", "closed won"];
   return [label];
 }
 
@@ -2244,7 +2601,7 @@ function scoreKpi(kpi: MetricKpiValue): number {
   return score;
 }
 
-function surfaceState(def: SurfaceDef, entry: SurfaceSummaryEntry | undefined, configured?: boolean): MetricDataState {
+export function surfaceState(def: SurfaceDef, entry: SurfaceSummaryEntry | undefined, configured?: boolean): MetricDataState {
   if (!configured) return "SIN DATOS";
   if (!entry?.connected) return "OFF";
   const req = SURFACE_MANDATORY_SOURCES[def.key];
@@ -2256,6 +2613,19 @@ function surfaceState(def: SurfaceDef, entry: SurfaceSummaryEntry | undefined, c
   }
   if (!entry.metrics?.length) return "CONECTADO SIN SNAPSHOTS";
   return "ON";
+}
+
+export function surfaceStateWithKpiQuality(
+  rawState: MetricDataState,
+  kpis: MetricKpiValue[],
+  observedSources: string[] = [],
+  authoritativeNoData = false,
+): MetricDataState {
+  if (authoritativeNoData && rawState === "CONECTADO SIN SNAPSHOTS") return rawState;
+  if (!kpis.some(hasDisplayableKpiValue)) return rawState;
+  const quality = worstKpiQuality(kpis, qualitySourceSet(kpis, [], observedSources));
+  if (quality && quality !== "ok") return "PARCIAL";
+  return rawState === "CONECTADO SIN SNAPSHOTS" ? "ON" : rawState;
 }
 
 function indexSurfaceEntries(entries?: SurfaceSummaryEntry[]): Partial<Record<SurfaceKey, SurfaceSummaryEntry>> {
@@ -2298,11 +2668,7 @@ function numericValue(value: unknown): number | null {
 }
 
 function metricDisplay(kpi?: MetricKpiValue | null): string {
-  return kpi?.displayValue ?? "Sin dato";
-}
-
-function numberDisplay(value: number | null | undefined): string {
-  return value == null || !Number.isFinite(value) ? "-" : formatCompact(value);
+  return displayKpiValue(kpi, "Sin dato");
 }
 
 function formatCompact(value: number | null | undefined): string {
@@ -2334,65 +2700,37 @@ function ratioDisplay(numerator: number | null | undefined, denominator: number 
   return formatPercent(safeRatio(numerator, denominator));
 }
 
-function ratioPercent(numerator: number | null | undefined, denominator: number | null | undefined): number {
-  const ratio = safeRatio(numerator, denominator);
-  if (ratio == null) return 0;
-  return Math.max(0, Math.min(100, Math.round(ratio * 100)));
-}
-
-function deriveDelivered(sent?: MetricKpiValue | null, bounced?: MetricKpiValue | null): number | null {
-  const sentValue = numericValue(sent?.value);
-  const bouncedValue = numericValue(bounced?.value);
-  if (sentValue == null || bouncedValue == null) return null;
-  return Math.max(0, sentValue - bouncedValue);
-}
-
-function outboundHealthScore(input: {
-  sent: number | null;
-  bounced: number | null;
-  unsubscribed: number | null;
-}): number | null {
-  if (input.sent == null || input.sent <= 0) return null;
-  const bounceRate = safeRatio(input.bounced ?? 0, input.sent) ?? 0;
-  const optOutRate = safeRatio(input.unsubscribed ?? 0, input.sent) ?? 0;
-  const bouncePenalty = Math.min(35, bounceRate * 800);
-  const optOutPenalty = Math.min(25, optOutRate * 1000);
-  return Math.max(0, Math.min(100, Math.round(92 - bouncePenalty - optOutPenalty)));
-}
-
-function markerFromRate(
-  numerator: number | null | undefined,
-  denominator: number | null | undefined,
-  threshold: number,
-  lowerIsBetter: boolean,
-): number | null {
-  const ratio = safeRatio(numerator, denominator);
-  if (ratio == null) return null;
-  const scale = lowerIsBetter ? threshold * 2 : Math.max(threshold * 1.6, 0.01);
-  return Math.max(2, Math.min(98, Math.round((ratio / scale) * 100)));
-}
-
 function sparkFromKpi(kpi?: MetricKpiValue | null): number[] {
-  const current = numericValue(kpi?.value);
+  if (kpi?.qualityStatus === "missing") return [];
+  const current = metricNumericValue(kpi);
   const previous = numericValue(kpi?.comparison?.previousValue);
   if (current == null || previous == null) return [];
   return [previous, current];
 }
 
-function sparkHeightsFromValue(value: number | null): number[] {
-  if (value == null) return [42, 42, 42, 42, 42, 42];
-  return [68, 76, 72, 84, 92, 100];
+export function northStarTarget(definition?: DashboardDefinition | null): number | null {
+  return numericValue(definition?.northStar?.target);
 }
 
-function percentOfTarget(value?: number | null, target?: number | null): number {
-  if (!value || !target) return 0;
-  return (value / target) * 100;
+export function percentOfTarget(value?: number | null, target?: number | null): number | null {
+  const numeric = numericValue(value);
+  const numericTarget = numericValue(target);
+  if (numeric == null || numericTarget == null || numericTarget <= 0) return null;
+  return (numeric / numericTarget) * 100;
 }
 
-function targetFor(kpi?: MetricKpiValue | null): number {
-  const value = numericValue(kpi?.value);
-  if (!value) return 100;
-  return Math.max(value, Math.ceil(value / 0.72));
+function formatKpiTarget(target: number, kpi?: MetricKpiValue | null): string {
+  if (kpi?.unit === "account_currency") return `${formatCompact(target)} moneda cuenta`;
+  if (kpi?.unit === "currency") return formatCurrencyEur(target);
+  if (kpi?.unit === "%") return `${formatCompact(target)}%`;
+  if (kpi?.unit === "ratio") return `${formatCompact(target)}x`;
+  return formatCompact(target);
+}
+
+export function stageRateToFraction(value: unknown): number | null {
+  const numeric = numericValue(value);
+  if (numeric == null) return null;
+  return Math.max(0, Math.min(1, numeric / 100));
 }
 
 function rangeLabel(range: DateRange): string {
@@ -2401,32 +2739,26 @@ function rangeLabel(range: DateRange): string {
 
 function stateValue(state: MetricDataState): string {
   if (state === "ON") return "Sin datos para este rango";
-  if (state === "PARCIAL") return "Falta conexión requerida";
-  if (state === "CONECTADO SIN SNAPSHOTS") return "Conectado sin datos";
+  if (state === "PARCIAL") return "Datos parciales";
+  if (state === "CONECTADO SIN SNAPSHOTS") return "Fuente detectada sin resumen";
   if (state === "COMING SOON") return "Próximamente";
-  return "No conectado";
+  if (state === "OFF") return "Sin datos recientes";
+  return "Métricas no configuradas";
 }
 
-function stateLabel(state: MetricDataState): string {
-  return stateValue(state);
+export function stateLabel(state: MetricDataState): string {
+  if (state === "ON") return "Datos recibidos";
+  if (state === "PARCIAL") return "Datos parciales";
+  if (state === "CONECTADO SIN SNAPSHOTS") return "Fuente detectada sin resumen";
+  if (state === "COMING SOON") return "Próximamente";
+  if (state === "OFF") return "Sin datos recientes";
+  return "Métricas no configuradas";
 }
 
 function stateClass(state: MetricDataState): string {
   if (state === "ON") return "on";
   if (state === "PARCIAL" || state === "CONECTADO SIN SNAPSHOTS") return "partial";
   return "off";
-}
-
-function heatStyle(share?: number | null): CSSProperties {
-  if (share == null) return {};
-  const t = Math.max(0, Math.min(1, share / 0.35));
-  const r = Math.round(253 - (253 - 30) * t);
-  const g = Math.round(248 - (248 - 110) * t);
-  const b = Math.round(239 - (239 - 150) * t);
-  return {
-    background: `rgb(${r},${g},${b})`,
-    color: t > 0.55 ? "#fff" : "#1A1A2E",
-  };
 }
 
 function conversionHeatStyle(value?: number | null): CSSProperties {
@@ -2438,35 +2770,10 @@ function conversionHeatStyle(value?: number | null): CSSProperties {
   return { background: `rgb(${r},${g},${b})` };
 }
 
-function dropoffLabel(value?: number | null): string {
+export function dropoffLabel(value?: number | null): string {
   if (value == null) return "-";
-  return `−${Math.round((1 - value) * 100)}%`;
-}
-
-function buildOutboundMovers(input: {
-  bounceRateValue: number | null;
-  optOutRateValue: number | null;
-  replyRateValue: number | null;
-  meetingsValue: number | null;
-  health: number | null;
-}): MoverItem[] {
-  const items: MoverItem[] = [];
-  if (input.replyRateValue != null && input.replyRateValue >= 0.05) {
-    items.push({ tone: "up", icon: "↗", title: `Reply rate ${formatPercent(input.replyRateValue)}`, subtitle: "respuesta por encima del umbral operativo", action: "Ver" });
-  }
-  if (input.meetingsValue != null && input.meetingsValue > 0) {
-    items.push({ tone: "act", icon: "✓", title: `${formatCompact(input.meetingsValue)} reuniones generadas`, subtitle: "impacto directo en el funnel comercial", action: "Abrir" });
-  }
-  if (input.bounceRateValue != null && input.bounceRateValue > 0.03) {
-    items.push({ tone: "alert", icon: "!", title: `Bounce ${formatPercent(input.bounceRateValue)}`, subtitle: "revisar calidad de listas y dominios", action: "Revisar" });
-  }
-  if (input.optOutRateValue != null && input.optOutRateValue > 0.01) {
-    items.push({ tone: "warn", icon: "•", title: `Opt-out ${formatPercent(input.optOutRateValue)}`, subtitle: "vigilar fit de ICP y copy", action: "Filtrar" });
-  }
-  if (input.health != null && input.health < 75) {
-    items.push({ tone: "alert", icon: "!", title: `Outbound Health ${input.health}/100`, subtitle: "deliverability puede invalidar engagement", action: "Actuar" });
-  }
-  return items.slice(0, 4);
+  const fraction = Math.max(0, Math.min(1, value));
+  return `−${Math.round((1 - fraction) * 100)}%`;
 }
 
 function sumCreatorSparklines(creators: PartnershipReportCreatorRow[]): number[] {
@@ -2494,17 +2801,17 @@ function buildPartnershipMovers(creators: PartnershipReportCreatorRow[]): MoverI
   const worst = [...withRoi].sort((a, b) => (a.roi ?? 0) - (b.roi ?? 0))[0];
   const inactive = creators.find((creator) => creator.clicks === 0 && creator.postsLive === 0);
   if (best) {
-    items.push({ tone: "up", icon: "↗", title: `${best.handle} lidera ROI ${roiDisplay(best.roi)}`, subtitle: `CPA ${best.cpaRealEur == null ? "-" : formatCurrencyEur(best.cpaRealEur)} contra break-even ${formatCurrencyEur(best.breakEvenCpaEur)}`, action: "Renovar" });
+    items.push({ tone: "up", icon: "↗", title: `${best.handle} lidera el ratio a CAC objetivo ${roiDisplay(best.roi)}`, subtitle: `CPA ${best.cpaRealEur == null ? "-" : formatCurrencyEur(best.cpaRealEur)} contra break-even ${formatCurrencyEur(best.breakEvenCpaEur)}` });
   }
   const promising = creators.find((creator) => creator.conversions > 0 && creator.cpaRealEur != null && creator.belowBreakEven);
   if (promising && promising.handle !== best?.handle) {
-    items.push({ tone: "act", icon: "✓", title: `${promising.handle} bajo break-even`, subtitle: `${formatCompact(promising.conversions)} primeras transacciones`, action: "Escalar" });
+    items.push({ tone: "act", icon: "✓", title: `${promising.handle} bajo break-even`, subtitle: `${formatCompact(promising.conversions)} primeras transacciones` });
   }
   if (worst && worst.roi != null && worst.roi < 1) {
-    items.push({ tone: "alert", icon: "!", title: `${worst.handle} bajo break-even`, subtitle: `ROI ${roiDisplay(worst.roi)} · renegociar fee o cortar`, action: "Renegociar" });
+    items.push({ tone: "alert", icon: "!", title: `${worst.handle} bajo break-even`, subtitle: `Ratio CAC obj. ${roiDisplay(worst.roi)} · renegociar fee o cortar` });
   }
   if (inactive) {
-    items.push({ tone: "warn", icon: "•", title: `${inactive.handle} sin actividad`, subtitle: "0 clicks y 0 posts live en la ventana", action: "Cerrar" });
+    items.push({ tone: "warn", icon: "•", title: `${inactive.handle} sin actividad`, subtitle: "0 clicks y 0 posts live en la ventana" });
   }
   return items.slice(0, 4);
 }
@@ -2534,7 +2841,7 @@ function surfaceGroups(surface: SurfaceKey): string[] {
   if (surface === "paid") return ["Meta Ads", "Google Ads", "Campaigns"];
   if (surface === "email") return ["Instantly", "Replies", "Meetings"];
   if (surface === "social") return ["Metricool", "Posts", "Engagement"];
-  if (surface === "partnerships") return ["YALC", "Creators", "ROI"];
+  if (surface === "partnerships") return ["YALC", "Creators", "Ratio CAC objetivo"];
   return ["KPIs", "Breakdown", "Health"];
 }
 
@@ -2562,6 +2869,7 @@ function MockupStyles() {
       }
       .metrics-mockup *{box-sizing:border-box;}
       .metrics-mockup button{font-family:inherit;cursor:pointer;}
+      .metrics-mockup button:disabled{cursor:not-allowed;opacity:.5;}
       .m-wrap{max-width:1100px;margin:0 auto;}
       .m-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:4px;}
       .m-title{display:flex;align-items:center;gap:10px;}
@@ -2573,28 +2881,27 @@ function MockupStyles() {
       .m-btn{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--ink);border-radius:var(--r-md);padding:7px 12px;font-weight:800;font-size:12.5px;color:var(--ink-soft);box-shadow:var(--pop-xs);}
       .m-btn-rust{background:var(--rust);color:#fff;}
       .m-btn-navy{background:var(--navy);color:#fff;}
-      .m-range,.m-modelseg,.m-controlseg{display:inline-flex;border:2px solid var(--ink);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--pop-xs);}
-      .m-range button,.m-modelseg button,.m-controlseg button{border:none;background:var(--paper);padding:6px 10px;font-weight:700;font-size:12px;color:var(--muted);border-right:1.5px solid var(--border);}
-      .m-range button:last-child,.m-modelseg button:last-child,.m-controlseg button:last-child{border-right:none;}
+      .m-range{display:inline-flex;border:2px solid var(--ink);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--pop-xs);}
+      .m-range button{border:none;background:var(--paper);padding:6px 10px;font-weight:700;font-size:12px;color:var(--muted);border-right:1.5px solid var(--border);}
+      .m-range button:last-child{border-right:none;}
       .m-range button.on{background:var(--rust);color:#fff;}
-      .m-modelseg{border-radius:var(--r-pill);}
-      .m-modelseg button{padding:6px 12px;font-weight:800;font-size:11.5px;}
-      .m-modelseg button.on,.m-controlseg button.on{background:var(--navy);color:#fff;}
-      .m-controlseg.rust button.on{background:var(--rust);color:#fff;}
       .m-tabs{display:flex;gap:7px;border-bottom:2.5px solid var(--ink);margin-top:14px;flex-wrap:wrap;}
       .m-tab{background:var(--paper);border:2.5px solid var(--ink);border-bottom:none;border-radius:12px 12px 0 0;padding:8px 14px;font-weight:800;font-size:13px;color:var(--muted);position:relative;top:2.5px;}
       .m-tab span{margin-right:6px;}
       .m-tab.on{background:var(--rust);color:#fff;}
       .m-inline-alert{margin-top:12px;border:2px solid var(--ink);border-radius:var(--r-md);background:var(--sun);box-shadow:var(--pop-xs);padding:8px 12px;font-size:12px;font-weight:800;}
+      .m-inline-alert-error{background:var(--redbg);color:var(--red);border-color:var(--red);}
+      .m-aggregation-notice{margin:0 0 12px;border:1.5px solid var(--ink);border-radius:var(--r-sm);background:var(--amber);padding:7px 10px;font-size:11px;font-weight:800;color:var(--amber-ink);}
       .m-panel{background:var(--paper);border:2.5px solid var(--ink);border-radius:var(--r-lg);box-shadow:var(--pop-sm);position:relative;overflow:hidden;}
       .m-panel-halftone:before,.m-intel:before{content:'';position:absolute;inset:0;background-image:var(--halftone);background-size:13px 13px;opacity:.45;pointer-events:none;}
       .m-panel>*{position:relative;}
       .m-pad{padding:14px 16px;}
-      .m-statebar,.m-modelbar,.m-controlbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:16px 0 14px;}
-      .m-controlbar{background:var(--paper2);border:2.5px solid var(--ink);border-radius:var(--r-md);padding:10px 14px;box-shadow:var(--pop-xs);}
-      .m-controlgrp{display:flex;align-items:center;gap:8px;}
-      .m-controlgrp>span,.m-label{font-size:11.5px;font-weight:800;color:var(--muted);}
+      .m-statebar,.m-modelbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:16px 0 14px;}
+      .m-label{font-size:11.5px;font-weight:800;color:var(--muted);}
       .m-segment-static{background:var(--navy);color:#fff;border:2px solid var(--ink);border-radius:var(--r-pill);box-shadow:var(--pop-xs);padding:5px 13px;font-size:11.5px;font-weight:800;}
+      .m-data-state-error .m-segment-static{background:var(--red);}
+      .m-data-state-demo .m-segment-static{background:#6D3BB5;color:#fff;}
+      .m-data-state-empty .m-segment-static,.m-data-state-partial .m-segment-static{background:var(--sun);color:var(--ink);}
       .m-subtle{font-size:11px;color:var(--subtle);}
       .m-hero{display:grid;grid-template-columns:330px 1fr;gap:0;}
       .m-hero-ns{padding:20px 22px;border-right:2.5px solid var(--ink);background:var(--paper2);}
@@ -2605,11 +2912,6 @@ function MockupStyles() {
       .m-ns-label{font-size:12px;color:var(--muted);font-weight:700;}
       .m-ns-meta{margin-top:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);}
       .m-ns-meta b{color:var(--navy);font-family:'Space Grotesk';}
-      .m-bars{display:flex;align-items:flex-end;gap:3px;height:30px;width:100%;min-width:52px;}
-      .m-bars span{flex:1;background:var(--rust);border:1px solid var(--ink);border-bottom:none;border-radius:2px 2px 0 0;min-height:3px;}
-      .m-bars.navy span{background:var(--navy);}
-      .m-bars.sage span{background:var(--sage);}
-      .m-bars.cyan span{background:var(--cyan);}
       .m-levers{margin-top:14px;padding-top:12px;border-top:1.5px dashed var(--border-strong);}
       .m-levers>div{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--subtle);margin-bottom:7px;}
       .m-lever{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--r-pill);padding:3px 9px;font-size:11px;font-weight:700;box-shadow:var(--pop-xs);margin:0 5px 5px 0;}
@@ -2628,6 +2930,13 @@ function MockupStyles() {
       .m-chip.up{background:var(--sage-tint);color:var(--sage);}
       .m-chip.down{background:var(--redbg);color:var(--red);}
       .m-chip.flat{background:var(--aged);color:var(--muted);}
+      .m-quality-badge{display:inline-flex;align-items:center;width:max-content;border:1.5px solid currentColor;border-radius:var(--r-pill);padding:1px 6px;font-family:'Space Grotesk';font-size:9px;font-weight:800;line-height:1.25;letter-spacing:.03em;white-space:nowrap;vertical-align:middle;}
+      .m-quality-badge.demo{background:#F1E8FF;color:#5C2D91;}
+      .m-quality-badge.warn{background:#FFF1C2;color:#785800;}
+      .m-quality-badge.missing{background:var(--aged);color:var(--muted);}
+      .m-frate .m-quality-badge,.m-cconv .m-quality-badge{background:#FFF1C2;color:#785800;border:1.5px solid currentColor;border-radius:var(--r-pill);padding:1px 5px;font-size:8px;box-shadow:none;}
+      .m-frate .m-quality-badge.demo,.m-cconv .m-quality-badge.demo{background:#F1E8FF;color:#5C2D91;}
+      .m-frate .m-quality-badge.missing,.m-cconv .m-quality-badge.missing{background:var(--aged);color:var(--muted);}
       .m-sectiontitle{font-size:16px;margin:24px 0 12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
       .m-sectiontitle>span{font-size:18px;}
       .m-sectiontitle h2{font-size:16px;}
@@ -2640,7 +2949,6 @@ function MockupStyles() {
       .m-fstage small{font-size:10.5px;color:var(--rust-600);font-weight:700;margin-top:2px;}
       .m-fstage div{margin-top:7px;display:flex;gap:3px;flex-wrap:wrap;}
       .m-fstage i{font-style:normal;font-size:11px;width:19px;height:19px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:5px;background:var(--paper);}
-      .m-fstage.star{border-color:var(--rust);border-width:2.5px;background:#FCEFE6;}
       .m-fstage.final,.m-cstage.last{background:var(--sage-tint);}
       .m-frate,.m-cconv{flex:0 0 64px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 2px;}
       .m-cconv{flex-basis:92px;}
@@ -2658,6 +2966,7 @@ function MockupStyles() {
       .m-surf.off{background:repeating-linear-gradient(135deg,var(--aged),var(--aged) 9px,#e3d6bf 9px,#e3d6bf 18px);}
       .m-surf-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px;}
       .m-surf-head span{display:flex;align-items:center;gap:7px;font-weight:800;font-size:12.5px;color:var(--navy);}
+      .m-surf-head .m-surf-status{font-size:9.5px;color:var(--muted);text-align:right;line-height:1.15;}
       .m-surf-head i{font-style:normal;font-size:15px;}
       .m-dot{width:9px;height:9px;border-radius:50%;display:inline-block;border:1.5px solid var(--ink);flex:0 0 9px;}
       .m-dot.on{background:var(--sage);}
@@ -2665,6 +2974,7 @@ function MockupStyles() {
       .m-dot.off{background:var(--subtle);}
       .m-surf-value{font-family:'Space Grotesk';font-size:23px;font-weight:700;color:var(--navy);line-height:1.05;}
       .m-surf-meta{font-size:11px;color:var(--muted);margin-top:3px;min-height:28px;}
+      .m-surf-sources{font-size:9.5px;color:var(--subtle);font-weight:700;margin-top:5px;min-height:14px;}
       .m-surf-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:8px;}
       .m-table-panel{padding:14px 16px;overflow-x:auto;}
       .m-matrix,.m-ct,.m-cmtx{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
@@ -2689,20 +2999,6 @@ function MockupStyles() {
       .m-share span{position:absolute;left:0;top:4px;bottom:4px;background:var(--sage-tint);border:1px solid var(--sage);border-radius:3px;}
       .m-share b{position:relative;z-index:1;font-family:'Space Grotesk';}
       .m-two-col{display:grid;grid-template-columns:1.1fr 1fr;gap:14px;}
-      .m-cmprow{display:grid;grid-template-columns:120px 1fr;gap:9px;align-items:center;padding:6px 0;border-bottom:1.5px dashed rgba(26,26,46,.12);}
-      .m-cmprow>span{font-weight:800;color:var(--navy);font-size:11.5px;}
-      .m-cmpbar{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;color:var(--muted);margin-bottom:3px;}
-      .m-cmpbar i{height:11px;border:1.5px solid var(--ink);border-radius:var(--r-pill);flex:1;background:var(--aged);overflow:hidden;}
-      .m-cmpbar b{display:block;height:100%;border-right:1.5px solid var(--ink);}
-      .m-cmpbar b.cyan{background:var(--cyan);}
-      .m-cmpbar b.navy{background:var(--navy);}
-      .m-cmpbar b.rust{background:var(--rust);}
-      .m-cmpbar strong{color:var(--navy);}
-      .m-journey{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1.5px dashed rgba(26,26,46,.13);flex-wrap:wrap;}
-      .m-journey div{display:flex;align-items:center;gap:5px;flex:1;flex-wrap:wrap;}
-      .m-journey span{font-size:11px;font-weight:800;color:var(--navy);background:var(--paper2);border:1.5px solid var(--ink);border-radius:var(--r-pill);padding:2px 9px;}
-      .m-journey i{font-style:normal;color:var(--subtle);font-weight:800;}
-      .m-journey b{font-family:'Space Grotesk';font-weight:700;color:var(--navy);white-space:nowrap;}
       .m-cmtx{border-collapse:separate;border-spacing:3px;}
       .m-cmtx th{text-align:center;border-bottom:0;}
       .m-cmtx th:first-child,.m-cmtx td:first-child{text-align:left;width:170px;font-weight:800;color:var(--navy);white-space:nowrap;}
@@ -2721,7 +3017,6 @@ function MockupStyles() {
       .m-leak b{display:block;color:var(--navy);font-size:12.5px;}
       .m-leak small{display:block;color:var(--muted);font-size:11px;}
       .m-leak button{border:2px solid var(--ink);background:var(--paper);border-radius:var(--r-sm);padding:4px 10px;font-weight:800;font-size:11px;box-shadow:var(--pop-xs);}
-      .m-controlgrp>span{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--subtle);}
       .m-trend-hero{padding:14px 8px 10px 4px;}
       .m-trend-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:2px 12px 10px;}
       .m-trend-top>div:first-child>span{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--rust-600);}
@@ -2731,8 +3026,6 @@ function MockupStyles() {
       .m-trend-top i{width:22px;height:0;display:inline-block;}
       .m-trend-top i.line{border-top:3px solid var(--rust);}
       .m-trend-top i.dash{border-top:2.5px dashed var(--subtle);}
-      .m-chart,.m-spark{display:block;width:100%;height:auto;}
-      .m-chart{height:250px;}
       .m-small-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
       .m-smcard{background:var(--paper);border:2.5px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--pop-xs);padding:12px 13px 8px;}
       .m-smh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;}
@@ -2742,12 +3035,6 @@ function MockupStyles() {
       .m-smv small{font-size:10.5px;color:var(--subtle);font-weight:700;}
       .m-smcard p{font-size:11px;color:var(--muted);min-height:32px;margin:3px 0 8px;}
       .m-smfoot{font-size:10px;color:var(--subtle);margin-top:5px;text-align:right;font-weight:800;}
-      .m-marker{display:flex;align-items:center;gap:11px;padding:9px 2px;border-bottom:1.5px dashed rgba(26,26,46,.14);}
-      .m-marker>span{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border:2px solid var(--ink);border-radius:var(--r-sm);box-shadow:var(--pop-xs);font-size:15px;background:var(--sage-tint);}
-      .m-marker div{flex:1;}
-      .m-marker b{display:block;color:var(--navy);font-size:12.5px;}
-      .m-marker small{display:block;color:var(--muted);font-size:11px;}
-      .m-marker i{font-family:'Space Grotesk';font-weight:700;font-size:11.5px;color:var(--muted);white-space:nowrap;font-style:normal;}
       .m-intel{background:var(--paper2);padding:13px 16px;}
       .m-intel-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:2px 2px 11px;border-bottom:2px dashed var(--border-strong);margin-bottom:9px;}
       .m-intel-head>span{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border:2.5px solid var(--ink);border-radius:var(--r-md);background:var(--navy);color:#fff;font-size:18px;box-shadow:var(--pop-xs);}
@@ -2755,9 +3042,6 @@ function MockupStyles() {
       .m-intel-head b{display:block;color:var(--navy);font-size:13.5px;}
       .m-intel-head small{display:block;font-size:11px;color:var(--muted);margin-top:2px;}
       .m-intel-head button{background:var(--navy);color:#fff;border:2.5px solid var(--ink);border-radius:var(--r-md);padding:8px 14px;font-weight:800;font-size:12.5px;box-shadow:var(--pop-sm);}
-      .m-ipreview div{display:flex;align-items:center;gap:9px;padding:6px 2px;opacity:.55;border-bottom:1.5px dashed rgba(26,26,46,.12);}
-      .m-ipreview i{font-style:normal;}
-      .m-ipreview span{font-weight:700;color:var(--navy);font-size:12px;}
       .m-detailbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 14px;}
       .m-back{display:inline-flex;align-items:center;gap:8px;background:var(--paper);border:2.5px solid var(--ink);border-radius:var(--r-md);padding:8px 14px;font-weight:800;font-size:13px;color:var(--ink-soft);box-shadow:var(--pop-sm);}
       .m-detailbar h2{font-size:19px;}
@@ -2767,14 +3051,14 @@ function MockupStyles() {
       .m-surface-subhead h2{display:flex;align-items:center;gap:10px;margin:0;font-family:'Space Grotesk';font-size:24px;font-weight:700;color:var(--navy);letter-spacing:0;}
       .m-surface-subhead h2 span{font-size:22px;}
       .m-subhead-sub{font-size:11.5px;color:var(--muted);font-weight:700;}
-      .m-health-pill{display:inline-flex;align-items:center;margin-left:auto;font-weight:800;font-size:12px;color:var(--muted);}
+      .m-subhead-state{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-left:auto;}
+      .m-health-pill{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:11px;color:var(--muted);}
+      .m-health-pill.on{color:var(--sage);}
       .m-health-pill.partial{color:var(--amber-ink);}
       .m-health-pill.off{color:var(--muted);}
+      .m-health-context,.m-subhead-sources{font-size:10.5px;color:var(--muted);font-weight:700;}
+      .m-subhead-sources{color:var(--subtle);}
       .m-statebar-tight{margin-top:13px;margin-bottom:2px;}
-      .m-vseg{display:inline-flex;border:2px solid var(--ink);border-radius:var(--r-pill);overflow:hidden;box-shadow:var(--pop-xs);}
-      .m-vseg button{border:none;background:var(--paper);padding:5px 12px;font-weight:800;font-size:11.5px;color:var(--muted);border-right:1.5px solid var(--border);}
-      .m-vseg button:last-child{border-right:none;}
-      .m-vseg button.on{background:var(--navy);color:#fff;}
       .m-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;}
       .m-skpi{background:var(--paper2);border:2px solid var(--ink);border-radius:var(--r-md);padding:11px 12px;box-shadow:var(--pop-xs);min-height:116px;}
       .m-skpi.hero,.m-skpi.good{border-left:5px solid var(--sage);}
@@ -2786,7 +3070,6 @@ function MockupStyles() {
       .m-skpi-label i{font-style:normal;font-size:8.5px;color:var(--subtle);border:1.5px solid var(--border-strong);border-radius:var(--r-pill);padding:0 5px;text-transform:none;letter-spacing:0;}
       .m-skpi-value{font-family:'Space Grotesk';font-size:22px;font-weight:700;color:var(--navy);line-height:1;margin:5px 0 8px;letter-spacing:0;}
       .m-skpi-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;}
-      .m-skpi-foot .m-bars{width:78px;height:24px;}
       .m-line-panel{padding:14px 16px;}
       .m-line-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;font-weight:700;margin-bottom:8px;color:var(--muted);}
       .m-line-legend span{display:inline-flex;align-items:center;gap:6px;}
@@ -2817,15 +3100,7 @@ function MockupStyles() {
       .m-mover div{flex:1;min-width:230px;}
       .m-mover b{display:block;font-weight:800;color:var(--navy);font-size:12.5px;}
       .m-mover small{display:block;font-size:11px;color:var(--muted);}
-      .m-mover button{border:2px solid var(--ink);background:var(--paper);border-radius:var(--r-sm);padding:5px 10px;font-weight:800;font-size:11px;box-shadow:var(--pop-xs);}
-      .m-deliv{padding:16px;display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start;}
-      .m-deliv-score{text-align:center;}
-      .m-deliv-ring{width:120px;height:120px;border-radius:50%;border:2.5px solid var(--ink);box-shadow:var(--pop-xs);display:grid;place-items:center;margin:0 auto;background:var(--aged);position:relative;}
-      .m-deliv-ring:before{content:'';position:absolute;width:84px;height:84px;border-radius:50%;background:var(--paper);}
-      .m-deliv-ring span,.m-deliv-ring small{position:relative;z-index:1;}
-      .m-deliv-ring span{font-family:'Space Grotesk';font-weight:700;font-size:26px;color:var(--navy);align-self:end;line-height:1;}
-      .m-deliv-ring small{font-size:8.5px;color:var(--muted);align-self:start;}
-      .m-deliv-score>b{display:block;font-weight:800;color:var(--sage);font-size:12.5px;margin-top:8px;}
+      .m-deliv{padding:16px;}
       .m-thresholds{display:flex;flex-direction:column;gap:9px;}
       .m-threshold-row{display:grid;grid-template-columns:120px 1fr 70px;gap:9px;align-items:center;}
       .m-threshold-row>span{font-weight:700;color:var(--navy);font-size:12px;}
@@ -2883,12 +3158,79 @@ function MockupStyles() {
       .m-empty-state h3{font-family:'Space Grotesk';font-size:23px;color:var(--navy);margin:8px 0 4px;}
       .m-empty-state p{max-width:600px;margin:2px auto 0;color:var(--muted);font-weight:700;}
       .m-empty{color:var(--muted);font-weight:700;}
+      .m-detail-status{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:13px 0 20px;padding:9px 12px;border:2px solid var(--ink);border-radius:var(--r-md);background:var(--paper2);box-shadow:var(--pop-xs);font-size:11px;color:var(--navy);}
+      .m-detail-status>span{width:10px;height:10px;border:1.5px solid var(--ink);border-radius:50%;background:var(--sage);flex:0 0 10px;}
+      .m-detail-status>b{font-weight:800;letter-spacing:.02em;}
+      .m-detail-status>small{margin-left:auto;color:var(--muted);font-weight:700;}
+      .m-detail-status.loading>span,.m-detail-status.empty>span{background:var(--sun);}
+      .m-detail-status.error>span{background:var(--red);}
+      .m-detail-status.partial{background:var(--amber);}
+      .m-detail-status.partial>span{background:var(--sun);}
+      .m-detail-section{margin:22px 0 30px;min-width:0;}
+      .m-detail-section>header{display:flex;align-items:flex-start;gap:11px;margin:0 0 10px;padding-bottom:8px;border-bottom:2px solid var(--ink);}
+      .m-detail-section>header>span{display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;border:2px solid var(--ink);border-radius:50%;background:var(--navy);color:#fff;font-family:'Space Grotesk';font-size:10px;font-weight:800;box-shadow:var(--pop-xs);}
+      .m-detail-section>header h3{font-family:'Space Grotesk';font-size:17px;font-weight:700;color:var(--navy);margin:0;letter-spacing:0;}
+      .m-detail-section>header p{font-size:11px;color:var(--muted);font-weight:700;margin:2px 0 0;max-width:820px;}
+      .m-detail-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+      .m-detail-kpi{min-width:0;background:var(--paper);border:2px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--pop-xs);padding:11px 12px;}
+      .m-detail-kpi:nth-child(4n+1){background:var(--paper2);}
+      .m-detail-kpi-label{min-height:28px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.035em;color:var(--muted);}
+      .m-detail-kpi-value{overflow-wrap:anywhere;font-family:'Space Grotesk';font-size:22px;font-weight:700;color:var(--navy);line-height:1.05;margin:4px 0 9px;}
+      .m-detail-kpi-foot{display:flex;align-items:center;justify-content:space-between;gap:7px;color:var(--subtle);font-size:9px;font-weight:800;}
+      .m-detail-table-wrap{overflow-x:auto;}
+      .m-detail-table-limit{padding:7px 10px;border-bottom:1.5px dashed var(--border-strong);background:var(--amber);color:var(--amber-ink);font-size:10px;font-weight:800;}
+      .m-detail-table{width:100%;min-width:680px;border-collapse:collapse;font-size:11.5px;}
+      .m-detail-table th{padding:8px 9px;border-bottom:2px solid var(--ink);background:var(--paper2);color:var(--muted);font-size:9px;font-weight:800;text-align:left;text-transform:uppercase;letter-spacing:.035em;white-space:nowrap;}
+      .m-detail-table td{padding:8px 9px;border-bottom:1.5px solid var(--border);color:var(--ink-soft);vertical-align:middle;}
+      .m-detail-table tbody tr:last-child td{border-bottom:0;}
+      .m-detail-table tbody tr:hover td{background:#fff7ea;}
+      .m-detail-table .num{text-align:right;font-family:'Space Grotesk';font-variant-numeric:tabular-nums;}
+      .m-detail-table td b{color:var(--navy);font-weight:800;}
+      .m-detail-empty{min-height:92px;display:flex;align-items:center;background:repeating-linear-gradient(135deg,var(--aged),var(--aged) 10px,#e3d6bf 10px,#e3d6bf 20px);color:var(--muted);font-size:12px;}
+      .m-detail-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+      .m-detail-split>.m-detail-section{margin-top:0;}
+      .m-provider-funnel{padding:13px 15px;}
+      .m-provider-funnel-row{display:grid;grid-template-columns:minmax(130px,210px) minmax(180px,1fr) auto;gap:11px;align-items:center;padding:9px 2px;border-bottom:1.5px dashed var(--border-strong);}
+      .m-provider-funnel-row:last-child{border-bottom:0;}
+      .m-provider-funnel-label b{display:block;color:var(--navy);font-size:12px;}
+      .m-provider-funnel-label small{display:block;color:var(--muted);font-size:9.5px;margin-top:1px;}
+      .m-provider-funnel-track{height:29px;position:relative;display:flex;align-items:center;border:2px solid var(--ink);border-radius:var(--r-sm);background:var(--aged);overflow:hidden;}
+      .m-provider-funnel-track>span{position:absolute;inset:0 auto 0 0;background:var(--cyan);border-right:2px solid var(--ink);}
+      .m-provider-funnel-track>b{position:relative;z-index:1;margin-left:9px;color:var(--navy);font-family:'Space Grotesk';font-size:12px;}
+      .m-product-funnel{padding:14px 16px;}
+      .m-product-funnel-row{display:grid;grid-template-columns:32px minmax(200px,1fr) 70px auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1.5px dashed var(--border-strong);}
+      .m-product-funnel-order{display:grid;place-items:center;width:28px;height:28px;border:2px solid var(--ink);border-radius:50%;background:var(--sun);font-family:'Space Grotesk';font-size:11px;font-weight:800;}
+      .m-product-funnel-main>div:first-child{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px;}
+      .m-product-funnel-main b{color:var(--navy);font-size:12px;}
+      .m-product-funnel-main span{color:var(--muted);font-size:9.5px;font-weight:700;text-align:right;}
+      .m-product-funnel-track{height:11px;border:1.5px solid var(--ink);border-radius:var(--r-pill);background:var(--aged);overflow:hidden;}
+      .m-product-funnel-track span{display:block;height:100%;background:var(--navy);border-right:1.5px solid var(--ink);}
+      .m-product-funnel-row>strong{font-family:'Space Grotesk';font-size:16px;color:var(--navy);text-align:right;}
+      .m-product-funnel>footer{padding-top:11px;color:var(--muted);font-size:10.5px;font-weight:800;}
+      .m-social-posts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+      .m-social-posts>.m-detail-table-limit{grid-column:1/-1;border:2px solid var(--ink);border-radius:var(--r-sm);}
+      .m-social-post{min-width:0;border:2px solid var(--ink);border-radius:var(--r-md);background:var(--paper);box-shadow:var(--pop-xs);padding:12px;}
+      .m-social-post>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:7px;border-bottom:1.5px dashed var(--border-strong);}
+      .m-social-post>header>span{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--rust-600);}
+      .m-social-post>p{min-height:34px;margin:9px 0;color:var(--navy);font-size:11.5px;font-weight:700;overflow-wrap:anywhere;}
+      .m-social-post dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 10px;}
+      .m-social-post dl>div{min-width:0;padding:5px 6px;background:var(--paper2);border:1px solid var(--border);border-radius:var(--r-sm);}
+      .m-social-post dt{font-size:8px;text-transform:uppercase;color:var(--muted);font-weight:800;overflow-wrap:anywhere;}
+      .m-social-post dd{margin:1px 0 0;font-family:'Space Grotesk';font-size:12px;font-weight:700;color:var(--navy);}
+      .m-social-post>a{font-size:10px;font-weight:800;color:var(--rust-600);text-decoration:underline;}
+      .m-detail-muted{font-size:10px;font-weight:700;color:var(--subtle);}
+      .m-discoverability-rail{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;margin:13px 0 20px;padding:10px 12px;border:2.5px solid var(--ink);border-radius:var(--r-md);box-shadow:var(--pop-xs);background:var(--paper);}
+      .m-discoverability-rail>b{padding:4px 9px;border:2px solid var(--ink);border-radius:var(--r-pill);background:var(--navy);color:#fff;font-size:10px;}
+      .m-discoverability-rail>span{font-size:10.5px;color:var(--muted);font-weight:800;}
+      .m-discoverability-rail>i{font-style:normal;padding-left:10px;border-left:1.5px dashed var(--border-strong);font-size:10px;color:var(--subtle);font-weight:800;}
       @media(max-width:1100px){
         .m-hero{grid-template-columns:1fr;}
         .m-hero-ns{border-right:none;border-bottom:2.5px solid var(--ink);}
         .m-surface-grid{grid-template-columns:repeat(2,1fr);}
         .m-two-col{grid-template-columns:1fr;}
         .m-kpi-grid{grid-template-columns:repeat(2,1fr);}
+        .m-detail-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+        .m-detail-split{grid-template-columns:1fr;}
         .m-rwc{grid-template-columns:1fr;}
       }
       @media(max-width:780px){
@@ -2897,9 +3239,17 @@ function MockupStyles() {
         .m-surface-grid{grid-template-columns:1fr;}
         .m-head-actions{width:100%;}
         .m-kpi-grid{grid-template-columns:1fr;}
+        .m-detail-kpi-grid,.m-social-posts{grid-template-columns:1fr;}
+        .m-provider-funnel-row{grid-template-columns:1fr;}
+        .m-product-funnel-row{grid-template-columns:32px minmax(0,1fr) 54px;}
+        .m-product-funnel-row>.m-quality-badge{grid-column:2/-1;}
+        .m-product-funnel-main>div:first-child{align-items:flex-start;flex-direction:column;gap:2px;}
+        .m-product-funnel-main span{text-align:left;}
+        .m-social-post dl{grid-template-columns:repeat(2,minmax(0,1fr));}
+        .m-discoverability-rail{grid-template-columns:1fr;}
+        .m-discoverability-rail>i{padding:8px 0 0;border-left:0;border-top:1.5px dashed var(--border-strong);}
         .m-seq-row{grid-template-columns:92px 1fr;}
         .m-seq-note{grid-column:2;}
-        .m-deliv{grid-template-columns:1fr;}
       }
     `}</style>
   );

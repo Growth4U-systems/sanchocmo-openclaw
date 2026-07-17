@@ -106,12 +106,41 @@ function near(actual: number | null, expected: number, eps = 0.01): void {
   );
 }
 
+describe("creator report · exact UTC collector day", () => {
+  it("includes only the requested calendar day, independent of job time", () => {
+    const records = [
+      record("@money_pau", [
+        { daysAgo: 2, clicks: 11, conversions: 2 },
+        { daysAgo: 3, clicks: 99, conversions: 9 },
+      ]),
+    ];
+    const report = buildCreatorReport(DEAL_LEADS, records, {
+      periodDays: 1,
+      now: new Date("2026-06-11T23:59:00Z"),
+      exactRange: {
+        from: new Date("2026-06-09T00:00:00.000Z"),
+        to: new Date("2026-06-09T23:59:59.999Z"),
+      },
+    });
+
+    assert.equal(report.from, "2026-06-09T00:00:00.000Z");
+    assert.equal(report.to, "2026-06-09T23:59:59.999Z");
+    assert.equal(report.totals.clicks, 11);
+    assert.equal(report.totals.conversions, 2);
+  });
+});
+
 // ── KPIs del programa (90d = mockup) ────────────────────────────────────────
 
 describe("creator report · 90 días = KPIs del mockup", () => {
   const report = buildCreatorReport(DEAL_LEADS, SEED_RECORDS, { periodDays: 90, now: NOW });
 
   it("agrega los totales del programa exactos", () => {
+    assert.deepEqual(report.tracking, {
+      status: "demo",
+      sources: ["seed"],
+      recordCount: 3,
+    });
     assert.equal(report.targetCacEur, 80);
     assert.equal(report.totals.investedEur, 11_300);
     assert.equal(report.totals.postsLive, 9);
@@ -230,6 +259,26 @@ describe("creator report · ventana de 30 días", () => {
 // ── Edges ───────────────────────────────────────────────────────────────────
 
 describe("creator report · reglas y edges", () => {
+  it("declara tracking real, demo o ausente según los registros que sí emparejan con Yalc", () => {
+    const unavailable = buildCreatorReport(DEAL_LEADS, [], { periodDays: 30, now: NOW });
+    assert.deepEqual(unavailable.tracking, {
+      status: "unavailable",
+      sources: [],
+      recordCount: 0,
+    });
+
+    const impact = {
+      ...record("@money_pau", [{ daysAgo: 2, clicks: 0 }]),
+      source: "impact" as const,
+    };
+    const real = buildCreatorReport(DEAL_LEADS, [impact], { periodDays: 30, now: NOW });
+    assert.deepEqual(real.tracking, {
+      status: "real",
+      sources: ["impact"],
+      recordCount: 1,
+    });
+  });
+
   it("omite registros sin lead en Yalc (el roster manda)", () => {
     const report = buildCreatorReport(
       [DEAL_LEADS[0]],
@@ -242,7 +291,7 @@ describe("creator report · reglas y edges", () => {
     );
   });
 
-  it("sin fee no hay CPA/ROI ni invertido; sin conversiones tampoco hay CPA", () => {
+  it("un fee desconocido mantiene incompletos los totales; sin conversiones tampoco hay CPA", () => {
     const leads = [
       lead({ id: "l1", handle: "@sinfee", followers: 10_000, qualityScore: 70 }),
       lead({ id: "l2", handle: "@sintx", followers: 10_000, offeredPrice: 1000 }),
@@ -260,7 +309,10 @@ describe("creator report · reglas y edges", () => {
     assert.equal(sinFee.roi, null);
     assert.equal(sinFee.conversionsNeeded, null);
     assert.equal(sinTx.cpaRealEur, null); // 0 conversiones
-    assert.equal(report.totals.investedEur, 1000); // solo el deal con fee
+    assert.equal(report.totals.investedEur, null);
+    assert.equal(report.totals.totalCostEur, null);
+    assert.equal(report.totals.cpaRealEur, null);
+    assert.equal(report.totals.roi, null);
   });
 
   it("deal mixto: el CPA variable entra al coste real y a las necesarias", () => {

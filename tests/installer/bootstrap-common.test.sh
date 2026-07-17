@@ -27,6 +27,8 @@ out="$(BASE_URL="https://mc.example.com/" APIFY_API_KEY="apk-1" bash -c '
   echo "MC_BASE=${MC_BASE:-}"
   echo "MC_ADMIN_TOKEN=${MC_ADMIN_TOKEN:-}"
   echo "APIFY_TOKEN=${APIFY_TOKEN:-}"
+  echo "MC_WORKSPACE=${MC_WORKSPACE:-}"
+  echo "MC_NEXTJS_DIR=${MC_NEXTJS_DIR:-}"
 ')"
 
 # 1. Config symlinks created, relative, and resolving to config/.
@@ -42,6 +44,19 @@ grep -q "my-brand" "$HOME_DIR/workspace-sancho/clients.json" \
 echo "$out" | grep -qx "MC_BASE=https://mc.example.com"  || { echo "FAIL: MC_BASE not derived/stripped -> $out"; exit 1; }
 echo "$out" | grep -qx "MC_ADMIN_TOKEN=tok-abc123"       || { echo "FAIL: MC_ADMIN_TOKEN not derived -> $out"; exit 1; }
 echo "$out" | grep -qx "APIFY_TOKEN=apk-1"               || { echo "FAIL: APIFY_TOKEN not derived -> $out"; exit 1; }
+echo "$out" | grep -qx "MC_WORKSPACE=$HOME_DIR/workspace-sancho" \
+  || { echo "FAIL: MC_WORKSPACE not derived from runtime home -> $out"; exit 1; }
+echo "$out" | grep -qx "MC_NEXTJS_DIR=/app/mc-nextjs" \
+  || { echo "FAIL: MC_NEXTJS_DIR default missing -> $out"; exit 1; }
+
+# Explicit operator paths always win over bootstrap defaults.
+override_out="$(MC_WORKSPACE=/custom/workspace MC_NEXTJS_DIR=/custom/app bash -c '
+  set -euo pipefail
+  . "'"$BOOT"'" "'"$HOME_DIR"'"
+  echo "$MC_WORKSPACE|$MC_NEXTJS_DIR"
+' | tail -n 1)"
+[ "$override_out" = "/custom/workspace|/custom/app" ] \
+  || { echo "FAIL: explicit workspace paths were overwritten -> $override_out"; exit 1; }
 
 # 3. Idempotent: a second run neither errors nor loses the symlink.
 BASE_URL="https://mc.example.com" bash -c 'set -euo pipefail; . "'"$BOOT"'" "'"$HOME_DIR"'"' >/dev/null 2>&1 \

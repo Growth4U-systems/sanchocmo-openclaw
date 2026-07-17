@@ -1,4 +1,5 @@
 import * as z from "zod/v4";
+import { formulaValidationMessage } from "./formula";
 
 /**
  * The versioned dashboard DEFINITION for Métricas v2 (SAN-265).
@@ -39,9 +40,12 @@ export const funnelStepSchema = z.object({
 });
 
 export const customMetricSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  formula: z.string(),
+  id: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  formula: z.string().superRefine((formula, ctx) => {
+    const message = formulaValidationMessage(formula);
+    if (message) ctx.addIssue({ code: "custom", message });
+  }),
   format: z.string().optional(),
   tier: z.string().optional(),
   surface: z.string().optional(),
@@ -96,6 +100,18 @@ export const dashboardDefinitionSchema = z.object({
   plan: planSchema.default({ funnel: [], kpis: [] }),
   customSurfaces: z.array(customSurfaceSchema).default([]),
   customMetrics: z.array(customMetricSchema).default([]),
+}).superRefine((definition, ctx) => {
+  const ids = new Set<string>();
+  definition.customMetrics.forEach((metric, index) => {
+    if (ids.has(metric.id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Duplicate custom metric id: ${metric.id}`,
+        path: ["customMetrics", index, "id"],
+      });
+    }
+    ids.add(metric.id);
+  });
 });
 
 export type DashboardDefinition = z.infer<typeof dashboardDefinitionSchema>;
@@ -109,4 +125,4 @@ export function parseDashboardDefinition(value: unknown): DashboardDefinition {
 // The formula validator lives in a zero-dependency module so the client metrics
 // page can import it without pulling zod into its bundle. Re-exported here so
 // existing server-side importers (metric-dashboard, MCP server) are unchanged.
-export { isSafeFormula } from "./formula";
+export { formulaValidationMessage, isSafeFormula, parseMetricFormula } from "./formula";

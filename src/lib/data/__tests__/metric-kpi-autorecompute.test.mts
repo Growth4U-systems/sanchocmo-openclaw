@@ -27,7 +27,7 @@ function runResult(range: { from: string; to: string }): RunMetricKpisResult {
     range,
     trigger: "ingest:auto",
     force: true,
-    definitionVersion: 1,
+    definitionVersion: 2,
     run: null,
     valuesCount: 12,
   };
@@ -43,10 +43,10 @@ test("builds dashboard ranges plus an ingest window and dedupes overlaps", () =>
   assert.deepEqual(
     ranges.map((range) => `${range.label}:${range.from}..${range.to}`),
     [
-      "1d:2026-06-28..2026-06-28",
-      "7d:2026-06-22..2026-06-28",
-      "30d:2026-05-30..2026-06-28",
-      "90d:2026-03-31..2026-06-28",
+      "1d:2026-06-27..2026-06-27",
+      "7d:2026-06-21..2026-06-27",
+      "30d:2026-05-29..2026-06-27",
+      "90d:2026-03-30..2026-06-27",
       "ingest-window:2026-06-01..2026-06-28",
     ],
   );
@@ -102,14 +102,15 @@ test("forces KPI recompute for every deduped dashboard range", async () => {
 
   assert.equal(result.attempted, true);
   assert.equal(result.ok, true);
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 5);
   assert.ok(calls.every((call) => call.force === true));
   assert.ok(calls.every((call) => call.trigger === "ingest:auto"));
   assert.deepEqual(calls.map((call) => `${call.from}..${call.to}`), [
+    "2026-06-27..2026-06-27",
+    "2026-06-21..2026-06-27",
+    "2026-05-29..2026-06-27",
+    "2026-03-30..2026-06-27",
     "2026-06-28..2026-06-28",
-    "2026-06-22..2026-06-28",
-    "2026-05-30..2026-06-28",
-    "2026-03-31..2026-06-28",
   ]);
 });
 
@@ -123,7 +124,7 @@ test("returns recompute errors without throwing", async () => {
     },
     {
       run: async (input) => {
-        if (input.range?.from === "2026-06-22") throw new Error("runner down");
+        if (input.range?.from === "2026-06-21") throw new Error("runner down");
         return runResult({
           from: input.range?.from ?? "2026-06-28",
           to: input.range?.to ?? "2026-06-28",
@@ -135,7 +136,7 @@ test("returns recompute errors without throwing", async () => {
   assert.equal(result.attempted, true);
   assert.equal(result.ok, false);
   assert.match(result.errors.join(" "), /runner down/);
-  assert.equal(result.results.length, 3);
+  assert.equal(result.results.length, 4);
 });
 
 test("extracts metric dates from nested daily snapshot sources", () => {
@@ -144,11 +145,38 @@ test("extracts metric dates from nested daily snapshot sources", () => {
       {
         ga4: { metrics: [{ name: "sessions", value: 3, date: "2026-06-27" }] },
         gsc: { metrics: [{ name: "clicks", value: 2 }, { name: "impressions", value: 5, date: "bad" }] },
+        yalc: { metrics: [], restatedDates: ["2026-06-26", "bad"] },
       },
       "2026-06-28",
     ),
-    ["2026-06-27", "2026-06-28"],
+    ["2026-06-26", "2026-06-27", "2026-06-28"],
   );
+});
+
+test("deletion-only ingest recomputes KPIs so removed snapshots cannot survive in the read model", async () => {
+  let calls = 0;
+  const result = await recomputeMetricKpisAfterIngest(
+    {
+      slug: "growth4u",
+      date: "2026-06-28",
+      metricDates: ["2026-06-27"],
+      ingest: { ...ingestOk, rows: 0, deleted: 7, sources: ["yalc"] },
+      now: new Date("2026-06-28T12:00:00.000Z"),
+    },
+    {
+      run: async (input) => {
+        calls++;
+        return runResult({
+          from: input.range?.from ?? "2026-06-28",
+          to: input.range?.to ?? "2026-06-28",
+        });
+      },
+    },
+  );
+
+  assert.equal(result.attempted, true);
+  assert.equal(result.skipped, false);
+  assert.equal(calls, 5);
 });
 
 test("batch recompute aggregates direct ingest results into one deduped range set", async () => {
@@ -191,10 +219,10 @@ test("batch recompute aggregates direct ingest results into one deduped range se
   assert.equal(calls.length, 5);
   assert.ok(calls.every((call) => call.trigger === "backfill-metrics:script"));
   assert.deepEqual(calls.map((call) => `${call.from}..${call.to}`), [
-    "2026-06-28..2026-06-28",
-    "2026-06-22..2026-06-28",
-    "2026-05-30..2026-06-28",
-    "2026-03-31..2026-06-28",
+    "2026-06-27..2026-06-27",
+    "2026-06-21..2026-06-27",
+    "2026-05-29..2026-06-27",
+    "2026-03-30..2026-06-27",
     "2026-06-01..2026-06-28",
   ]);
 });

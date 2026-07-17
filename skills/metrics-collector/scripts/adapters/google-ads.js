@@ -19,6 +19,21 @@
 const GOOGLE_ADS_API_VERSION = 'v24';
 const BASE_URL = `https://googleads.googleapis.com/${GOOGLE_ADS_API_VERSION}`;
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_MS = 86_400_000;
+export const GOOGLE_ADS_METRIC_NAMES = [
+  'spend',
+  'impressions',
+  'clicks',
+  'ctr',
+  'cpc',
+  'conversions',
+  'leads',
+  'revenue',
+  'roas',
+  'impressionShare',
+  'lostImpressionShare',
+];
 
 function slugUpper(config) {
   return (config._slug || '').toUpperCase().replace(/-/g, '_');
@@ -41,22 +56,33 @@ function cleanCustomerId(value, label) {
   return cleaned;
 }
 
-function num(value, fallback = 0) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
+function metricNumber(row, key, { min, integer = false, defaultZero = true } = {}) {
+  const raw = metric(row, key);
+  if (raw == null || raw === '') {
+    if (defaultZero) return 0;
+    return null;
+  }
+  const value = Number(raw);
+  if (
+    !Number.isFinite(value) ||
+    (integer && !Number.isSafeInteger(value)) ||
+    (min != null && value < min)
+  ) {
+    throw new Error(`Google Ads: invalid metrics.${key}`);
+  }
+  return value;
 }
 
 function round(value, digits = 2) {
   const factor = 10 ** digits;
-  return Math.round((num(value) + Number.EPSILON) * factor) / factor;
+  return Math.round((value + Number.EPSILON) * factor) / factor;
 }
 
-function percent(value) {
-  const n = num(value, NaN);
-  if (!Number.isFinite(n)) return null;
-  // Google Ads REST returns ratios for percentage metrics. Keep already-percent
-  // values safe for fixtures or future SDK-shaped payloads.
-  return round(n >= 0 && n <= 1 ? n * 100 : n, 4);
+function ratioPercent(row, key) {
+  const value = metricNumber(row, key, { min: 0, defaultZero: false });
+  if (value == null) return null;
+  if (value > 1) throw new Error(`Google Ads: invalid ratio metrics.${key}`);
+  return round(value * 100, 4);
 }
 
 function metric(row, key) {
@@ -81,8 +107,10 @@ async function refreshAccessToken({ clientId, clientSecret, refreshToken }) {
     throw new Error(`Google Ads OAuth ${resp.status}: ${text.slice(0, 200)}`);
   }
   const data = await resp.json();
-  if (!data.access_token) throw new Error('Google Ads OAuth: missing access_token');
-  return data.access_token;
+  if (typeof data.access_token !== 'string' || !data.access_token.trim()) {
+    throw new Error('Google Ads OAuth: missing access_token');
+  }
+  return data.access_token.trim();
 }
 
 async function searchStream({ customerId, developerToken, loginCustomerId, accessToken, query }) {
@@ -105,27 +133,95 @@ async function searchStream({ customerId, developerToken, loginCustomerId, acces
     throw new Error(`Google Ads API ${resp.status}: ${text.slice(0, 300)}`);
   }
   const payload = await resp.json();
-  const chunks = Array.isArray(payload) ? payload : [payload];
-  return chunks.flatMap((chunk) => Array.isArray(chunk.results) ? chunk.results : []);
+  if (!Array.isArray(payload)) {
+    throw new Error('Google Ads API: malformed searchStream payload');
+  }
+  const rows = [];
+  for (const chunk of payload) {
+    if (!chunk || typeof chunk !== 'object' || !Array.isArray(chunk.results)) {
+      throw new Error('Google Ads API: malformed searchStream chunk');
+    }
+    rows.push(...chunk.results);
+  }
+  return rows;
 }
 
 function campaignDims(row) {
   const campaign = row.campaign || {};
+  const id = campaign.id;
+  const name = campaign.name;
+  const channelType = campaign.advertisingChannelType || campaign.advertising_channel_type;
+  if (id == null || id === '' || typeof name !== 'string' || !name || typeof channelType !== 'string' || !channelType) {
+    throw new Error('Google Ads: malformed campaign identity');
+  }
   return {
-    campaign: campaign.name || 'unknown',
-    campaignId: String(campaign.id || ''),
-    channelType: campaign.advertisingChannelType || campaign.advertising_channel_type || '',
+    campaign: name,
+    campaignId: String(id),
+    channelType,
   };
 }
 
+function metricDate(row, dateRange) {
+  const date = row.segments?.date || row.segments?.date_value;
+  if (date) {
+    if (date < dateRange.from || date > dateRange.to) {
+      throw new Error(`Google Ads: row date ${date} outside ${dateRange.from}..${dateRange.to}`);
+    }
+    return date;
+  }
+  if (dateRange.from === dateRange.to) return dateRange.from;
+  throw new Error('Google Ads: multi-day response row missing segments.date');
+}
+
+function rowsByMetricDate(rows, dateRange) {
+  const grouped = new Map();
+  for (const row of rows) {
+    const date = metricDate(row, dateRange);
+    const bucket = grouped.get(date) || [];
+    bucket.push(row);
+    grouped.set(date, bucket);
+  }
+  return grouped;
+}
+
+function datesInRange(dateRange) {
+  if (!DATE_RE.test(dateRange.from) || !DATE_RE.test(dateRange.to) || dateRange.from > dateRange.to) {
+    throw new Error(`Google Ads: invalid date range ${dateRange.from}..${dateRange.to}`);
+  }
+  const start = Date.parse(`${dateRange.from}T00:00:00Z`);
+  const end = Date.parse(`${dateRange.to}T00:00:00Z`);
+  if (
+    !Number.isFinite(start) ||
+    !Number.isFinite(end) ||
+    new Date(start).toISOString().slice(0, 10) !== dateRange.from ||
+    new Date(end).toISOString().slice(0, 10) !== dateRange.to
+  ) {
+    throw new Error(`Google Ads: invalid date range ${dateRange.from}..${dateRange.to}`);
+  }
+  const days = Math.floor((end - start) / DAY_MS) + 1;
+  if (days > 366) throw new Error('Google Ads: date range cannot exceed 366 days');
+  return Array.from({ length: days }, (_, index) =>
+    new Date(start + index * DAY_MS).toISOString().slice(0, 10));
+}
+
+export function googleAdsRestatementScopes(dateRange) {
+  return datesInRange(dateRange).flatMap((metricDate) =>
+    GOOGLE_ADS_METRIC_NAMES.map((metricName) => ({ metricDate, metricName })));
+}
+
+function addZeroDayMetrics(metrics, date) {
+  for (const name of ['spend', 'impressions', 'clicks', 'conversions', 'leads', 'revenue']) {
+    metrics.push({ name, value: 0, date });
+  }
+}
+
 function addCoreMetrics(metrics, row, date, dimensions = null) {
-  const costMicros = num(metric(row, 'costMicros'));
+  const costMicros = metricNumber(row, 'costMicros', { min: 0, integer: true });
   const spend = round(costMicros / 1_000_000, 2);
-  const impressions = num(metric(row, 'impressions'));
-  const clicks = num(metric(row, 'clicks'));
-  const conversions = num(metric(row, 'conversions'));
-  const revenue = round(num(metric(row, 'conversionsValue')), 2);
-  const cpcMicros = num(metric(row, 'averageCpc'));
+  const impressions = metricNumber(row, 'impressions', { min: 0, integer: true });
+  const clicks = metricNumber(row, 'clicks', { min: 0, integer: true });
+  const conversions = metricNumber(row, 'conversions');
+  const revenue = round(metricNumber(row, 'conversionsValue'), 2);
   const dims = dimensions ? { dimensions } : {};
 
   metrics.push(
@@ -134,74 +230,46 @@ function addCoreMetrics(metrics, row, date, dimensions = null) {
     { name: 'clicks', value: clicks, date, ...dims },
   );
 
-  const ctr = percent(metric(row, 'ctr'));
-  if (ctr != null) metrics.push({ name: 'ctr', value: ctr, date, ...dims });
-  if (cpcMicros > 0) metrics.push({ name: 'cpc', value: round(cpcMicros / 1_000_000, 2), date, ...dims });
-  if (conversions) {
-    metrics.push(
-      { name: 'conversions', value: round(conversions, 2), date, ...dims },
-      // Google Ads platform conversions are the closest paid lead signal. Real
-      // closed-won/revenue still belongs to the revenue source.
-      { name: 'leads', value: round(conversions, 2), date, ...dims },
-    );
+  if (impressions > 0) {
+    metrics.push({ name: 'ctr', value: round((clicks / impressions) * 100, 4), date, ...dims });
   }
-  if (revenue) {
-    metrics.push({ name: 'revenue', value: revenue, date, ...dims });
-    if (spend > 0) metrics.push({ name: 'roas', value: round(revenue / spend, 2), date, ...dims });
+  if (clicks > 0) {
+    metrics.push({ name: 'cpc', value: round(spend / clicks, 2), date, ...dims });
   }
+  metrics.push(
+    { name: 'conversions', value: round(conversions, 2), date, ...dims },
+    // Google Ads platform conversions are the closest paid lead signal. Real
+    // closed-won/revenue still belongs to the revenue source.
+    { name: 'leads', value: round(conversions, 2), date, ...dims },
+    { name: 'revenue', value: revenue, date, ...dims },
+  );
+  // A valid row with spend and no revenue has a real ROAS of zero. Omitting it
+  // would remove bad days from weighted range calculations and bias ROAS up.
+  if (spend > 0) metrics.push({ name: 'roas', value: round(revenue / spend, 2), date, ...dims });
 }
 
-function aggregateRows(rows) {
-  const total = {
-    metrics: {
-      costMicros: 0,
-      impressions: 0,
-      clicks: 0,
-      conversions: 0,
-      conversionsValue: 0,
-    },
-  };
-  for (const row of rows) {
-    total.metrics.costMicros += num(metric(row, 'costMicros'));
-    total.metrics.impressions += num(metric(row, 'impressions'));
-    total.metrics.clicks += num(metric(row, 'clicks'));
-    total.metrics.conversions += num(metric(row, 'conversions'));
-    total.metrics.conversionsValue += num(metric(row, 'conversionsValue'));
-  }
-  total.metrics.ctr = total.metrics.impressions > 0
-    ? total.metrics.clicks / total.metrics.impressions
-    : 0;
-  total.metrics.averageCpc = total.metrics.clicks > 0
-    ? total.metrics.costMicros / total.metrics.clicks
-    : 0;
-  return total;
-}
+function addShareMetrics(metrics, row, date, dimensions = null) {
+  const impressionShare = ratioPercent(row, 'searchImpressionShare');
+  let rankLost = ratioPercent(row, 'searchRankLostImpressionShare');
+  let budgetLost = ratioPercent(row, 'searchBudgetLostImpressionShare');
+  const dims = dimensions ? { dimensions } : {};
 
-function addShareMetrics(metrics, rows, date) {
-  const shares = [];
-  const lostShares = [];
-  for (const row of rows) {
-    const dims = campaignDims(row);
-    const impressionShare = percent(metric(row, 'searchImpressionShare'));
-    const rankLost = percent(metric(row, 'searchRankLostImpressionShare'));
-    const budgetLost = percent(metric(row, 'searchBudgetLostImpressionShare'));
-    const lost = [rankLost, budgetLost].filter((v) => v != null).reduce((sum, v) => sum + v, 0);
-
-    if (impressionShare != null) {
-      shares.push(impressionShare);
-      metrics.push({ name: 'impressionShare', value: impressionShare, date, dimensions: dims });
-    }
-    if (lost > 0) {
-      const value = round(Math.min(lost, 100), 4);
-      lostShares.push(value);
-      metrics.push({ name: 'lostImpressionShare', value, date, dimensions: dims });
-    }
+  if (impressionShare != null) {
+    metrics.push({ name: 'impressionShare', value: impressionShare, date, ...dims });
+    // REST omits protobuf scalar fields at their default 0. Once search
+    // impression share proves the row is applicable, an omitted loss component
+    // is therefore a real zero rather than an unknown metric.
+    rankLost ??= 0;
+    budgetLost ??= 0;
   }
-  if (shares.length) {
-    metrics.push({ name: 'impressionShare', value: round(shares.reduce((a, b) => a + b, 0) / shares.length, 4), date });
-  }
-  if (lostShares.length) {
-    metrics.push({ name: 'lostImpressionShare', value: round(lostShares.reduce((a, b) => a + b, 0) / lostShares.length, 4), date });
+  // "Lost share" means rank + budget. Reporting only one available component
+  // would understate the total, so publish it only when both are present.
+  if (rankLost != null && budgetLost != null) {
+    const lost = rankLost + budgetLost;
+    if (lost > 100.01) {
+      throw new Error('Google Ads: inconsistent lost impression share components');
+    }
+    metrics.push({ name: 'lostImpressionShare', value: round(lost, 4), date, ...dims });
   }
 }
 
@@ -212,6 +280,9 @@ function addShareMetrics(metrics, rows, date) {
  */
 export async function collect(config, env, dateRange) {
   const slug = slugUpper(config);
+  // Validate the calendar window before OAuth or reporting requests. A malformed
+  // range must never be normalized by JavaScript or sent to the provider.
+  const requestedDates = datesInRange(dateRange);
   const developerToken = envValue(env, slug, 'GOOGLE_ADS_DEVELOPER_TOKEN');
   const clientId = envValue(env, slug, 'GOOGLE_ADS_CLIENT_ID');
   const clientSecret = envValue(env, slug, 'GOOGLE_ADS_CLIENT_SECRET');
@@ -243,52 +314,80 @@ export async function collect(config, env, dateRange) {
 
   const ctx = { customerId, developerToken, loginCustomerId, accessToken };
   const dateWhere = `segments.date BETWEEN '${dateRange.from}' AND '${dateRange.to}'`;
+  // Account-level rows are the provider's Account report. Do not reconstruct
+  // headline totals or impression share by averaging campaign rows: campaign
+  // filtering and unequal eligibility can make that disagree with Google Ads.
+  const accountQuery = `
+    SELECT
+      segments.date,
+      metrics.cost_micros,
+      metrics.impressions,
+      metrics.clicks,
+      metrics.conversions,
+      metrics.conversions_value,
+      metrics.search_impression_share,
+      metrics.search_rank_lost_impression_share,
+      metrics.search_budget_lost_impression_share
+    FROM customer
+    WHERE ${dateWhere}
+  `;
   const campaignQuery = `
     SELECT
       campaign.id,
       campaign.name,
       campaign.status,
       campaign.advertising_channel_type,
+      segments.date,
       metrics.cost_micros,
       metrics.impressions,
       metrics.clicks,
-      metrics.ctr,
-      metrics.average_cpc,
       metrics.conversions,
-      metrics.conversions_value
-    FROM campaign
-    WHERE ${dateWhere}
-      AND campaign.status != 'REMOVED'
-    ORDER BY metrics.cost_micros DESC
-    LIMIT 100
-  `;
-
-  const rows = await searchStream({ ...ctx, query: campaignQuery });
-  const metrics = [];
-  if (rows.length) {
-    addCoreMetrics(metrics, aggregateRows(rows), dateRange.from);
-    for (const row of rows) addCoreMetrics(metrics, row, dateRange.from, campaignDims(row));
-  }
-
-  const shareQuery = `
-    SELECT
-      campaign.id,
-      campaign.name,
-      campaign.advertising_channel_type,
+      metrics.conversions_value,
       metrics.search_impression_share,
       metrics.search_rank_lost_impression_share,
       metrics.search_budget_lost_impression_share
     FROM campaign
     WHERE ${dateWhere}
       AND campaign.status != 'REMOVED'
-    LIMIT 100
+    ORDER BY metrics.cost_micros DESC
   `;
-  try {
-    const shareRows = await searchStream({ ...ctx, query: shareQuery });
-    addShareMetrics(metrics, shareRows, dateRange.from);
-  } catch (err) {
-    console.warn(`  Warning: Google Ads impression share skipped: ${err.message}`);
+
+  const [accountRows, campaignRows] = await Promise.all([
+    searchStream({ ...ctx, query: accountQuery }),
+    searchStream({ ...ctx, query: campaignQuery }),
+  ]);
+  const metrics = [];
+  const accountRowsByDate = rowsByMetricDate(accountRows, dateRange);
+  const campaignRowsByDate = rowsByMetricDate(campaignRows, dateRange);
+  for (const date of requestedDates) {
+    const dailyAccountRows = accountRowsByDate.get(date) || [];
+    if (dailyAccountRows.length > 1) {
+      throw new Error(`Google Ads: ambiguous account rows for ${date}`);
+    }
+    if (!dailyAccountRows.length) {
+      // searchStream legitimately has no account row on a zero-delivery day.
+      // Keep additive account totals explicit so a re-pull can clear stale data;
+      // CTR/CPC/ROAS are undefined without a denominator and remain omitted.
+      addZeroDayMetrics(metrics, date);
+    } else {
+      addCoreMetrics(metrics, dailyAccountRows[0], date);
+      addShareMetrics(metrics, dailyAccountRows[0], date);
+    }
+
+    for (const row of campaignRowsByDate.get(date) || []) {
+      const dimensions = campaignDims(row);
+      addCoreMetrics(metrics, row, date, dimensions);
+      addShareMetrics(metrics, row, date, dimensions);
+    }
   }
 
-  return { source: 'google_ads', date: dateRange.from, metrics };
+  return {
+    source: 'google_ads',
+    date: dateRange.from,
+    metrics,
+    attemptedDates: requestedDates,
+    // Denominator-based and share metrics can be legitimately absent. A clean
+    // account+campaign response still authoritatively restates those scopes.
+    restatedScopes: googleAdsRestatementScopes(dateRange),
+  };
 }

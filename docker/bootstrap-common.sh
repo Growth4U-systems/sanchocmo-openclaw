@@ -15,6 +15,18 @@
 
 _sancho_home="${1:-/root/.openclaw}"
 
+# --- Shared workspace paths -------------------------------------------------
+# The metrics collector resolves its fallback from the skill's own __dirname,
+# which lands on the OpenClaw home, while tenant data lives one level deeper in
+# workspace-sancho/. Export the canonical paths for gateway/cron children too;
+# setting MC_WORKSPACE only on the Next.js child does not reach agent shells.
+if [ -z "${MC_WORKSPACE:-}" ]; then
+  export MC_WORKSPACE="$_sancho_home/workspace-sancho"
+fi
+if [ -z "${MC_NEXTJS_DIR:-}" ]; then
+  export MC_NEXTJS_DIR="/app/mc-nextjs"
+fi
+
 # --- Config symlinks: workspace-sancho/<f> -> ../config/<f> -------------------
 # These files live in config/ (instance-specific, untracked) but the app reads
 # them from workspace-sancho/. `git checkout` during deploy deletes

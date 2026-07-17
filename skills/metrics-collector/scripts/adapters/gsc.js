@@ -6,6 +6,12 @@
 
 import { GoogleAuth } from 'google-auth-library';
 import { resolveGoogleServiceAccountPath } from './google-auth-path.js';
+import {
+  buildGscQueryBody,
+  gscDatesInRange,
+  gscRestatementScopes,
+  gscRowsToMetrics,
+} from '../gsc-metrics.js';
 
 const SA_PATH = resolveGoogleServiceAccountPath(import.meta.url);
 
@@ -31,59 +37,33 @@ export async function collect(config, env, dateRange) {
   const metrics = [];
 
   // --- Totals ---
-  const totalsData = await queryGSC(token.token, siteUrl, dateRange, []);
-  if (totalsData.rows?.length) {
-    for (const row of totalsData.rows) {
-      metrics.push(
-        { name: 'clicks', value: row.clicks, date: dateRange.from },
-        { name: 'impressions', value: row.impressions, date: dateRange.from },
-        { name: 'ctr', value: Math.round(row.ctr * 10000) / 100, date: dateRange.from },
-        { name: 'position', value: Math.round(row.position * 100) / 100, date: dateRange.from },
-      );
-    }
-  }
+  const totalsData = await queryGSC(token.token, siteUrl, dateRange);
+  metrics.push(...gscRowsToMetrics(totalsData.rows, dateRange, null, { fillMissingDates: true }));
 
   // --- By query (top 20) ---
-  const queryData = await queryGSC(token.token, siteUrl, dateRange, ['query'], 20);
-  if (queryData.rows) {
-    for (const row of queryData.rows) {
-      const query = row.keys?.[0] || 'unknown';
-      metrics.push(
-        { name: 'clicks', value: row.clicks, date: dateRange.from, dimensions: { query } },
-        { name: 'impressions', value: row.impressions, date: dateRange.from, dimensions: { query } },
-        { name: 'ctr', value: Math.round(row.ctr * 10000) / 100, date: dateRange.from, dimensions: { query } },
-        { name: 'position', value: Math.round(row.position * 100) / 100, date: dateRange.from, dimensions: { query } },
-      );
-    }
-  }
+  const queryData = await queryGSC(token.token, siteUrl, dateRange, 'query');
+  metrics.push(...gscRowsToMetrics(queryData.rows, dateRange, 'query'));
 
   // --- By page (top 20) ---
-  const pageData = await queryGSC(token.token, siteUrl, dateRange, ['page'], 20);
-  if (pageData.rows) {
-    for (const row of pageData.rows) {
-      const page = row.keys?.[0] || 'unknown';
-      metrics.push(
-        { name: 'clicks', value: row.clicks, date: dateRange.from, dimensions: { page } },
-        { name: 'impressions', value: row.impressions, date: dateRange.from, dimensions: { page } },
-        { name: 'ctr', value: Math.round(row.ctr * 10000) / 100, date: dateRange.from, dimensions: { page } },
-        { name: 'position', value: Math.round(row.position * 100) / 100, date: dateRange.from, dimensions: { page } },
-      );
-    }
-  }
+  const pageData = await queryGSC(token.token, siteUrl, dateRange, 'page');
+  metrics.push(...gscRowsToMetrics(pageData.rows, dateRange, 'page'));
 
-  return { source: 'gsc', date: dateRange.from, metrics };
+  return {
+    source: 'gsc',
+    date: dateRange.from,
+    metrics,
+    attemptedDates: gscDatesInRange(dateRange),
+    // CTR/position are undefined on a zero-impression day. The explicit owned
+    // scopes let a clean empty result remove yesterday's stale derived values.
+    restatedScopes: gscRestatementScopes(dateRange),
+  };
 }
 
-async function queryGSC(token, siteUrl, dateRange, dimensions = [], rowLimit = 1) {
+async function queryGSC(token, siteUrl, dateRange, breakdown = null) {
   const encodedSite = encodeURIComponent(siteUrl);
   const url = `https://www.googleapis.com/webmasters/v3/sites/${encodedSite}/searchAnalytics/query`;
 
-  const body = {
-    startDate: dateRange.from,
-    endDate: dateRange.to,
-    dimensions,
-    rowLimit,
-  };
+  const body = buildGscQueryBody(dateRange, breakdown);
 
   const response = await fetch(url, {
     method: 'POST',

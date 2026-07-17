@@ -5,6 +5,14 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { KpiCard } from "@/components/shared/kpi-card";
+import {
+  useMetricKpis,
+  useMetricsHealth,
+  type MetricKpiQualityStatus,
+  type MetricKpiRange,
+  type MetricKpiValue,
+  type MetricsHealthResult,
+} from "@/hooks/useMetrics";
 import { cn } from "@/lib/utils";
 import { TRUST_PILLAR_KEYS, type TrustPillarKey } from "@/lib/trust-score/client";
 
@@ -13,13 +21,14 @@ import { TRUST_PILLAR_KEYS, type TrustPillarKey } from "@/lib/trust-score/client
 // ============================================================
 
 interface MetricsSource {
-  status: string;
+  status: MetricKpiQualityStatus;
   metrics: MetricEntry[];
 }
 
 interface MetricEntry {
   name: string;
   value: number;
+  qualityStatus: MetricKpiQualityStatus;
   dimensions?: Record<string, string>;
 }
 
@@ -83,6 +92,10 @@ function mGet(src: MetricsSource | undefined, name: string): number | null {
   return m ? m.value : null;
 }
 
+function mQuality(src: MetricsSource | undefined, name: string): MetricKpiQualityStatus | undefined {
+  return src?.metrics.find((metric) => metric.name === name)?.qualityStatus;
+}
+
 function fmt(v: number | null): string {
   if (v === null) return "\u2014";
   if (v >= 1000) return v.toLocaleString();
@@ -109,9 +122,9 @@ function psiColor(score: number): string {
 }
 
 const DATE_RANGE_OPTIONS = [
-  { label: "7 dias", value: "7" },
-  { label: "30 dias", value: "30" },
-  { label: "Todo", value: "0" },
+  { label: "7 dias", value: "7d" },
+  { label: "30 dias", value: "30d" },
+  { label: "90 dias", value: "90d" },
 ];
 
 const SOURCE_CONFIG = [
@@ -122,7 +135,7 @@ const SOURCE_CONFIG = [
     icon: "\uD83D\uDD0D",
     metrics: [
       { n: "sessions", l: "Sesiones" },
-      { n: "totalUsers", l: "Usuarios" },
+      { n: "totalUsers", l: "Usuarios diarios medios" },
       { n: "newUsers", l: "Nuevos" },
       { n: "bounceRate", l: "Bounce", fmt: (v: number) => `${(v * 100).toFixed(0)}%` },
       {
@@ -217,83 +230,201 @@ function tsColor(score: number): string {
   return "#C45D35";
 }
 
-// Aggregate entries across date range
-function aggregate(entries: Array<{ sources?: Record<string, MetricsSource> }>) {
-  const merged: Record<string, MetricsSource> = {};
-  const feedNames = new Set([
-    "recentLead",
-    "postDetail",
-    "recentConversation",
-    "pipeline",
-    "sourceBreakdown",
-    "topPage",
-  ]);
+const SEMANTIC_SOURCE_ALIASES: Record<string, string[]> = {
+  ga4: ["ga4", "google-analytics"],
+  gsc: ["gsc", "google-search-console"],
+  meta_ads: ["meta_ads", "meta-ads", "meta"],
+  google_ads: ["google_ads", "google-ads"],
+  ghl: ["ghl"],
+  metricool: ["metricool"],
+  pagespeed: ["pagespeed"],
+  posthog: ["posthog"],
+  trust_score: ["trust_score", "trust-score"],
+  yalc: ["yalc"],
+};
 
-  for (const entry of entries) {
-    for (const [srcName, srcData] of Object.entries(entry.sources || {})) {
-      if (srcData.status !== "ok") continue;
-      if (!merged[srcName]) merged[srcName] = { status: "ok", metrics: [] };
-      merged[srcName].metrics.push(...(srcData.metrics || []));
-    }
+function canonicalSource(source: string): string {
+  return source.trim().toLowerCase().replace(/-/g, "_");
+}
+
+const QUALITY_SEVERITY: Record<MetricKpiQualityStatus, number> = {
+  ok: 0,
+  partial: 1,
+  stale: 2,
+  dirty: 3,
+  demo: 4,
+  missing: 5,
+};
+
+/** Conservatively keep the least trustworthy status represented by a source. */
+export function worstMetricQualityStatus(
+  current: MetricKpiQualityStatus,
+  next: MetricKpiQualityStatus,
+): MetricKpiQualityStatus {
+  return QUALITY_SEVERITY[next] > QUALITY_SEVERITY[current] ? next : current;
+}
+
+export function buildSemanticMetricSources(
+  values: MetricKpiValue[],
+  period: "current" | "previous" = "current",
+): Record<string, MetricsSource> {
+  const sources: Record<string, MetricsSource> = {};
+  for (const kpi of values) {
+    if (!kpi.source || !kpi.metricName) continue;
+    const value = period === "current" ? kpi.value : kpi.comparison?.previousValue;
+    if (period === "previous" && (value == null || !Number.isFinite(Number(value)))) continue;
+    const canonical = canonicalSource(kpi.source);
+    const aliases = SEMANTIC_SOURCE_ALIASES[canonical] ?? [canonical, canonical.replace(/_/g, "-")];
+    const source = aliases.map((alias) => sources[alias]).find(Boolean) ?? {
+      status: kpi.qualityStatus,
+      metrics: [],
+    };
+    source.status = worstMetricQualityStatus(source.status, kpi.qualityStatus);
+    for (const alias of aliases) sources[alias] = source;
+
+    // A persisted placeholder must never be promoted to the numeric value 0.
+    if (kpi.qualityStatus === "missing") continue;
+    if (value == null || !Number.isFinite(Number(value))) continue;
+    const nextMetric = { name: kpi.metricName, value: Number(value), qualityStatus: kpi.qualityStatus };
+    const existing = source.metrics.findIndex((metric) => metric.name === nextMetric.name);
+    if (existing >= 0) source.metrics[existing] = nextMetric;
+    else source.metrics.push(nextMetric);
   }
+  return sources;
+}
 
-  for (const [, srcData] of Object.entries(merged)) {
-    const byKey: Record<string, MetricEntry & { _count: number }> = {};
-    const feeds: MetricEntry[] = [];
-
-    for (const m of srcData.metrics) {
-      if (feedNames.has(m.name)) {
-        feeds.push(m);
-        continue;
-      }
-      const dimKey = m.dimensions ? JSON.stringify(m.dimensions) : "";
-      const key = m.name + "|" + dimKey;
-      if (!byKey[key]) {
-        byKey[key] = { ...m, _count: 1 };
-      } else {
-        const isRate =
-          m.name.includes("Rate") ||
-          m.name.includes("ctr") ||
-          m.name.includes("cpc") ||
-          m.name.includes("position") ||
-          m.name.includes("Engagement") ||
-          m.name.includes("bounce");
-        if (isRate) {
-          byKey[key].value =
-            (byKey[key].value * byKey[key]._count + m.value) / (byKey[key]._count + 1);
-        } else {
-          byKey[key].value += m.value;
-        }
-        byKey[key]._count++;
-      }
-    }
-
-    srcData.metrics = [
-      ...Object.values(byKey).map((m) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { _count: _unused, ...rest } = m;
-        return rest;
-      }),
-      ...feeds,
-    ];
+export function compactMetricQualityState(
+  status?: MetricKpiQualityStatus | null,
+): { label: string; tone: "warn" | "demo" | "empty"; detail: string } | null {
+  if (!status || status === "ok") return null;
+  if (status === "demo") {
+    return { label: "DEMO", tone: "demo", detail: "Dato de demostración; no procede de una integración real." };
   }
+  if (status === "missing") {
+    return { label: "INCOMPLETO", tone: "empty", detail: "Falta al menos una métrica de esta fuente." };
+  }
+  if (status === "dirty") {
+    return { label: "REVISAR", tone: "warn", detail: "La fuente marcó datos que requieren revisión." };
+  }
+  if (status === "stale") {
+    return { label: "ATRASADO", tone: "warn", detail: "Hay datos fuera de su cadencia de actualización." };
+  }
+  return { label: "PARCIAL", tone: "warn", detail: "El cálculo tiene cobertura incompleta." };
+}
 
-  return merged;
+export function CompactMetricQualityBadge({ status }: { status?: MetricKpiQualityStatus | null }) {
+  const state = compactMetricQualityState(status);
+  if (!state) return null;
+  return (
+    <span
+      title={state.detail}
+      className={cn(
+        "text-[9px] px-1.5 py-0.5 rounded font-semibold",
+        state.tone === "demo" && "bg-violet-100 text-violet-800",
+        state.tone === "warn" && "bg-amber-100 text-amber-800",
+        state.tone === "empty" && "bg-muted text-muted-foreground",
+      )}
+    >
+      {state.label}
+    </span>
+  );
+}
+
+function sourceLabel(source: string): string {
+  const labels: Record<string, string> = {
+    ga4: "GA4",
+    gsc: "Search Console",
+    meta_ads: "Meta Ads",
+    google_ads: "Google Ads",
+    ghl: "GHL",
+    metricool: "Metricool",
+    pagespeed: "PageSpeed",
+    posthog: "PostHog",
+    trust_score: "Trust Score",
+    yalc: "Yalc",
+  };
+  const canonical = canonicalSource(source);
+  return labels[canonical] ?? source.replace(/[_-]/g, " ");
+}
+
+export function compactSourceHealthState(
+  sourceKeys: string[],
+  health?: MetricsHealthResult,
+): { label: string; tone: "ok" | "warn" | "error" | "empty" } | null {
+  if (!health) return null;
+  const keys = new Set(sourceKeys.map(canonicalSource));
+  const item = health.sources.find((source) => keys.has(canonicalSource(source.source)));
+  if (!item) return null;
+  if (item.lastStatus?.toLowerCase() === "error") return { label: "ERROR", tone: "error" };
+  if (item.knownDirty) return { label: "REVISAR", tone: "warn" };
+  if (item.overdue) return { label: "ATRASADO", tone: "warn" };
+  if (item.lastStatus?.toLowerCase() === "ok") return { label: "RECOGIDO", tone: "ok" };
+  if (item.lastMetricDate) return { label: "DATOS RECIBIDOS", tone: "ok" };
+  if (item.enabled) return { label: "SIN DATOS", tone: "empty" };
+  return null;
+}
+
+function MetricsHealthNotice({ health }: { health?: MetricsHealthResult }) {
+  if (!health || health.overall === "ok" || health.overall === "no-data") return null;
+  const failed = health.sources
+    .filter((source) => source.lastStatus?.toLowerCase() === "error")
+    .map((source) => sourceLabel(source.source));
+  if (health.overall === "error") {
+    return (
+      <div className="bg-red-50 border border-red-300 rounded-lg p-2.5 mb-3 text-[10px] text-red-700" role="alert">
+        {failed.length ? `Fallo de recoleccion: ${[...new Set(failed)].join(", ")}.` : "La recoleccion programada esta degradada."}
+        {" "}Los datos anteriores pueden estar desactualizados.
+      </div>
+    );
+  }
+  return (
+    <div className="bg-amber-50 border border-amber-300 rounded-lg p-2.5 mb-3 text-[10px] text-amber-800" role="status">
+      Hay fuentes atrasadas segun su cadencia de recoleccion.
+    </div>
+  );
+}
+
+export function compactMetricQualitySummary(values: MetricKpiValue[]): {
+  demo: number;
+  warning: number;
+  missing: number;
+} {
+  return values.reduce(
+    (summary, kpi) => {
+      if (kpi.qualityStatus === "missing") summary.missing += 1;
+      else if (kpi.qualityStatus === "demo" && (kpi.value != null || Boolean(kpi.valueText))) summary.demo += 1;
+      else if (["dirty", "stale", "partial"].includes(kpi.qualityStatus) && (kpi.value != null || Boolean(kpi.valueText))) summary.warning += 1;
+      return summary;
+    },
+    { demo: 0, warning: 0, missing: 0 },
+  );
+}
+
+function MetricsQualityNotice({ values }: { values: MetricKpiValue[] }) {
+  const summary = compactMetricQualitySummary(values);
+  if (!summary.demo && !summary.warning && !summary.missing) return null;
+  const details = [
+    summary.demo ? `${summary.demo} KPI ${summary.demo === 1 ? "es" : "son"} de demostración` : null,
+    summary.warning ? `${summary.warning} ${summary.warning === 1 ? "requiere" : "requieren"} revisión` : null,
+    summary.missing ? `${summary.missing} ${summary.missing === 1 ? "no tiene" : "no tienen"} dato` : null,
+  ].filter(Boolean).join(" · ");
+  return (
+    <div
+      className={cn(
+        "border rounded-lg p-2.5 mb-3 text-[10px]",
+        summary.demo ? "bg-violet-50 border-violet-300 text-violet-900" : "bg-amber-50 border-amber-300 text-amber-900",
+      )}
+      role="status"
+    >
+      <b>{summary.demo ? "Datos DEMO" : "Calidad de datos limitada"}.</b> {details}. Los valores sin dato se muestran como “—”, nunca como cero.
+    </div>
+  );
 }
 
 export function MetricsColumn({ slug }: MetricsColumnProps) {
-  const [range, setRange] = useState("30");
-
-  const { data: metricsData, isLoading } = useQuery({
-    queryKey: ["metrics-v2", slug],
-    queryFn: async () => {
-      const res = await fetch(`/api/metrics?slug=${slug}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    },
-    enabled: !!slug,
-    staleTime: 30_000,
-  });
+  const [range, setRange] = useState<MetricKpiRange>("30d");
+  const kpiQuery = useMetricKpis(slug, range);
+  const healthQuery = useMetricsHealth(slug);
 
   const { data: plan } = useQuery<MetricsPlan>({
     queryKey: ["metrics-plan", slug],
@@ -317,7 +448,7 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
     staleTime: 60_000,
   });
 
-  const { data: psiData } = useQuery({
+  const { data: psiData, isLoading: psiLoading, isError: psiError } = useQuery({
     queryKey: ["pagespeed", slug],
     queryFn: async () => {
       const res = await fetch(`/api/pagespeed?slug=${slug}`);
@@ -328,7 +459,7 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
     staleTime: 120_000,
   });
 
-  const { data: tsData } = useQuery<TrustScoreData | null>({
+  const { data: tsData, isLoading: trustLoading, isError: trustError } = useQuery<TrustScoreData | null>({
     queryKey: ["trust-score", slug],
     queryFn: async () => {
       const res = await fetch(`/api/trust-score?slug=${slug}`);
@@ -339,92 +470,32 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
     staleTime: 120_000,
   });
 
-  if (isLoading) {
+  if (kpiQuery.isLoading) {
     return <div className="text-xs text-muted-foreground py-6 text-center">Cargando metricas...</div>;
   }
-
-  const rolling = metricsData?.rolling || metricsData?.daily || [];
-  const hasMetrics = rolling.length > 0 && rolling.some((d: Record<string, unknown>) => Object.keys((d as { sources?: Record<string, unknown> }).sources || {}).length > 0);
-
-  // No metrics states
-  if (!hasMetrics) {
-    const ds = metricsData?.dataSources || {};
-    const connectedApis = Object.entries(ds).filter(([, v]) => (v as { status: string }).status === "connected");
-
-    return (
-      <div>
-        {connectedApis.length > 0 ? (
-          <div className="bg-[#F0F7EE] border border-[#4A5D23] rounded-lg p-3 mb-3 flex items-center gap-2.5">
-            <span className="text-base">{"\u2705"}</span>
-            <div className="flex-1">
-              <div className="text-xs font-bold text-[#4A5D23]">
-                APIs conectadas: {connectedApis.map(([k]) => k.toUpperCase()).join(", ")}
-              </div>
-              <div className="text-[10px] text-muted-foreground">
-                Esperando primera recoleccion de datos
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Link
-            href={`/dashboard/${slug}/settings?tab=apis`}
-            className="block bg-[#FEF3EE] border border-rust rounded-lg p-3 mb-3"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">{"\uD83D\uDD0C"}</span>
-              <div className="flex-1">
-                <div className="text-xs font-bold text-rust">Conecta tus APIs</div>
-                <div className="text-[10px] text-muted-foreground">
-                  GA4, Search Console, Meta Ads, CRM...
-                </div>
-              </div>
-              <span className="text-[11px] font-bold text-rust">Configurar {"\u2192"}</span>
-            </div>
-          </Link>
-        )}
-
-        {/* PageSpeed placeholder */}
-        <PageSpeedSection data={psiData} />
-        <TrustScoreSection data={tsData} history={metricsData?.daily} />
-      </div>
-    );
-  }
-
-  // Filter by date range
-  const rangeDays = parseInt(range);
-  let filtered = rolling;
-  if (rangeDays > 0) {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - rangeDays);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
-    filtered = rolling.filter(
-      (d: Record<string, unknown>) => ((d as { dateRange?: { from?: string }; date?: string }).dateRange?.from || (d as { date?: string }).date || "") >= cutoffStr
-    );
-    if (filtered.length === 0) filtered = rolling;
-  }
-
-  const src = aggregate(filtered);
-
-  // Previous period for delta comparison
-  let pSrc: Record<string, MetricsSource> = {};
-  if (rangeDays > 0) {
-    const cutoff2 = new Date();
-    cutoff2.setDate(cutoff2.getDate() - rangeDays * 2);
-    const cutoff1 = new Date();
-    cutoff1.setDate(cutoff1.getDate() - rangeDays);
-    const prevFiltered = rolling.filter((d: Record<string, unknown>) => {
-      const from = (d as { dateRange?: { from?: string }; date?: string }).dateRange?.from || (d as { date?: string }).date || "";
-      return from >= cutoff2.toISOString().slice(0, 10) && from < cutoff1.toISOString().slice(0, 10);
-    });
-    if (prevFiltered.length > 0) pSrc = aggregate(prevFiltered);
-  }
+  const kpiData = kpiQuery.data;
+  const hasMetrics = Boolean(
+    kpiData?.stageRollups.available ||
+    kpiData?.values.some((value) => value.qualityStatus !== "missing" && (value.value != null || Boolean(value.valueText))),
+  );
+  const src = buildSemanticMetricSources(kpiData?.values ?? [], "current");
+  const pSrc = buildSemanticMetricSources(kpiData?.values ?? [], "previous");
 
   return (
     <div>
       {/* Date range filter */}
       <div className="mb-3">
-        <DateRangeFilter options={DATE_RANGE_OPTIONS} value={range} onChange={setRange} />
+        <DateRangeFilter
+          options={DATE_RANGE_OPTIONS}
+          value={range}
+          onChange={(value) => {
+            if (value === "7d" || value === "30d" || value === "90d") setRange(value);
+          }}
+        />
       </div>
+
+      <MetricsHealthNotice health={healthQuery.data} />
+      <MetricsQualityNotice values={kpiData?.values ?? []} />
 
       {/* Health Score */}
       {monData?.health_score && (
@@ -434,18 +505,43 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
         />
       )}
 
-      {/* Plan mode: funnel + categorized KPIs */}
-      {plan?.funnel && plan.funnel.length > 0 ? (
+      {kpiQuery.isError ? (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-3 mb-3 text-xs text-red-700" role="alert">
+          No se pudieron cargar las metricas de este rango.
+        </div>
+      ) : !hasMetrics ? (
+        <div className="bg-muted/30 border border-border rounded-lg p-3 mb-3">
+          <div className="text-xs font-bold">Sin metricas para {range.replace("d", " dias")}</div>
+          <div className="text-[10px] text-muted-foreground mt-1">
+            No se reutilizan datos de otros periodos. Revisa la ultima recoleccion o cambia el rango.
+          </div>
+          <Link href={`/dashboard/${slug}/settings?tab=apis`} className="inline-block text-[11px] font-bold text-rust mt-2">
+            Revisar fuentes {"\u2192"}
+          </Link>
+        </div>
+      ) : plan?.funnel && plan.funnel.length > 0 ? (
         <PlanMetrics plan={plan} src={src} pSrc={pSrc} />
       ) : (
-        <GenericMetrics src={src} pSrc={pSrc} />
+        <GenericMetrics src={src} pSrc={pSrc} health={healthQuery.data} />
       )}
 
       {/* PageSpeed */}
-      <PageSpeedSection data={psiData} />
+      {psiLoading ? (
+        <div className="text-[10px] text-muted-foreground py-3 text-center">Cargando PageSpeed...</div>
+      ) : psiError ? (
+        <div className="text-[10px] text-red-600 py-3 text-center">No se pudo cargar PageSpeed.</div>
+      ) : (
+        <PageSpeedSection data={psiData} />
+      )}
 
       {/* Trust Score */}
-      <TrustScoreSection data={tsData} history={metricsData?.daily} />
+      {trustLoading ? (
+        <div className="text-[10px] text-muted-foreground py-3 text-center">Cargando Trust Score...</div>
+      ) : trustError ? (
+        <div className="text-[10px] text-red-600 py-3 text-center">No se pudo cargar Trust Score.</div>
+      ) : (
+        <TrustScoreSection data={tsData} />
+      )}
 
       {/* Link to full metrics */}
       <div className="text-center mt-2">
@@ -459,15 +555,20 @@ export function MetricsColumn({ slug }: MetricsColumnProps) {
 
 // --- Sub-components ---
 
-function HealthScoreCard({ hs, recCount }: { hs: HealthScore; recCount: number }) {
-  const score = hs.overall ?? hs.overallScore ?? 0;
+export function healthScoreValue(hs: HealthScore): number | null {
+  const value = hs.overall ?? hs.overallScore;
+  return value != null && Number.isFinite(Number(value)) ? Number(value) : null;
+}
+
+export function HealthScoreCard({ hs, recCount }: { hs: HealthScore; recCount: number }) {
+  const score = healthScoreValue(hs);
   const cats = hs.by_category || hs.categories || {};
   const alerts = hs.active_alerts || hs.topAlerts || [];
   const alertCount = Array.isArray(alerts) ? alerts.length : 0;
   const trend = hs.trend === "improving" ? "\u2191" : hs.trend === "declining" ? "\u2193" : "\u2192";
   const trendColor =
     hs.trend === "improving" ? "text-[#4A5D23]" : hs.trend === "declining" ? "text-rust" : "text-muted-foreground";
-  const scoreColor = score >= 70 ? "#4A5D23" : score >= 40 ? "#B8860B" : "#C45D35";
+  const scoreColor = score == null ? "#E5E2DC" : score >= 70 ? "#4A5D23" : score >= 40 ? "#B8860B" : "#C45D35";
 
   return (
     <div className="bg-card border border-border rounded-lg p-3.5 mb-3.5">
@@ -477,14 +578,14 @@ function HealthScoreCard({ hs, recCount }: { hs: HealthScore; recCount: number }
           style={{ borderColor: scoreColor }}
         >
           <span className="text-[22px] font-extrabold" style={{ color: scoreColor }}>
-            {score}
+            {score ?? "\u2014"}
           </span>
         </div>
         <div className="flex-1">
           <div className="text-[13px] font-bold tracking-wide">
-            Health Score <span className={cn("text-[15px] ml-0.5", trendColor)}>{trend}</span>
+            Health Score {score != null && <span className={cn("text-[15px] ml-0.5", trendColor)}>{trend}</span>}
           </div>
-          {hs.previous_week && (
+          {hs.previous_week != null && (
             <div className="text-[9px] text-muted-foreground mt-0.5">
               vs {hs.previous_week} semana anterior
             </div>
@@ -516,7 +617,7 @@ function HealthScoreCard({ hs, recCount }: { hs: HealthScore; recCount: number }
               <div className="flex-1 h-1.5 bg-[#E5E2DC] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full"
-                  style={{ width: `${v.score}%`, background: barColor }}
+                  style={{ width: `${Math.max(0, Math.min(100, v.score))}%`, background: barColor }}
                 />
               </div>
               <span className="text-[10px] font-bold w-7 text-right" style={{ color: barColor }}>
@@ -566,6 +667,9 @@ function PlanMetrics({
           <div className="text-[11px] font-bold mb-2">
             {"\uD83D\uDD04"} Funnel {"\u2014"} {plan.label || plan.archetype || ""}
           </div>
+          <div className="text-[9px] text-muted-foreground mb-2">
+            Totales por fuente; sin deduplicacion entre proveedores.
+          </div>
           <div className="flex items-center gap-1 overflow-x-auto">
             {plan.funnel.map((step, i) => {
               const val = step.source ? mGet(src[step.source], step.metric) : null;
@@ -576,13 +680,9 @@ function PlanMetrics({
                   <div className="text-center min-w-[56px]">
                     <div className="text-[15px] font-bold">{val !== null ? fmt(val) : "\u2014"}</div>
                     <div className="text-[9px] text-muted-foreground">{step.step}</div>
+                    <CompactMetricQualityBadge status={mQuality(src[step.source], step.metric) ?? src[step.source]?.status} />
                     {d && (
-                      <span
-                        className={cn(
-                          "text-[9px] font-semibold",
-                          d.direction === "up" ? "text-green-600" : "text-red-500"
-                        )}
-                      >
+                      <span className="text-[9px] font-semibold text-muted-foreground">
                         {d.direction === "up" ? "\u2191" : "\u2193"} {d.value}
                       </span>
                     )}
@@ -605,8 +705,8 @@ function PlanMetrics({
           <div key={cat} className="mb-3">
             <div className="flex items-center gap-2 text-[11px] font-bold mb-1.5">
               {CAT_LABELS[cat] || cat}
-              <span className="text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-semibold">
-                OK
+              <span className="text-[9px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded font-semibold">
+                DATOS DEL RANGO
               </span>
             </div>
             {kpis.map((kpi) => {
@@ -632,7 +732,10 @@ function PlanMetrics({
                   className="flex justify-between py-1 text-[11px] border-b border-border/50 last:border-0"
                 >
                   <span className="text-muted-foreground">{kpi.name}</span>
-                  <span className="font-semibold">{display}</span>
+                  <span className="flex items-center gap-1 font-semibold">
+                    {display}
+                    <CompactMetricQualityBadge status={mQuality(src[kpi.source], kpi.metric) ?? src[kpi.source]?.status} />
+                  </span>
                 </div>
               );
             })}
@@ -646,9 +749,11 @@ function PlanMetrics({
 function GenericMetrics({
   src,
   pSrc,
+  health,
 }: {
   src: Record<string, MetricsSource>;
   pSrc: Record<string, MetricsSource>;
+  health?: MetricsHealthResult;
 }) {
   // Build KPI cards
   const ga = src.ga4;
@@ -658,23 +763,37 @@ function GenericMetrics({
   const ghl = src.ghl;
   const pGhl = pSrc.ghl;
 
-  const kpis: Array<{ v: string; l: string; c: string; d: ReturnType<typeof deltaCalc> }> = [];
+  const kpis: Array<{
+    v: string;
+    l: string;
+    d: ReturnType<typeof deltaCalc>;
+    quality?: MetricKpiQualityStatus;
+  }> = [];
 
   const sessions = mGet(ga, "sessions");
   const pSessions = mGet(pGa, "sessions");
-  if (sessions !== null) kpis.push({ v: fmt(sessions), l: "Sesiones", c: "#0065FF", d: deltaCalc(sessions, pSessions) });
+  if (sessions !== null) kpis.push({ v: fmt(sessions), l: "Sesiones", d: deltaCalc(sessions, pSessions), quality: mQuality(ga, "sessions") });
 
   const spend = mGet(meta, "spend");
-  const pSpend = mGet(pMeta, "spend");
-  if (spend !== null) kpis.push({ v: `\u20AC${Number(spend).toFixed(0)}`, l: "Ad Spend", c: "#C45D35", d: deltaCalc(spend, pSpend) });
+  // Spend movement is contextual, not inherently good or bad, so no coloured delta.
+  if (spend !== null) kpis.push({ v: `\u20AC${Number(spend).toFixed(0)}`, l: "Meta spend", d: undefined, quality: mQuality(meta, "spend") });
 
   const leads = mGet(meta, "leads");
   const pLeads = mGet(pMeta, "leads");
-  if (leads !== null) kpis.push({ v: fmt(leads), l: "Leads", c: "#22A06B", d: deltaCalc(leads, pLeads) });
+  if (leads !== null) kpis.push({ v: fmt(leads), l: "Meta leads", d: deltaCalc(leads, pLeads), quality: mQuality(meta, "leads") });
 
-  const contacts = mGet(ghl, "totalContacts") || mGet(ghl, "newContacts");
-  const pContacts = mGet(pGhl, "totalContacts") || mGet(pGhl, "newContacts");
-  if (contacts !== null) kpis.push({ v: fmt(contacts), l: "CRM", c: "#00B8D9", d: deltaCalc(contacts, pContacts) });
+  const contacts = mGet(ghl, "totalContacts") ?? mGet(ghl, "newContacts");
+  const pContacts = mGet(pGhl, "totalContacts") ?? mGet(pGhl, "newContacts");
+  if (contacts !== null) {
+    const contactsAreTotal = mGet(ghl, "totalContacts") !== null;
+    const contactMetric = contactsAreTotal ? "totalContacts" : "newContacts";
+    kpis.push({
+      v: fmt(contacts),
+      l: contactsAreTotal ? "Total contactos GHL" : "Nuevos contactos GHL del rango",
+      d: deltaCalc(contacts, pContacts),
+      quality: mQuality(ghl, contactMetric),
+    });
+  }
 
   return (
     <div>
@@ -682,12 +801,14 @@ function GenericMetrics({
       {kpis.length > 0 && (
         <div className="grid grid-cols-2 gap-2 mb-3">
           {kpis.slice(0, 4).map((k) => (
-            <KpiCard
-              key={k.l}
-              value={k.v}
-              label={k.l}
-              delta={k.d}
-            />
+            <div key={k.l} className="space-y-1">
+              <KpiCard
+                value={k.v}
+                label={k.l}
+                delta={k.d}
+              />
+              <CompactMetricQualityBadge status={k.quality} />
+            </div>
           ))}
         </div>
       )}
@@ -696,14 +817,14 @@ function GenericMetrics({
       {SOURCE_CONFIG.map((sc) => {
         const s = src[sc.key] || (sc.alt ? src[sc.alt] : undefined);
         if (!s?.metrics || s.metrics.length === 0) return null;
-        const isOk = s.status !== "error";
+        const sourceHealth = compactSourceHealthState([sc.key, ...(sc.alt ? [sc.alt] : [])], health);
 
-        const rows: Array<{ l: string; v: string }> = [];
+        const rows: Array<{ l: string; v: string; quality?: MetricKpiQualityStatus }> = [];
         for (const mDef of sc.metrics) {
           const val = mGet(s, mDef.n);
           if (val === null) continue;
           const display = mDef.fmt ? mDef.fmt(val) : fmt(val);
-          rows.push({ l: mDef.l, v: display });
+          rows.push({ l: mDef.l, v: display, quality: mQuality(s, mDef.n) });
         }
         if (rows.length === 0) return null;
 
@@ -711,14 +832,20 @@ function GenericMetrics({
           <div key={sc.key} className="mb-3">
             <div className="flex items-center gap-2 text-[11px] font-bold mb-1.5">
               {sc.icon} {sc.label}
-              <span
-                className={cn(
-                  "text-[9px] px-1.5 py-0.5 rounded font-semibold",
-                  isOk ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-                )}
-              >
-                {isOk ? "OK" : "ERR"}
-              </span>
+              {sourceHealth && (
+                <span
+                  className={cn(
+                    "text-[9px] px-1.5 py-0.5 rounded font-semibold",
+                    sourceHealth.tone === "ok" && "bg-green-100 text-green-700",
+                    sourceHealth.tone === "warn" && "bg-amber-100 text-amber-700",
+                    sourceHealth.tone === "error" && "bg-red-100 text-red-600",
+                    sourceHealth.tone === "empty" && "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {sourceHealth.label}
+                </span>
+              )}
+              <CompactMetricQualityBadge status={s.status} />
             </div>
             {rows.map((row) => (
               <div
@@ -726,7 +853,10 @@ function GenericMetrics({
                 className="flex justify-between py-1 text-[11px] border-b border-border/50 last:border-0"
               >
                 <span className="text-muted-foreground">{row.l}</span>
-                <span className="font-semibold">{row.v}</span>
+                <span className="flex items-center gap-1 font-semibold">
+                  {row.v}
+                  <CompactMetricQualityBadge status={row.quality} />
+                </span>
               </div>
             ))}
           </div>
@@ -736,7 +866,7 @@ function GenericMetrics({
   );
 }
 
-function PageSpeedSection({ data }: { data: { mobile?: Record<string, number>; fetchedAt?: string; _stale?: boolean } | null | undefined }) {
+export function PageSpeedSection({ data }: { data: { mobile?: Record<string, number>; fetchedAt?: string; _stale?: boolean } | null | undefined }) {
   const m = data?.mobile || {};
   const scores = [
     { key: "performance", label: "Perf", value: m.performance },
@@ -745,7 +875,8 @@ function PageSpeedSection({ data }: { data: { mobile?: Record<string, number>; f
     { key: "bestPractices", label: "Practicas", value: m.bestPractices },
   ];
 
-  const hasScores = scores.some((s) => s.value != null);
+  const hasScores = scores.some((score) => score.value != null && Number.isFinite(Number(score.value)));
+  const hasCwv = [m.lcp, m.cls, m.tbt].some((value) => value != null && Number.isFinite(Number(value)));
   const age = data?.fetchedAt
     ? new Date(data.fetchedAt).toLocaleDateString("es-ES", { day: "numeric", month: "short" })
     : "";
@@ -758,15 +889,15 @@ function PageSpeedSection({ data }: { data: { mobile?: Record<string, number>; f
 
       <div className="grid grid-cols-4 gap-1.5 mb-2">
         {scores.map((s) => {
-          const score = s.value ?? 0;
-          const color = hasScores ? psiColor(score) : "#E5E2DC";
+          const score = s.value != null && Number.isFinite(Number(s.value)) ? Number(s.value) : null;
+          const color = score == null ? "#E5E2DC" : psiColor(score);
           return (
             <div key={s.key} className="text-center">
               <div
                 className="w-10 h-10 rounded-full border-[3px] flex items-center justify-center mx-auto mb-1 text-sm font-extrabold"
-                style={{ borderColor: color, color: hasScores ? color : "#7A7A7A" }}
+                style={{ borderColor: color, color: score == null ? "#7A7A7A" : color }}
               >
-                {hasScores ? score : "\u2026"}
+                {score ?? "\u2014"}
               </div>
               <div className="text-[9px] text-muted-foreground">{s.label}</div>
             </div>
@@ -774,13 +905,18 @@ function PageSpeedSection({ data }: { data: { mobile?: Record<string, number>; f
         })}
       </div>
 
-      {/* Core Web Vitals */}
-      {m.lcp != null && (
+      {!hasScores && (
+        <div className="text-[9px] text-muted-foreground text-center mb-2">Sin scores de PageSpeed.</div>
+      )}
+
+      {/* Lighthouse laboratory measurements; not a CrUX field assessment. */}
+      {hasCwv && (
         <div className="bg-muted/30 rounded-md p-2 mb-1">
-          <div className="text-[9px] font-bold text-muted-foreground mb-1">CORE WEB VITALS</div>
+          <div className="text-[9px] font-bold text-muted-foreground mb-1">LIGHTHOUSE · LABORATORIO</div>
           <CwvRow label="LCP" value={m.lcp} unit="s" good={2.5} bad={4.0} />
-          <CwvRow label="CLS" value={m.cls ?? 0} unit="" good={0.1} bad={0.25} />
-          <CwvRow label="TBT" value={m.tbt ?? 0} unit="ms" good={200} bad={600} />
+          <CwvRow label="CLS" value={m.cls} unit="" good={0.1} bad={0.25} />
+          <CwvRow label="TBT" value={m.tbt} unit="ms" good={200} bad={600} />
+          <div className="mt-1 text-[8px] text-muted-foreground">No equivale a datos reales de CrUX.</div>
         </div>
       )}
 
@@ -897,11 +1033,14 @@ function TrustScoreSection({
       {/* Scores de competidores */}
       {competitors.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-1">
-          {competitors.map((c, i) => (
-            <span key={i} className="text-[9px] bg-[#E5E2DC] text-muted-foreground px-1.5 py-0.5 rounded-full">
-              {c.brand_name || "?"}: <b style={{ color: tsColor(c.trust_score ?? 0) }}>{c.trust_score ?? "\u2014"}</b>
-            </span>
-          ))}
+          {competitors.map((c, i) => {
+            const competitorScore = c.trust_score ?? null;
+            return (
+              <span key={i} className="text-[9px] bg-[#E5E2DC] text-muted-foreground px-1.5 py-0.5 rounded-full">
+                {c.brand_name || "?"}: <b style={{ color: competitorScore == null ? "#7A7A7A" : tsColor(competitorScore) }}>{competitorScore ?? "\u2014"}</b>
+              </span>
+            );
+          })}
         </div>
       )}
 
@@ -922,18 +1061,18 @@ function CwvRow({
   bad,
 }: {
   label: string;
-  value: number;
+  value: number | null | undefined;
   unit: string;
   good: number;
   bad: number;
 }) {
-  const color = value <= good ? "#22A06B" : value <= bad ? "#E5A100" : "#DE350B";
+  const numeric = value != null && Number.isFinite(Number(value)) ? Number(value) : null;
+  const color = numeric == null ? "#7A7A7A" : numeric <= good ? "#22A06B" : numeric <= bad ? "#E5A100" : "#DE350B";
   return (
     <div className="flex justify-between py-0.5 text-[11px]">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold" style={{ color }}>
-        {value}
-        {unit}
+        {numeric == null ? "\u2014" : `${numeric}${unit}`}
       </span>
     </div>
   );

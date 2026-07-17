@@ -49,7 +49,8 @@ function eur1(n: number): string {
   return `${n.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}€`;
 }
 
-function eur0(n: number): string {
+function eur0(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
   return `${nf(Math.round(n))}€`;
 }
 

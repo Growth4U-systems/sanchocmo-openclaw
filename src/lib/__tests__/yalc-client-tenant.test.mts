@@ -5,7 +5,7 @@ import * as yalcClientModule from "../yalc/client";
 // Interop CJS↔ESM de tsx (mismo patrón que break-even.test.mts).
 const yalcClient =
   (yalcClientModule as unknown as { default: typeof yalcClientModule }).default ?? yalcClientModule;
-const { resolveYalcConfig, yalcFetch } = yalcClient;
+const { resolveYalcConfig, resolveYalcConfigFromSources, yalcFetch } = yalcClient;
 
 /**
  * Every Sancho→YALC call must be scoped to the brand's tenant via `?tenant=`.
@@ -38,5 +38,24 @@ test("yalcFetch omits tenant when no slug is given", async () => {
   await withStubbedFetch(async (calls) => {
     await yalcFetch(resolveYalcConfig(), "/api/campaigns");
     assert.ok(!calls[0].includes("tenant="), calls[0]);
+  });
+});
+
+test("YALC runtime honors the API panel's stored base URL and tenant", async () => {
+  const config = resolveYalcConfigFromSources(
+    "growth4u",
+    { GROWTH4U_YALC_API_TOKEN: "brand-token" },
+    { BASE_URL: "https://yalc.internal/", TENANT: "growth-tenant" },
+  );
+  assert.deepEqual(config, {
+    baseUrl: "https://yalc.internal",
+    token: "brand-token",
+    slug: "growth4u",
+    tenant: "growth-tenant",
+  });
+
+  await withStubbedFetch(async (calls) => {
+    await yalcFetch(config, "/api/campaigns");
+    assert.ok(calls[0].includes("tenant=growth-tenant"), calls[0]);
   });
 });

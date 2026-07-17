@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db/drizzle";
 import { metricKpiRuns, metricKpiValues, metricSnapshots } from "@/db/schema";
+import { getDashboardDefinition } from "@/lib/data/metric-dashboard";
 import {
   persistMetricStageRollupsForSnapshots,
   replaceStageRollupAvailabilityKpi,
@@ -25,14 +26,20 @@ import {
   type MetricKpiSnapshotInput,
 } from "@/lib/metrics/semantic-kpis";
 import type { SurfaceKey } from "@/lib/metrics/surfaces";
+import type { CustomMetric } from "@/lib/metrics/dashboard-schema";
+import { computeCustomMetricKpisFromSnapshots } from "@/lib/metrics/custom-metric-kpis";
+import { composeMetricKpiDefinitionVersion } from "@/lib/metrics/kpi-definition-version";
+import { aggFor } from "@/lib/metrics/aggregation";
+import { parseMetricFormula } from "@/lib/metrics/formula";
 
 /**
  * Semantic KPI read model (SAN-354).
  *
  * Raw `metric_snapshots` stay the source of truth. This layer computes direct,
  * dashboard-ready KPIs with quality/provenance and persists them in
- * `metric_kpi_runs` + `metric_kpi_values`. It deliberately avoids attribution,
- * revenue stitching, and advanced KPI formulas; those remain future layers.
+ * `metric_kpi_runs` + `metric_kpi_values`. Versioned dashboard custom formulas
+ * are evaluated here too; attribution and revenue stitching remain future
+ * layers.
  */
 
 export type MetricKpiRunRow = typeof metricKpiRuns.$inferSelect;
@@ -44,7 +51,11 @@ export interface ComputeMetricKpisOptions {
   to?: string;
   trigger?: string;
   definitionVersion?: number;
+  dashboardVersion?: number;
   definitions?: MetricKpiDefinition[];
+  customMetrics?: CustomMetric[];
+  /** UTC boundary for point-in-time (`latest`) observations. */
+  observationAsOf?: string;
 }
 
 export interface ComputeMetricKpisResult {
@@ -57,6 +68,7 @@ export interface MetricKpiReadOptions {
   dashboardBlock?: MetricKpiDashboardBlock;
   surface?: SurfaceKey;
   runId?: string;
+  definitionVersion?: number;
 }
 
 export interface MetricKpiRunLookupOptions {
@@ -73,6 +85,12 @@ export interface MetricKpiReadResult {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function isCalendarDate(value: string): boolean {
+  if (!DATE_RE.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
 
 const ENSURE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS "metric_kpi_runs" ("id" text PRIMARY KEY NOT NULL, "slug" text NOT NULL, "range_from" text NOT NULL, "range_to" text NOT NULL, "status" text DEFAULT 'running' NOT NULL, "trigger" text DEFAULT 'agent' NOT NULL, "definition_version" integer, "values_count" integer DEFAULT 0 NOT NULL, "quality_summary" jsonb DEFAULT '{}'::jsonb NOT NULL, "errors" jsonb DEFAULT '[]'::jsonb NOT NULL, "started_at" timestamp DEFAULT now() NOT NULL, "finished_at" timestamp, "created_at" timestamp DEFAULT now() NOT NULL)`,
@@ -113,7 +131,7 @@ export function defaultMetricKpiRange(now = new Date()): {
     now.getUTCFullYear(),
     now.getUTCMonth(),
     now.getUTCDate(),
-  );
+  ) - 86_400_000;
   const start = end - 29 * 86_400_000;
   return {
     from: new Date(start).toISOString().slice(0, 10),
@@ -126,11 +144,49 @@ function normalizeRange(opts: ComputeMetricKpisOptions): {
   to: string;
 } {
   const fallback = defaultMetricKpiRange();
-  const from = DATE_RE.test(opts.from ?? "") ? opts.from! : fallback.from;
-  const to = DATE_RE.test(opts.to ?? "") ? opts.to! : fallback.to;
+  const rawFrom = opts.from?.trim();
+  const rawTo = opts.to?.trim();
+  if (rawFrom && !isCalendarDate(rawFrom)) {
+    throw new Error(`Invalid metric KPI range.from: ${rawFrom}`);
+  }
+  if (rawTo && !isCalendarDate(rawTo)) {
+    throw new Error(`Invalid metric KPI range.to: ${rawTo}`);
+  }
+  const from = rawFrom || fallback.from;
+  const to = rawTo || fallback.to;
   if (from > to)
     throw new Error(`Invalid metric KPI range: ${from} is after ${to}`);
   return { from, to };
+}
+
+function observationAsOfDay(value: string | undefined, now = new Date()): string {
+  const day = value?.trim() || now.toISOString().slice(0, 10);
+  if (!isCalendarDate(day)) {
+    throw new Error(`Invalid metric KPI observationAsOf: ${day}`);
+  }
+  return day;
+}
+
+export function latestMetricNamesForEvaluation(
+  definitions: MetricKpiDefinition[],
+  customMetrics: CustomMetric[],
+): string[] {
+  const names = new Set<string>();
+  for (const definition of definitions) {
+    if ((definition.agg ?? aggFor(definition.source, definition.metric)) !== "latest") continue;
+    names.add(definition.metric);
+    for (const alias of definition.metricAliases ?? []) names.add(alias);
+  }
+  for (const customMetric of customMetrics) {
+    const parsed = parseMetricFormula(customMetric.formula);
+    if (!parsed.ok) continue;
+    for (const reference of parsed.references) {
+      if (aggFor(reference.source, reference.metric) === "latest") {
+        names.add(reference.metric);
+      }
+    }
+  }
+  return [...names];
 }
 
 function errorPayload(error: unknown): Array<Record<string, unknown>> {
@@ -161,12 +217,23 @@ export async function computeMetricKpis(
   if (!hasDatabase) return { configured: false, run: null, values: [] };
   if (!slug) throw new Error("slug is required to compute metric KPIs");
   const range = normalizeRange(opts);
+  const observationAsOf = observationAsOfDay(opts.observationAsOf);
   const database = getDb();
   await ensureMetricKpiStorage();
 
   const startedAt = new Date();
+  let dashboardVersion = opts.dashboardVersion;
+  let customMetrics = opts.customMetrics;
+  if (dashboardVersion == null || customMetrics == null) {
+    const dashboard = await getDashboardDefinition(slug);
+    dashboardVersion ??= dashboard.version;
+    customMetrics ??= dashboard.definition?.customMetrics ?? [];
+  }
   const definitionVersion =
-    opts.definitionVersion ?? METRIC_KPI_DEFINITION_VERSION;
+    opts.definitionVersion ?? composeMetricKpiDefinitionVersion(
+      METRIC_KPI_DEFINITION_VERSION,
+      dashboardVersion,
+    );
   const runId = `mkpir_${stableId(slug, range.from, range.to, startedAt.toISOString(), Math.random())}`;
 
   await database.insert(metricKpiRuns).values({
@@ -185,7 +252,12 @@ export async function computeMetricKpis(
   });
 
   try {
-    const rawRows = await database
+    const definitions = opts.definitions ?? METRIC_KPI_DEFINITIONS;
+    const latestMetricNames = latestMetricNamesForEvaluation(
+      definitions,
+      customMetrics,
+    );
+    const flowRowsQuery = database
       .select({
         id: metricSnapshots.id,
         source: metricSnapshots.source,
@@ -206,6 +278,31 @@ export async function computeMetricKpis(
           lte(metricSnapshots.metricDate, range.to),
         ),
       );
+    const latestRowsQuery = latestMetricNames.length
+      ? database
+        .select({
+          id: metricSnapshots.id,
+          source: metricSnapshots.source,
+          metricName: metricSnapshots.metricName,
+          value: metricSnapshots.value,
+          valueText: metricSnapshots.valueText,
+          metricDate: metricSnapshots.metricDate,
+          dimensions: metricSnapshots.dimensions,
+          dimsKey: metricSnapshots.dimsKey,
+          collectedAt: metricSnapshots.collectedAt,
+          ingestRunId: metricSnapshots.ingestRunId,
+        })
+        .from(metricSnapshots)
+        .where(and(
+          eq(metricSnapshots.slug, slug),
+          inArray(metricSnapshots.metricName, latestMetricNames),
+          lte(metricSnapshots.metricDate, observationAsOf),
+        ))
+      : Promise.resolve([]);
+    const [flowRows, latestRows] = await Promise.all([flowRowsQuery, latestRowsQuery]);
+    const rawRows = [...new Map(
+      [...flowRows, ...latestRows].map((row) => [row.id, row]),
+    ).values()];
 
     const snapshots: MetricKpiSnapshotInput[] = rawRows.map((row) => ({
       id: row.id,
@@ -222,8 +319,18 @@ export async function computeMetricKpis(
     let values = computeSemanticKpisFromSnapshots(
       snapshots,
       range,
-      opts.definitions ?? METRIC_KPI_DEFINITIONS,
+      definitions,
+      { observationAsOf },
     );
+    values = [
+      ...values,
+      ...computeCustomMetricKpisFromSnapshots(
+        snapshots,
+        range,
+        customMetrics,
+        { observationAsOf },
+      ),
+    ];
     const stageRollups = await persistMetricStageRollupsForSnapshots(slug, {
       runId,
       range,
@@ -316,13 +423,21 @@ export async function computeMetricKpis(
 
 export async function getLatestMetricKpiRun(
   slug: string,
+  definitionVersion?: number,
 ): Promise<MetricKpiRunRow | null> {
   if (!hasDatabase) return null;
   await ensureMetricKpiStorage();
+  const conditions = [
+    eq(metricKpiRuns.slug, slug),
+    eq(metricKpiRuns.status, "ok"),
+  ];
+  if (typeof definitionVersion === "number") {
+    conditions.push(eq(metricKpiRuns.definitionVersion, definitionVersion));
+  }
   const [run] = await getDb()
     .select()
     .from(metricKpiRuns)
-    .where(and(eq(metricKpiRuns.slug, slug), eq(metricKpiRuns.status, "ok")))
+    .where(and(...conditions))
     .orderBy(desc(metricKpiRuns.startedAt))
     .limit(1);
   return run ?? null;
@@ -334,7 +449,7 @@ export async function findMetricKpiRunForRange(
 ): Promise<MetricKpiRunRow | null> {
   if (!hasDatabase) return null;
   if (!slug) throw new Error("slug is required to find metric KPI runs");
-  if (!DATE_RE.test(opts.from) || !DATE_RE.test(opts.to) || opts.from > opts.to) {
+  if (!isCalendarDate(opts.from) || !isCalendarDate(opts.to) || opts.from > opts.to) {
     throw new Error(`Invalid metric KPI range: ${opts.from}..${opts.to}`);
   }
 
@@ -381,7 +496,7 @@ export async function getMetricKpiValues(
       .limit(1);
     run = row ?? null;
   } else {
-    run = await getLatestMetricKpiRun(slug);
+    run = await getLatestMetricKpiRun(slug, opts.definitionVersion);
   }
   if (!run) return { configured: true, run: null, values: [] };
 

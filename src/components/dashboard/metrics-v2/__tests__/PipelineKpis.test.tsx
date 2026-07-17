@@ -31,6 +31,8 @@ test("PipelineKpis: renders the GHL KPI values + labels", () => {
   for (const label of ["Contacts", "New", "Appts", "Opps", "Pipeline"]) {
     assert.match(m, new RegExp(label));
   }
+  assert.match(m, /45[.,]000 moneda cuenta/);
+  assert.doesNotMatch(m, /€/);
 });
 
 test("PipelineKpis: GHL keeps direct-source provenance without a visible Real tag", () => {

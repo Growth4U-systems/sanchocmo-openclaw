@@ -13,7 +13,17 @@ export const METRIC_METADATA_DIMENSION_KEYS = new Set([
   "__type",
   "__demo",
   "__seed",
+  "__scopeEvidence",
 ]);
+
+export type MetricScopeEvidenceStatus = "complete" | "partial";
+
+export function metricScopeEvidenceStatus(
+  dimensions: Record<string, unknown> | null | undefined,
+): MetricScopeEvidenceStatus | null {
+  const value = String(dimensions?.__scopeEvidence ?? "").trim().toLowerCase();
+  return value === "complete" || value === "partial" ? value : null;
+}
 
 const DEMO_PROVENANCE_VALUES = new Set(["seed", "demo"]);
 const TRUE_FLAG_VALUES = new Set(["true", "1", "yes"]);

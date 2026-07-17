@@ -329,6 +329,19 @@
           ],
           "docs": "https://developers.google.com/analytics/devguides/reporting/data/v1"
         },
+        "sheets": {
+          "provider": "Google Sheets",
+          "icon": "📗",
+          "desc": "Métricas manuales o de proveedores sin API, con trazabilidad manual",
+          "ownership": "client",
+          "usesSystemSA": true,
+          "credentials": [],
+          "config": [
+            { "key": "spreadsheetId", "label": "Spreadsheet ID", "type": "string", "sensitive": false, "help": "El identificador entre /d/ y /edit en la URL de Google Sheets" },
+            { "key": "range", "label": "Rango", "type": "string", "sensitive": false, "help": "Ejemplo: Metricas!A:Z. Por defecto: Sheet1!A:Z" }
+          ],
+          "docs": "https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get"
+        },
         "posthog": {
           "provider": "PostHog",
           "icon": "🦔",
@@ -371,6 +384,19 @@
             { "key": "SITE_URL", "label": "Site URL", "type": "string", "sensitive": false, "help": "Exactly as registered in GSC (e.g. https://example.com/ or sc-domain:example.com)" }
           ],
           "docs": "https://developers.google.com/webmaster-tools/v1/api_reference_index"
+        },
+        "pagespeed": {
+          "provider": "Google PageSpeed Insights",
+          "icon": "⚡",
+          "desc": "Lighthouse y Core Web Vitals para móvil y escritorio",
+          "ownership": "client",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key (opcional)", "type": "string", "sensitive": true, "help": "Clave de Google Cloud para PageSpeed Insights API; puede omitirse con la cuota pública" }
+          ],
+          "config": [
+            { "key": "url", "label": "URL del sitio", "type": "string", "sensitive": false, "help": "URL pública completa que se analizará, por ejemplo https://example.com" }
+          ],
+          "docs": "https://developers.google.com/speed/docs/insights/v5/get-started"
         }
       }
     },
