@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.9.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.8.0...v1.9.0) (2026-07-17)
+
+
+### Features
+
+* durable execution ledger for external tools (SAN-480) ([#1361](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1361)) ([9d2b9e6](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9d2b9e6e880684bc17c7e67b3b4768dca02989a3))
+* **metrics:** add Explee AutoGTM integration ([f510212](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f5102120db59b092b57581f0bd50d2d4307c5d55))
+* **partnerships:** resumable short-step discovery on the durable ledger (SAN-480) ([#1371](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1371)) ([b707f96](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/b707f96293fe5c3d418a7163e94901fa43c7a48b))
+
+
+### Bug Fixes
+
+* close nested deploy heredocs (SAN-480) ([#1363](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1363)) ([94daba9](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/94daba97c56e392306c068a00ab786befb9ea5b8))
+* enforce partnerships timeout invariant (SAN-480) ([6a3fe01](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/6a3fe01820b760f7af0f202ef66fba810257e3d8))
+* **metrics:** provider-truthful calculations and panels (SAN-326) ([#1367](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1367)) ([1805528](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/18055283e2bd253045197a695d89bb6c1fa13a5b))
+* package staging canary preflight (SAN-480) ([#1364](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1364)) ([32b0e8f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/32b0e8fece1f837cb96d26320b8317963ea5b5a5))
+* **runtime:** accept OpenClaw release metadata ([#1365](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1365)) ([f945abb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/f945abb2e30619be2f05e471351aa439c7337dd3))
+* **runtime:** resolve install assets from the install home, not the runtime state home (SAN-485) ([#1368](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1368)) ([466d14f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/466d14f1c64360f0e4f9f17ebb06ffad860d9de3))
+
 ## [1.8.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.7.5...v1.8.0) (2026-07-17)
 
 
