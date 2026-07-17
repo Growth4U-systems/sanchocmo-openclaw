@@ -342,6 +342,9 @@ function sourceLabel(source: string): string {
     posthog: "PostHog",
     trust_score: "Trust Score",
     yalc: "Yalc",
+    instantly: "Instantly",
+    lemlist: "Lemlist",
+    explee: "Explee AutoGTM",
   };
   const canonical = canonicalSource(source);
   return labels[canonical] ?? source.replace(/[_-]/g, " ");

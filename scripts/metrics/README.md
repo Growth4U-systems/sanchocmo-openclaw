@@ -87,8 +87,9 @@ for source in meta-ads ghl posthog; do
 done
 
 # One final routine pull supplies current-only snapshots once (GHL totals and
-# pipeline, Lemlist active-campaign count, Metricool followers, PageSpeed) and
-# converges the latest complete provider day.
+# pipeline, Lemlist active-campaign count, Explee lifetime/current project
+# metrics, Metricool followers, PageSpeed) and converges the latest complete
+# provider day.
 node collect.js --slug "$SLUG" --all --no-recompute-kpis
 
 cd /app/mc-nextjs
@@ -105,6 +106,10 @@ Safety notes:
   period. It is collected only by the final routine pull until a period timeline
   adapter is validated.
 - PageSpeed is point-in-time and is collected only once in that final pull.
+- Explee is point-in-time: its API exposes fixed windows rather than exact
+  calendar days. Sancho reads `period=all` only in the final routine pull and
+  keeps those explicitly named lifetime/current metrics out of historical
+  repairs and cross-provider outbound totals.
 - A multi-day Sheets repair requires a valid `Date` value on every data row.
 - `--no-recompute-kpis` avoids four dashboard recomputations plus one ingest
   window per source/day; the final command recomputes exactly `1d/7d/30d/90d`.

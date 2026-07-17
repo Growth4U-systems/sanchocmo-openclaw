@@ -388,6 +388,122 @@ test('Instantly verifies daily analytics array rather than a generic campaigns 2
   assert.match(calls[0].url, /campaigns\/analytics\/daily/);
 });
 
+test('Explee verifies the configured AutoGTM project with a read-only lifetime request', async () => {
+  const calls = mockRequests([
+    response({ projects: [{ id: 18200, domain: 'growth4u.io' }], total: 1 }),
+    response({
+      project_id: 18200,
+      period: 'all',
+      total_emails_sent: 100,
+      total_replies: 8,
+      overall_reply_rate_pct: 8,
+      total_hot_leads: 3,
+      total_spend_usd: 12.5,
+      campaigns: [],
+    }),
+  ]);
+  const result = await TESTERS.explee(
+    { PROJECT_ID: '18200' },
+    { ACME_EXPLEE_API_KEY: 'key' },
+    'ACME',
+  );
+  assert.equal(result.ok, true);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, 'https://api.explee.com/public/api/v1/autogtm/projects');
+  assert.equal(
+    calls[1].url,
+    'https://api.explee.com/public/api/v1/autogtm/projects/18200/analytics?period=all',
+  );
+  assert.equal(calls[0].options.headers['X-API-Key'], 'key');
+  assert.equal(calls[0].options.method, undefined);
+
+  mockRequests([
+    response({ projects: [{ id: 18200 }], total: 1 }),
+    response({ project_id: 18200, period: 'all', campaigns: [] }),
+  ]);
+  const invalid = await TESTERS.explee(
+    { PROJECT_ID: '18200' },
+    { EXPLEE_API_KEY: 'key' },
+    'ACME',
+  );
+  assert.equal(invalid.ok, false);
+  assert.match(invalid.error, /total_emails_sent/);
+
+  mockRequests([
+    response({ projects: [{ id: 18200 }], total: 1 }),
+    response({
+      project_id: 18200,
+      period: 'all',
+      total_emails_sent: 100,
+      total_replies: 8,
+      overall_reply_rate_pct: 8,
+      total_hot_leads: 3,
+      total_spend_usd: 12.5,
+      campaigns: [{}],
+    }),
+  ]);
+  const malformedCampaign = await TESTERS.explee(
+    { PROJECT_ID: '18200' },
+    { EXPLEE_API_KEY: 'key' },
+    'ACME',
+  );
+  assert.equal(malformedCampaign.ok, false);
+  assert.match(malformedCampaign.error, /campaign_id/);
+
+  mockRequests([
+    response({ projects: [{ id: 18200 }], total: 1 }),
+    response({
+      project_id: 18200,
+      period: 'all',
+      total_emails_sent: 100,
+      total_replies: 8,
+      overall_reply_rate_pct: 99,
+      total_hot_leads: 3,
+      total_spend_usd: 12.5,
+      campaigns: [],
+    }),
+  ]);
+  const inconsistentRate = await TESTERS.explee(
+    { PROJECT_ID: '18200' },
+    { EXPLEE_API_KEY: 'key' },
+    'ACME',
+  );
+  assert.equal(inconsistentRate.ok, false);
+  assert.match(inconsistentRate.error, /does not match its reported counts/);
+});
+
+test('Explee auto-selects one project and rejects ambiguous or inaccessible projects', async () => {
+  mockRequests([
+    response({ projects: [{ id: 42 }], total: 1 }),
+    response({
+      project_id: 42,
+      period: 'all',
+      total_emails_sent: 0,
+      total_replies: 0,
+      overall_reply_rate_pct: 0,
+      total_hot_leads: 0,
+      total_spend_usd: 0,
+      campaigns: [],
+    }),
+  ]);
+  const single = await TESTERS.explee({}, { EXPLEE_API_KEY: 'key' }, 'ACME');
+  assert.equal(single.ok, true);
+
+  mockRequests([response({ projects: [{ id: 1 }, { id: 2 }], total: 2 })]);
+  const ambiguous = await TESTERS.explee({}, { EXPLEE_API_KEY: 'key' }, 'ACME');
+  assert.equal(ambiguous.ok, false);
+  assert.match(ambiguous.error, /configure PROJECT_ID explicitly/);
+
+  mockRequests([response({ projects: [{ id: 1 }], total: 1 })]);
+  const inaccessible = await TESTERS.explee(
+    { PROJECT_ID: '2' },
+    { EXPLEE_API_KEY: 'key' },
+    'ACME',
+  );
+  assert.equal(inaccessible.ok, false);
+  assert.match(inaccessible.error, /not available/);
+});
+
 test('Lemlist verifies campaign listing and batch stats when a campaign is configured', async () => {
   const calls = mockRequests([response({ results: [], errors: [] })]);
   const result = await TESTERS.lemlist(

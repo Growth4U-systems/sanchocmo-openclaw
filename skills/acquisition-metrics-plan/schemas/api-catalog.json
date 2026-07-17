@@ -527,6 +527,19 @@
           "config": [],
           "docs": "https://developer.instantly.ai/"
         },
+        "explee": {
+          "provider": "Explee AutoGTM",
+          "icon": "🚀",
+          "desc": "AI outbound analytics: emails sent, human replies, hot leads and spend",
+          "ownership": "client",
+          "credentials": [
+            { "key": "API_KEY", "label": "API Key", "type": "string", "sensitive": true, "required": true, "help": "Explee → API Keys. Usa una clave nueva o rotada; Sancho la envía únicamente como X-API-Key desde el servidor." }
+          ],
+          "config": [
+            { "key": "PROJECT_ID", "label": "AutoGTM Project ID (opcional si solo hay uno)", "type": "string", "sensitive": false, "required": false, "placeholder": "18200", "help": "ID numérico del proyecto AutoGTM. Puedes dejarlo vacío si tu organización solo tiene un proyecto activo." }
+          ],
+          "docs": "https://api.explee.com/public/api/docs"
+        },
         "yalc": {
           "provider": "YALC / GTM-OS",
           "icon": "🧭",

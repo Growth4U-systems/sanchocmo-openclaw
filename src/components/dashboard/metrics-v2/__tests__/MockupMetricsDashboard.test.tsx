@@ -22,6 +22,7 @@ import {
   MetricQualityBadge,
   metricQualityCopy,
   northStarTarget,
+  observedMetricLineageSources,
   OutboundSurface,
   partnershipReportDataState,
   partnershipReportHasCompleteFinancials,
@@ -507,6 +508,13 @@ test("Outbound separa proveedores y nunca presenta contadores independientes com
     ["outbound.lemlist.meetings", "Lemlist · reuniones", "lemlist", "meetings", 1],
     ["outbound.lemlist.bounced", "Lemlist · rebotes", "lemlist", "bounced", 2],
     ["outbound.lemlist.unsubscribed", "Lemlist · desuscritos", "lemlist", "unsubscribed", 1],
+    ["outbound.explee.campaigns_current", "Explee · campañas no archivadas", "explee", "campaignsCurrent", 2],
+    ["outbound.explee.emails_sent_lifetime", "Explee · emails enviados acumulados", "explee", "emailsSentLifetime", 100],
+    ["outbound.explee.replies_lifetime", "Explee · respuestas acumuladas", "explee", "repliesLifetime", 8],
+    ["outbound.explee.reply_rate_lifetime", "Explee · tasa acumulada", "explee", "replyRatePctLifetime", 8],
+    ["outbound.explee.hot_leads_lifetime", "Explee · hot leads acumulados", "explee", "hotLeadsLifetime", 4],
+    ["outbound.explee.spend_lifetime", "Explee · gasto acumulado", "explee", "spendUsdLifetime", 20],
+    ["outbound.explee.cpl_lifetime", "Explee · CPL acumulado", "explee", "costPerHotLeadUsdLifetime", 5],
   ].map(([kpiId, label, source, metricName, value]) => qualityKpi({
     kpiId: String(kpiId),
     label: String(label),
@@ -520,15 +528,46 @@ test("Outbound separa proveedores y nunca presenta contadores independientes com
   const markup = renderToStaticMarkup(createElement(OutboundSurface, {
     kpis: values,
     state: "ON",
-    sources: ["instantly", "lemlist"],
+    sources: ["instantly", "lemlist", "explee"],
   }));
 
-  assert.match(markup, /Los contadores de Instantly y Lemlist se muestran por separado/);
+  assert.match(markup, /Explee AutoGTM/);
+  assert.match(markup, /snapshot acumulado del proyecto/);
+  assert.match(markup, /independiente del selector de fechas/);
+  assert.match(markup, /Hot leads acumulados/);
   assert.match(markup, /No se infiere continuidad entre pasos/);
-  assert.match(markup, /Ratios:/);
-  assert.match(markup, /Se necesita un join por campaña\/destinatario/);
+  assert.match(markup, /Ratios de cohorte del rango:/);
+  assert.match(markup, /se necesita un join por campaña\/destinatario/);
+  const trendMarkup = markup.slice(
+    markup.indexOf("Tendencia observada"),
+    markup.indexOf("Lectura de los contadores"),
+  );
+  assert.doesNotMatch(trendMarkup, /Explee/);
   assert.doesNotMatch(markup, /Funnel de secuencia/);
   assert.doesNotMatch(markup, /333/);
+});
+
+test("Outbound no declara Explee como fuente observada cuando sus KPIs están missing", () => {
+  const instantly = qualityKpi({
+    kpiId: "outbound.instantly.sent",
+    label: "Instantly · envíos",
+    source: "instantly",
+    metricName: "sent",
+    qualityStatus: "ok",
+    value: 10,
+    surface: "email",
+  });
+  const expleeMissing = qualityKpi({
+    kpiId: "outbound.explee.hot_leads_lifetime",
+    label: "Explee · hot leads acumulados",
+    source: "explee",
+    metricName: "hotLeadsLifetime",
+    qualityStatus: "missing",
+    value: null,
+    surface: "email",
+  });
+
+  assert.deepEqual(observedMetricLineageSources([instantly, expleeMissing]), ["instantly"]);
 });
 
 test("badge KPI explicita provenance y missing nunca muestra el cero placeholder", () => {

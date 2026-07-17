@@ -105,9 +105,9 @@ export const SURFACES: SurfaceDef[] = [
     emoji: "📧",
     channel: "email",
     what: "Enviados, aperturas, replies, reuniones agendadas.",
-    sources: ["instantly", "lemlist"],
+    sources: ["instantly", "lemlist", "explee"],
     spendMetric: null,
-    requires: { mandatory: [], oneOf: ["Instantly", "Lemlist"], optional: [] },
+    requires: { mandatory: [], oneOf: ["Instantly", "Lemlist", "Explee AutoGTM"], optional: [] },
     how: "Ajustes › APIs: API key de la herramienta de cold email.",
   },
   {
@@ -155,7 +155,7 @@ export const SURFACE_API_PROVIDERS: Record<SurfaceKey, string[]> = {
   product: ["posthog"],
   pipeline: ["ghl"],
   paid: ["meta_ads", "google_ads"],
-  email: ["instantly", "lemlist"],
+  email: ["instantly", "lemlist", "explee"],
   social: ["metricool"],
   partnerships: ["yalc"],
 };

@@ -53,6 +53,9 @@ export interface MetricKpiDefinition {
   metricAliases?: string[];
   unit?: string;
   agg?: AggStrategy;
+  /** For latest scalar snapshots, a complete scope-evidence row with no value
+   * authoritatively clears an older observation instead of falling back to it. */
+  authoritativeLatestScope?: boolean;
   /**
    * Companion denominator used to combine per-snapshot averages/rates without
    * giving a tiny sample the same influence as a large one. The companion row
@@ -110,11 +113,10 @@ function normalizedObservationAsOf(value: string | undefined, fallback: string):
   return day;
 }
 
-// v9 also requires Google Ads impression-share KPIs to use an account rollup:
-// campaign/keyword shares have different eligible-impression denominators and
-// cannot be averaged faithfully. Persisted v8 runs must therefore be recomputed
-// instead of continuing to expose the former dimensional fallback.
-export const METRIC_KPI_DEFINITION_VERSION = 9;
+// v10 adds Explee's provider-native lifetime/current project snapshots. They
+// are explicit `latest` KPIs and must never be summed into daily outbound flows
+// or mixed into the Instantly + Lemlist cross-provider counters.
+export const METRIC_KPI_DEFINITION_VERSION = 10;
 
 const SOURCE_ALIASES: Record<string, string> = {
   meta: "meta_ads",
@@ -137,6 +139,7 @@ const SOURCE_ALIASES: Record<string, string> = {
   gsc: "gsc",
   instantly: "instantly",
   lemlist: "lemlist",
+  explee: "explee",
   ghl: "ghl",
   "go-high-level": "ghl",
   "go_high_level": "ghl",
@@ -762,6 +765,95 @@ const outboundDefinitions: MetricKpiDefinition[] = [
     "meetings",
     { provenanceLabel: "Lemlist · meetingBooked" },
   ),
+  kpi(
+    "outbound.explee.campaigns_current",
+    "Explee · campañas no archivadas",
+    "surface",
+    "email",
+    "explee",
+    "campaignsCurrent",
+    {
+      agg: "latest",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
+  kpi(
+    "outbound.explee.emails_sent_lifetime",
+    "Explee · emails enviados acumulados",
+    "surface",
+    "email",
+    "explee",
+    "emailsSentLifetime",
+    {
+      agg: "latest",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
+  kpi(
+    "outbound.explee.replies_lifetime",
+    "Explee · respuestas acumuladas",
+    "surface",
+    "email",
+    "explee",
+    "repliesLifetime",
+    {
+      agg: "latest",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
+  kpi(
+    "outbound.explee.reply_rate_lifetime",
+    "Explee · tasa de respuesta acumulada",
+    "surface",
+    "email",
+    "explee",
+    "replyRatePctLifetime",
+    {
+      agg: "latest",
+      authoritativeLatestScope: true,
+      unit: "%",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
+  kpi(
+    "outbound.explee.hot_leads_lifetime",
+    "Explee · hot leads acumulados",
+    "surface",
+    "email",
+    "explee",
+    "hotLeadsLifetime",
+    {
+      agg: "latest",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
+  kpi(
+    "outbound.explee.spend_lifetime",
+    "Explee · gasto acumulado",
+    "surface",
+    "email",
+    "explee",
+    "spendUsdLifetime",
+    {
+      agg: "latest",
+      unit: "USD",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
+  kpi(
+    "outbound.explee.cpl_lifetime",
+    "Explee · coste por hot lead acumulado",
+    "surface",
+    "email",
+    "explee",
+    "costPerHotLeadUsdLifetime",
+    {
+      agg: "latest",
+      authoritativeLatestScope: true,
+      unit: "USD",
+      provenanceLabel: "Explee AutoGTM · snapshot acumulado del proveedor",
+    },
+  ),
 ];
 
 const socialDefinitions: MetricKpiDefinition[] = [
@@ -1359,7 +1451,51 @@ function latestDimensionSnapshotSelection(
   allRows: MetricKpiSnapshotInput[],
 ): DimensionSnapshotSelection {
   const strategy = def.agg ?? aggFor(def.source, def.metric);
-  if (strategy !== "latest" || !def.allowDimensionRollup || !rows.length)
+  if (strategy !== "latest")
+    return {
+      rows,
+      qualityEvidenceRows: [],
+      evidenceQuality: null,
+      completeSnapshotDays: null,
+    };
+
+  const sourceSet = sourcesFor(def);
+  const metricSet = metricNamesFor(def);
+  const sourceRows = allRows.filter((row) =>
+    sourceSet.has(normalizeSourceId(row.source))
+    && metricSet.has(normalizeMetricName(row.metricName)));
+  const latestSourceDate = sourceRows
+    .map((row) => row.metricDate)
+    .sort()
+    .at(-1);
+
+  if (def.authoritativeLatestScope && latestSourceDate) {
+    const latestSourceRows = sourceRows.filter((row) =>
+      row.metricDate === latestSourceDate);
+    const evidenceQuality = sourceSnapshotEvidenceQuality(latestSourceRows);
+    if (evidenceQuality === "ok") {
+      // A complete scope with no numeric row is an intentional absence (for
+      // example an undefined rate with a zero denominator), not permission to
+      // resurrect yesterday's value.
+      return {
+        rows: rows.filter((row) => row.metricDate === latestSourceDate),
+        qualityEvidenceRows: [],
+        evidenceQuality: null,
+        completeSnapshotDays: null,
+      };
+    }
+    if (evidenceQuality === "partial") {
+      const selectedSet = new Set(rows);
+      return {
+        rows,
+        qualityEvidenceRows: latestSourceRows.filter((row) => !selectedSet.has(row)),
+        evidenceQuality,
+        completeSnapshotDays: null,
+      };
+    }
+  }
+
+  if (!def.allowDimensionRollup || !rows.length)
     return {
       rows,
       qualityEvidenceRows: [],
@@ -1382,18 +1518,9 @@ function latestDimensionSnapshotSelection(
     };
   }
 
-  const sourceSet = sourcesFor(def);
-  const metricSet = metricNamesFor(def);
   // Snapshot membership is authoritative only inside the exact metric family.
   // A clean flow row from the same provider/day (for example Metricool posts)
   // must never invalidate retained followers from a failed optional snapshot.
-  const sourceRows = allRows.filter((row) =>
-    sourceSet.has(normalizeSourceId(row.source))
-    && metricSet.has(normalizeMetricName(row.metricName)));
-  const latestSourceDate = sourceRows
-    .map((row) => row.metricDate)
-    .sort()
-    .at(-1);
   if (!latestSourceDate) {
     return {
       rows: latestMetricDate

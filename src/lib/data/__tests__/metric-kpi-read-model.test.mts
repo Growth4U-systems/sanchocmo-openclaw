@@ -121,6 +121,14 @@ test("formats KPI display values without inventing missing numbers", () => {
     "1234,5 moneda cuenta",
   );
   assert.equal(formatMetricKpiValue({ value: 1234, valueText: null, unit: "currency" }), "1234 €");
+  assert.equal(
+    formatMetricKpiValue({ value: 12.5, valueText: null, unit: "USD" }),
+    new Intl.NumberFormat("es-ES", {
+      currency: "USD",
+      maximumFractionDigits: 2,
+      style: "currency",
+    }).format(12.5),
+  );
   assert.equal(formatMetricKpiValue({ value: 2.45, valueText: null, unit: "ratio" }), "2,45x");
   assert.equal(formatMetricKpiValue({ value: 180, valueText: null, unit: "ms" }), "180 ms");
   assert.equal(formatMetricKpiValue({ value: 44, valueText: "44 leads", unit: null }), "44 leads");

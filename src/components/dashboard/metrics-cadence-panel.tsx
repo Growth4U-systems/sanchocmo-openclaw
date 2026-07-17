@@ -44,6 +44,8 @@ const SOURCE_LABELS: Record<string, string> = {
   metricool: "Metricool",
   "meta-ads": "Meta Ads",
   instantly: "Instantly",
+  lemlist: "Lemlist",
+  explee: "Explee AutoGTM",
 };
 const sourceLabel = (source: string) => SOURCE_LABELS[source] ?? source;
 

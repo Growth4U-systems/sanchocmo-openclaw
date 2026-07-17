@@ -856,7 +856,7 @@ function SurfaceDetailView({
   );
   const sources = [...new Set([
     ...(entry?.sources ?? []),
-    ...rendererKpis.flatMap(metricLineageSources),
+    ...observedMetricLineageSources(rendererKpis),
   ])];
   const partnershipPeriod = PARTNERSHIP_PERIODS[range];
   const partnershipReport = usePartnershipReport(surface === "partnerships" ? slug : null, partnershipPeriod);
@@ -1002,13 +1002,20 @@ export function OutboundSurface({
   const lemlistMeetings = findKpi(kpis, ["outbound.lemlist.meetings"]);
   const lemlistBounced = findKpi(kpis, ["outbound.lemlist.bounced"]);
   const lemlistUnsubscribed = findKpi(kpis, ["outbound.lemlist.unsubscribed"]);
+  const expleeCampaigns = findKpi(kpis, ["outbound.explee.campaigns_current"]);
+  const expleeEmailsSent = findKpi(kpis, ["outbound.explee.emails_sent_lifetime"]);
+  const expleeReplies = findKpi(kpis, ["outbound.explee.replies_lifetime"]);
+  const expleeReplyRate = findKpi(kpis, ["outbound.explee.reply_rate_lifetime"]);
+  const expleeHotLeads = findKpi(kpis, ["outbound.explee.hot_leads_lifetime"]);
+  const expleeSpend = findKpi(kpis, ["outbound.explee.spend_lifetime"]);
+  const expleeCpl = findKpi(kpis, ["outbound.explee.cpl_lifetime"]);
 
   return (
     <div>
       <SurfaceSubhead
         icon="🎯"
         title="ICP Outreach"
-        subtitle="cold email a ICP · Instantly / Lemlist"
+        subtitle="cold email a ICP · Instantly / Lemlist / Explee"
         state={state}
         sources={sources}
       />
@@ -1016,7 +1023,7 @@ export function OutboundSurface({
       <div className="m-statebar m-statebar-tight">
         <span className="m-label">Vista:</span>
         <span className="m-segment-static">Por proveedor</span>
-        <span className="m-subtle">Los contadores de Instantly y Lemlist se muestran por separado y no se convierten en tasas de cohorte.</span>
+        <span className="m-subtle">Instantly y Lemlist se muestran por separado. Explee se identifica como acumulado y no depende del selector de fechas.</span>
       </div>
 
       <SectionTitle icon="📨" title="Instantly" subtitle="contadores diarios del proveedor" />
@@ -1037,6 +1044,17 @@ export function OutboundSurface({
         <SurfaceKpiTile label="Reuniones reservadas" value={metricDisplay(lemlistMeetings)} kpi={lemlistMeetings} tone="hero" />
         <SurfaceKpiTile label="Mensajes rebotados" value={metricDisplay(lemlistBounced)} kpi={lemlistBounced} tone="gate" />
         <SurfaceKpiTile label="Leads desuscritos" value={metricDisplay(lemlistUnsubscribed)} kpi={lemlistUnsubscribed} />
+      </div>
+
+      <SectionTitle icon="🚀" title="Explee AutoGTM" subtitle="snapshot acumulado del proyecto · independiente del selector de fechas" />
+      <div className="m-kpi-grid">
+        <SurfaceKpiTile label="Campañas no archivadas" value={metricDisplay(expleeCampaigns)} kpi={expleeCampaigns} />
+        <SurfaceKpiTile label="Emails enviados acumulados" value={metricDisplay(expleeEmailsSent)} kpi={expleeEmailsSent} />
+        <SurfaceKpiTile label="Respuestas acumuladas" value={metricDisplay(expleeReplies)} kpi={expleeReplies} />
+        <SurfaceKpiTile label="Tasa de respuesta acumulada" value={metricDisplay(expleeReplyRate)} kpi={expleeReplyRate} />
+        <SurfaceKpiTile label="Hot leads acumulados" value={metricDisplay(expleeHotLeads)} kpi={expleeHotLeads} tone="hero" />
+        <SurfaceKpiTile label="Gasto acumulado (USD)" value={metricDisplay(expleeSpend)} kpi={expleeSpend} />
+        <SurfaceKpiTile label="Coste por hot lead (USD)" value={metricDisplay(expleeCpl)} kpi={expleeCpl} />
       </div>
 
       <SectionTitle icon="📈" title="Tendencia observada" subtitle="series separadas por proveedor; no es un funnel" />
@@ -1071,13 +1089,13 @@ export function OutboundSurface({
       </div>
 
       <div className="m-statebar m-statebar-tight">
-        <span className="m-label">Ratios:</span>
-        <span className="m-subtle">No disponibles: las APIs reportan actividad del rango, pero no prueban que aperturas, replies o entregas pertenezcan a los envíos del mismo rango. Se necesita un join por campaña/destinatario antes de calcular conversión.</span>
+        <span className="m-label">Ratios de cohorte del rango:</span>
+        <span className="m-subtle">No disponibles: las APIs no prueban que aperturas, replies o entregas pertenezcan a los envíos del mismo rango. La tasa acumulada de Explee se calcula únicamente con sus propios contadores; para el resto se necesita un join por campaña/destinatario.</span>
       </div>
 
       <div className="m-statebar m-statebar-tight">
         <span className="m-label">Atribución:</span>
-        <span className="m-subtle">Las reuniones de Lemlist no se suman al funnel global sin un join de identidad verificable.</span>
+        <span className="m-subtle">Las reuniones de Lemlist y los hot leads de Explee no se suman al funnel global sin un join de identidad verificable.</span>
       </div>
 
       <SectionTitle icon="🔭" title="Señales de esta superficie" />
@@ -2383,7 +2401,7 @@ function buildSurfaceCard(
   );
   const sources = [...new Set([
     ...(entry?.sources ?? []),
-    ...kpis.flatMap(metricLineageSources),
+    ...observedMetricLineageSources(kpis),
   ])];
   const value = primaryKpi
     ? displayKpiValue(primaryKpi)
@@ -2470,6 +2488,12 @@ function metricLineageSources(kpi: MetricKpiValue): string[] {
     .filter((source): source is string => typeof source === "string" && Boolean(source.trim()));
   if (kpi.source === "custom" && inputSources.length) return [...new Set(inputSources)];
   return kpi.source ? [kpi.source] : inputSources;
+}
+
+export function observedMetricLineageSources(kpis: MetricKpiValue[]): string[] {
+  return [...new Set(
+    kpis.filter(hasDisplayableKpiValue).flatMap(metricLineageSources),
+  )];
 }
 
 export function selectDashboardNorthStarKpi(
@@ -2564,6 +2588,7 @@ function friendlySource(source: string): string {
     google_ads: "Google Ads",
     "google-ads": "Google Ads",
     instantly: "Instantly",
+    explee: "Explee AutoGTM",
     meta_ads: "Meta Ads",
     "meta-ads": "Meta Ads",
     metricool: "Metricool",
