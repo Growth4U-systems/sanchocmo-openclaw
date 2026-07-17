@@ -20,6 +20,7 @@ scripts/
 │   ├── ghl.js              # GoHighLevel CRM
 │   ├── instantly.js        # Instantly.ai cold email
 │   ├── lemlist.js          # Lemlist cold email
+│   ├── explee.js           # Explee AutoGTM lifetime/current snapshot
 │   └── sheets.js           # Manual data from Google Sheets
 ├── sync-sheets.js          # Legacy JSON-to-Sheets helper (not runtime source)
 └── package.json
@@ -45,6 +46,7 @@ node collect.js --slug <client-slug> --source google-ads
 node collect.js --slug <client-slug> --source ghl
 node collect.js --slug <client-slug> --source instantly
 node collect.js --slug <client-slug> --source lemlist
+node collect.js --slug <client-slug> --source explee
 node collect.js --slug <client-slug> --source sheets
 node collect.js --slug <client-slug> --source posthog
 ```
@@ -69,8 +71,11 @@ event or daily measurements keep the exact provider day requested. Metricool
 historical repairs fail closed because the posts endpoint returns current
 cumulative counters for posts created in the requested period, not activity on
 that day. PageSpeed is stored on the UTC observation day and therefore needs
-only one point-in-time run, not a historical loop. A multi-day Sheets repair
-requires a valid `Date` on every data row.
+only one point-in-time run, not a historical loop. Explee likewise rejects
+explicit historical ranges: its API only exposes fixed provider windows, so
+Sancho stores `period=all` as explicitly named lifetime/current metrics on the
+observation day. A multi-day Sheets repair requires a valid `Date` on every
+data row.
 
 ### Replace one explicit source range
 ```bash
@@ -120,6 +125,7 @@ node collect.js --slug <client-slug> --all --due
 | GHL | Bearer token | `{SLUG}_GHL_API_KEY` in .env, `ghl.locationId` in integrations.json or `{SLUG}_GHL_LOCATION_ID` env override; `ghl.timezone` IANA (auto-read from location when token scope allows) |
 | Instantly | API key | `{SLUG}_INSTANTLY_API_KEY` in .env |
 | Lemlist | API key (Basic auth) | `{SLUG}_LEMLIST_API_KEY` in .env |
+| Explee AutoGTM | `X-API-Key` | `{SLUG}_EXPLEE_API_KEY` in .env, optional `explee.PROJECT_ID` in integrations.json when the key can access multiple projects |
 | Sheets | Service account | `sheets.spreadsheetId`, `sheets.range` in integrations.json |
 | PostHog | Personal API key (Bearer) | `{SLUG}_POSTHOG_API_KEY` in .env, `posthog.projectId` (+ optional `posthog.host`, `posthog.activationEvent`, `posthog.funnelSteps`) in integrations.json |
 
@@ -133,6 +139,7 @@ node collect.js --slug <client-slug> --all --due
   "google-ads": { "enabled": true, "customerId": "1234567890", "loginCustomerId": "9876543210" },
   "ghl": { "enabled": true, "locationId": "loc_abc123", "timezone": "Europe/Madrid" },
   "instantly": { "enabled": true },
+  "explee": { "enabled": true, "PROJECT_ID": "18200" },
   "sheets": { "enabled": true, "spreadsheetId": "1ABC...", "range": "ManualData!A:Z" },
   "posthog": { "enabled": true, "projectId": "12345", "host": "https://us.posthog.com", "activationEvent": "user signed up", "funnelSteps": ["$pageview", "signed up", "activated"] }
 }

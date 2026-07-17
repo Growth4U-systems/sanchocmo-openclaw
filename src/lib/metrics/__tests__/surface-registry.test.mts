@@ -9,14 +9,16 @@ test("metrics connection registry advertises only providers with collector and s
   assert.deepEqual(SURFACE_API_PROVIDERS.product, ["posthog"]);
   assert.deepEqual(SURFACE_API_PROVIDERS.pipeline, ["ghl"]);
   assert.deepEqual(SURFACE_API_PROVIDERS.paid, ["meta_ads", "google_ads"]);
-  assert.deepEqual(SURFACE_API_PROVIDERS.email, ["instantly", "lemlist"]);
+  assert.deepEqual(SURFACE_API_PROVIDERS.email, ["instantly", "lemlist", "explee"]);
 
   const pipeline = SURFACES.find((surface) => surface.key === "pipeline");
   const paid = SURFACES.find((surface) => surface.key === "paid");
+  const email = SURFACES.find((surface) => surface.key === "email");
   const web = SURFACES.find((surface) => surface.key === "web");
   assert.deepEqual(pipeline?.sources, ["ghl", "go-high-level"]);
   assert.deepEqual(pipeline?.requires.oneOf, ["GoHighLevel"]);
   assert.deepEqual(paid?.sources, ["meta-ads", "meta_ads", "google_ads", "google-ads"]);
+  assert.deepEqual(email?.sources, ["instantly", "lemlist", "explee"]);
   assert.deepEqual(paid?.requires.oneOf, ["Meta Ads", "Google Ads"]);
   assert.deepEqual(web?.requires.mandatory, ["Google Search Console", "Google Analytics 4"]);
   assert.deepEqual(web?.requires.oneOf, []);

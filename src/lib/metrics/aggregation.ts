@@ -111,6 +111,16 @@ const BY_SOURCE_METRIC: Record<string, AggStrategy> = {
   // The campaign catalogue is current account state; daily campaign stats
   // remain additive, but the catalogue size must not multiply by range days.
   "lemlist:campaigns": "latest",
+  // Explee exposes provider-native lifetime/current project snapshots, not
+  // exact daily flows. Every persisted Explee value must therefore select the
+  // newest observation and remain independent from the dashboard date range.
+  "explee:campaignsCurrent": "latest",
+  "explee:emailsSentLifetime": "latest",
+  "explee:repliesLifetime": "latest",
+  "explee:replyRatePctLifetime": "latest",
+  "explee:hotLeadsLifetime": "latest",
+  "explee:spendUsdLifetime": "latest",
+  "explee:costPerHotLeadUsdLifetime": "latest",
   // Legacy YALC rows (before exact daily collection) were rolling snapshots.
   // Keep them non-additive so generic historical queries cannot double count
   // them. Current flow metrics use the `*Daily` vocabulary and default to sum.

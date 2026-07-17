@@ -31,6 +31,7 @@ API name mapping (common names → catalog IDs):
 - tiktok ads → `tiktok_ads`
 - posthog → `posthog`
 - instantly → `instantly`
+- explee, explee autogtm, autogtm → `explee`
 - lemlist → `lemlist`
 - slack → `slack`
 - notion → `notion`

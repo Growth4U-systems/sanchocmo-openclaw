@@ -284,6 +284,12 @@ export function formatMetricKpiValue(row: Pick<MetricKpiValueRow, "value" | "val
         maximumFractionDigits: 0,
         style: "currency",
       }).format(value);
+    case "USD":
+      return new Intl.NumberFormat("es-ES", {
+        currency: "USD",
+        maximumFractionDigits: 2,
+        style: "currency",
+      }).format(value);
     case "%":
       return `${formatNumber(value)}%`;
     case "ratio":

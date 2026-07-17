@@ -841,7 +841,7 @@ function IntegrationsCard() {
   const SOURCE_NAMES: Record<string, string> = {
     ga4: "GA4", gsc: "Search Console", metricool: "Social",
     "meta-ads": "Meta Ads", meta_ads: "Meta Ads", ghl: "CRM",
-    instantly: "Outreach", sheets: "Manual",
+    instantly: "Outreach", lemlist: "Lemlist", explee: "Explee AutoGTM", sheets: "Manual",
   };
 
   return (

@@ -215,6 +215,21 @@
     }
   },
 
+  "explee": {
+    "label": "Explee AutoGTM",
+    "aliases": ["explee_autogtm", "autogtm"],
+    "provides": {
+      "campaignsCurrent": { "metric": "campaignsCurrent", "label": "Non-Archived Campaigns" },
+      "emailsSentLifetime": { "metric": "emailsSentLifetime", "label": "Emails Sent (Lifetime)" },
+      "repliesLifetime": { "metric": "repliesLifetime", "label": "Replies (Lifetime)" },
+      "replyRateLifetime": { "metric": "replyRatePctLifetime", "label": "Reply Rate (Lifetime)" },
+      "hotLeadsLifetime": { "metric": "hotLeadsLifetime", "label": "Hot Leads (Lifetime)" },
+      "spendLifetimeUsd": { "metric": "spendUsdLifetime", "label": "Spend USD (Lifetime)" },
+      "costPerHotLeadLifetimeUsd": { "metric": "costPerHotLeadUsdLifetime", "label": "Cost per Hot Lead USD (Lifetime)" }
+    },
+    "funnelMaps": {}
+  },
+
   "shopify": {
     "label": "Shopify",
     "provides": {

@@ -184,7 +184,7 @@ function hasAnyEnv(...keys) {
 }
 
 // --- Available adapters ---
-const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'lemlist', 'sheets', 'posthog', 'pagespeed', 'yalc'];
+const ADAPTERS = ['ga4', 'gsc', 'metricool', 'meta-ads', 'google-ads', 'ghl', 'instantly', 'lemlist', 'explee', 'sheets', 'posthog', 'pagespeed', 'yalc'];
 
 // --- Determine which adapters to run ---
 const ds = integrations.dataSources || integrations;

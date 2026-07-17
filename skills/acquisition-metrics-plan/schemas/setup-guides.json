@@ -365,6 +365,28 @@
     ],
     "warning": "⚠️ Requiere plan <strong>Hypergrowth</strong> o superior."
   },
+  "explee": {
+    "title": "Explee AutoGTM",
+    "difficulty": "baja",
+    "time": "3 min",
+    "steps": [
+      {
+        "title": "Crea una API key nueva",
+        "instructions": "En <a href='https://explee.com/api-keys' target='_blank'>Explee → API Keys</a>, crea una clave exclusiva para Sancho. Si una clave anterior se compartió fuera de Explee, revócala y usa una nueva.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Copia el Project ID si tienes varios proyectos",
+        "instructions": "Si tu cuenta tiene más de un proyecto AutoGTM, abre el que quieres monitorizar y copia su identificador numérico. Si solo hay uno, puedes dejar el campo vacío y Sancho lo seleccionará de forma segura.",
+        "alwaysShow": true
+      },
+      {
+        "title": "Conecta y testea",
+        "instructions": "Introduce la <strong>API Key</strong> y, si corresponde, el <strong>AutoGTM Project ID</strong>. La prueba es de solo lectura y consulta el snapshot acumulado del proyecto; no inicia campañas ni consume acciones de búsqueda."
+      }
+    ],
+    "warning": "Explee solo ofrece ventanas nativas <code>today</code>, <code>7d</code>, <code>30d</code> y <code>all</code>. Sancho muestra estos valores como snapshot acumulado del proveedor, independiente del selector de fechas, y no mezcla hot leads con otros proveedores."
+  },
   "yalc": {
     "title": "YALC / GTM-OS",
     "difficulty": "media",

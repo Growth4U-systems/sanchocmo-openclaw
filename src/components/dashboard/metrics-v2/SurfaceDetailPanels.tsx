@@ -62,6 +62,9 @@ const SOURCE_LABELS: Record<string, string> = {
   ghl: "GoHighLevel",
   posthog: "PostHog",
   metricool: "Metricool",
+  instantly: "Instantly",
+  lemlist: "Lemlist",
+  explee: "Explee AutoGTM",
 };
 
 const SOURCE_CANONICAL: Record<string, string> = {
@@ -79,6 +82,9 @@ const SOURCE_CANONICAL: Record<string, string> = {
   gohighlevel: "ghl",
   posthog: "posthog",
   metricool: "metricool",
+  instantly: "instantly",
+  lemlist: "lemlist",
+  explee: "explee",
 };
 
 function normalized(value: string | null | undefined): string {

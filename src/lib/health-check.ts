@@ -451,6 +451,7 @@ const SERVICE_ENV_REQUIREMENTS: Record<string, string[][]> = {
   dumpling: [["DUMPLING_API_KEY"]],
   nanobanana: [["GEMINI_API_KEY"]],
   instantly: [["INSTANTLY_API_KEY"]],
+  explee: [["EXPLEE_API_KEY"]],
   metricool: [["METRICOOL_API_KEY"]],
 };
 

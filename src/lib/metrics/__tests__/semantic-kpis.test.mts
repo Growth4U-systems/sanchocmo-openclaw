@@ -16,8 +16,8 @@ type SnapshotInput = mod.MetricKpiSnapshotInput;
 
 const oneDay = { from: "2026-06-01", to: "2026-06-01" };
 
-test("uses definition v9 so persisted runs reject dimensional Google Ads share fallbacks", () => {
-  assert.equal(mod.METRIC_KPI_DEFINITION_VERSION, 9);
+test("uses definition v10 so persisted runs include Explee lifetime snapshots", () => {
+  assert.equal(mod.METRIC_KPI_DEFINITION_VERSION, 10);
 });
 
 test("canonicalizes provider source aliases across case, spaces, hyphens and underscores", () => {
@@ -282,6 +282,102 @@ test("keeps Instantly and Lemlist outbound counters in provider-specific KPI uni
   assert.equal(byId(values, "outbound.lemlist.delivered").value, 18);
   assert.equal(byId(values, "outbound.lemlist.opens").value, 60);
   assert.equal(byId(values, "outbound.lemlist.bounced").value, 2);
+});
+
+test("maps Explee lifetime snapshots without mixing them into daily outbound totals", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({ source: "explee", metricName: "campaignsCurrent", value: 2 }),
+      row({ source: "explee", metricName: "emailsSentLifetime", value: 100 }),
+      row({ source: "explee", metricName: "repliesLifetime", value: 8 }),
+      row({ source: "explee", metricName: "replyRatePctLifetime", value: 8 }),
+      row({ source: "explee", metricName: "hotLeadsLifetime", value: 4 }),
+      row({ source: "explee", metricName: "spendUsdLifetime", value: 20 }),
+      row({ source: "explee", metricName: "costPerHotLeadUsdLifetime", value: 5 }),
+    ],
+    oneDay,
+  );
+
+  assert.equal(byId(values, "outbound.explee.campaigns_current").value, 2);
+  assert.equal(byId(values, "outbound.explee.emails_sent_lifetime").value, 100);
+  assert.equal(byId(values, "outbound.explee.replies_lifetime").value, 8);
+  assert.equal(byId(values, "outbound.explee.reply_rate_lifetime").unit, "%");
+  assert.equal(byId(values, "outbound.explee.hot_leads_lifetime").value, 4);
+  assert.equal(byId(values, "outbound.explee.spend_lifetime").unit, "USD");
+  assert.equal(byId(values, "outbound.explee.cpl_lifetime").value, 5);
+  assert.equal(byId(values, "outbound.sent").qualityStatus, "missing");
+});
+
+test("complete Explee scope evidence clears a prior ratio when its denominator becomes zero", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({
+        source: "explee",
+        metricName: "replyRatePctLifetime",
+        metricDate: "2026-06-01",
+        value: 8,
+      }),
+      row({
+        source: "explee",
+        metricName: "replyRatePctLifetime",
+        metricDate: "2026-06-02",
+        value: null,
+        dimensions: { __scopeEvidence: "complete" },
+        dimsKey: "__scope_evidence__",
+      }),
+      row({
+        source: "explee",
+        metricName: "costPerHotLeadUsdLifetime",
+        metricDate: "2026-06-01",
+        value: 5,
+      }),
+      row({
+        source: "explee",
+        metricName: "costPerHotLeadUsdLifetime",
+        metricDate: "2026-06-02",
+        value: null,
+        dimensions: { __scopeEvidence: "complete" },
+        dimsKey: "__scope_evidence__",
+      }),
+    ],
+    oneDay,
+    mod.METRIC_KPI_DEFINITIONS,
+    { observationAsOf: "2026-06-02" },
+  );
+
+  const rate = byId(values, "outbound.explee.reply_rate_lifetime");
+  assert.equal(rate.value, null);
+  assert.equal(rate.qualityStatus, "missing");
+  assert.deepEqual(rate.inputRefs, []);
+  assert.equal(byId(values, "outbound.explee.cpl_lifetime").value, null);
+});
+
+test("partial Explee scope evidence retains the last ratio but marks it partial", () => {
+  const values = computeSemanticKpisFromSnapshots(
+    [
+      row({
+        source: "explee",
+        metricName: "replyRatePctLifetime",
+        metricDate: "2026-06-01",
+        value: 8,
+      }),
+      row({
+        source: "explee",
+        metricName: "replyRatePctLifetime",
+        metricDate: "2026-06-02",
+        value: null,
+        dimensions: { __scopeEvidence: "partial", __quality: "partial" },
+        dimsKey: "__scope_evidence__",
+      }),
+    ],
+    oneDay,
+    mod.METRIC_KPI_DEFINITIONS,
+    { observationAsOf: "2026-06-02" },
+  );
+
+  const rate = byId(values, "outbound.explee.reply_rate_lifetime");
+  assert.equal(rate.value, 8);
+  assert.equal(rate.qualityStatus, "partial");
 });
 
 test("keeps PageSpeed TBT separate from INP and uses the latest real INP snapshot", () => {

@@ -703,6 +703,143 @@ const TESTERS = {
     }
   },
 
+  async explee(config, env, slug) {
+    const apiKey = providerEnv(env, slug, 'EXPLEE_API_KEY');
+    const configuredProjectId = firstPresent(
+      config.PROJECT_ID,
+      config.projectId,
+      config.project_id,
+      providerEnv(env, slug, 'EXPLEE_PROJECT_ID'),
+    );
+    if (!apiKey) return { ok: false, error: 'EXPLEE_API_KEY not set' };
+    if (configuredProjectId && !/^\d+$/.test(configuredProjectId)) {
+      return { ok: false, error: 'Explee PROJECT_ID must be a numeric project id' };
+    }
+
+    try {
+      const headers = { 'X-API-Key': apiKey, Accept: 'application/json' };
+      const projectsRes = await connectionRequest(
+        'https://api.explee.com/public/api/v1/autogtm/projects',
+        { headers },
+      );
+      if (projectsRes.status !== 200) {
+        return { ok: false, error: `Explee projects HTTP ${projectsRes.status}` };
+      }
+      const projectsData = parseJson(projectsRes.body, 'Explee projects');
+      if (!isRecord(projectsData) || !Array.isArray(projectsData.projects)) {
+        throw new Error('Explee projects: response missing projects array');
+      }
+      const projectsTotal = assertFiniteNonNegative(projectsData.total, 'Explee projects total');
+      if (!Number.isInteger(projectsTotal) || projectsTotal !== projectsData.projects.length) {
+        throw new Error('Explee projects: total does not match projects array');
+      }
+      for (const project of projectsData.projects) {
+        if (!isRecord(project) || !Number.isInteger(project.id) || project.id < 1) {
+          throw new Error('Explee projects: project missing numeric id');
+        }
+      }
+      const selected = configuredProjectId
+        ? projectsData.projects.find((project) => String(project.id) === configuredProjectId)
+        : projectsData.projects.length === 1
+          ? projectsData.projects[0]
+          : null;
+      if (!selected) {
+        if (configuredProjectId) {
+          return { ok: false, error: `Explee project ${configuredProjectId} is not available to this API key` };
+        }
+        return {
+          ok: false,
+          error: projectsData.projects.length === 0
+            ? 'Explee has no active AutoGTM projects'
+            : `Explee returned ${projectsData.projects.length} projects; configure PROJECT_ID explicitly`,
+        };
+      }
+      const projectId = String(selected.id);
+      const analyticsRes = await connectionRequest(
+        `https://api.explee.com/public/api/v1/autogtm/projects/${encodeURIComponent(projectId)}/analytics?period=all`,
+        { headers },
+      );
+      if (analyticsRes.status !== 200) {
+        return { ok: false, error: `Explee analytics HTTP ${analyticsRes.status}` };
+      }
+
+      const data = parseJson(analyticsRes.body, 'Explee project analytics');
+      if (!isRecord(data)) throw new Error('Explee project analytics: response was not an object');
+      if (String(data.project_id) !== projectId || data.period !== 'all') {
+        throw new Error('Explee project analytics: response did not match the requested project and period');
+      }
+      for (const field of [
+        'total_emails_sent',
+        'total_replies',
+        'overall_reply_rate_pct',
+        'total_hot_leads',
+        'total_spend_usd',
+      ]) {
+        assertFiniteNonNegative(data[field], `Explee ${field}`);
+      }
+      if (Number(data.total_emails_sent) > 0) {
+        const expectedReplyRate = (Number(data.total_replies) / Number(data.total_emails_sent)) * 100;
+        if (Math.abs(Number(data.overall_reply_rate_pct) - expectedReplyRate) > 0.51) {
+          throw new Error('Explee overall_reply_rate_pct does not match its reported counts');
+        }
+      }
+      if (!Array.isArray(data.campaigns)) {
+        throw new Error('Explee project analytics: response missing campaigns array');
+      }
+      for (const campaign of data.campaigns) {
+        if (!isRecord(campaign) || !Number.isInteger(campaign.campaign_id) || campaign.campaign_id < 1) {
+          throw new Error('Explee campaign analytics: campaign missing numeric campaign_id');
+        }
+        if (typeof campaign.name !== 'string' || !campaign.name.trim()) {
+          throw new Error('Explee campaign analytics: campaign missing name');
+        }
+        if (typeof campaign.status !== 'string' || !campaign.status.trim()) {
+          throw new Error('Explee campaign analytics: campaign missing status');
+        }
+        if (campaign.status_reason != null && (typeof campaign.status_reason !== 'string' || !campaign.status_reason.trim())) {
+          throw new Error('Explee campaign analytics: invalid status_reason');
+        }
+        for (const field of [
+          'emails_sent',
+          'total_replies',
+          'hot_leads',
+          'leads_pool_used',
+          'leads_pool_total',
+        ]) {
+          const value = assertFiniteNonNegative(campaign[field], `Explee campaign ${field}`);
+          if (!Number.isInteger(value)) {
+            throw new Error(`Explee campaign ${field}: expected a non-negative integer`);
+          }
+        }
+        for (const field of [
+          'reply_rate_pct',
+          'spend_usd',
+          'cost_per_lead_usd',
+          'daily_budget_usd',
+        ]) {
+          assertFiniteNonNegative(campaign[field], `Explee campaign ${field}`);
+        }
+        if (campaign.manual_status_counts != null) {
+          if (!isRecord(campaign.manual_status_counts)) {
+            throw new Error('Explee campaign analytics: invalid manual_status_counts');
+          }
+          for (const [status, count] of Object.entries(campaign.manual_status_counts)) {
+            const value = assertFiniteNonNegative(count, `Explee campaign manual status ${status}`);
+            if (!status.trim() || !Number.isInteger(value)) {
+              throw new Error('Explee campaign analytics: invalid manual status count');
+            }
+          }
+        }
+      }
+      return {
+        ok: true,
+        detail: `Explee AutoGTM verified for project ${projectId} (${data.campaigns.length} campaigns)`,
+      };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   async notion(config, env, slug) {
     const token = env[`${slug}_NOTION_API_KEY`];
     if (!token) return { ok: false, error: `Env var ${slug}_NOTION_API_KEY not set` };

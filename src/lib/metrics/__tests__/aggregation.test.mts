@@ -104,6 +104,27 @@ test("Lemlist campaign catalogue is a latest snapshot while delivery stats remai
   assert.equal(aggFor("lemlist", "replied"), "sum");
 });
 
+test("Explee lifetime/current project metrics always use the newest snapshot", () => {
+  for (const metric of [
+    "campaignsCurrent",
+    "emailsSentLifetime",
+    "repliesLifetime",
+    "replyRatePctLifetime",
+    "hotLeadsLifetime",
+    "spendUsdLifetime",
+    "costPerHotLeadUsdLifetime",
+  ]) {
+    assert.equal(aggFor("explee", metric), "latest", metric);
+  }
+  assert.deepEqual(
+    reduceMetricSeries(aggFor("explee", "emailsSentLifetime"), [
+      { date: "2026-07-16", value: 90 },
+      { date: "2026-07-17", value: 100 },
+    ]),
+    { value: 100, quality: "ok" },
+  );
+});
+
 test("source aliases are canonicalized before source-specific overrides", () => {
   for (const source of ["ghl", "go-high-level", "go_high_level", "GO HIGH LEVEL", "gohighlevel"]) {
     assert.equal(aggFor(source, "totalContacts"), "latest", `${source} totalContacts`);
