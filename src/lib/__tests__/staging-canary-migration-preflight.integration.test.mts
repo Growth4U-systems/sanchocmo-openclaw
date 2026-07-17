@@ -173,7 +173,10 @@ test(
         CREATE TABLE "attacker"."execution_origins" ("id" text);
         CREATE TABLE "attacker"."execution_run_origins" ("id" text)
       `);
-      await admin.unsafe(`CREATE ROLE "${readerRole}" LOGIN`);
+      await admin.unsafe(`
+        CREATE ROLE "${readerRole}"
+        LOGIN PASSWORD 'reader-password-must-never-surface'
+      `);
       await admin.unsafe(
         `ALTER ROLE "${readerRole}" SET default_transaction_read_only TO on`,
       );
