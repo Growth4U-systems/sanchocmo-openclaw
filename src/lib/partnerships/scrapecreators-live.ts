@@ -23,13 +23,13 @@ class ScrapeCreatorsRequestError extends Error {
   }
 }
 
-interface SearchProfile {
+export interface SearchProfile {
   username?: string;
   full_name?: string;
   follower_count?: number;
 }
 
-interface InstagramProfileUser {
+export interface InstagramProfileUser {
   username?: string;
   full_name?: string;
   biography?: string;
@@ -40,7 +40,7 @@ interface InstagramProfileUser {
   edge_followed_by?: { count?: number };
 }
 
-interface InstagramPost {
+export interface InstagramPost {
   like_count?: number;
   comment_count?: number;
   taken_at?: number | string;
@@ -137,7 +137,7 @@ function tierForFollowers(followers: number | undefined): string | null {
   return "macro";
 }
 
-function matchesWantedTier(
+export function matchesWantedTier(
   followers: number | undefined,
   wantedTiers: Set<string>,
   allowUnknown = true,
@@ -237,7 +237,7 @@ function computePostsPerWeek(posts: InstagramPost[]): {
   };
 }
 
-function computeCandidate(
+export function computeCandidate(
   profile: SearchProfile,
   detail: InstagramProfileUser,
   posts: InstagramPost[],
@@ -317,7 +317,7 @@ function positiveIntFromEnv(name: string, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
 }
 
-function targetCandidates(plan: DiscoveryPlan): number {
+export function targetCandidates(plan: DiscoveryPlan): number {
   const envCap = positiveIntFromEnv(
     "PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES",
     MAX_TARGET_CANDIDATES,
@@ -568,7 +568,7 @@ async function collectSearchProfiles(
   return { profiles: [...profiles.values()], lastError };
 }
 
-function passesLiveAudienceGate(
+export function passesLiveAudienceGate(
   candidate: RawDiscoveryCandidate,
   plan: DiscoveryPlan,
 ): boolean {

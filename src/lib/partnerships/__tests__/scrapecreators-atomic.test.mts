@@ -64,6 +64,43 @@ test("cada método hace un único fetch y usa los endpoints oficiales", async ()
   );
 });
 
+test("searchHashtagOnce hace un único fetch y extrae owners deduplicados", async () => {
+  const calls: string[] = [];
+  const fetchImpl = (async (input: string | URL | Request) => {
+    calls.push(String(input));
+    return json({
+      posts: [
+        { owner: { username: "dra_pelo", full_name: "Dra. Pelo", follower_count: 40_000 } },
+        { owner: { username: "@DRA_PELO" } },
+        { owner: { username: "capilar_clinic", follower_count: "60000" } },
+        { no_owner: true },
+        { owner: { username: "bad handle!" } },
+      ],
+    });
+  }) as typeof fetch;
+  const client = createScrapeCreatorsAtomicClient({
+    apiKey: "test-secret-key",
+    fetchImpl,
+  });
+
+  const profiles = await client.searchHashtagOnce("#SaludCapilar");
+
+  assert.equal(calls.length, 1);
+  const url = new URL(calls[0]);
+  assert.equal(url.pathname, "/v1/instagram/search/hashtag");
+  assert.equal(url.searchParams.get("hashtag"), "saludcapilar");
+  assert.equal(url.searchParams.get("media_type"), "all");
+  assert.deepEqual(profiles, [
+    { handle: "@dra_pelo", name: "Dra. Pelo", followers: 40_000 },
+    { handle: "@capilar_clinic", followers: 60_000 },
+  ]);
+  await assert.rejects(
+    client.searchHashtagOnce("tag inválido"),
+    TypeError,
+  );
+  assert.equal(calls.length, 1);
+});
+
 test("searchProfilesOnce normaliza, deduplica y limita el resultado persistible", async () => {
   let calls = 0;
   const noisyProfiles = [

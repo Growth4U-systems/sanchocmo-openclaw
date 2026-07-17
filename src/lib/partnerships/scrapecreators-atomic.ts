@@ -64,6 +64,7 @@ export interface AtomicInstagramPost {
 
 export interface ScrapeCreatorsAtomicClient {
   searchProfilesOnce(query: string): Promise<AtomicSearchProfile[]>;
+  searchHashtagOnce(hashtag: string): Promise<AtomicSearchProfile[]>;
   getProfileOnce(handle: string): Promise<AtomicInstagramProfile>;
   getPostsOnce(handle: string): Promise<AtomicInstagramPost[]>;
 }
@@ -326,6 +327,41 @@ export function createScrapeCreatorsAtomicClient(
           MAX_NAME_LENGTH,
         );
         const followers = nestedFollowers({ ...item, ...nestedUser });
+        profiles.push({
+          handle,
+          ...(name ? { name } : {}),
+          ...(followers !== undefined ? { followers } : {}),
+        });
+        if (profiles.length >= MAX_SEARCH_RESULTS) break;
+      }
+      return profiles;
+    },
+
+    async searchHashtagOnce(hashtag) {
+      const normalized = requiredInput(hashtag, "hashtag")
+        .replace(/^#+/, "")
+        .toLowerCase();
+      if (!/^[a-z0-9_]+$/.test(normalized)) {
+        throw new TypeError("hashtag de Instagram inválido");
+      }
+      const params = new URLSearchParams({
+        hashtag: normalized,
+        media_type: "all",
+      });
+      const body = await fetchJsonOnce(
+        `/v1/instagram/search/hashtag?${params.toString()}`,
+      );
+      const seen = new Set<string>();
+      const profiles: AtomicSearchProfile[] = [];
+      for (const value of postArray(body)) {
+        const owner = asRecord(asRecord(value).owner);
+        const handle = normalizedHandle(owner.username);
+        if (!handle) continue;
+        const key = handle.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const name = compactString(owner.full_name, MAX_NAME_LENGTH);
+        const followers = nestedFollowers(owner);
         profiles.push({
           handle,
           ...(name ? { name } : {}),
