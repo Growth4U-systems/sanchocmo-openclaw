@@ -351,7 +351,12 @@ export function validateOpenClawVersion(
   raw: string,
   minimum = STAGING_CANARY_OPENCLAW_MINIMUM,
 ): string {
-  const normalized = raw.trim().replace(/^openclaw\s+/i, "");
+  const trimmed = raw.trim();
+  const cli =
+    /^openclaw[ \t]+(\d{4}\.\d{1,2}\.\d{1,2})(?:[ \t]+\([0-9a-f]{7,40}\))?$/i.exec(
+      trimmed,
+    );
+  const normalized = cli?.[1] ?? trimmed;
   const actual = versionTuple(normalized);
   const floor = versionTuple(minimum);
   if (!actual || !floor) {

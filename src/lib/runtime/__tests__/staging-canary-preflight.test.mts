@@ -682,6 +682,11 @@ test("OpenClaw version validation accepts the floor, a newer calendar version, a
   for (const [raw, expected] of [
     [STAGING_CANARY_OPENCLAW_MINIMUM, STAGING_CANARY_OPENCLAW_MINIMUM],
     ["openclaw 2026.5.18\n", "2026.5.18"],
+    ["OpenClaw 2026.5.18 (32b0e8f)", "2026.5.18"],
+    [
+      "OpenClaw 2026.5.19 (32b0e8fece1f837cb96d26320b8317963ea5b5a5)",
+      "2026.5.19",
+    ],
     ["OpenClaw 2026.5.19", "2026.5.19"],
     ["2026.6.1", "2026.6.1"],
     ["2027.1.1", "2027.1.1"],
@@ -691,7 +696,12 @@ test("OpenClaw version validation accepts the floor, a newer calendar version, a
 });
 
 test("OpenClaw version validation distinguishes unsupported from unavailable", () => {
-  for (const raw of ["2025.12.31", "2026.4.99", "2026.5.17"]) {
+  for (const raw of [
+    "2025.12.31",
+    "2026.4.99",
+    "2026.5.17",
+    "OpenClaw 2026.5.17 (32b0e8f)",
+  ]) {
     expectCode(
       () => validateOpenClawVersion(raw),
       "openclaw_version_unsupported",
@@ -703,6 +713,10 @@ test("OpenClaw version validation distinguishes unsupported from unavailable", (
     "openclaw version 2026.5.18",
     "2026.5",
     "2026.5.18-beta.1",
+    "OpenClaw 2026.5.18 (not-a-commit)",
+    "OpenClaw 2026.5.18 (abcdef)",
+    "OpenClaw\n2026.5.18 (32b0e8f)",
+    "2026.5.18 (32b0e8f)",
     "2026.05.018",
     "secret diagnostic instead of a version",
   ]) {
@@ -719,7 +733,9 @@ test("OpenClaw version validation distinguishes unsupported from unavailable", (
 
 test("OpenClaw CLI inspection preserves classified failures and redacts execution errors", async () => {
   assert.equal(
-    await inspectOpenClawVersion(async () => "openclaw 2026.5.19\n"),
+    await inspectOpenClawVersion(
+      async () => "OpenClaw 2026.5.19 (32b0e8f)\n",
+    ),
     "2026.5.19",
   );
   await expectCodeAsync(
