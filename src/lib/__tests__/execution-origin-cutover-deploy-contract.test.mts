@@ -109,9 +109,17 @@ test("release image contains the same checked CLI used by deploy", () => {
     dockerfile,
     /COPY scripts\/verify-execution-origin-cutover\.mts \.\/scripts\/verify-execution-origin-cutover\.mts/,
   );
+  assert.match(
+    dockerfile,
+    /COPY scripts\/preflight-staging-canary\.mts \.\/scripts\/preflight-staging-canary\.mts/,
+  );
   assert.equal(
     packageJson.scripts?.["execution:origin-cutover:check"],
     "tsx scripts/verify-execution-origin-cutover.mts",
+  );
+  assert.equal(
+    packageJson.scripts?.["staging:canary:preflight"],
+    "tsx scripts/preflight-staging-canary.mts",
   );
 });
 

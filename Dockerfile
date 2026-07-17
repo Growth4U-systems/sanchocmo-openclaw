@@ -75,6 +75,9 @@ COPY scripts/run-execution-control-migrations.mjs ./scripts/run-execution-contro
 COPY scripts/lib/ ./scripts/lib/
 # Read-only execution-origin cutover gate used before durable workers boot.
 COPY scripts/verify-execution-origin-cutover.mts ./scripts/verify-execution-origin-cutover.mts
+# Staging canary gate runs inside the release container so it inspects the
+# exact runtime, credentials, image identity and migration state being tested.
+COPY scripts/preflight-staging-canary.mts ./scripts/preflight-staging-canary.mts
 # Single-day metrics ingest (SAN-318): the collector pipes a snapshot to this tsx
 # script to persist via the app's getDb(); scripts/ is copied file-by-file.
 COPY scripts/ingest-metrics.ts ./scripts/ingest-metrics.ts
