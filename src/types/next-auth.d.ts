@@ -6,6 +6,10 @@ declare module "next-auth" {
       role?: string;
       clientSlug?: string | null;
       allowedSlugs?: string[] | null;
+      /** Authentication provider frozen into the JWT at sign-in. */
+      authProvider?: string;
+      /** Stable provider subject copied from the signed JWT. */
+      subject?: string;
     } & DefaultSession["user"];
   }
 
@@ -21,5 +25,6 @@ declare module "next-auth/jwt" {
     role?: string;
     clientSlug?: string | null;
     allowedSlugs?: string[] | null;
+    authProvider?: string;
   }
 }

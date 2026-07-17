@@ -74,9 +74,55 @@ export {
 export type DurableExecutionHandlerVersion = number;
 export type DurableExecutionDelivery = "at-least-once";
 
-const DEFAULT_HANDLER_TIMEOUT_MS = 120_000;
-const MAX_HANDLER_TIMEOUT_MS = 3_600_000;
+export const DEFAULT_HANDLER_TIMEOUT_MS = 120_000;
+export const MAX_HANDLER_TIMEOUT_MS = 3_600_000;
+export const DEFAULT_EFFECT_SETTLEMENT_GRACE_MS = 30_000;
 export const MAX_TERMINAL_PROJECTION_DELIVERY_CLAIMS = 100 as const;
+
+/**
+ * A contract-v2 handler owns every declared effect until it settles. The
+ * outer handler deadline must therefore outlive the longest conservative
+ * single pass through those effects; otherwise the runtime can manufacture
+ * an ambiguous timeout while an effect is still inside its admitted window.
+ */
+export function declaredEffectTimeoutBudgetMs(
+  registry: DurableExecutionRegistry,
+  operation: string,
+): number {
+  return registry
+    .registeredHandlersForOperation(operation)
+    .reduce((largestBudget, handler) => {
+      if (
+        handler.contractVersion !==
+        DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION_V2
+      ) {
+        return largestBudget;
+      }
+      const handlerBudget = Object.values(handler.effects).reduce(
+        (total, effect) => total + effect.timeoutMs,
+        0,
+      );
+      return Math.max(largestBudget, handlerBudget);
+    }, 0);
+}
+
+/** Product-agnostic default sized from the immutable handler policy. */
+export function defaultHandlerTimeoutMsForOperation(
+  registry: DurableExecutionRegistry,
+  operation: string,
+): number {
+  const effectBudget = declaredEffectTimeoutBudgetMs(registry, operation);
+  const required = Math.max(
+    DEFAULT_HANDLER_TIMEOUT_MS,
+    effectBudget + DEFAULT_EFFECT_SETTLEMENT_GRACE_MS,
+  );
+  if (required > MAX_HANDLER_TIMEOUT_MS) {
+    throw new Error(
+      `declared effect timeout budget exceeds ${MAX_HANDLER_TIMEOUT_MS}`,
+    );
+  }
+  return required;
+}
 
 export class DurableExecutionDeadlineExceededError extends Error {
   readonly code = "durable_execution_deadline_exceeded";
@@ -702,8 +748,16 @@ export class DurableExecutionEngine {
     if (!Number.isSafeInteger(options.maxAttempts) || options.maxAttempts < 1) {
       throw new Error("maxAttempts must be a positive integer");
     }
+    const effectTimeoutBudgetMs = declaredEffectTimeoutBudgetMs(
+      options.registry,
+      this.scope.operation,
+    );
     const handlerTimeoutMs =
-      options.handlerTimeoutMs ?? DEFAULT_HANDLER_TIMEOUT_MS;
+      options.handlerTimeoutMs ??
+      defaultHandlerTimeoutMsForOperation(
+        options.registry,
+        this.scope.operation,
+      );
     if (
       !Number.isSafeInteger(handlerTimeoutMs) ||
       handlerTimeoutMs < 1_000 ||
@@ -711,6 +765,11 @@ export class DurableExecutionEngine {
     ) {
       throw new Error(
         `handlerTimeoutMs must be an integer from 1000 to ${MAX_HANDLER_TIMEOUT_MS}`,
+      );
+    }
+    if (handlerTimeoutMs <= effectTimeoutBudgetMs) {
+      throw new Error(
+        `handlerTimeoutMs must exceed the declared effect timeout budget (${effectTimeoutBudgetMs})`,
       );
     }
     this.handlerTimeoutMs = handlerTimeoutMs;

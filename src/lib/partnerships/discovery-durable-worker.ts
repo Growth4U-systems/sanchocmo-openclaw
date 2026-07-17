@@ -21,6 +21,7 @@ import {
   type DurableExecutionContext,
   type DurableExecutionDrainPolicy,
   type DurableExecutionErrorDecision,
+  type DurableExecutionOutcome,
   type DurableExecutionHandler,
   type DurableExecutionReconciliationContext,
   type DurableExecutionScheduler,
@@ -86,19 +87,28 @@ import {
 import {
   createPartnershipsCredentialProvider,
   createPartnershipsPrepareAssignmentEffectV2,
+  createPartnershipsPrepareAssignmentEffectV2LegacyV3,
   createPartnershipsYalcAssignEffectV2,
+  createPartnershipsYalcAssignEffectV2LegacyV3,
   type PartnershipsPrepareEffectDependencies,
   type PartnershipsYalcAssignEffectDependencies,
 } from "./discovery-effects-v2";
 import {
   PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+  PARTNERSHIPS_PREPARE_EFFECT_STEP,
   PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
   createPartnershipsDiscoveryHandlerV2,
+  createPartnershipsDiscoveryHandlerV2LegacyV3,
+  isPartnershipsDiscoveryHandlerV2Version,
+  partnershipsDiscoveryEffectPolicyV2LegacyV3,
   partnershipsCommandSnapshot,
   type PartnershipsDiscoveryCommandV2,
   type PartnershipsPrepareAssignmentEffectV2,
   type PartnershipsYalcAssignEffectV2,
+  type PartnershipsDiscoveryHandlerVersionV2,
 } from "./discovery-handler-v2";
+import { resolvePartnershipsDiscoveryRuntimeContract } from "./discovery-runtime-contract";
 import { deliverPartnershipsDiscoveryChatCompletion } from "./discovery-chat-completion";
 import type {
   DiscoveryRunnerErrorCode,
@@ -113,7 +123,7 @@ const DEFAULT_MAX_ATTEMPTS = 3;
 const DEFAULT_MAX_CLAIMS_PER_DRAIN = 10;
 const DISCOVERY_YALC_EFFECT_STEP = "yalc.campaign";
 
-interface DiscoveryDurableWorkerEnvironment
+export interface DiscoveryDurableWorkerEnvironment
   extends DiscoveryExecutionEnvironment, PartnershipsDiscoveryV2Environment {
   PARTNERSHIPS_DISCOVERY_WORKER_LEASE_MS?: string;
   PARTNERSHIPS_DISCOVERY_WORKER_POLL_MS?: string;
@@ -221,7 +231,7 @@ function runtimeCapabilityPolicy(
     mayAdmit: (input: Parameters<DurableCapabilityPolicy["mayAdmit"]>[0]) =>
       policy.mayAdmit(input),
     mayDrain: (input: Parameters<DurableCapabilityPolicy["mayDrain"]>[0]) => {
-      if (input.handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2) {
+      if (isPartnershipsDiscoveryHandlerV2Version(input.handlerVersion)) {
         try {
           assertPartnershipsDiscoveryV2StaticGate(env);
         } catch {
@@ -619,10 +629,9 @@ function assignmentEffectKeyForRun(
     operation: DISCOVERY_EXECUTION_OPERATION,
     runId: run.id,
     handlerVersion,
-    step:
-      handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2
-        ? PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP
-        : DISCOVERY_YALC_EFFECT_STEP,
+    step: isPartnershipsDiscoveryHandlerV2Version(handlerVersion)
+      ? PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP
+      : DISCOVERY_YALC_EFFECT_STEP,
   });
 }
 
@@ -1056,8 +1065,13 @@ export function createPartnershipsDiscoveryWorkerHandlerV2(
     DiscoveryWorkerDependencies,
     "deliverV2ChatCompletion"
   > = {},
+  handlerVersion: PartnershipsDiscoveryHandlerVersionV2 = PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
 ) {
-  return createPartnershipsDiscoveryHandlerV2(
+  const createHandler =
+    handlerVersion === PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3
+      ? createPartnershipsDiscoveryHandlerV2LegacyV3
+      : createPartnershipsDiscoveryHandlerV2;
+  return createHandler(
     { prepare, assign },
     {
       projectTerminal: async (
@@ -1109,6 +1123,12 @@ function registryFor(
   const assign =
     v2.yalcAssignEffect ??
     createPartnershipsYalcAssignEffectV2(v2.yalcAssignEffectDependencies);
+  const legacyPrepare = createPartnershipsPrepareAssignmentEffectV2LegacyV3(
+    v2.prepareEffectDependencies,
+  );
+  const legacyAssign = createPartnershipsYalcAssignEffectV2LegacyV3(
+    v2.yalcAssignEffectDependencies,
+  );
   const registry = new DurableExecutionRegistry()
     .register(
       createDiscoverySetupHandler(repository, {
@@ -1124,9 +1144,18 @@ function registryFor(
       ),
     );
   return registerV2
-    ? registry.register(
-        createPartnershipsDiscoveryWorkerHandlerV2(prepare, assign, v2),
-      )
+    ? registry
+        .register(
+          createPartnershipsDiscoveryWorkerHandlerV2(
+            legacyPrepare,
+            legacyAssign,
+            v2,
+            PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+          ),
+        )
+        .register(
+          createPartnershipsDiscoveryWorkerHandlerV2(prepare, assign, v2),
+        )
     : registry;
 }
 
@@ -1180,6 +1209,8 @@ export async function processNextCanaryDiscoveryRun(
       dependencies.workerId ?? `sancho-partnerships-test-${process.pid}`,
     leaseMs: workerLeaseMs(env),
     maxAttempts: workerMaxAttempts(env),
+    handlerTimeoutMs:
+      resolvePartnershipsDiscoveryRuntimeContract(env).handlerTimeoutMs,
     ...(enforceBootAuthority
       ? {
           drainPolicy: createPartnershipsDefaultRuntimeDrainPolicy(
@@ -1191,6 +1222,114 @@ export async function processNextCanaryDiscoveryRun(
   });
   const outcome = await engine.processNext();
   return outcome.kind !== "idle";
+}
+
+export interface PartnershipsDiscoveryCancellationDrainDependencies {
+  repository?: ExecutionControlRepository;
+  env?: DiscoveryDurableWorkerEnvironment;
+  workerId?: string;
+  now?: () => Date;
+  deliverV2ChatCompletion?: typeof deliverPartnershipsDiscoveryChatCompletion;
+}
+
+export class PartnershipsDiscoveryCancellationDrainError extends Error {
+  readonly code = "partnerships_discovery_cancellation_drain_refused" as const;
+
+  constructor(readonly reason: string) {
+    super(`Partnerships cancellation drain refused (${reason})`);
+    this.name = "PartnershipsDiscoveryCancellationDrainError";
+  }
+}
+
+/**
+ * Claims one exact legacy run only after an audited cancellation marker exists.
+ * Policy-only effects are intentionally unbound: even a boundary regression
+ * cannot turn this operator recovery path into a provider invocation.
+ */
+export async function drainPartnershipsDiscoveryCancellation(
+  slug: string,
+  runId: string,
+  dependencies: PartnershipsDiscoveryCancellationDrainDependencies = {},
+): Promise<DurableExecutionOutcome> {
+  const tenantKey = slug.trim().toLowerCase();
+  const normalizedRunId = runId.trim();
+  if (!isValidTenantSlug(tenantKey) || !normalizedRunId) {
+    throw new PartnershipsDiscoveryCancellationDrainError("invalid_scope");
+  }
+  const repository = dependencies.repository ?? defaultRepository;
+  if (
+    typeof repository.getRunByIdForScope !== "function" ||
+    !effectRepositoryFrom(repository) ||
+    !cancellationRepositoryFrom(repository)
+  ) {
+    throw new PartnershipsDiscoveryCancellationDrainError(
+      "repository_capability_missing",
+    );
+  }
+  const scope = canaryScope(tenantKey);
+  const run = await repository.getRunByIdForScope({
+    ...scope,
+    runId: normalizedRunId,
+  });
+  if (!run) return { kind: "idle", runId: normalizedRunId };
+  if (run.status === "cancelled") {
+    return { kind: "cancelled", runId: normalizedRunId };
+  }
+  if (
+    run.status !== "running" ||
+    !run.cancelRequestId ||
+    !run.cancelRequestedAt ||
+    run.cancelAcknowledgedAt ||
+    run.metadata.authority !== "execution_ledger_v2" ||
+    run.metadata.executionContractVersion !== 2 ||
+    run.metadata.executionHandlerVersion !==
+      PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3
+  ) {
+    throw new PartnershipsDiscoveryCancellationDrainError(
+      "legacy_cancel_marker_required",
+    );
+  }
+
+  const registry = new DurableExecutionRegistry().register(
+    createPartnershipsDiscoveryWorkerHandlerV2(
+      partnershipsDiscoveryEffectPolicyV2LegacyV3[
+        PARTNERSHIPS_PREPARE_EFFECT_STEP
+      ],
+      partnershipsDiscoveryEffectPolicyV2LegacyV3[
+        PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP
+      ],
+      {
+        deliverV2ChatCompletion: dependencies.deliverV2ChatCompletion,
+      },
+      PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2_LEGACY_V3,
+    ),
+  );
+  const env =
+    dependencies.env ?? (process.env as DiscoveryDurableWorkerEnvironment);
+  const engine = new DurableExecutionEngine({
+    repository,
+    effectRepository: effectRepositoryFrom(repository)!,
+    cancellationRepository: cancellationRepositoryFrom(repository)!,
+    capabilityPolicy: partnershipsDiscoveryCapabilityPolicyV2,
+    credentialProvider: {
+      async resolve() {
+        throw new PartnershipsDiscoveryCancellationDrainError(
+          "external_capability_unbound",
+        );
+      },
+    },
+    registry,
+    scope,
+    workerId:
+      dependencies.workerId ??
+      `sancho-partnerships-cancel-${process.pid}-${normalizedRunId.slice(-8)}`,
+    leaseMs: workerLeaseMs(env),
+    maxAttempts: 1,
+    handlerTimeoutMs:
+      resolvePartnershipsDiscoveryRuntimeContract(env).handlerTimeoutMs,
+    now: dependencies.now,
+  });
+  return engine.processRun(normalizedRunId);
 }
 
 /** Claim and execute at most one durable pre-effect setup command. */

@@ -1,20 +1,41 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { NextApiRequest, NextApiResponse } from "next";
-import type {
-  ExecutionControlReadRepository,
-  ExecutionEventPage,
-  ExecutionRun,
-  ExecutionRunPage,
-  ExecutionStepPage,
-  ListExecutionEventsPageInput,
-  ListExecutionRunsInput,
-  ListExecutionStepsPageInput,
+import {
+  type ExecutionCancellationControlRepository,
+  type ExecutionCancellationReceipt,
+  type ExecutionControlReadRepository,
+  type ExecutionEventPage,
+  type RequestExecutionRunCancellationInput,
+  type ExecutionRun,
+  type ExecutionRunPage,
+  type ExecutionStepPage,
+  type ListExecutionEventsPageInput,
+  type ListExecutionRunsInput,
+  type ListExecutionStepsPageInput,
 } from "../execution-control";
+import { ExecutionCancellationConflictError } from "../execution-control/types";
 import { createExecutionRunsHandler } from "../../pages/api/admin/execution-runs/index";
 import { createExecutionRunDetailHandler } from "../../pages/api/admin/execution-runs/[id]";
+import { authOptions } from "../../pages/api/auth/[...nextauth]";
 
 const ADMIN_SESSION = { user: { role: "admin" } } as const;
+const MARTIN_ADMIN_SESSION = {
+  user: {
+    role: "admin",
+    authProvider: "google",
+    subject: "google-martin-subject",
+    email: "martin@example.test",
+  },
+} as const;
+const ALFONSO_ADMIN_SESSION = {
+  user: {
+    role: "admin",
+    authProvider: "google",
+    subject: "google-alfonso-subject",
+    email: "alfonso@example.test",
+  },
+} as const;
 const CLIENT_SESSION = { user: { role: "client" } } as const;
 const CURSOR_SECRET = "test-only-cursor-secret";
 
@@ -46,12 +67,14 @@ function run(overrides: Partial<ExecutionRun> = {}): ExecutionRun {
 }
 
 interface RepositoryHarness {
-  repository: ExecutionControlReadRepository;
+  repository: ExecutionControlReadRepository &
+    Pick<ExecutionCancellationControlRepository, "requestRunCancellation">;
   calls: {
     listRuns: ListExecutionRunsInput[];
     detail: Array<{ tenantKey: string; runId: string }>;
     steps: ListExecutionStepsPageInput[];
     events: ListExecutionEventsPageInput[];
+    cancellations: RequestExecutionRunCancellationInput[];
   };
 }
 
@@ -61,6 +84,9 @@ function repositoryHarness(
     detailRun?: ExecutionRun | null;
     stepsPage?: ExecutionStepPage;
     eventsPage?: ExecutionEventPage;
+    cancel?: (
+      input: RequestExecutionRunCancellationInput,
+    ) => Promise<ExecutionCancellationReceipt | null>;
   } = {},
 ): RepositoryHarness {
   const calls: RepositoryHarness["calls"] = {
@@ -68,8 +94,9 @@ function repositoryHarness(
     detail: [],
     steps: [],
     events: [],
+    cancellations: [],
   };
-  const repository: ExecutionControlReadRepository = {
+  const repository: RepositoryHarness["repository"] = {
     async listRuns(input) {
       calls.listRuns.push(input);
       return options.runsPage ?? { runs: [run()] };
@@ -85,6 +112,20 @@ function repositoryHarness(
     async listEventsPage(input) {
       calls.events.push(input);
       return options.eventsPage ?? { events: [] };
+    },
+    async requestRunCancellation(input) {
+      calls.cancellations.push(input);
+      if (options.cancel) return options.cancel(input);
+      const existing =
+        options.detailRun === undefined ? run() : options.detailRun;
+      if (!existing) return null;
+      return {
+        run: existing,
+        cancellationId: input.cancellationId,
+        disposition:
+          existing.status === "cancelled" ? "cancelled" : "requested",
+        replayed: false,
+      };
     },
   };
   return { repository, calls };
@@ -116,11 +157,18 @@ function response() {
 function request(
   query: NextApiRequest["query"],
   method = "GET",
+  options: {
+    headers?: NextApiRequest["headers"];
+    body?: unknown;
+  } = {},
 ): NextApiRequest {
   return {
     method,
     query,
-    headers: {},
+    headers: options.headers ?? {},
+    ...(Object.prototype.hasOwnProperty.call(options, "body")
+      ? { body: options.body }
+      : {}),
   } as unknown as NextApiRequest;
 }
 
@@ -380,6 +428,383 @@ test("detail is also NextAuth-session-only and rejects legacy admin context", as
   assert.equal(harness.calls.detail.length, 0);
   assert.equal(harness.calls.steps.length, 0);
   assert.equal(harness.calls.events.length, 0);
+});
+
+test("detail exposes DELETE as cooperative cancellation, never deletion", async () => {
+  const harness = repositoryHarness();
+  const handler = createExecutionRunDetailHandler({
+    repository: harness.repository,
+    getSession: async () => MARTIN_ADMIN_SESSION,
+  });
+  const mocked = response();
+  await handler(
+    request({ tenantKey: "growth4u", id: "xrun_01" }, "PATCH"),
+    mocked.res,
+  );
+  assert.equal(mocked.state.status, 405);
+  assert.equal(mocked.state.headers.allow, "GET, DELETE");
+  assert.equal(harness.calls.detail.length, 0);
+  assert.equal(harness.calls.cancellations.length, 0);
+});
+
+test("NextAuth propagates the frozen provider and stable JWT subject", async () => {
+  const jwt = authOptions.callbacks?.jwt;
+  const session = authOptions.callbacks?.session;
+  assert.equal(typeof jwt, "function");
+  assert.equal(typeof session, "function");
+
+  const token = await jwt!({
+    token: { sub: "google-stable-subject" },
+    account: { provider: "google" },
+  } as never);
+  const resolved = await session!({
+    session: {
+      user: { email: "martin@example.test" },
+      expires: "2099-01-01T00:00:00.000Z",
+    },
+    token,
+  } as never);
+
+  assert.equal(resolved.user.authProvider, "google");
+  assert.equal(resolved.user.subject, "google-stable-subject");
+});
+
+test("DELETE requires an individual NextAuth admin identity", async () => {
+  const harness = repositoryHarness({
+    detailRun: run({ status: "running", mode: "canary" }),
+  });
+  for (const session of [
+    ADMIN_SESSION,
+    { user: { role: "admin", email: "admin@localhost" } } as const,
+    {
+      user: {
+        role: "admin",
+        authProvider: "legacy-token",
+        subject: "admin",
+        email: "martin@example.test",
+      },
+    } as const,
+  ]) {
+    const handler = createExecutionRunDetailHandler({
+      repository: harness.repository,
+      getSession: async () => session,
+    });
+    const req = request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+      headers: { "idempotency-key": "cancel-request-1" },
+    });
+    // A legacy middleware identity cannot fill the missing human subject.
+    req.headers.authorization = "Bearer legacy-admin-token";
+    (req as NextApiRequest & { ctx?: unknown }).ctx = { isAdmin: true };
+    const mocked = response();
+    await handler(req, mocked.res);
+    assert.equal(mocked.state.status, 403);
+    assert.deepEqual(mocked.state.body, {
+      error: "Individual admin identity required",
+    });
+  }
+  assert.equal(harness.calls.detail.length, 0);
+  assert.equal(harness.calls.cancellations.length, 0);
+});
+
+test("DELETE accepts a Google email only as fallback when JWT subject is absent", async () => {
+  const running = run({ status: "running", mode: "canary" });
+  const harness = repositoryHarness({ detailRun: running });
+  const handler = createExecutionRunDetailHandler({
+    repository: harness.repository,
+    getSession: async () => ({
+      user: {
+        role: "admin",
+        authProvider: "google",
+        email: "martin@example.test",
+      },
+    }),
+  });
+  const mocked = response();
+  await handler(
+    request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+      body: { requestId: "google-email-fallback" },
+    }),
+    mocked.res,
+  );
+
+  assert.equal(mocked.state.status, 202);
+  assert.match(harness.calls.cancellations[0].actor.id, /^user:[a-f0-9]{64}$/);
+  assert.equal(
+    JSON.stringify(harness.calls.cancellations[0]).includes(
+      "martin@example.test",
+    ),
+    false,
+  );
+});
+
+test("DELETE accepts exactly one bounded idempotency source", async () => {
+  const harness = repositoryHarness({
+    detailRun: run({ status: "running", mode: "canary" }),
+  });
+  const handler = createExecutionRunDetailHandler({
+    repository: harness.repository,
+    getSession: async () => MARTIN_ADMIN_SESSION,
+  });
+  for (const options of [
+    {},
+    {
+      headers: { "idempotency-key": "header-request" },
+      body: { requestId: "body-request" },
+    },
+    { body: { requestId: "contains spaces" } },
+    { body: { requestId: "valid-request", actor: "martin" } },
+    { body: [] },
+  ]) {
+    const mocked = response();
+    await handler(
+      request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", options),
+      mocked.res,
+    );
+    assert.equal(mocked.state.status, 400, JSON.stringify(options));
+  }
+  assert.equal(harness.calls.detail.length, 0);
+  assert.equal(harness.calls.cancellations.length, 0);
+});
+
+test("DELETE requests exact-scope audited cancellation idempotently", async () => {
+  const running = run({
+    operation: "partnerships.discovery",
+    mode: "canary",
+    status: "running",
+    finishedAt: undefined,
+  });
+  let calls = 0;
+  const harness = repositoryHarness({
+    detailRun: running,
+    cancel: async (input) => ({
+      run: running,
+      cancellationId: input.cancellationId,
+      disposition: "requested",
+      replayed: calls++ > 0,
+    }),
+  });
+  const handler = createExecutionRunDetailHandler({
+    repository: harness.repository,
+    getSession: async () => MARTIN_ADMIN_SESSION,
+  });
+
+  const first = response();
+  await handler(
+    request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+      headers: { "idempotency-key": "operator-cancel-01" },
+    }),
+    first.res,
+  );
+  const replay = response();
+  await handler(
+    request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+      body: { requestId: "operator-cancel-01" },
+    }),
+    replay.res,
+  );
+
+  assert.equal(first.state.status, 202);
+  assert.deepEqual(first.state.body, {
+    ok: true,
+    cancellation: {
+      runId: "xrun_01",
+      status: "running",
+      disposition: "requested",
+      replayed: false,
+    },
+  });
+  assert.equal(replay.state.status, 202);
+  assert.equal(
+    (replay.state.body as { cancellation: { replayed: boolean } }).cancellation
+      .replayed,
+    true,
+  );
+  assert.equal(harness.calls.cancellations.length, 2);
+  const [firstInput, replayInput] = harness.calls.cancellations;
+  assert.deepEqual(
+    {
+      tenantKey: firstInput.tenantKey,
+      operation: firstInput.operation,
+      mode: firstInput.mode,
+      runId: firstInput.runId,
+      reasonCode: firstInput.reasonCode,
+    },
+    {
+      tenantKey: "growth4u",
+      operation: "partnerships.discovery",
+      mode: "canary",
+      runId: "xrun_01",
+      reasonCode: "operator_intervention",
+    },
+  );
+  assert.match(firstInput.cancellationId, /^cancel_[a-f0-9]{64}$/);
+  assert.equal(firstInput.cancellationId, replayInput.cancellationId);
+  assert.equal(firstInput.actor.type, "user");
+  assert.match(firstInput.actor.id, /^user:[a-f0-9]{64}$/);
+  assert.equal(firstInput.actor.id, replayInput.actor.id);
+  const serialized = JSON.stringify([
+    first.state.body,
+    replay.state.body,
+    firstInput.actor,
+  ]);
+  assert.equal(serialized.includes("martin@example.test"), false);
+  assert.equal(serialized.includes("operator-cancel-01"), false);
+  assert.equal(harness.calls.steps.length, 0);
+  assert.equal(harness.calls.events.length, 0);
+});
+
+test("DELETE derives distinct opaque actors for Martin and Alfonso", async () => {
+  const running = run({ status: "running", mode: "canary" });
+  const harness = repositoryHarness({
+    detailRun: running,
+    cancel: async (input) => ({
+      run: running,
+      cancellationId: input.cancellationId,
+      disposition: "requested",
+      replayed: false,
+    }),
+  });
+  for (const [index, session] of [
+    MARTIN_ADMIN_SESSION,
+    ALFONSO_ADMIN_SESSION,
+  ].entries()) {
+    const handler = createExecutionRunDetailHandler({
+      repository: harness.repository,
+      getSession: async () => session,
+    });
+    const mocked = response();
+    await handler(
+      request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+        body: { requestId: `operator-${index}` },
+      }),
+      mocked.res,
+    );
+    assert.equal(mocked.state.status, 202);
+  }
+  assert.notEqual(
+    harness.calls.cancellations[0].actor.id,
+    harness.calls.cancellations[1].actor.id,
+  );
+});
+
+test("DELETE prefers the stable Google subject over a changed email", async () => {
+  const running = run({ status: "running", mode: "canary" });
+  const harness = repositoryHarness({ detailRun: running });
+  for (const [index, email] of [
+    "martin-old@example.test",
+    "martin-new@example.test",
+  ].entries()) {
+    const handler = createExecutionRunDetailHandler({
+      repository: harness.repository,
+      getSession: async () => ({
+        user: {
+          role: "admin",
+          authProvider: "google",
+          subject: "google-martin-stable-subject",
+          email,
+        },
+      }),
+    });
+    const mocked = response();
+    await handler(
+      request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+        body: { requestId: `subject-first-${index}` },
+      }),
+      mocked.res,
+    );
+    assert.equal(mocked.state.status, 202);
+  }
+
+  assert.equal(
+    harness.calls.cancellations[0].actor.id,
+    harness.calls.cancellations[1].actor.id,
+  );
+});
+
+test("DELETE returns 200 only for an acknowledged immediate cancellation", async () => {
+  const queued = run({ status: "queued", mode: "canary" });
+  const cancelled = run({
+    status: "cancelled",
+    mode: "canary",
+    cancelRequestedAt: "2026-07-17T08:00:00.000Z",
+    cancelAcknowledgedAt: "2026-07-17T08:00:00.000Z",
+  });
+  const harness = repositoryHarness({
+    detailRun: queued,
+    cancel: async (input) => ({
+      run: cancelled,
+      cancellationId: input.cancellationId,
+      disposition: "cancelled",
+      replayed: false,
+    }),
+  });
+  const handler = createExecutionRunDetailHandler({
+    repository: harness.repository,
+    getSession: async () => MARTIN_ADMIN_SESSION,
+  });
+  const mocked = response();
+  await handler(
+    request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+      body: { requestId: "cancel-queued-01" },
+    }),
+    mocked.res,
+  );
+  assert.equal(mocked.state.status, 200);
+  assert.equal(
+    (mocked.state.body as { cancellation: { disposition: string } })
+      .cancellation.disposition,
+    "cancelled",
+  );
+});
+
+test("DELETE keeps cross-tenant ids indistinguishable from missing runs", async () => {
+  for (const detailRun of [null, run({ tenantKey: "other" })]) {
+    const harness = repositoryHarness({ detailRun });
+    const handler = createExecutionRunDetailHandler({
+      repository: harness.repository,
+      getSession: async () => MARTIN_ADMIN_SESSION,
+    });
+    const mocked = response();
+    await handler(
+      request({ tenantKey: "growth4u", id: "xrun_other" }, "DELETE", {
+        body: { requestId: "operator-cancel-cross-tenant" },
+      }),
+      mocked.res,
+    );
+    assert.equal(mocked.state.status, 404);
+    assert.equal(harness.calls.cancellations.length, 0);
+  }
+});
+
+test("DELETE maps cancellation CAS conflicts to a bounded 409", async () => {
+  const privateMarker = "private-cancellation-state";
+  const harness = repositoryHarness({
+    detailRun: run({ status: "running", mode: "canary" }),
+    cancel: async () => {
+      const error = new ExecutionCancellationConflictError();
+      Object.defineProperty(error, "privateMarker", { value: privateMarker });
+      throw error;
+    },
+  });
+  const handler = createExecutionRunDetailHandler({
+    repository: harness.repository,
+    getSession: async () => MARTIN_ADMIN_SESSION,
+  });
+  const mocked = response();
+  await handler(
+    request({ tenantKey: "growth4u", id: "xrun_01" }, "DELETE", {
+      body: { requestId: "operator-conflict-01" },
+    }),
+    mocked.res,
+  );
+  assert.equal(mocked.state.status, 409);
+  assert.deepEqual(mocked.state.body, {
+    error: "Execution cancellation conflict",
+  });
+  assert.equal(
+    JSON.stringify(mocked.state.body).includes(privateMarker),
+    false,
+  );
 });
 
 test("detail re-sanitizes bounded run, step, error, and event payloads", async () => {

@@ -33,7 +33,7 @@ function effectKey(runId = "xrun-effects-v2") {
   return durableExecutionEffectKey({
     operation: "partnerships.discovery",
     runId,
-    handlerVersion: 3,
+    handlerVersion: handler.PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
     step: "yalc.assign_leads",
   });
 }
@@ -120,7 +120,7 @@ async function preparedPayload() {
     effectKey: durableExecutionEffectKey({
       operation: "partnerships.discovery",
       runId,
-      handlerVersion: 3,
+      handlerVersion: handler.PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
       step: "provider.prepare_assignment",
     }),
     signal: new AbortController().signal,
@@ -281,7 +281,7 @@ test("assignment uses the versioned Yalc contract with the same key and canonica
     credentials,
   });
 
-  assert.equal(assign.retry.maxAttempts, 3);
+  assert.equal(assign.retry.maxAttempts, 1);
   assert.equal(calls.length, 1);
   assert.equal(
     calls[0].path,

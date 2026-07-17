@@ -78,6 +78,7 @@ COPY scripts/verify-execution-origin-cutover.mts ./scripts/verify-execution-orig
 # Staging canary gate runs inside the release container so it inspects the
 # exact runtime, credentials, image identity and migration state being tested.
 COPY scripts/preflight-staging-canary.mts ./scripts/preflight-staging-canary.mts
+COPY scripts/drain-partnerships-cancellation.mts ./scripts/drain-partnerships-cancellation.mts
 # Single-day metrics ingest (SAN-318): the collector pipes a snapshot to this tsx
 # script to persist via the app's getDb(); scripts/ is copied file-by-file.
 COPY scripts/ingest-metrics.ts ./scripts/ingest-metrics.ts

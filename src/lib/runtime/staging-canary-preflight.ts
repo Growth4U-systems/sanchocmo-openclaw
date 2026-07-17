@@ -4,13 +4,30 @@ import { promisify } from "node:util";
 import {
   PARTNERSHIPS_YALC_ASSIGN_CONTRACT_FINGERPRINT,
   PARTNERSHIPS_YALC_ASSIGN_CAPABILITY_VERSION,
+  partnershipsDiscoveryRegistryV2,
   preflightPartnershipsDiscoveryV2,
   type PartnershipsDiscoveryV2Environment,
 } from "@/lib/partnerships/discovery-admission-v2";
 import {
+  DISCOVERY_EXECUTION_OPERATION,
   DISCOVERY_LOCAL_ARTIFACT_STORE_ACK,
   resolveDiscoveryExecutionPolicy,
 } from "@/lib/partnerships/discovery-execution-policy";
+import {
+  PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2,
+  PARTNERSHIPS_PREPARE_EFFECT_STEP,
+  PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
+} from "@/lib/partnerships/discovery-handler-v2";
+import {
+  PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS_DEFAULT,
+  PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS_DEFAULT,
+  PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS,
+  PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS,
+  resolvePartnershipsDiscoveryRuntimeContract,
+} from "@/lib/partnerships/discovery-runtime-contract";
+import { DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION_V2 } from "@/lib/durable-execution/contract";
+import type { DurableExecutionRegistry } from "@/lib/durable-execution/registry";
+import { declaredEffectTimeoutBudgetMs } from "@/lib/durable-execution/runtime";
 import {
   resolveLeadsSearchPolicy,
   type LeadsSearchEnvironment,
@@ -49,11 +66,91 @@ export const STAGING_CANARY_MC_CHAT_LIMITS = Object.freeze({
   maxSessionHistoryCallsPerRun: 1,
   maxTurnMs: 300_000,
 });
-export const STAGING_CANARY_PARTNERSHIPS_LIMITS = Object.freeze({
+const STAGING_CANARY_PARTNERSHIPS_ENV_LIMITS = Object.freeze({
   maxCandidates: 3,
   concurrency: 1,
   maxWorkerAttempts: 1,
+  liveDiscoveryTimeoutMs: PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS_DEFAULT,
+  handlerTimeoutMs: PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS_DEFAULT,
 });
+
+function partnershipsPolicyNotExact(): never {
+  throw new StagingCanaryPreflightError("flags_not_exact");
+}
+
+/** Runtime evidence derived from the same immutable registry used to admit v4. */
+export function resolveStagingCanaryPartnershipsLimits(
+  registry: DurableExecutionRegistry = partnershipsDiscoveryRegistryV2(),
+) {
+  try {
+    const handlers = registry.registeredHandlersForOperation(
+      DISCOVERY_EXECUTION_OPERATION,
+    );
+    if (handlers.length !== 1) partnershipsPolicyNotExact();
+    const handler = handlers[0];
+    if (
+      handler.contractVersion !==
+        DURABLE_EXECUTION_HANDLER_CONTRACT_VERSION_V2 ||
+      handler.version !== PARTNERSHIPS_DISCOVERY_HANDLER_VERSION_V2
+    ) {
+      partnershipsPolicyNotExact();
+    }
+    const expectedSteps = [
+      PARTNERSHIPS_PREPARE_EFFECT_STEP,
+      PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP,
+    ].sort();
+    if (
+      JSON.stringify(Object.keys(handler.effects).sort()) !==
+      JSON.stringify(expectedSteps)
+    ) {
+      partnershipsPolicyNotExact();
+    }
+    const prepare = handler.effects[PARTNERSHIPS_PREPARE_EFFECT_STEP];
+    const assign = handler.effects[PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP];
+    if (
+      !prepare ||
+      !assign ||
+      prepare.definitionVersion !== 2 ||
+      assign.definitionVersion !== 2 ||
+      prepare.retry.maxAttempts !== 1 ||
+      assign.retry.maxAttempts !== 1 ||
+      prepare.timeoutMs !== PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS ||
+      assign.timeoutMs !== PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS
+    ) {
+      partnershipsPolicyNotExact();
+    }
+    const effectTimeoutBudgetMs = declaredEffectTimeoutBudgetMs(
+      registry,
+      DISCOVERY_EXECUTION_OPERATION,
+    );
+    if (
+      effectTimeoutBudgetMs !==
+      PARTNERSHIPS_PREPARE_EFFECT_TIMEOUT_MS +
+        PARTNERSHIPS_YALC_ASSIGN_EFFECT_TIMEOUT_MS
+    ) {
+      partnershipsPolicyNotExact();
+    }
+    return Object.freeze({
+      ...STAGING_CANARY_PARTNERSHIPS_ENV_LIMITS,
+      handlerVersion: handler.version,
+      effectDefinitionVersions: Object.freeze({
+        [PARTNERSHIPS_PREPARE_EFFECT_STEP]: prepare.definitionVersion,
+        [PARTNERSHIPS_YALC_ASSIGN_EFFECT_STEP]: assign.definitionVersion,
+      }),
+      maxEffectInvocations: Math.max(
+        prepare.retry.maxAttempts,
+        assign.retry.maxAttempts,
+      ),
+      effectTimeoutBudgetMs,
+    });
+  } catch (error) {
+    if (error instanceof StagingCanaryPreflightError) throw error;
+    return partnershipsPolicyNotExact();
+  }
+}
+
+export const STAGING_CANARY_PARTNERSHIPS_LIMITS =
+  resolveStagingCanaryPartnershipsLimits();
 export type StagingCanarySurface = StagingCanaryReadinessSurface;
 
 const STAGING_CANARY_MC_CHAT_ENV = Object.freeze({
@@ -69,6 +166,8 @@ const STAGING_CANARY_MC_CHAT_ENV = Object.freeze({
 });
 
 const STAGING_CANARY_PARTNERSHIPS_ENV = Object.freeze({
+  PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS: "270000",
+  PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS: "360000",
   PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: "3",
   PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY: "1",
   PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS: "1",
@@ -106,7 +205,7 @@ export function stagingCanaryLimitEvidence(surface: StagingCanarySurface) {
     modelMaxOutputTokens: STAGING_CANARY_MODEL_MAX_OUTPUT_TOKENS,
     chat: STAGING_CANARY_MC_CHAT_LIMITS,
     ...(surface === "partnerships"
-      ? { partnerships: STAGING_CANARY_PARTNERSHIPS_LIMITS }
+      ? { partnerships: resolveStagingCanaryPartnershipsLimits() }
       : {}),
   } as const;
 }
@@ -132,6 +231,8 @@ export function validateStagingCanaryConfiguration(input: {
   runtimeId: string;
   singleHostAttested: boolean;
   env?: Environment;
+  /** Test seam; production always resolves the canonical admission registry. */
+  partnershipsRegistry?: DurableExecutionRegistry;
 }) {
   const env = runtimeEnvironment(input.env);
   const tenant = canonicalTenant(input.tenant);
@@ -177,6 +278,12 @@ export function validateStagingCanaryConfiguration(input: {
   }
 
   validateImmutableYalcImage(env.YALC_IMAGE);
+  try {
+    resolvePartnershipsDiscoveryRuntimeContract(env);
+    resolveStagingCanaryPartnershipsLimits(input.partnershipsRegistry);
+  } catch {
+    throw new StagingCanaryPreflightError("flags_not_exact");
+  }
   const policy = resolveDiscoveryExecutionPolicy(tenant, env);
   if (
     !commonExact ||
@@ -262,10 +369,12 @@ function modelCredentialPresent(
  * Reads the model actually selected for Sancho and the provider-enforced
  * output ceiling. This is deliberately runtime evidence, not an env claim.
  */
-export async function inspectStagingCanaryModel(input: {
-  control?: StagingCanaryModelControl;
-  env?: NodeJS.ProcessEnv;
-} = {}) {
+export async function inspectStagingCanaryModel(
+  input: {
+    control?: StagingCanaryModelControl;
+    env?: NodeJS.ProcessEnv;
+  } = {},
+) {
   try {
     const control = input.control ?? getRuntime().control;
     const effectiveModel =
