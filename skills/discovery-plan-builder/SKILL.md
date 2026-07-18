@@ -127,6 +127,12 @@ En ambos caminos el usuario puede elegir, ajustar o guiarte él ("Sorpréndeme t
 decide tú con el contexto). Itera lo que haga falta: tiers, redes, volumen,
 audiencia.
 
+**El volumen NUNCA se asume en silencio.** Si el usuario no dijo cuántos
+candidatos quiere, pregúntaselo con un `:::ask` (opciones típicas: 10 / 25 / 40 /
+"Otro"). El número que viaje en `targetVolume` tiene que ser uno que el usuario
+eligió o vio y confirmó en la fila **Volumen** del plan-card — jamás un default
+que descubra después en los resultados.
+
 ### 3. Presenta el PLAN (plan-card)
 
 Cuando tengas los ingredientes, presenta el plan con las filas canónicas del
@@ -233,14 +239,24 @@ ejecuta el runner inline con los 9 creators fake del mockup.
 
 ### 5. Confirma al usuario
 
-Resume en una línea + próximos pasos:
+El mensaje post-lanzamiento es para una persona, no para un operador técnico.
+Debe responder tres preguntas en este orden: **qué está pasando ahora**,
+**cuánto tarda**, y **qué tiene que hacer el usuario** (normalmente: nada).
+Plantilla:
 
-> 🚀 Búsqueda lanzada — Rocinante está ejecutando el discovery ahora (scrapea
-> creators según el plan). Cuando termine veréis los candidatos con su quality
-> score en **Outreach → Encuentra** (los descartados automáticos quedan
-> consultables).
+> 🔎 **Buscando 3 creadoras en Instagram** (salud capilar · España · 10-100k
+> seguidores). Suele tardar 2-3 minutos y sigue sola aunque cierres el chat.
+> Te aviso aquí mismo con las candidatas — no tienes que hacer nada.
+> Las verás también en **Outreach → Encuentra**, con su puntuación de calidad.
 
-Incluye `searchId` y `campaignId` por si el usuario opera por MCP/CLI después.
+Adapta la primera línea al plan real (nº, red, nicho, filtros). PROHIBIDO en
+este mensaje: `searchId`, `campaignId`, `taskId`, `runner`, `queued`, nombres
+de agentes internos o estados técnicos. Si el plan dejó redes fuera (TikTok/
+YouTube), UNA frase corta al final ("TikTok no está disponible aún — esta
+búsqueda es solo Instagram"), sin promesas de aviso futuro.
+
+Los IDs técnicos existen para MCP/CLI: solo si el usuario los pide, o al final
+en una única línea colapsable de letra pequeña (`searchId` únicamente).
 
 ## Errores
 

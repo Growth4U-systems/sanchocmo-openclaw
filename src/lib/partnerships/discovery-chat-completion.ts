@@ -28,13 +28,28 @@ export function formatPartnershipsDiscoveryChatCompletion(
   if (run.status === "completed") {
     const stats = statsFromRun(run);
     if (stats) {
+      const parts: string[] = [];
+      if (stats.sourced > 0) {
+        parts.push(
+          `${stats.sourced} lista${stats.sourced === 1 ? "" : "s"} para outreach`,
+        );
+      }
+      if (stats.disqualified > 0) {
+        parts.push(
+          `${stats.disqualified} por debajo del umbral de calidad (puedes recalificarlas a mano)`,
+        );
+      }
+      if (stats.dropped > 0) {
+        parts.push(`${stats.dropped} ya existían como leads y no se duplicaron`);
+      }
+      const found = stats.candidates || stats.inserted + stats.dropped;
+      const summary = parts.length > 0 ? ` — ${parts.join(" · ")}` : "";
       return (
-        `✅ Búsqueda de partners completada: ${stats.inserted} perfiles añadidos ` +
-        `(${stats.sourced} aptos · ${stats.disqualified} descartados por score · ` +
-        `${stats.dropped} no insertados).`
+        `✅ Búsqueda completada: ${found} candidata${found === 1 ? "" : "s"} encontrada${found === 1 ? "" : "s"}${summary}. ` +
+        `Las tienes en Outreach → Encuentra.`
       );
     }
-    return "✅ Búsqueda de partners completada.";
+    return "✅ Búsqueda de partners completada. Las candidatas están en Outreach → Encuentra.";
   }
   if (run.status === "cancelled") {
     return "La búsqueda de partners fue cancelada y no se publicaron resultados nuevos.";

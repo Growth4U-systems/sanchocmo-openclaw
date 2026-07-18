@@ -12,10 +12,10 @@ on:
         required: false
         default: ""
       execution_rollout_configuration:
-        description: "Execution rollout on deploy: safe-off ignores stale Environment rollout vars; environment applies them deliberately"
+        description: "Execution rollout on deploy: environment applies the staging Environment rollout vars (default — push deploys must not silently switch the canary off); safe-off forces every rollout flag off as the explicit kill switch"
         type: choice
         required: true
-        default: safe-off
+        default: environment
         options:
           - safe-off
           - environment
@@ -57,7 +57,11 @@ jobs:
           ENABLE_OD_SERVICE: ${{ vars.ENABLE_OD_SERVICE || '1' }}
           RUN_DB_MIGRATIONS: ${{ vars.RUN_DB_MIGRATIONS }}
           EXECUTION_MIGRATION_ADOPT_THROUGH: ${{ inputs.execution_migration_adopt_through || '' }}
-          EXECUTION_ROLLOUT_CONFIGURATION: ${{ inputs.execution_rollout_configuration || 'safe-off' }}
+          # Push deploys apply the staging Environment vars: those vars are the
+          # operator's explicit rollout intent, and defaulting to safe-off made
+          # every nightly merge silently switch the canary off (SAN-480).
+          # Dispatch with safe-off for the explicit kill switch.
+          EXECUTION_ROLLOUT_CONFIGURATION: ${{ inputs.execution_rollout_configuration || 'environment' }}
           # YALC ships as a public GHCR image (SAN-135). Override the tag here
           # to pin a version; empty falls back to the compose default (:edge).
           YALC_IMAGE: ${{ vars.YALC_IMAGE }}

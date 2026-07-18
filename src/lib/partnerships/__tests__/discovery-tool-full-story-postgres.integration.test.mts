@@ -645,7 +645,7 @@ test(
       assert.equal(projected?.runner.stats?.inserted, 1);
       const deliveries = delivery.listDurableChatDeliveries(threadId);
       assert.equal(deliveries.length, 1);
-      assert.match(deliveries[0]?.text ?? "", /1 perfiles añadidos/);
+      assert.match(deliveries[0]?.text ?? "", /1 lista para outreach/);
 
       // Thin runtime-adapter assertion: the mc-chat/OpenClaw factory must map
       // to the same generic HTTP contract, but is not the core story driver.
