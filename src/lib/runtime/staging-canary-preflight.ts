@@ -65,11 +65,12 @@ export const STAGING_CANARY_MC_CHAT_LIMITS = Object.freeze({
   maxTurnMs: 300_000,
 });
 const STAGING_CANARY_PARTNERSHIPS_ENV_LIMITS = Object.freeze({
-  maxCandidates: 3,
+  maxCandidates: 50,
   concurrency: 1,
   maxWorkerAttempts: 1,
   liveDiscoveryTimeoutMs: PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS_DEFAULT,
-  handlerTimeoutMs: PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS_DEFAULT,
+  // 30 min: una pasada real de ~50 candidatas no cabe en el default de 360s.
+  handlerTimeoutMs: 1_800_000,
 });
 
 function partnershipsPolicyNotExact(): never {
@@ -152,8 +153,8 @@ const STAGING_CANARY_MC_CHAT_ENV = Object.freeze({
 
 const STAGING_CANARY_PARTNERSHIPS_ENV = Object.freeze({
   PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS: "270000",
-  PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS: "360000",
-  PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: "3",
+  PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS: "1800000",
+  PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: "50",
   PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY: "1",
   PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS: "1",
 });

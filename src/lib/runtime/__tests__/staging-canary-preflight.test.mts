@@ -109,8 +109,8 @@ function partnershipsEnvironment(tenant = "growth4u"): Environment {
     PARTNERSHIPS_DISCOVERY_V2_SLUGS: tenant,
     PARTNERSHIPS_DISCOVERY_ARTIFACT_STORE: DISCOVERY_LOCAL_ARTIFACT_STORE_ACK,
     PARTNERSHIPS_LIVE_DISCOVERY_TIMEOUT_MS: "270000",
-    PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS: "360000",
-    PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: "3",
+    PARTNERSHIPS_DISCOVERY_HANDLER_TIMEOUT_MS: "1800000",
+    PARTNERSHIPS_LIVE_DISCOVERY_MAX_CANDIDATES: "50",
     PARTNERSHIPS_LIVE_DISCOVERY_CONCURRENCY: "1",
     PARTNERSHIPS_DISCOVERY_WORKER_MAX_ATTEMPTS: "1",
   };
@@ -383,11 +383,11 @@ test("partnerships canary accepts exact flags plus the single-host artifact ackn
 test("partnerships canary evidence is derived from the exact v5 registry policy", () => {
   const limits = resolveStagingCanaryPartnershipsLimits();
   assert.deepEqual(limits, {
-    maxCandidates: 3,
+    maxCandidates: 50,
     concurrency: 1,
     maxWorkerAttempts: 1,
     liveDiscoveryTimeoutMs: 270_000,
-    handlerTimeoutMs: 360_000,
+    handlerTimeoutMs: 1_800_000,
     handlerVersion: 5,
     effectDefinitionVersions: {
       "yalc.assign_leads": 3,
