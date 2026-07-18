@@ -898,6 +898,42 @@ else
 fi
 
 # ===========================================================
+# 7a-ter. METRICS AUTO-COLLECTION TICK (background) — SAN-300
+# ===========================================================
+# The per-client collection cadence (Métricas → cadencia, /api/metrics/schedule)
+# had no deterministic executor: the morning_metrics agent cron was the de-facto
+# runner, and when it silently stopped every source went stale until someone
+# collected by hand. This loop invokes autocollect-tick.mjs on an interval; the
+# tick itself no-ops until METRICS_AUTOCOLLECT_UTC_HOUR and at most once per UTC
+# day (stamp file under workspace-sancho/_system/), then runs
+# `collect.js --slug <brand> --all --due` per brand — `--due` keeps Mission
+# Control the owner of *what* is due; this loop only owns *when* to try.
+# Disable with METRICS_AUTOCOLLECT=0.
+METRICS_AUTOCOLLECT_INTERVAL="${METRICS_AUTOCOLLECT_INTERVAL:-900}"
+METRICS_AUTOCOLLECT_LOG="/root/.openclaw/workspace-sancho/_system/metrics-autocollect.log"
+if [ "${METRICS_AUTOCOLLECT:-1}" != "0" ]; then
+  mkdir -p "$(dirname "$METRICS_AUTOCOLLECT_LOG")"
+  echo "[entrypoint] Starting metrics auto-collection loop (every ${METRICS_AUTOCOLLECT_INTERVAL}s)…"
+  (
+    sleep 180  # let MC come up so collect.js --due can consult the schedule API
+    while :; do
+      {
+        MC_WORKSPACE=/root/.openclaw/workspace-sancho \
+          node /root/.openclaw/skills/metrics-collector/scripts/autocollect-tick.mjs 2>&1
+      } >> "$METRICS_AUTOCOLLECT_LOG" 2>&1 || true
+      if [ -f "$METRICS_AUTOCOLLECT_LOG" ] && [ "$(stat -c%s "$METRICS_AUTOCOLLECT_LOG" 2>/dev/null || echo 0)" -gt 5242880 ]; then
+        tail -c 2097152 "$METRICS_AUTOCOLLECT_LOG" > "${METRICS_AUTOCOLLECT_LOG}.tmp" && mv "${METRICS_AUTOCOLLECT_LOG}.tmp" "$METRICS_AUTOCOLLECT_LOG"
+      fi
+      sleep "$METRICS_AUTOCOLLECT_INTERVAL"
+    done
+  ) &
+  METRICS_AUTOCOLLECT_PID=$!
+else
+  echo "[entrypoint] metrics auto-collection disabled (METRICS_AUTOCOLLECT=0)"
+  METRICS_AUTOCOLLECT_PID=""
+fi
+
+# ===========================================================
 # 7b. START NEXT.JS MC (primary frontend on :3000)
 # ===========================================================
 echo "[entrypoint] Starting Next.js Mission Control on :3000..."
