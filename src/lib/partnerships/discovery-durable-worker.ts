@@ -1936,6 +1936,10 @@ function createRuntimeBundle(
     leaseMs: workerLeaseMs(env),
     pollMs: workerPollMs(env),
     maxAttempts: workerMaxAttempts(env),
+    // Sin esto el runtime deriva el deadline del registry (360s por los
+    // handlers legacy aún registrados) e ignora el timeout del contrato.
+    handlerTimeoutMs: resolvePartnershipsDiscoveryRuntimeContract(env)
+      .handlerTimeoutMs,
     maxClaimsPerDrain: DEFAULT_MAX_CLAIMS_PER_DRAIN,
     ...(enforceBootAuthority
       ? {
