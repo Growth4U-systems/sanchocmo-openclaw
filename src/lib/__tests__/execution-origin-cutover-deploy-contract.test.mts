@@ -123,7 +123,13 @@ test("release image contains the same checked CLI used by deploy", () => {
   );
 });
 
-test("managed deploys persist caps, default safe-off, and purge stale rollout scope", () => {
+test("managed deploys persist caps, honor rollout defaults, and purge stale rollout scope", () => {
+  // Staging follows the Environment rollout vars by default (nightly merges
+  // must not silently switch the canary off — SAN-480); prod stays safe-off.
+  const expectedDefault: Record<string, RegExp> = {
+    "deploy-staging.yml": /default: environment/,
+    "deploy-prod.yml": /default: safe-off/,
+  };
   for (const workflowName of ["deploy-staging.yml", "deploy-prod.yml"]) {
     const workflow = fs.readFileSync(
       path.join(root, ".github/workflows", workflowName),
@@ -144,7 +150,7 @@ test("managed deploys persist caps, default safe-off, and purge stale rollout sc
       assert.ok(workflow.includes(key), `${workflowName}: missing ${key}`);
     }
     assert.match(workflow, /execution_rollout_configuration:/);
-    assert.match(workflow, /default: safe-off/);
+    assert.match(workflow, expectedDefault[workflowName]);
     assert.match(workflow, /export PARTNERSHIPS_DISCOVERY_EXECUTION_V2=off/);
     assert.match(workflow, /export CHAT_AGENT_TURN_EXECUTION_V1=off/);
     for (const staleScopeKey of [
