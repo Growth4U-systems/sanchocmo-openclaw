@@ -64,6 +64,52 @@ function safeIsoTimestamp(value: unknown): string | undefined {
   return new Date(epochMs).toISOString();
 }
 
+const PROGRESS_STAGES = new Set(["search", "enrich", "qualify", "assign"]);
+
+function boundedProgressCount(value: unknown): number | null {
+  return typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= 0 &&
+    value <= 10_000
+    ? value
+    : null;
+}
+
+/**
+ * Fail-closed extraction of the short-step checkpoint counters. Anything that
+ * does not match the closed shape exactly is omitted — the badge then falls
+ * back to the plain status label; no other run output ever reaches the client.
+ */
+function sanitizeProgress(
+  output: unknown,
+): ChatExternalExecutionSummary["progress"] {
+  if (!output || typeof output !== "object" || Array.isArray(output)) {
+    return undefined;
+  }
+  const record = output as Record<string, unknown>;
+  if (record.schemaVersion !== 1) return undefined;
+  const stage =
+    typeof record.stage === "string" && PROGRESS_STAGES.has(record.stage)
+      ? (record.stage as NonNullable<
+          ChatExternalExecutionSummary["progress"]
+        >["stage"])
+      : null;
+  const searchedQueries = boundedProgressCount(record.searchedQueries);
+  const poolCount = boundedProgressCount(record.poolCount);
+  const attemptedCount = boundedProgressCount(record.attemptedCount);
+  const candidateCount = boundedProgressCount(record.candidateCount);
+  if (
+    !stage ||
+    searchedQueries === null ||
+    poolCount === null ||
+    attemptedCount === null ||
+    candidateCount === null
+  ) {
+    return undefined;
+  }
+  return { stage, searchedQueries, poolCount, attemptedCount, candidateCount };
+}
+
 function sanitizeActiveExecution(
   run: ExecutionRun,
   tenantKey: string,
@@ -81,6 +127,7 @@ function sanitizeActiveExecution(
   const startedAt = safeIsoTimestamp(run.startedAt);
   const finishedAt = safeIsoTimestamp(run.finishedAt);
   const cancelRequestedAt = safeIsoTimestamp(run.cancelRequestedAt);
+  const progress = sanitizeProgress(run.output);
   return {
     id,
     parentRunId,
@@ -91,6 +138,7 @@ function sanitizeActiveExecution(
     ...(startedAt ? { startedAt } : {}),
     ...(finishedAt ? { finishedAt } : {}),
     ...(cancelRequestedAt ? { cancelRequestedAt } : {}),
+    ...(progress ? { progress } : {}),
   };
 }
 

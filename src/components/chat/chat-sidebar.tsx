@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, CircleEllipsis, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { ChatExternalExecutionSummary } from "@/lib/chat/external-execution-contract";
 import { useChatStore } from "@/stores/chat";
 import { useAppStore } from "@/stores/app";
 import {
@@ -95,6 +96,39 @@ function externalExecutionStatusLabel(
   if (status === "waiting_approval") return "Esperando aprobación";
   if (status === "blocked") return "Bloqueada";
   return "En curso";
+}
+
+const EXTERNAL_OPERATION_LABELS: Record<string, string> = {
+  "partnerships.discovery": "Búsqueda de partners",
+  "partnerships.discovery.setup": "Preparando la búsqueda de partners",
+  "leads.search": "Búsqueda de leads",
+};
+
+/** Human line for the badge: what it is doing right now, with live counters. */
+function externalExecutionActivityLabel(
+  execution: ChatExternalExecutionSummary,
+): string {
+  const name =
+    EXTERNAL_OPERATION_LABELS[execution.operation] ?? execution.operation;
+  const statusLabel = externalExecutionStatusLabel(
+    execution.status,
+    execution.cancelRequestedAt,
+  );
+  const progress =
+    execution.status === "running" && !execution.cancelRequestedAt
+      ? execution.progress
+      : undefined;
+  if (!progress) return `${name} · ${statusLabel}`;
+  if (progress.stage === "search") {
+    return `${name} · buscando perfiles (${progress.poolCount} encontrados)`;
+  }
+  if (progress.stage === "enrich") {
+    return `${name} · evaluando perfiles (${progress.attemptedCount} revisados · ${progress.candidateCount} candidatas)`;
+  }
+  if (progress.stage === "qualify") {
+    return `${name} · puntuando candidatas`;
+  }
+  return `${name} · guardando candidatas en la campaña`;
 }
 
 function executionErrorCopy(category: ErrorDetail["category"]): { title: string; body: string } {
@@ -2089,13 +2123,7 @@ export function ChatSidebar() {
               <div className="mt-0.5 truncate text-[var(--chat-text-faint)]">
                 {activeExecutions
                   .slice(0, 2)
-                  .map(
-                    (execution) =>
-                      `${execution.operation} · ${externalExecutionStatusLabel(
-                        execution.status,
-                        execution.cancelRequestedAt,
-                      )}`,
-                  )
+                  .map((execution) => externalExecutionActivityLabel(execution))
                   .join(" · ")}
                 {activeExecutions.length > 2
                   ? ` · +${activeExecutions.length - 2}`
