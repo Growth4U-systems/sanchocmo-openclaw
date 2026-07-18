@@ -4,6 +4,18 @@ Tooling around the `metric_snapshots` time-series (Métricas v2 · SAN-300). The
 (Neon/Postgres) is the source of truth; these scripts seed it and let analysts
 explore it without touching production.
 
+## Automatic collection (SAN-300)
+
+`docker/entrypoint.sh` runs a background loop that invokes
+`skills/metrics-collector/scripts/autocollect-tick.mjs` every
+`METRICS_AUTOCOLLECT_INTERVAL` seconds (default 900). The tick runs at most
+once per UTC day, from `METRICS_AUTOCOLLECT_UTC_HOUR` (default `6`) onward,
+and executes `collect.js --slug <brand> --all --due` for every brand whose
+`integrations.json` references a collector adapter — the cadence configured in
+Métricas decides *what* is due; the tick only decides *when* to try. State:
+stamp + log under `workspace-sancho/_system/` (`metrics-autocollect.last` /
+`metrics-autocollect.log`). Disable with `METRICS_AUTOCOLLECT=0`.
+
 ## KPI compute runner
 
 ```bash
