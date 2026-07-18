@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.10.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.9.0...v1.10.0) (2026-07-18)
+
+
+### Features
+
+* **chat:** live short-step progress on the active task badge (SAN-480) ([#1374](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1374)) ([03bc6af](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/03bc6af4dba022e8b5c6988a2796a692a0e72252))
+* **metrics:** daily auto-collection runner for due sources (SAN-300) ([#1375](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1375)) ([de7197c](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/de7197c7998743047de6615a39d21035baaf6e84))
+* **partnerships:** Unipile sender account selector in Outreach UI ([#1377](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1377)) ([ad48bca](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/ad48bcad507c6d930a959990f79893d687e10a56))
+
+
+### Bug Fixes
+
+* **chat:** tolerant :::ask parsing, technical-id fold, transport-abort retry (SAN-479) ([#1378](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1378)) ([12ec090](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/12ec090d6507d1e7fe78430bc492c6223a2b9ca4))
+* **partnerships:** honor discovery handler timeout in boot worker (SAN-480) ([#1376](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1376)) ([27841cb](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/27841cbfcdc093c734fbce33fa13db2632d49465))
+* **partnerships:** human chat copy, ask-for-volume, staging keeps rollout flags (SAN-480) ([#1372](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1372)) ([3ad0515](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/3ad05156f31ca00e7363f1afb3cfddd42087bf4a))
+* **partnerships:** influencer-vs-business filter and failed-run chat notice (SAN-480) ([#1379](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1379)) ([344ad0b](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/344ad0b06fead0469b5f1ab22600eb1e6d8a8009))
+
 ## [1.9.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.8.0...v1.9.0) (2026-07-17)
 
 
