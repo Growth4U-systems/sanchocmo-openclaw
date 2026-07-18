@@ -317,3 +317,53 @@ test("an active child after 100 terminal siblings stays visible in one bounded q
     [{ id: "child-100", parentRunId: parent.id }],
   );
 });
+
+test("running child exposes only the closed short-step progress shape", async () => {
+  const parent = parentRun("run-parent-progress", {
+    runtimeDispatchMode: "ledger-v1",
+  });
+  const repository = new OriginRepository([
+    childRun("xrun-progress-valid", "running", {
+      operation: "partnerships.discovery",
+      output: {
+        schemaVersion: 1,
+        stage: "enrich",
+        searchedQueries: 2,
+        poolCount: 18,
+        attemptedCount: 4,
+        candidateCount: 2,
+        qualified: null,
+      },
+    }),
+    childRun("xrun-progress-invalid", "running", {
+      operation: "partnerships.discovery",
+      output: {
+        schemaVersion: 1,
+        stage: "enrich",
+        searchedQueries: 2,
+        poolCount: 999_999,
+        attemptedCount: 4,
+        candidateCount: 2,
+      },
+    }),
+  ]);
+  const projection = await projectActiveExternalExecutions(
+    { tenantKey: "hospital-capilar", parentRuns: [parent] },
+    repository,
+  );
+  const valid = projection.activeExecutions.find(
+    (execution) => execution.id === "xrun-progress-valid",
+  );
+  const invalid = projection.activeExecutions.find(
+    (execution) => execution.id === "xrun-progress-invalid",
+  );
+  assert.deepEqual(valid?.progress, {
+    stage: "enrich",
+    searchedQueries: 2,
+    poolCount: 18,
+    attemptedCount: 4,
+    candidateCount: 2,
+  });
+  assert.equal(invalid?.progress, undefined);
+  assert.doesNotMatch(JSON.stringify(projection), /qualified|secret/);
+});
