@@ -52,6 +52,10 @@ export interface AtomicInstagramProfile {
   category?: string;
   externalUrl?: string;
   email?: string;
+  /** `is_business_account` del proveedor (empresa vs creador, SAN-480). */
+  isBusinessAccount?: boolean;
+  /** `is_professional_account` del proveedor. */
+  isProfessionalAccount?: boolean;
   profileUrl: string;
 }
 
@@ -104,6 +108,10 @@ function compactString(value: unknown, maxLength: number): string | undefined {
   const compact = value.replace(/\s+/g, " ").trim();
   if (!compact) return undefined;
   return compact.slice(0, maxLength);
+}
+
+function strictBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 function finiteNumber(value: unknown): number | undefined {
@@ -476,6 +484,12 @@ export function createScrapeCreatorsAtomicClient(
         500,
       );
       const email = compactString(item.business_email ?? item.email, 320);
+      const isBusinessAccount = strictBoolean(
+        item.is_business_account ?? item.isBusinessAccount,
+      );
+      const isProfessionalAccount = strictBoolean(
+        item.is_professional_account ?? item.isProfessionalAccount,
+      );
       return {
         handle: normalized,
         ...(name ? { name } : {}),
@@ -484,6 +498,10 @@ export function createScrapeCreatorsAtomicClient(
         ...(category ? { category } : {}),
         ...(externalUrl ? { externalUrl } : {}),
         ...(email ? { email } : {}),
+        ...(isBusinessAccount !== undefined ? { isBusinessAccount } : {}),
+        ...(isProfessionalAccount !== undefined
+          ? { isProfessionalAccount }
+          : {}),
         profileUrl: `https://www.instagram.com/${normalized.slice(1)}/`,
       };
     },

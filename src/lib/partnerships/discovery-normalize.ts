@@ -110,6 +110,27 @@ function normalizeSignals(value: unknown): CreatorSignals | undefined {
   return Object.keys(signals).length > 0 ? signals : undefined;
 }
 
+function normalizeAccount(
+  input: Record<string, unknown>,
+): RawDiscoveryCandidate["account"] | undefined {
+  const nested = isRecord(input.account) ? input.account : {};
+  const businessAccount = asBoolean(
+    nested.businessAccount ?? nested.is_business_account ?? input.is_business_account,
+  );
+  const professionalAccount = asBoolean(
+    nested.professionalAccount ??
+      nested.is_professional_account ??
+      input.is_professional_account,
+  );
+  if (businessAccount === undefined && professionalAccount === undefined) {
+    return undefined;
+  }
+  return {
+    ...(businessAccount !== undefined ? { businessAccount } : {}),
+    ...(professionalAccount !== undefined ? { professionalAccount } : {}),
+  };
+}
+
 /** Normaliza un candidato crudo. Devuelve `null` si no es usable (sin handle/red). */
 export function normalizeCandidate(input: unknown): RawDiscoveryCandidate | null {
   if (!isRecord(input)) return null;
@@ -140,6 +161,8 @@ export function normalizeCandidate(input: unknown): RawDiscoveryCandidate | null
   if (customVariables) candidate.customVariables = customVariables;
   const signals = normalizeSignals(input.signals);
   if (signals) candidate.signals = signals;
+  const account = normalizeAccount(input);
+  if (account) candidate.account = account;
   return candidate;
 }
 

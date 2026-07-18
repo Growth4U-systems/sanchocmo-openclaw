@@ -37,6 +37,8 @@ export interface InstagramProfileUser {
   category_name?: string;
   external_url?: string;
   business_email?: string;
+  is_business_account?: boolean;
+  is_professional_account?: boolean;
   edge_followed_by?: { count?: number };
 }
 
@@ -293,6 +295,15 @@ export function computeCandidate(
     ),
   );
 
+  const account = {
+    ...(typeof detail.is_business_account === "boolean"
+      ? { businessAccount: detail.is_business_account }
+      : {}),
+    ...(typeof detail.is_professional_account === "boolean"
+      ? { professionalAccount: detail.is_professional_account }
+      : {}),
+  };
+
   return {
     handle: `@${normalizedUsername}`,
     network: "instagram",
@@ -302,6 +313,7 @@ export function computeCandidate(
     ...(followers !== undefined ? { followers } : {}),
     ...(engagementRatePct !== undefined ? { engagementRatePct } : {}),
     ...(Object.keys(customVariables).length > 0 ? { customVariables } : {}),
+    ...(Object.keys(account).length > 0 ? { account } : {}),
     signals: {
       ...(verticalMatchShare !== undefined ? { verticalMatchShare } : {}),
       adLibraryChecked: false,
