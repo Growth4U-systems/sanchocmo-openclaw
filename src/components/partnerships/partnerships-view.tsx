@@ -50,12 +50,17 @@ import {
   OutreachTabs,
   type OutreachTabKey,
 } from "@/components/outreach/outreach-tabs";
+import type { SenderAccount } from "@/lib/partnerships/sender-accounts";
 import { EncuentraTab } from "./encuentra-tab";
 import { KanbanView } from "./kanban-view";
 import { ListaView } from "./lista-view";
 import { PartnerDrawer } from "./partner-drawer";
 import { InboxTab } from "./inbox-tab";
 import { PlantillasTab } from "./plantillas-tab";
+import {
+  SenderAccountSelect,
+  senderAccountOptionLabel,
+} from "./sender-account-select";
 import { SettingsTab } from "./settings-tab";
 import { ToastViewport, useToast } from "./ui";
 
@@ -224,6 +229,61 @@ export function PartnershipsView() {
         `/api/partnerships/templates?slug=${encodeURIComponent(slug)}`,
       ),
     enabled: !!slug,
+  });
+
+  // ── SAN-480 · Cuenta remitente de Unipile (selector por tenant) ──
+  interface SenderAccountsPayload {
+    configured?: boolean;
+    accounts?: SenderAccount[];
+    selectedAccountId?: string | null;
+  }
+  const senderAccountsKey = ["partnerships", slug, "sender-accounts"] as const;
+  const senderAccountsQuery = useQuery({
+    queryKey: senderAccountsKey,
+    queryFn: () =>
+      fetchJson<SenderAccountsPayload>(
+        `/api/partnerships/sender-accounts?slug=${encodeURIComponent(slug)}`,
+      ),
+    enabled: !!slug,
+  });
+  const senderAccounts = senderAccountsQuery.data?.accounts || [];
+  const selectedSenderAccountId =
+    senderAccountsQuery.data?.selectedAccountId ?? null;
+  const selectedSenderAccount =
+    senderAccounts.find((account) => account.id === selectedSenderAccountId) ||
+    null;
+
+  const senderAccountMutation = useMutation({
+    mutationFn: (senderAccountId: string | null) =>
+      fetchJson<{ ok?: boolean; selectedAccountId?: string | null }>(
+        `/api/partnerships/sender-accounts?slug=${encodeURIComponent(slug)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ senderAccountId }),
+        },
+      ),
+    onMutate: async (senderAccountId) => {
+      await queryClient.cancelQueries({ queryKey: senderAccountsKey });
+      const previous =
+        queryClient.getQueryData<SenderAccountsPayload>(senderAccountsKey);
+      queryClient.setQueryData<SenderAccountsPayload>(
+        senderAccountsKey,
+        (old) => (old ? { ...old, selectedAccountId: senderAccountId } : old),
+      );
+      return { previous };
+    },
+    onError: (error, _senderAccountId, context) => {
+      if (context?.previous)
+        queryClient.setQueryData(senderAccountsKey, context.previous);
+      showToast(
+        `⚠️ No se pudo guardar el remitente: ${error instanceof Error ? error.message : "error"}`,
+        "warn",
+      );
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: senderAccountsKey });
+    },
   });
 
   const campaigns = useMemo(
@@ -542,6 +602,12 @@ export function PartnershipsView() {
             campaignId: lead.campaignId,
           })),
           dryRun: false,
+          // SAN-480: cuenta remitente de Unipile elegida (pass-through a
+          // Yalc). Solo si la cuenta sigue en la lista cargada — así el chip
+          // "Remitente" del gate y el payload siempre cuentan lo mismo.
+          ...(selectedSenderAccount
+            ? { senderAccountId: selectedSenderAccount.id }
+            : {}),
         }),
       });
       const first = payload.gates?.[0];
@@ -1046,6 +1112,17 @@ export function PartnershipsView() {
                     </button>
                   )}
 
+                  {/* SAN-480: desde qué cuenta conectada de Unipile sale el DM */}
+                  <SenderAccountSelect
+                    accounts={senderAccounts}
+                    selectedAccountId={selectedSenderAccountId}
+                    onSelect={(accountId) =>
+                      senderAccountMutation.mutate(accountId)
+                    }
+                    disabled={senderAccountMutation.isPending}
+                    className="ml-1"
+                  />
+
                   <span className="ml-auto text-xs text-muted-foreground">
                     {activeLeadsQuery.isFetching ||
                     discardedLeadsQuery.isFetching
@@ -1161,6 +1238,15 @@ export function PartnershipsView() {
                   <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                     <b>Acción:</b> {contactGate.prompt}
                   </div>
+                  {selectedSenderAccount && (
+                    <div
+                      className="rounded-md border border-border bg-muted/30 px-3 py-1.5"
+                      data-testid="contact-gate-sender"
+                    >
+                      <b>Remitente:</b>{" "}
+                      {senderAccountOptionLabel(selectedSenderAccount)}
+                    </div>
+                  )}
                   {contactGate.dryRun && (
                     <div className="rounded-md border border-border bg-muted/30 px-3 py-1.5">
                       <b>Modo:</b> prueba

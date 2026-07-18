@@ -82,6 +82,12 @@ export interface ContactLeadsInput {
   sequenceName?: string;
   /** dry-run obligatorio salvo `false` explícito (se reenvía a Yalc tal cual). */
   dryRun?: boolean;
+  /**
+   * Cuenta remitente de Unipile elegida en la UI (SAN-480). Contrato hacia
+   * delante: se propaga tal cual a Yalc en el payload de `partner-contact`;
+   * el daemon actual la ignora hasta que implemente la selección de cuenta.
+   */
+  senderAccountId?: string;
 }
 
 /**
@@ -179,6 +185,11 @@ export async function contactPartnerLeads(
           sequenceName: sequenceName || "Secuencia de partners",
           // NUNCA envío real salvo opt-out explícito del caller.
           dryRun: input.dryRun === false ? false : true,
+          // SAN-480: cuenta remitente elegida (Unipile). El daemon actual la
+          // ignora; el contrato queda tendido para cuando la implemente.
+          ...(input.senderAccountId
+            ? { senderAccountId: input.senderAccountId }
+            : {}),
         },
       },
     );
