@@ -216,7 +216,7 @@ test("crash replay publishes one immutable completion in the originating chat", 
   assert.deepEqual(delivery.listDurableChatDeliveries(threadId), [
     {
       role: "workflow",
-      text: "✅ Búsqueda de partners completada: 1 perfiles añadidos (1 aptos · 0 descartados por score · 0 no insertados).",
+      text: "✅ Búsqueda completada: 1 candidata encontrada — 1 lista para outreach. Las tienes en Outreach → Encuentra.",
       agent: "sancho",
       deliveryKey: `execution-terminal:partnerships.discovery:v2:${runId}`,
       ts: delivery.listDurableChatDeliveries(threadId)[0].ts,
