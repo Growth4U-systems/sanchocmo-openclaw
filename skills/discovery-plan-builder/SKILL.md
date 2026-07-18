@@ -133,6 +133,14 @@ candidatos quiere, pregúntaselo con un `:::ask` (opciones típicas: 10 / 25 / 4
 eligió o vio y confirmó en la fila **Volumen** del plan-card — jamás un default
 que descubra después en los resultados.
 
+**El umbral de calidad también se acuerda, no se asume.** El plan lleva
+`disqualifyThreshold` (default 40, escala 0-100): las candidatas por debajo NO
+se pierden — entran en la campaña como *revisables* para aprobación manual.
+Muestra el umbral en la fila **Umbral** del plan-card y, si el usuario habló de
+calidad o de "traer solo los buenos", ofrécelo con un `:::ask` (30 = más
+volumen · 40 = equilibrio · 55 = solo top). El usuario decide el corte; el
+score solo propone.
+
 ### 3. Presenta el PLAN (plan-card)
 
 Cuando tengas los ingredientes, presenta el plan con las filas canónicas del
@@ -146,6 +154,7 @@ plan-card de Encuentra (en este orden):
 | **Tiers** | Micro (25–100K) / Mid (100–250K)... con la regla acordada |
 | **Audiencia** | ≥ N% España (proxy idioma) |
 | **Volumen** | ~N candidatos · scoring completo en 5 componentes |
+| **Umbral** | score mínimo para "lista para outreach" (default 40) · las de abajo quedan revisables |
 | **Señales** | repeat con competidores vía ad-library (marcas concretas) |
 | **Plantillas** | plantillas a instanciar al lanzar (se cambian aquí o luego en la búsqueda) |
 
