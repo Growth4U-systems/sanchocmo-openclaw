@@ -36,6 +36,7 @@ import {
 import { ProgressTimeline } from "./progress-timeline";
 import { ChatMarkdown } from "./chat-markdown";
 import {
+  extractTechnicalIdDetails,
   groupChatMessages,
   stripAskProtocol,
   stripOutboundWorkflowDebugDetails,
@@ -243,6 +244,34 @@ function OpenerNote({ text }: { text: string }) {
         )}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TechnicalIdDetailsNote — leaked run/search identifiers, folded away
+// ---------------------------------------------------------------------------
+
+/**
+ * Presentation safety net (SAN-479): when an agent leaks machine identifiers
+ * into a reply ("Run ID: xrun_…", "Search ID: ds-…"), those lines are pulled
+ * out of the visible message by `extractTechnicalIdDetails` and tucked behind
+ * this discreet fold. The rest of the message renders untouched.
+ */
+function TechnicalIdDetailsNote({ lines }: { lines: string[] }) {
+  return (
+    <details
+      className="mt-1.5 text-[11px] text-[var(--chat-text-faint)]"
+      title="Identificadores internos de la ejecución"
+    >
+      <summary className="cursor-pointer select-none list-none hover:text-[var(--chat-text-muted)]">
+        Detalles técnicos
+      </summary>
+      <div className="mt-1 rounded-md bg-[var(--chat-surface-2)] border border-[var(--chat-border)] px-2 py-1.5 font-mono text-[10.5px] leading-relaxed [overflow-wrap:anywhere]">
+        {lines.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -1908,6 +1937,11 @@ export function ChatSidebar() {
           const isUser = msg.role === "user";
           const badge = !isUser ? agentBadge(msg.agent) : null;
           const askMessageKey = askMessageIdentity(msg);
+          // Bot text passes two scrubbers: legacy workflow debug ids, then the
+          // technical run/search identifiers fold (SAN-479).
+          const botTextExtraction = isUser
+            ? null
+            : extractTechnicalIdDetails(stripOutboundWorkflowDebugDetails(msg.text));
 
           if (!isUser && msg.errorDetail) {
             const copy = executionErrorCopy(msg.errorDetail.category);
@@ -1965,7 +1999,7 @@ export function ChatSidebar() {
                   segments={parseMessageSegments(
                     isUser
                       ? stripAskProtocol(msg.text)
-                      : stripOutboundWorkflowDebugDetails(msg.text)
+                      : botTextExtraction?.text ?? ""
                   )}
                   threadId={activeThreadId ?? ""}
                   messageKey={askMessageKey}
@@ -1977,6 +2011,9 @@ export function ChatSidebar() {
                     sendMutation.mutate({ text, threadId: activeThreadId })
                   }
                 />
+                {botTextExtraction && botTextExtraction.technicalDetails.length > 0 && (
+                  <TechnicalIdDetailsNote lines={botTextExtraction.technicalDetails} />
+                )}
                 {/* Attachments */}
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(msg as any).attachments?.length > 0 && (

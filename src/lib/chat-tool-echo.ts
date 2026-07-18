@@ -180,6 +180,130 @@ export function stripOutboundWorkflowDebugDetails(text: string | undefined | nul
   return withoutDebugDetails === raw ? raw : withoutDebugDetails.trim();
 }
 
+// ---------------------------------------------------------------------------
+// Technical run/search identifiers (SAN-479)
+// ---------------------------------------------------------------------------
+
+/** Machine identifiers that should never headline a chat reply. */
+const TECHNICAL_ID_TOKEN_RE = /\b(?:xrun_[a-z0-9_]+|ds-[a-f0-9]{16,})\b/i;
+const TECHNICAL_ID_TOKEN_RE_G = /\b(?:xrun_[a-z0-9_]+|ds-[a-f0-9]{16,})\b/gi;
+
+/** "Run ID:" / "Search ID:" style labels (tolerates markdown bold/italics). */
+const TECHNICAL_ID_LABEL_RE = /^(?:[*_`]{0,3})(?:run|search)[\s-]*id(?:[*_`]{0,3})\s*[:=]/i;
+
+/** Fast pre-check so unaffected messages pass through untouched. */
+const TECHNICAL_ID_HINT_RE = /xrun_[a-z0-9_]+|ds-[a-f0-9]{16,}|\b(?:run|search)[\s-]*id\s*[:=]/i;
+
+/** Strip a leading list marker ("- ", "* ", "• ", "1. ") from a line/segment. */
+function stripListMarker(unit: string): string {
+  return unit
+    .trim()
+    .replace(/^[-*•‣·]\s+/, "")
+    .replace(/^\d+[.)]\s+/, "")
+    .trim();
+}
+
+/**
+ * True when a line (or inline `•` bullet segment) CONSISTS of a technical
+ * identifier — "Run ID: xrun_…", "Search ID: ds-…", or a bare/`label:` id.
+ * Prose that merely mentions an id somewhere stays intact (conservative).
+ */
+function isTechnicalIdUnit(unit: string): boolean {
+  const t = stripListMarker(unit);
+  if (!t) return false;
+  // Never touch JSON-ish lines (e.g. an `:::ask` payload that happens to
+  // carry an id) — this scrubber is for human-facing bullets only.
+  if (/^[{[]/.test(t) || t.includes('":')) return false;
+  if (TECHNICAL_ID_LABEL_RE.test(t)) return true;
+  // Note: `_` must survive — it is part of xrun_… tokens.
+  const bare = t.replace(/[`"'()[\]*]/g, "").trim();
+  if (!TECHNICAL_ID_TOKEN_RE.test(bare)) return false;
+  // Only collapse when the id IS the content: nothing else around it beyond a
+  // short label ("Búsqueda: ds-…"). Longer remainders are real prose.
+  const rest = bare
+    .replace(TECHNICAL_ID_TOKEN_RE_G, " ")
+    .replace(/[:=·|,;.]+/g, " ")
+    .trim();
+  return rest === "" || rest.split(/\s+/).length <= 3;
+}
+
+export interface TechnicalIdExtraction {
+  /** Message text with the technical-id lines removed. */
+  text: string;
+  /** The removed lines, for a discreet "Detalles técnicos" fold. */
+  technicalDetails: string[];
+}
+
+/**
+ * Presentation safety net for agents that leak run identifiers into replies
+ * ("• Run ID: xrun_mrqhdp0a_617807f4 • Search ID: ds-82934ba0…"): pull those
+ * lines/bullets out of the visible message so the UI can tuck them behind a
+ * collapsed "Detalles técnicos" affordance. Everything else — including prose
+ * that merely mentions an id mid-sentence — is preserved verbatim.
+ */
+export function extractTechnicalIdDetails(
+  text: string | undefined | null,
+): TechnicalIdExtraction {
+  const raw = text || "";
+  if (!raw || !TECHNICAL_ID_HINT_RE.test(raw)) {
+    return { text: raw, technicalDetails: [] };
+  }
+
+  const technicalDetails: string[] = [];
+  const outLines: string[] = [];
+  let inFence = false;
+
+  for (const line of raw.split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      outLines.push(line);
+      continue;
+    }
+    if (inFence) {
+      outLines.push(line);
+      continue;
+    }
+
+    // Single line packing several `•` bullets (the observed Rocinante shape):
+    // filter the technical segments, keep the human ones ("Estado: …").
+    if (line.includes("•")) {
+      const startsWithBullet = /^\s*•/.test(line.trim());
+      const parts = line
+        .split("•")
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const kept: string[] = [];
+      let removed = 0;
+      for (const part of parts) {
+        if (isTechnicalIdUnit(part)) {
+          technicalDetails.push(part);
+          removed += 1;
+        } else {
+          kept.push(part);
+        }
+      }
+      if (removed === 0) {
+        outLines.push(line);
+      } else if (kept.length > 0) {
+        outLines.push((startsWithBullet ? "• " : "") + kept.join(" • "));
+      }
+      continue;
+    }
+
+    if (isTechnicalIdUnit(line)) {
+      technicalDetails.push(stripListMarker(line));
+      continue;
+    }
+    outLines.push(line);
+  }
+
+  if (technicalDetails.length === 0) {
+    return { text: raw, technicalDetails: [] };
+  }
+  const cleaned = outLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { text: cleaned, technicalDetails };
+}
+
 export interface ChatMsgLike {
   role: string;
   text?: string;
