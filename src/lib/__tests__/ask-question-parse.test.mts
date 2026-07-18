@@ -70,6 +70,137 @@ test("parseMessageSegments: can MIX text + single blocks in one message", () => 
   assert.equal(asks[1].question.mode, "single");
 });
 
+test("parseMessageSegments: single classic multiline block surrounded by text (SAN-479)", () => {
+  const text =
+    'Intro.\n\n:::ask\n{"id":"q_a","prompt":"¿A?","mode":"single","options":[{"id":"x","label":"X"},{"id":"other","label":"Otro"}]}\n:::\n\nCierre.';
+  const segs = parseMessageSegments(text);
+  const asks = segs.filter((s) => s.type === "ask");
+  assert.equal(asks.length, 1);
+  assert.equal(asks[0].question.id, "q_a");
+  const joined = segs
+    .filter((s) => s.type === "text")
+    .map((s) => s.content)
+    .join("");
+  assert.equal(joined.includes("Intro."), true);
+  assert.equal(joined.includes("Cierre."), true);
+  assert.equal(joined.includes(":::"), false);
+});
+
+test("parseMessageSegments: SECOND block emitted INLINE no longer leaks as raw JSON (SAN-479 staging bug)", () => {
+  // Real-world shape: the first block follows the protocol, the second one is
+  // emitted inline (`:::ask {json} :::`) inside the prose. The old parser only
+  // matched line-anchored blocks, so the second one rendered as raw JSON text.
+  const text =
+    "¿Arrancamos?\n\n" +
+    ':::ask\n{"id":"q_path","prompt":"¿Cómo lo montamos?","mode":"single","options":[{"id":"a","label":"A"},{"id":"other","label":"Otro"}]}\n:::\n' +
+    'Y también: :::ask {"id":"q_sectors","prompt":"¿En qué sectores?","mode":"multi","options":[{"id":"fintech","label":"Fintech"},{"id":"other","label":"Otro (lo escribo)"}]} ::: seguimos después.';
+  const segs = parseMessageSegments(text);
+  const asks = segs.filter((s) => s.type === "ask");
+  assert.equal(asks.length, 2);
+  assert.equal(asks[0].question.id, "q_path");
+  assert.equal(asks[1].question.id, "q_sectors");
+  assert.equal(asks[1].question.mode, "multi");
+  const joined = segs
+    .filter((s) => s.type === "text")
+    .map((s) => s.content)
+    .join("");
+  assert.equal(joined.includes(":::"), false, "no ask protocol may leak as text");
+  assert.equal(joined.includes("q_sectors"), false, "no raw JSON may leak as text");
+  assert.equal(joined.includes("Y también:"), true);
+  assert.equal(joined.includes("seguimos después."), true);
+});
+
+test("parseMessageSegments: TWO asks interleaved with prose parse in order (SAN-479)", () => {
+  const text =
+    "Antes de nada:\n\n" +
+    ':::ask\n{"id":"q_1","prompt":"¿Uno?","mode":"text"}\n:::\n\n' +
+    "Entre bloques.\n\n" +
+    ':::ask\n{"id":"q_2","prompt":"¿Dos?","mode":"single","options":[{"id":"si","label":"Sí"},{"id":"no","label":"No"}]}\n:::\n\n' +
+    "Al final.";
+  const segs = parseMessageSegments(text);
+  assert.deepEqual(
+    segs.filter((s) => s.type === "ask").map((s) => s.question.id),
+    ["q_1", "q_2"],
+  );
+  const joined = segs
+    .filter((s) => s.type === "text")
+    .map((s) => s.content)
+    .join("");
+  assert.equal(joined.includes("Entre bloques."), true);
+  assert.equal(joined.includes("Al final."), true);
+  assert.equal(joined.includes(":::"), false);
+});
+
+test("parseMessageSegments: multiline (pretty-printed) JSON payload parses (SAN-479)", () => {
+  const text = [
+    ":::ask",
+    "{",
+    '  "id": "q_pretty",',
+    '  "prompt": "¿Multilínea?",',
+    '  "mode": "multi",',
+    '  "options": [',
+    '    { "id": "a", "label": "A" },',
+    '    { "id": "other", "label": "Otro (lo escribo)" }',
+    "  ]",
+    "}",
+    ":::",
+  ].join("\n");
+  const segs = parseMessageSegments(text);
+  const ask = segs.find((s) => s.type === "ask");
+  assert.ok(ask, "expected an ask segment");
+  assert.equal(ask.question.id, "q_pretty");
+  assert.equal(ask.question.options?.length, 2);
+});
+
+test("parseMessageSegments: JSON containing ':::' inside a string still finds the real close (SAN-479)", () => {
+  const text =
+    ':::ask {"id":"q_lit","prompt":"¿Ves el separador ::: ahí?","mode":"single","options":[{"id":"si","label":"Sí"},{"id":"other","label":"Otro"}]} :::';
+  const segs = parseMessageSegments(text);
+  const ask = segs.find((s) => s.type === "ask");
+  assert.ok(ask, "expected an ask segment");
+  assert.equal(ask.question.prompt, "¿Ves el separador ::: ahí?");
+});
+
+test("parseMessageSegments: unterminated inline block stays as text (streaming-safe, SAN-479)", () => {
+  const text = 'Cargando… :::ask {"id":"q_stream","prompt":"¿Todaví';
+  const segs = parseMessageSegments(text);
+  assert.equal(segs.some((s) => s.type === "ask" || s.type === "ask-malformed"), false);
+  assert.equal(segs.map((s) => (s.type === "text" ? s.content : "")).join(""), text);
+});
+
+test("parseMessageSegments: prose mentioning ':::ask' without a JSON payload stays as text (SAN-479)", () => {
+  const text = "Los bloques :::ask se pintan como formularios en el chat.";
+  const segs = parseMessageSegments(text);
+  assert.deepEqual(segs, [{ type: "text", content: text }]);
+});
+
+test("parseMessageSegments: unterminated first block does not swallow the complete second block (SAN-479)", () => {
+  const text =
+    ':::ask {"id":"q_trunc","prompt":"cortado…\n\n' +
+    ':::ask\n{"id":"q_ok","prompt":"¿Bien?","mode":"text"}\n:::';
+  const segs = parseMessageSegments(text);
+  const asks = segs.filter((s) => s.type === "ask");
+  assert.equal(asks.length, 1);
+  assert.equal(asks[0].question.id, "q_ok");
+  const joined = segs
+    .filter((s) => s.type === "text")
+    .map((s) => s.content)
+    .join("");
+  assert.equal(joined.includes("q_trunc"), true, "the truncated block stays visible as text");
+});
+
+test("parseMessageSegments: block inside a code fence is preserved as literal text", () => {
+  const text =
+    'Ejemplo del protocolo:\n```\n:::ask\n{"id":"q_doc","prompt":"Demo","mode":"text"}\n:::\n```\nFin.';
+  const segs = parseMessageSegments(text);
+  assert.equal(segs.some((s) => s.type === "ask"), false);
+  const joined = segs
+    .filter((s) => s.type === "text")
+    .map((s) => s.content)
+    .join("");
+  assert.equal(joined, text);
+});
+
 test("parseMessageSegments: malformed :::ask (unescaped quote in label) → placeholder, NO raw-JSON leak (SAN-238)", () => {
   // The label contains an unescaped `"` which breaks JSON.parse.
   const text =

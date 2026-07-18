@@ -81,6 +81,16 @@ const CLASSIFIERS = [
     hint: "Reintentá. Verificá conectividad del runtime.",
   },
   {
+    // Provider dropped the streaming request mid-response ("Request was
+    // aborted.", GLM/Fireworks ~71s). The mc-chat channel already retried the
+    // dispatch once before surfacing this (SAN-479) — if the user sees it,
+    // the retry failed too.
+    category: "transport_abort",
+    regex: /request was aborted/i,
+    header: "Se cortó la conexión con el modelo",
+    hint: "El proveedor cortó la respuesta a mitad de camino. Se reintentó automáticamente sin éxito — volvé a enviar el mensaje.",
+  },
+  {
     category: "watchdog_abort",
     regex: /^⚠️ 🛠️ .* \(agent\) failed$/,
     header: "Sesión sin progreso (timeout)",

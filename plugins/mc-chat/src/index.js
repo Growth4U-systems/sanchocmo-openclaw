@@ -33,6 +33,10 @@ import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { buildTurnReplyOptions, resolveTurnModelOverride } from "./model-routing.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
+import {
+  shouldRetryTransportAbort,
+  TRANSPORT_ABORT_RETRY_DELAY_MS,
+} from "./transport-abort.js";
 import { applyBrandEnvToProcess, applyRuntimeEnvToProcess } from "./brand-env.js";
 import { mcChatCostGuard } from "./cost-guard.js";
 import { buildAttachmentContextBlock } from "./attachments.js";
@@ -859,9 +863,27 @@ export default defineChannelPluginEntry({
             SANCHO_CHAT_AGENT: requestedAgent || "sancho",
             SANCHO_CHAT_REQUEST: text,
           });
+          // ─── Transport-abort retry (SAN-479) ───
+          // GLM/Fireworks sometimes drops the streaming request mid-turn; the
+          // runtime surfaces a bare "Request was aborted." (reason=none) and
+          // gives up. When that happens BEFORE anything visible reached the
+          // thread, re-dispatch the same message once instead of surfacing the
+          // raw literal. See transport-abort.js for the double-delivery
+          // reasoning (the buffered dispatcher only posts via `deliver`).
+          let transportAbortRetryUsed = false;
+          let pendingTransportAbortRaw = null;
+          const canRetryTransportAbort = (raw) =>
+            shouldRetryTransportAbort({
+              raw,
+              retryUsed: transportAbortRetryUsed,
+              visibleReplyPosted,
+              channelDeliveryObserved: hasRecentVisibleDelivery(slug, threadId, turnStartedAt),
+              guardAbortMessage: mcChatCostGuard.abortMessageFor(guardRunId, sessionKey),
+              signalAborted: abortController.signal.aborted,
+            });
           let dispatchResult;
           try {
-            const dispatchPromise = dispatchInboundMessageWithBufferedDispatcher({
+            const startDispatch = () => dispatchInboundMessageWithBufferedDispatcher({
               ctx: msgCtx,
               cfg,
             // OpenClaw's default sourceReplyDeliveryMode for chatType="channel"
@@ -1237,7 +1259,8 @@ export default defineChannelPluginEntry({
                 }
               },
               onError: (err, info) => {
-                logger.error(`[mc-chat] Dispatch error (${info.kind}): ${err?.message || err}`);
+                const rawError = err?.message || String(err);
+                logger.error(`[mc-chat] Dispatch error (${info.kind}): ${rawError}`);
                 // Record classified errors into the per-agent tracker so a
                 // subsequent watchdog_abort delivery can correlate ("session
                 // timed out — last seen rate_limit"). Best-effort only.
@@ -1247,10 +1270,20 @@ export default defineChannelPluginEntry({
                     ...(readCodexAuthInfo(respondingAgent) || {}),
                     anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
                   };
-                  const { errorDetail } = classifyAndRewriteError(err?.message || String(err), authInfo);
+                  const { errorDetail } = classifyAndRewriteError(rawError, authInfo);
                   if (errorDetail) errorTracker.record(respondingAgent, errorDetail);
                 } catch {}
-                postRuntimeError(err?.message || String(err), requestedAgent || "sancho").catch((postErr) => {
+                // Mid-turn transport abort with nothing visible posted yet:
+                // don't surface the raw literal — defer, and let the turn loop
+                // re-dispatch this same message once (SAN-479). If the retry
+                // fails too, this path runs again with retryUsed=true and the
+                // error surfaces through the transport_abort classifier.
+                if (canRetryTransportAbort(rawError)) {
+                  pendingTransportAbortRaw = rawError;
+                  logger.warn(`[mc-chat] transport abort deferred for one retry thread=${threadId}`);
+                  return;
+                }
+                postRuntimeError(rawError, requestedAgent || "sancho").catch((postErr) => {
                   logger.error(`[mc-chat] Runtime error callback failed: ${postErr?.message || postErr}`);
                 });
               },
@@ -1410,12 +1443,36 @@ export default defineChannelPluginEntry({
               },
             },
             });
+            const dispatchPromise = startDispatch();
             admissionBoundary.resolve({
               ok: true,
               status: 200,
               dispatchInvoked: true,
             });
-            dispatchResult = await dispatchPromise;
+            try {
+              dispatchResult = await dispatchPromise;
+            } catch (dispatchErr) {
+              const raw = dispatchErr?.message || String(dispatchErr);
+              if (!canRetryTransportAbort(raw)) throw dispatchErr;
+              pendingTransportAbortRaw = raw;
+            }
+            if (pendingTransportAbortRaw) {
+              const raw = pendingTransportAbortRaw;
+              pendingTransportAbortRaw = null;
+              if (canRetryTransportAbort(raw)) {
+                // Same message, same session — one retry. Marked BEFORE the
+                // second dispatch so its own failure can never re-enter here.
+                transportAbortRetryUsed = true;
+                logger.warn(`[mc-chat] transport abort ("${raw.slice(0, 120)}"); retrying dispatch once in ${TRANSPORT_ABORT_RETRY_DELAY_MS}ms thread=${threadId}`);
+                await new Promise((resolve) => setTimeout(resolve, TRANSPORT_ABORT_RETRY_DELAY_MS));
+                dispatchResult = await startDispatch();
+              } else {
+                // Conditions changed between the deferred onError and now
+                // (e.g. a partial reply became visible) — surface the original
+                // error instead of risking a double delivery.
+                await postRuntimeError(raw, requestedAgent || "sancho");
+              }
+            }
           } finally {
             restoreChatEnv();
             restoreBrandEnv();

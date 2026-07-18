@@ -441,7 +441,8 @@ export function AskQuestionGroup(props: AskQuestionGroupProps) {
   );
 }
 
-const ASK_REGEX = /^:::ask\s*\n([\s\S]*?)\n:::\s*$/gm;
+const ASK_OPEN = ":::ask";
+const ASK_CLOSE = ":::";
 const CODE_FENCE_REGEX = /```[\s\S]*?```/g;
 
 export type MessageSegment =
@@ -455,15 +456,57 @@ export type MessageSegment =
    */
   | { type: "ask-malformed"; raw: string };
 
+/** Validate a decoded `:::ask` JSON payload into AskQuestionData (or null). */
+function tryParseAskJson(raw: string): AskQuestionData | null {
+  try {
+    const json = JSON.parse(raw);
+    const hasValidOptions =
+      Array.isArray(json?.options) &&
+      json.options.every(
+        (o: unknown) =>
+          typeof o === "object" &&
+          o !== null &&
+          typeof (o as { id?: unknown }).id === "string" &&
+          typeof (o as { label?: unknown }).label === "string",
+      );
+    const baseValid =
+      json && typeof json.id === "string" && typeof json.prompt === "string";
+    // text mode: open input, no options required.
+    // single/multi: options are mandatory (and must be well-formed).
+    // Extra fields (placeholder, optional, recommended) are tolerated.
+    if (baseValid && json.mode === "text") {
+      return json as AskQuestionData;
+    }
+    if (
+      baseValid &&
+      (json.mode === "single" || json.mode === "multi") &&
+      hasValidOptions
+    ) {
+      return json as AskQuestionData;
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
+
 /**
  * Split a message into text and `:::ask` segments.
+ *
+ * Tolerant by design (SAN-479): the protocol asks agents to put each block on
+ * its own lines (`:::ask\n{json}\n:::`), but models routinely emit the second+
+ * block INLINE (`:::ask {json} :::` mid-paragraph). The old regex demanded
+ * newlines around the payload and a line-final close, so those inline blocks
+ * leaked into the chat as raw JSON. This scanner accepts a block wherever it
+ * appears — the only requirements are the `:::ask` marker, a `{` payload and
+ * a closing `:::`.
  *
  * Streaming-safe: an `:::ask` block without a closing `:::` is left as text.
  * Code-fence-safe: `:::ask` blocks INSIDE triple-backtick code fences are
  * preserved as text so the protocol can be shown literally.
  */
 export function parseMessageSegments(text: string): MessageSegment[] {
-  if (!text || !text.includes(":::ask")) {
+  if (!text || !text.includes(ASK_OPEN)) {
     return [{ type: "text", content: text }];
   }
 
@@ -476,66 +519,105 @@ export function parseMessageSegments(text: string): MessageSegment[] {
     codeRanges.some(([cs, ce]) => start >= cs && end <= ce);
 
   const segments: MessageSegment[] = [];
-  let cursor = 0;
+  let cursor = 0; // start of text not yet emitted as a segment
+  let searchFrom = 0;
 
-  for (const match of text.matchAll(ASK_REGEX)) {
-    const start = match.index;
-    if (start === undefined) continue;
-    const end = start + match[0].length;
-    if (isInsideCode(start, end)) continue;
+  /** Absorb spaces plus one trailing newline so removed blocks leave no gap. */
+  const consumeLineBreakAfter = (end: number) => {
+    const tail = /^[ \t]*\r?\n/.exec(text.slice(end));
+    return tail ? end + tail[0].length : end;
+  };
 
-    let parsed: AskQuestionData | null = null;
-    try {
-      const json = JSON.parse(match[1]);
-      const hasValidOptions =
-        Array.isArray(json?.options) &&
-        json.options.every(
-          (o: unknown) =>
-            typeof o === "object" &&
-            o !== null &&
-            typeof (o as { id?: unknown }).id === "string" &&
-            typeof (o as { label?: unknown }).label === "string",
-        );
-      const baseValid =
-        json && typeof json.id === "string" && typeof json.prompt === "string";
-      // text mode: open input, no options required.
-      // single/multi: options are mandatory (and must be well-formed).
-      // Extra fields (placeholder, optional, recommended) are tolerated.
-      if (baseValid && json.mode === "text") {
-        parsed = json as AskQuestionData;
-      } else if (
-        baseValid &&
-        (json.mode === "single" || json.mode === "multi") &&
-        hasValidOptions
-      ) {
-        parsed = json as AskQuestionData;
-      }
-    } catch {
-      // fall through
-    }
+  while (searchFrom < text.length) {
+    const open = text.indexOf(ASK_OPEN, searchFrom);
+    if (open === -1) break;
+    const bodyStart = open + ASK_OPEN.length;
 
-    if (start > cursor) {
-      segments.push({ type: "text", content: text.slice(cursor, start) });
-    }
-
-    if (!parsed) {
-      // Malformed `:::ask` (bad JSON or failed validation — e.g. a label with
-      // an unescaped `"`). Don't leak the raw block as plain text: emit a
-      // placeholder, advance the cursor PAST the block so the JSON is not
-      // re-emitted by the trailing `text.slice(cursor)`, and log for diagnosis.
-      const raw = match[1];
-      // eslint-disable-next-line no-console
-      console.error(
-        "[ask] malformed :::ask block, rendering placeholder:",
-        raw.length > 300 ? `${raw.slice(0, 300)}…` : raw,
-      );
-      segments.push({ type: "ask-malformed", raw });
-      cursor = end;
+    // ":::askXYZ" is some other token, not our marker.
+    const boundary = text[bodyStart];
+    if (boundary !== undefined && /[A-Za-z0-9_-]/.test(boundary)) {
+      searchFrom = bodyStart;
       continue;
     }
 
-    segments.push({ type: "ask", question: parsed });
+    // The payload is always a JSON object. If the next non-whitespace char
+    // isn't `{`, this occurrence is prose mentioning ":::ask" (or a payload
+    // still streaming in) — leave it as text.
+    if (!/^\s*\{/.test(text.slice(bodyStart))) {
+      searchFrom = bodyStart;
+      continue;
+    }
+
+    // Find the closing ":::". The JSON may itself contain ":::" inside a
+    // string, so keep extending to the next candidate until the body parses.
+    const firstClose = text.indexOf(ASK_CLOSE, bodyStart);
+    let close = -1;
+    let parsed: AskQuestionData | null = null;
+    for (
+      let candidate = firstClose;
+      candidate !== -1;
+      candidate = text.indexOf(ASK_CLOSE, candidate + 1)
+    ) {
+      const attempt = tryParseAskJson(text.slice(bodyStart, candidate));
+      if (attempt) {
+        parsed = attempt;
+        close = candidate;
+        break;
+      }
+      // A ":::" that begins the NEXT ask block can never close this one.
+      if (text.startsWith(ASK_OPEN, candidate)) break;
+    }
+
+    if (parsed && close !== -1) {
+      const end = consumeLineBreakAfter(close + ASK_CLOSE.length);
+      if (isInsideCode(open, close + ASK_CLOSE.length)) {
+        // Shown literally inside a code fence — keep as text.
+        searchFrom = close + ASK_CLOSE.length;
+        continue;
+      }
+      if (open > cursor) {
+        segments.push({ type: "text", content: text.slice(cursor, open) });
+      }
+      segments.push({ type: "ask", question: parsed });
+      cursor = end;
+      searchFrom = end;
+      continue;
+    }
+
+    if (firstClose === -1) {
+      // No close anywhere after the payload: still streaming — leave as text.
+      break;
+    }
+
+    if (text.startsWith(ASK_OPEN, firstClose)) {
+      // The first ":::" after this payload opens ANOTHER block, so this one
+      // never closed (streaming/truncation). Leave it as text and scan the
+      // next block normally.
+      searchFrom = firstClose;
+      continue;
+    }
+
+    // A real close exists but the payload failed JSON.parse/validation — e.g.
+    // a label with an unescaped `"`. Don't leak the raw block as plain text:
+    // emit a placeholder, advance the cursor PAST the block so the JSON is not
+    // re-emitted by the trailing `text.slice(cursor)`, and log for diagnosis.
+    const end = consumeLineBreakAfter(firstClose + ASK_CLOSE.length);
+    if (isInsideCode(open, firstClose + ASK_CLOSE.length)) {
+      searchFrom = firstClose + ASK_CLOSE.length;
+      continue;
+    }
+    const raw = text.slice(bodyStart, firstClose).trim();
+    // eslint-disable-next-line no-console
+    console.error(
+      "[ask] malformed :::ask block, rendering placeholder:",
+      raw.length > 300 ? `${raw.slice(0, 300)}…` : raw,
+    );
+    if (open > cursor) {
+      segments.push({ type: "text", content: text.slice(cursor, open) });
+    }
+    segments.push({ type: "ask-malformed", raw });
     cursor = end;
+    searchFrom = end;
   }
 
   if (cursor < text.length) {
