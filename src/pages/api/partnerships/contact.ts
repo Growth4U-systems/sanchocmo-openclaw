@@ -14,7 +14,8 @@ import { yalcGuardErrorResponse } from "@/lib/yalc/campaign-guards";
  *       leads: [{ id, campaignId }],         // o leadIds + campaignId
  *       sequence?:  [{ subject?, body, delayDays? }],  // Inbox: reply única
  *       sequenceName?,
- *       dryRun?: boolean                      // default true (NUNCA real)
+ *       dryRun?: boolean,                     // default true (NUNCA real)
+ *       senderAccountId?: string              // SAN-480: cuenta Unipile remitente
  *     }
  *     → { ok, gates: [{ campaignId, runId, gateId, prompt, queuedLeads,
  *          dryRun, sequenceName, draftCount, previews }] }
@@ -39,6 +40,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     sequence?: unknown;
     sequenceName?: unknown;
     dryRun?: unknown;
+    senderAccountId?: unknown;
   };
 
   let leads: Array<{ id: string; campaignId: string }> = [];
@@ -62,6 +64,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       sequence: Array.isArray(body.sequence) ? (body.sequence as never) : undefined,
       sequenceName: typeof body.sequenceName === "string" ? body.sequenceName : undefined,
       dryRun: body.dryRun === false ? false : true,
+      // SAN-480: cuenta remitente de Unipile elegida en la UI (opcional).
+      senderAccountId:
+        typeof body.senderAccountId === "string" && body.senderAccountId.trim()
+          ? body.senderAccountId.trim()
+          : undefined,
     });
     return res.status(200).json({ ok: true, gates });
   } catch (err) {

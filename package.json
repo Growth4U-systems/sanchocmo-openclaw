@@ -13,6 +13,7 @@
     "test:lib": "tsx --test src/lib/__tests__/*.test.mts src/lib/data/__tests__/*.test.mts src/lib/metrics/__tests__/*.test.mts src/lib/calc-creator-core/__tests__/*.test.mts src/lib/partnerships/__tests__/*.test.mts src/lib/chat/__tests__/*.test.mts src/lib/runtime/__tests__/*.test.mts src/lib/leads/__tests__/*.test.mts",
     "test:calc": "tsx --test src/lib/calc-creator-core/__tests__/*.test.mts",
     "test:partnerships": "tsx --test src/lib/partnerships/__tests__/*.test.mts",
+    "test:partnerships-ui": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/partnerships/__tests__/*.test.tsx",
     "test:metrics": "tsx --tsconfig tsconfig.tsx-tests.json --test src/components/dashboard/metrics-v2/__tests__/*.test.tsx",
     "test:runtime": "tsx --test src/lib/__tests__/runtime-*.test.mts && node --test docker/runtimes/*/bridge.test.mjs",
     "smoke:runtime:external-http": "node scripts/smoke-external-http.mjs",
