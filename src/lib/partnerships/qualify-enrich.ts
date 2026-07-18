@@ -10,17 +10,38 @@
  * La decisión de entrada (Sourced vs Disqualified con nota auto) NO se toma
  * aquí: la aplica Yalc (`resolveEntryStatus`) según el `qualification_mode`
  * de la campaign al insertar — el score es información, no decisión.
+ *
+ * Excepción de producto (SAN-480): buscamos CREADORES. Si el clasificador
+ * influencer-vs-empresa dictamina `business` (clínica/tienda/marca), el score
+ * se fuerza a 0 para que Yalc la descarte bajo cualquier umbral, con la razón
+ * visible en `qualityComponents.accountType` y el tag
+ * `descartada:cuenta-empresa`. Un veredicto `ambiguous` no descarta: marca el
+ * lead con "⚠️ revisar: posible cuenta de negocio".
  */
 
 import { computeQualityScore, DEFAULT_CREATOR_MODEL_CONFIG } from "@/lib/calc-creator-core";
 import type { CreatorModelConfig, QualityScoreResult } from "@/lib/calc-creator-core";
+import {
+  classifyCandidateAccountType,
+  type AccountTypeClassification,
+} from "./account-type-classifier";
 import { candidateToCreatorMetrics } from "./discovery-normalize";
 import type { DiscoveryLeadPayload, LeadQualityComponents, RawDiscoveryCandidate } from "./discovery-types";
+
+/** Razón visible cuando el clasificador descarta una cuenta de empresa. */
+export const BUSINESS_ACCOUNT_DISQUALIFY_NOTE =
+  "Cuenta de empresa (clínica/tienda), no creadora";
+
+/** Nota de revisión cuando el clasificador no puede decidir. */
+export const AMBIGUOUS_ACCOUNT_REVIEW_NOTE =
+  "⚠️ revisar: posible cuenta de negocio";
 
 export interface QualifiedCandidate {
   candidate: RawDiscoveryCandidate;
   score: QualityScoreResult;
   lead: DiscoveryLeadPayload;
+  /** Veredicto influencer-vs-empresa aplicado en qualify (SAN-480). */
+  accountType: AccountTypeClassification;
 }
 
 export interface QualifyOptions {
@@ -52,11 +73,35 @@ export function qualifyCandidate(
   options: QualifyOptions = {},
 ): QualifiedCandidate {
   const config = options.config ?? DEFAULT_CREATOR_MODEL_CONFIG;
-  const score = computeQualityScore(candidateToCreatorMetrics(candidate), config);
+  let score = computeQualityScore(candidateToCreatorMetrics(candidate), config);
+  const accountType = classifyCandidateAccountType(candidate);
 
   const tags = [`network:${candidate.network}`];
   if (options.searchId) tags.unshift(`search:${options.searchId}`);
   if (candidate.profileUrl) tags.push(`profile:${candidate.profileUrl}`);
+
+  const qualityComponents = toQualityComponents(score);
+  if (accountType.verdict === "business") {
+    // Solo buscamos creadores: una cuenta de empresa se descarta SIEMPRE.
+    // El score 0 fuerza el Disqualified de Yalc bajo cualquier umbral
+    // (auto/hybrid) y la razón queda visible junto al desglose del score.
+    score = { ...score, total: 0, band: "low" };
+    qualityComponents.band = "low";
+    qualityComponents.accountType = {
+      verdict: "business",
+      note: BUSINESS_ACCOUNT_DISQUALIFY_NOTE,
+      reasons: accountType.reasons,
+    };
+    tags.push("descartada:cuenta-empresa");
+  } else if (accountType.verdict === "ambiguous") {
+    // No se descarta: se marca para revisión manual sin tocar el score.
+    qualityComponents.accountType = {
+      verdict: "ambiguous",
+      note: AMBIGUOUS_ACCOUNT_REVIEW_NOTE,
+      reasons: accountType.reasons,
+    };
+    tags.push("revisar:posible-negocio");
+  }
 
   const lead: DiscoveryLeadPayload = {
     name: leadName(candidate),
@@ -68,12 +113,12 @@ export function qualifyCandidate(
     ...(candidate.email ? { email: candidate.email } : {}),
     ...(candidate.customVariables ? { customVariables: candidate.customVariables } : {}),
     qualityScore: score.total,
-    qualityComponents: toQualityComponents(score),
+    qualityComponents,
     source: "discovery",
     tags,
   };
 
-  return { candidate, score, lead };
+  return { candidate, score, lead, accountType };
 }
 
 /** Puntúa una lista de candidatos normalizados (orden de entrada preservado). */

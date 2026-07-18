@@ -37,8 +37,22 @@ export {
 } from "./discovery-normalize";
 export type { NormalizeResult } from "./discovery-normalize";
 
-export { qualifyCandidate, qualifyCandidates } from "./qualify-enrich";
+export {
+  AMBIGUOUS_ACCOUNT_REVIEW_NOTE,
+  BUSINESS_ACCOUNT_DISQUALIFY_NOTE,
+  qualifyCandidate,
+  qualifyCandidates,
+} from "./qualify-enrich";
 export type { QualifiedCandidate, QualifyOptions } from "./qualify-enrich";
+export {
+  classifyAccountType,
+  classifyCandidateAccountType,
+} from "./account-type-classifier";
+export type {
+  AccountTypeClassification,
+  AccountTypeProfile,
+  AccountTypeVerdict,
+} from "./account-type-classifier";
 
 export { fixturesEnabledByEnv, loadFixtureCandidates } from "./fixtures";
 

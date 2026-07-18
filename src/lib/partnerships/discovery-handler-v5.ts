@@ -5,7 +5,6 @@ import {
   type DurableExecutionContextV2,
   type DurableExecutionHandlerV2,
   type DurableEffectMap,
-  type DurableJson,
   type DurableJsonBounds,
   type DurableJsonContract,
   type DurableJsonObject,
@@ -343,6 +342,12 @@ function toProfileUser(profile: AtomicInstagramProfile): InstagramProfileUser {
     ...(profile.category ? { category_name: profile.category } : {}),
     ...(profile.externalUrl ? { external_url: profile.externalUrl } : {}),
     ...(profile.email ? { business_email: profile.email } : {}),
+    ...(profile.isBusinessAccount !== undefined
+      ? { is_business_account: profile.isBusinessAccount }
+      : {}),
+    ...(profile.isProfessionalAccount !== undefined
+      ? { is_professional_account: profile.isProfessionalAccount }
+      : {}),
     ...(profile.followers !== undefined
       ? { edge_followed_by: { count: profile.followers } }
       : {}),

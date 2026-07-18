@@ -81,6 +81,15 @@ export interface RawDiscoveryCandidate {
   customVariables?: Record<string, string>;
   /** Señales para el quality score (calc-creator-core `CreatorSignals`). */
   signals?: CreatorSignals;
+  /**
+   * Flags de tipo de cuenta del proveedor (SAN-480): alimentan el clasificador
+   * influencer-vs-empresa en la etapa qualify. Opcionales — ScrapeCreators no
+   * siempre los trae y el clasificador también funciona con bio/categoría.
+   */
+  account?: {
+    businessAccount?: boolean;
+    professionalAccount?: boolean;
+  };
 }
 
 /** Desglose persistido en el Lead de Yalc (`quality_components`). */
@@ -92,6 +101,17 @@ export interface LeadQualityComponents {
   components: QualityComponent[];
   missingSignals: string[];
   engine: "calc-creator-core";
+  /**
+   * Veredicto del clasificador influencer-vs-empresa (SAN-480). Solo se
+   * persiste cuando NO es "creator": `business` fuerza el descarte (score 0)
+   * y `ambiguous` marca el lead para revisión manual. `note` es la razón
+   * visible junto a las descartadas/score notes.
+   */
+  accountType?: {
+    verdict: "business" | "ambiguous";
+    note: string;
+    reasons: string[];
+  };
 }
 
 /** Payload de Lead que el runner envía a Yalc (`POST /campaigns/:id/leads/assign`). */

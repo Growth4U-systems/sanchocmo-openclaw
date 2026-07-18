@@ -1089,10 +1089,20 @@ export function createPartnershipsDiscoveryWorkerHandlerV2(
           saveSearch(reconstructSearchProjection(run, snapshot));
         projectTerminalRun(search, run);
         const current = getSearch(snapshot.slug, snapshot.searchId);
+        const isCurrentRun =
+          !!current &&
+          current.executionControl?.runId === run.id &&
+          searchExecutionGeneration(current) === snapshot.executionGeneration;
+        // A failed/partial run ALWAYS notifies its originating chat (SAN-480):
+        // the currency guard protects superseded product projections, but it
+        // was exactly what swallowed the failure notice when the run/search
+        // bind had not landed yet or the user had already relaunched. The
+        // append is insert-only and idempotent per run id, and the resolved
+        // mc-chat origin still tombstones cancelled parents.
         if (
-          !current ||
-          current.executionControl?.runId !== run.id ||
-          searchExecutionGeneration(current) !== snapshot.executionGeneration
+          !isCurrentRun &&
+          run.status !== "failed" &&
+          run.status !== "partial"
         ) {
           return;
         }
@@ -1143,10 +1153,20 @@ export function createPartnershipsDiscoveryWorkerHandlerV5(
         saveSearch(reconstructSearchProjection(run, snapshot));
       projectTerminalRun(search, run);
       const current = getSearch(snapshot.slug, snapshot.searchId);
+      const isCurrentRun =
+        !!current &&
+        current.executionControl?.runId === run.id &&
+        searchExecutionGeneration(current) === snapshot.executionGeneration;
+      // A failed/partial run ALWAYS notifies its originating chat (SAN-480):
+      // the currency guard protects superseded product projections, but it
+      // was exactly what swallowed the failure notice when the run/search
+      // bind had not landed yet or the user had already relaunched. The
+      // append is insert-only and idempotent per run id, and the resolved
+      // mc-chat origin still tombstones cancelled parents.
       if (
-        !current ||
-        current.executionControl?.runId !== run.id ||
-        searchExecutionGeneration(current) !== snapshot.executionGeneration
+        !isCurrentRun &&
+        run.status !== "failed" &&
+        run.status !== "partial"
       ) {
         return;
       }

@@ -22,6 +22,38 @@ function statsFromRun(run: ExecutionRun): PartnershipsDiscoveryStatsV2 | null {
     : null;
 }
 
+function errorCodeFromRun(run: ExecutionRun): string | null {
+  if (!run.output || typeof run.output !== "object") return null;
+  const errorCode = (run.output as { errorCode?: unknown }).errorCode;
+  return typeof errorCode === "string" && errorCode ? errorCode : null;
+}
+
+/** Causa amigable por código de error terminal (es-ES, sin jerga interna). */
+function friendlyFailureCause(errorCode: string | null): string | null {
+  if (!errorCode) return null;
+  if (errorCode === "durable_execution_deadline_exceeded") {
+    return "la búsqueda tardó más del límite de tiempo permitido y se detuvo";
+  }
+  if (errorCode.includes("no_candidates")) {
+    return "no aparecieron candidatas que cumplan el plan";
+  }
+  if (
+    errorCode.includes("rate_limited") ||
+    errorCode.includes("provider_error") ||
+    errorCode.includes("timeout") ||
+    errorCode.includes("network_error")
+  ) {
+    return "el proveedor de scraping falló repetidamente";
+  }
+  if (errorCode.includes("payment_required")) {
+    return "el proveedor de scraping se quedó sin créditos";
+  }
+  if (errorCode.includes("unauthorized")) {
+    return "el proveedor de scraping rechazó las credenciales";
+  }
+  return null;
+}
+
 export function formatPartnershipsDiscoveryChatCompletion(
   run: ExecutionRun,
 ): string {
@@ -57,7 +89,17 @@ export function formatPartnershipsDiscoveryChatCompletion(
   if (run.status === "partial") {
     return "La búsqueda de partners terminó parcialmente. El Ledger conserva el diagnóstico y no se publicaron resultados incompletos.";
   }
-  return "No se pudo completar la búsqueda de partners. La ejecución quedó registrada para diagnóstico.";
+  const cause = friendlyFailureCause(errorCodeFromRun(run));
+  if (cause) {
+    return (
+      `❌ La búsqueda de partners no se completó: ${cause}. ` +
+      `No se publicaron resultados; puedes relanzarla desde Outreach → Encuentra.`
+    );
+  }
+  return (
+    "❌ La búsqueda de partners no se completó y no se publicaron resultados. " +
+    "Puedes relanzarla desde Outreach → Encuentra; el detalle quedó registrado para diagnóstico."
+  );
 }
 
 /** Terminal delivery is insert-only and therefore safe after projection crash. */
