@@ -124,11 +124,13 @@ test("release image contains the same checked CLI used by deploy", () => {
 });
 
 test("managed deploys persist caps, honor rollout defaults, and purge stale rollout scope", () => {
-  // Staging follows the Environment rollout vars by default (nightly merges
-  // must not silently switch the canary off — SAN-480); prod stays safe-off.
+  // Both deploys follow the Environment rollout vars by default (SAN-480):
+  // a routine dispatch must not silently switch the validated rail off — the
+  // 2026-07-20 prod deploy did exactly that. safe-off stays as the explicit
+  // kill switch a human selects on dispatch.
   const expectedDefault: Record<string, RegExp> = {
     "deploy-staging.yml": /default: environment/,
-    "deploy-prod.yml": /default: safe-off/,
+    "deploy-prod.yml": /default: environment/,
   };
   for (const workflowName of ["deploy-staging.yml", "deploy-prod.yml"]) {
     const workflow = fs.readFileSync(

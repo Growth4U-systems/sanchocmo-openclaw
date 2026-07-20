@@ -22,10 +22,10 @@ on:
         required: false
         default: ""
       execution_rollout_configuration:
-        description: "Execution rollout on deploy: safe-off ignores stale Environment rollout vars; environment applies them deliberately"
+        description: "Execution rollout on deploy: environment (default) applies the production Environment rollout vars; safe-off is the explicit kill switch that forces every durable rail off"
         type: choice
         required: true
-        default: safe-off
+        default: environment
         options:
           - safe-off
           - environment
