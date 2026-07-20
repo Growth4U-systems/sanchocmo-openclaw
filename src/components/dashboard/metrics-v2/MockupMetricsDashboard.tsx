@@ -1480,9 +1480,11 @@ function SurfaceGrid({
 /**
  * Motor de ventas (SAN-326): one funnel, people-numbers from GHL only, split by
  * the contact's acquisition channel. Stages are rows; channel buckets are
- * columns. Each stage reads a GHL surface-detail metric: the undimensioned
- * rollup carries the honest total (a real 0 stays 0), the `{channel}` rows are
- * grouped into buckets. A stage whose metric was never collected shows "—".
+ * columns. Each stage reads a GHL surface-detail metric: the `{channel}` rows
+ * are grouped into buckets and, when any exist, their sum IS the stage total —
+ * the matrix must always be self-consistent with its visible cells. The
+ * undimensioned rollup is the fallback total only when no channel rows exist
+ * (a real 0 stays 0). A stage whose metric was never collected shows "—".
  */
 const SALES_ENGINE_STAGES: Array<{
   key: string;
@@ -1536,10 +1538,13 @@ export function buildSalesEngineMatrix(
       const bucket = mapChannelToBucket(row.dimensions?.channel ?? "");
       bucketTotals.set(bucket, (bucketTotals.get(bucket) ?? 0) + row.value);
     }
-    const total = totalRow
-      ? totalRow.value
-      : present
-        ? channelRows.reduce((sum, row) => sum + row.value, 0)
+    // TOTAL must never contradict the visible bucket cells: when channel rows
+    // exist their sum is the total. The undimensioned rollup remains the honest
+    // fallback (including real zeros) only when no channel split was stored.
+    const total = channelRows.length
+      ? channelRows.reduce((sum, row) => sum + row.value, 0)
+      : totalRow
+        ? totalRow.value
         : null;
     return {
       key: spec.key,

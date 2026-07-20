@@ -327,6 +327,31 @@ test("Motor de ventas agrupa canales GHL en buckets y distingue ausencia de cero
   assert.doesNotMatch(markup, /Proveedor · canal/);
 });
 
+test("Motor de ventas: el total nunca contradice las celdas visibles (SAN-326)", () => {
+  // Réplica del bug de staging: rollup sin dimensiones desincronizado (7)
+  // frente a filas por canal que suman 43 → el total ES la suma de las celdas.
+  const model = buildSalesEngineMatrix(salesEngineDetail([
+    { metric: "newContacts", value: 7 },
+    { metric: "newContacts", value: 35, dimensions: { channel: "Explee" } },
+    { metric: "newContacts", value: 1, dimensions: { channel: "Facebook" } },
+    { metric: "newContacts", value: 2, dimensions: { channel: "GROWTH4U |  Llamada Estratégica" } },
+    { metric: "newContacts", value: 1, dimensions: { channel: "Growth4U | Demo Sancho" } },
+    { metric: "newContacts", value: 1, dimensions: { channel: "Growth4U | Reunión virtual" } },
+    { metric: "newContacts", value: 3, dimensions: { channel: "Trust Score Analyzer" } },
+    // Solo rollup, sin split por canal → el rollup sigue siendo el total.
+    { metric: "appointmentsByChannel", value: 5 },
+  ]));
+  const stage = (key: string) => model.stages.find((item) => item.key === key);
+  const leads = stage("leads");
+  assert.ok(leads);
+  assert.equal(leads.total, 43);
+  assert.equal(
+    leads.cells.reduce((sum, cell) => sum + (cell.value ?? 0), 0),
+    leads.total,
+  );
+  assert.equal(stage("reuniones")?.total, 5);
+});
+
 test("Motor de ventas: la ventana del rango termina HOY (parcial), no ayer", () => {
   const now = new Date("2026-07-20T15:30:00.000Z");
   assert.deepEqual(salesEngineWindow("30d", now), { from: "2026-06-20", to: "2026-07-20" });

@@ -931,6 +931,84 @@ test("complete-empty scope is observed coverage while partial scope remains fail
   assert.equal(partialCoverage?.ratio, 0);
 });
 
+test("a scope-evidence sentinel never evicts the real undimensioned rollup (SAN-326)", () => {
+  // Staging reproduction: the GHL run writes the undimensioned newContacts
+  // rollup, the channel rows AND a complete scope sentinel with identical
+  // collectedAt/updatedAt. The sentinel's metadata-only dimensions collapse to
+  // the same logical identity ("") as the rollup; before the fix the dedupe id
+  // tie-break let the value-less sentinel evict the rollup, so the total
+  // dropped today's 36 while the channel rows kept counting 35+1.
+  const runAt = "2026-07-20T14:20:18.071Z";
+  const savedAt = "2026-07-20T14:20:24.978Z";
+  const ghlRow = (overrides: Partial<DetailRow>): DetailRow => row({
+    source: "ghl",
+    metric: "newContacts",
+    date: "2026-07-20",
+    dimsKey: "",
+    dimensions: null,
+    collectedAt: runAt,
+    updatedAt: savedAt,
+    ...overrides,
+  });
+  const detail = buildMetricSurfaceDetail(
+    "pipeline",
+    { from: "2026-06-20", to: "2026-07-20" },
+    [
+      // Legacy collection day without a sentinel.
+      ghlRow({
+        id: "ms_legacy",
+        date: "2026-06-22",
+        value: 4,
+        collectedAt: "2026-06-23T20:03:18.357Z",
+        updatedAt: "2026-06-23T20:03:21.864Z",
+      }),
+      ghlRow({ id: "ms_2020f702ddc44f72b9795464", value: 36 }),
+      ghlRow({
+        id: "ms_45500d96cec2bdc1980726b3",
+        value: 35,
+        dimsKey: '[["channel","Explee"]]',
+        dimensions: { channel: "Explee" },
+      }),
+      // Sentinel id sorts greater than the rollup id → wins the old tie-break.
+      ghlRow({
+        id: "ms_5a09ddbd3ca2ed6e0be02371",
+        value: null,
+        dimsKey: "__scope_evidence__",
+        dimensions: { __scopeEvidence: "complete" },
+      }),
+    ],
+    { asOf: "2026-07-20" },
+  );
+  const metrics = detail.sources.find((source) => source.source === "ghl")?.metrics ?? [];
+  const rollup = metrics.find((metric) =>
+    metric.metric === "newContacts" && metric.dimensions === null);
+  assert.equal(rollup?.value, 40, "undimensioned rollup must keep today's 36 (4 + 36)");
+  assert.equal(
+    metrics.find((metric) => metric.dimensions?.channel === "Explee")?.value,
+    35,
+  );
+
+  // Reverse eviction: when the value row's id wins the tie-break instead, the
+  // partial sentinel must still survive as failed-coverage evidence.
+  const reverse = buildMetricSurfaceDetail(
+    "pipeline",
+    { from: "2026-07-19", to: "2026-07-19" },
+    [
+      ghlRow({
+        id: "ms_aaa_sentinel",
+        date: "2026-07-19",
+        value: null,
+        dimsKey: "__scope_evidence__",
+        dimensions: { __scopeEvidence: "partial", __quality: "partial" },
+      }),
+      ghlRow({ id: "ms_zzz_rollup", date: "2026-07-19", value: 0 }),
+    ],
+    { asOf: "2026-07-20" },
+  );
+  const coverage = reverse.sources.find((source) => source.source === "ghl")?.coverage;
+  assert.equal(coverage?.failedDates.includes("2026-07-19"), true);
+});
+
 test("PageSpeed weekly coverage expects only weekly provider days", () => {
   const expectedDates = ["2026-07-05", "2026-07-12", "2026-07-19", "2026-07-26"];
   const detail = buildMetricSurfaceDetail(

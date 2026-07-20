@@ -15,7 +15,10 @@ import {
   metricSnapshots,
   metricSourceRuns,
 } from "@/db/schema";
-import { ensureMetricsStorage } from "@/lib/data/metrics-snapshots";
+import {
+  ensureMetricsStorage,
+  METRIC_SCOPE_EVIDENCE_DIMS_KEY,
+} from "@/lib/data/metrics-snapshots";
 import {
   aggFor,
   latestMetricNamesForSources,
@@ -401,7 +404,14 @@ function prepareSnapshotRows(
       && row.date <= asOf;
     if (!insideFlowRange && !isLatestObservation) continue;
     const display = logicalDimensions(row.dimensions);
-    const identityKey = dimensionIdentityKey(source, row.metric, display);
+    // Scope-evidence sentinels carry only metadata dimensions, so their logical
+    // identity would collapse to "" — the same key as the real undimensioned
+    // rollup of that metric/day. Deduping them together lets the value-less
+    // sentinel evict the genuine rollup (or vice versa, losing coverage
+    // evidence) on an id tie-break (SAN-326). Keep them in their own identity.
+    const identityKey = metricScopeEvidenceStatus(row.dimensions) != null
+      ? METRIC_SCOPE_EVIDENCE_DIMS_KEY
+      : dimensionIdentityKey(source, row.metric, display);
     const key = snapshotEvidenceKey(source, row.date, row.metric, identityKey);
     const candidate = {
       row,
