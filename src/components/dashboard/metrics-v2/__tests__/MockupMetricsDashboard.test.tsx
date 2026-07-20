@@ -13,8 +13,10 @@ import {
   DashboardDataStateBanner,
   buildChannelRows,
   buildFunnelModel,
+  buildSalesEngineConversion,
   buildSalesEngineMatrix,
   ChannelMatrix,
+  salesEngineWindow,
   CustomMetricPanel,
   deltaTone,
   displayKpiValue,
@@ -323,6 +325,70 @@ test("Motor de ventas agrupa canales GHL en buckets y distingue ausencia de cero
   assert.match(markup, /SIN DATO/);
   assert.match(markup, /origen del contacto/);
   assert.doesNotMatch(markup, /Proveedor · canal/);
+});
+
+test("Motor de ventas: la ventana del rango termina HOY (parcial), no ayer", () => {
+  const now = new Date("2026-07-20T15:30:00.000Z");
+  assert.deepEqual(salesEngineWindow("30d", now), { from: "2026-06-20", to: "2026-07-20" });
+  assert.deepEqual(salesEngineWindow("7d", now), { from: "2026-07-13", to: "2026-07-20" });
+  assert.deepEqual(salesEngineWindow("1d", now), { from: "2026-07-19", to: "2026-07-20" });
+});
+
+test("Conversión del período: tasas solo con base real; sin base → — con aviso", () => {
+  const conversion = buildSalesEngineConversion(buildSalesEngineMatrix(salesEngineDetail([
+    { metric: "newContacts", value: 10 },
+    { metric: "appointmentsByChannel", value: 4 },
+    { metric: "opportunitiesByChannel", value: 2 },
+    { metric: "wonByChannel", value: 1, dimensions: { channel: "Explee AutoGTM" } },
+    { metric: "wonOpportunities", value: 1 },
+    { metric: "wonValue", value: 5000 },
+  ])));
+  assert.equal(conversion.available, true);
+  const step = (key: string) => {
+    const found = conversion.steps.find((item) => item.key === key);
+    assert.ok(found, key);
+    return found;
+  };
+  assert.equal(step("leads-reuniones").value, 0.4);
+  assert.equal(step("reuniones-oportunidades").value, 0.5);
+  assert.equal(step("oportunidades-ganadas").value, 0.5);
+  assert.equal(step("leads-reuniones").hint, null);
+  assert.match(conversion.wonValueDisplay, /5\.?000/u);
+
+  // Denominador 0 (reuniones recolectadas en 0) y numerador ausente
+  // (oportunidades sin recolectar) → nunca una tasa fabricada.
+  const gapped = buildSalesEngineConversion(buildSalesEngineMatrix(salesEngineDetail([
+    { metric: "newContacts", value: 10 },
+    { metric: "appointmentsByChannel", value: 0 },
+  ])));
+  const gappedStep = (key: string) => gapped.steps.find((item) => item.key === key);
+  assert.equal(gappedStep("leads-reuniones")?.value, 0);
+  assert.equal(gappedStep("reuniones-oportunidades")?.value, null);
+  assert.equal(gappedStep("reuniones-oportunidades")?.display, "—");
+  assert.equal(gappedStep("reuniones-oportunidades")?.hint, "sin base");
+  assert.equal(gappedStep("oportunidades-ganadas")?.value, null);
+  assert.equal(gapped.wonValueDisplay, "—");
+});
+
+test("Motor de ventas: celdas con datos abren drill-down; ceros y ausencias no", () => {
+  const model = buildSalesEngineMatrix(salesEngineDetail([
+    { metric: "newContacts", value: 5 },
+    { metric: "newContacts", value: 5, dimensions: { channel: "Explee AutoGTM" } },
+    { metric: "appointmentsByChannel", value: 0 },
+  ]));
+  const withDrill = renderToStaticMarkup(createElement(ChannelMatrix, {
+    model,
+    drilldown: { slug: "acme", from: "2026-06-20", to: "2026-07-20" },
+  }));
+  // Solo celdas con valor > 0 son botones (Leads: bucket email + Total).
+  assert.equal(withDrill.match(/m-mcell-btn/g)?.length, 2);
+  assert.match(withDrill, /Conversión del período/);
+  assert.match(withDrill, /sin base/);
+  assert.match(withDrill, /Toca una celda con datos/);
+
+  // Sin contexto de drill-down (tests/consumidores legacy) la matriz es estática.
+  const withoutDrill = renderToStaticMarkup(createElement(ChannelMatrix, { model }));
+  assert.doesNotMatch(withoutDrill, /m-mcell-btn/);
 });
 
 test("Motor de ventas sin datos GHL muestra vacío honesto, no una matriz de ceros", () => {

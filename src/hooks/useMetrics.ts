@@ -365,6 +365,114 @@ export function useSurfaceDetail(
   });
 }
 
+/**
+ * Provider-native breakdowns for an explicit calendar window (SAN-326).
+ * Unlike `useSurfaceDetail`, the caller controls from/to — the sales-engine
+ * matrix uses it to include today ("hasta ahora") while every preset-range
+ * read keeps its complete-days behavior.
+ */
+export function useSurfaceDetailWindow(
+  slug: string | null,
+  surface: SurfaceKey | null,
+  window: { from: string; to: string } | null,
+) {
+  return useQuery<SurfaceDetailResult>({
+    queryKey: ["metrics-surface-detail-window", slug, surface, window?.from, window?.to],
+    queryFn: async () => {
+      if (!slug || !surface || !window) {
+        throw new Error("Surface detail window requires slug, surface and window");
+      }
+      const params = new URLSearchParams({
+        view: "surface-detail",
+        slug,
+        surface,
+        from: window.from,
+        to: window.to,
+      });
+      const res = await fetch(`/api/metrics/timeseries?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch surface detail");
+      return res.json();
+    },
+    enabled: !!slug && !!surface && !!window,
+    staleTime: 60_000,
+  });
+}
+
+// ── Sales-engine drill-down (SAN-326) ────────────────────────────────────────
+
+export type SalesEngineLeadsStage = "leads" | "meetings" | "opportunities" | "won";
+
+export interface SalesEngineLeadRow {
+  name: string;
+  email: string;
+  companyName: string;
+  source: string;
+  date: string;
+  status?: string;
+  pipelineStage?: string;
+  monetaryValue?: number;
+}
+
+export interface SalesEngineLeadsResponse {
+  configured: boolean;
+  slug: string;
+  stage: SalesEngineLeadsStage;
+  bucket: string | null;
+  from: string | null;
+  to: string | null;
+  rows: SalesEngineLeadRow[];
+  total: number;
+  truncated: boolean;
+  source: "ghl-live";
+}
+
+export interface SalesEngineLeadsParams {
+  stage: SalesEngineLeadsStage;
+  /** null → Total column (no channel filter). */
+  bucket: string | null;
+  from: string;
+  to: string;
+}
+
+/** Live GHL list behind one "Motor de ventas" matrix cell. Enabled only while
+ * a drill-down is open; the API queries GoHighLevel directly. */
+export function useSalesEngineLeads(
+  slug: string | null,
+  params: SalesEngineLeadsParams | null,
+) {
+  return useQuery<SalesEngineLeadsResponse>({
+    queryKey: [
+      "sales-engine-leads",
+      slug,
+      params?.stage,
+      params?.bucket ?? "total",
+      params?.from,
+      params?.to,
+    ],
+    queryFn: async () => {
+      if (!slug || !params) throw new Error("Sales engine leads require slug and params");
+      const search = new URLSearchParams({ slug, stage: params.stage });
+      if (params.bucket) search.set("bucket", params.bucket);
+      if (params.stage !== "won") {
+        search.set("from", params.from);
+        search.set("to", params.to);
+      }
+      const res = await fetch(`/api/metrics/sales-engine-leads?${search.toString()}`);
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          (payload as { error?: string } | null)?.error
+          || "No se pudo consultar GoHighLevel",
+        );
+      }
+      return payload as SalesEngineLeadsResponse;
+    },
+    enabled: !!slug && !!params,
+    retry: false,
+    staleTime: 60_000,
+  });
+}
+
 /** Persisted semantic KPI read model. The API may run a read-through recompute when snapshots changed. */
 export function useMetricKpis(slug: string | null, range: MetricKpiRange) {
   return useQuery<MetricKpiResult>({

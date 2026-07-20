@@ -6,6 +6,7 @@ import {
   useMetricsHealth,
   usePartnershipReport,
   useSurfaceDetail,
+  useSurfaceDetailWindow,
   useSurfaceSummary,
   type DashboardVersionMeta,
   type MetricKpiQualityStatus,
@@ -50,8 +51,15 @@ import {
   SocialSurfacePanel,
   WebSurfacePanel,
 } from "./SurfaceDetailPanels";
+import {
+  drilldownStageForMatrixRow,
+  SalesEngineDrilldownPanel,
+  type SalesEngineCellSelection,
+} from "./SalesEngineDrilldown";
 
 type DateRange = "1d" | "7d" | "30d" | "90d";
+
+const DAY_MS = 86_400_000;
 
 const DATE_RANGES: Array<{ key: DateRange; label: string }> = [
   { key: "1d", label: "Ayer" },
@@ -227,11 +235,19 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
   const funnel = useMemo(() => buildFunnelModel(kpiData), [kpiData]);
   const channelRows = useMemo(() => buildChannelRows(kpiData?.stageRollups, funnel.stages), [funnel.stages, kpiData?.stageRollups]);
   // Motor de ventas (SAN-326): people-numbers come only from GHL, split by the
-  // contact's acquisition channel. Reuses the pipeline surface-detail read.
-  const pipelineDetail = useSurfaceDetail(slug, "pipeline", range);
+  // contact's acquisition channel. Reuses the pipeline surface-detail read but
+  // over an explicit window whose `to` is TODAY: the CRM funnel is expected to
+  // be current, so leads that entered GHL today must show up today. Every other
+  // surface/panel keeps its complete-days preset behavior.
+  const salesEngineRange = useMemo(() => salesEngineWindow(range), [range]);
+  const pipelineDetail = useSurfaceDetailWindow(slug, "pipeline", salesEngineRange);
   const salesEngine = useMemo(
     () => buildSalesEngineMatrix(pipelineDetail.data),
     [pipelineDetail.data],
+  );
+  const salesEngineDrilldown = useMemo(
+    () => ({ slug, from: salesEngineRange.from, to: salesEngineRange.to }),
+    [slug, salesEngineRange.from, salesEngineRange.to],
   );
 
   function selectTab(next: MetricDashboardTab) {
@@ -342,6 +358,7 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
                 salesEngine={salesEngine}
                 salesEngineLoading={pipelineDetail.isLoading}
                 salesEngineError={pipelineDetail.isError}
+                salesEngineDrilldown={salesEngineDrilldown}
                 surfaceCards={surfaceCards}
                 openSurface={openSurface}
               />
@@ -356,6 +373,7 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
                 salesEngine={salesEngine}
                 salesEngineLoading={pipelineDetail.isLoading}
                 salesEngineError={pipelineDetail.isError}
+                salesEngineDrilldown={salesEngineDrilldown}
               />
             )}
             {activeTab === "conversion" && (
@@ -600,6 +618,7 @@ function OverviewView({
   salesEngine,
   salesEngineLoading,
   salesEngineError,
+  salesEngineDrilldown,
   surfaceCards,
   openSurface,
 }: {
@@ -609,6 +628,7 @@ function OverviewView({
   salesEngine: SalesEngineMatrixModel;
   salesEngineLoading?: boolean;
   salesEngineError?: boolean;
+  salesEngineDrilldown?: SalesEngineDrilldownContext;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
 }) {
@@ -667,8 +687,8 @@ function OverviewView({
       <SectionTitle icon="🪜" title="Volúmenes por etapa y proveedor" subtitle="observaciones separadas; no son un embudo deduplicado" />
       <UnifiedFunnel funnel={funnel} />
 
-      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto" />
-      <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} />
+      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto · incluye hoy (parcial)" />
+      <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} drilldown={salesEngineDrilldown} />
 
       <SectionTitle icon="🗂️" title="Salud de las superficies" subtitle="cada tarjeta abre su detalle" />
       <SurfaceGrid cards={surfaceCards} onOpen={openSurface} />
@@ -700,12 +720,14 @@ function ChannelsView({
   salesEngine,
   salesEngineLoading,
   salesEngineError,
+  salesEngineDrilldown,
 }: {
   funnel: ReturnType<typeof buildFunnelModel>;
   rows: ChannelMatrixRow[];
   salesEngine: SalesEngineMatrixModel;
   salesEngineLoading?: boolean;
   salesEngineError?: boolean;
+  salesEngineDrilldown?: SalesEngineDrilldownContext;
 }) {
   return (
     <div>
@@ -719,8 +741,8 @@ function ChannelsView({
 
       <CompactFunnel stages={funnel.stages} />
 
-      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto" />
-      <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} />
+      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto · incluye hoy (parcial)" />
+      <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} drilldown={salesEngineDrilldown} />
 
       <SectionTitle icon="🧾" title="Inventario de observaciones" subtitle="sin ranking ni porcentaje global entre universos solapados" />
       <ContributionTable rows={rows} />
@@ -1547,15 +1569,121 @@ function salesEngineCellValue(stage: SalesEngineStageModel, value: number | null
   return stage.currency ? formatCurrencyEur(value) : formatCompact(value);
 }
 
+/**
+ * Calendar window of the sales-engine matrix (SAN-326 drill-down): same start
+ * as the preset ranges (which end on the last complete day) but extended
+ * through TODAY, because the CRM funnel is expected to be current. The partial
+ * day is declared in the section subtitle instead of excluded.
+ */
+export function salesEngineWindow(
+  range: DateRange,
+  now: Date = new Date(),
+): { from: string; to: string } {
+  const days = { "1d": 1, "7d": 7, "30d": 30, "90d": 90 }[range];
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const iso = (timestamp: number) => new Date(timestamp).toISOString().slice(0, 10);
+  return { from: iso(today - days * DAY_MS), to: iso(today) };
+}
+
+/** Context the matrix needs to open live GHL drill-downs. */
+export interface SalesEngineDrilldownContext {
+  slug: string;
+  from: string;
+  to: string;
+}
+
+export interface SalesEngineConversionStep {
+  key: string;
+  label: string;
+  /** Fraction (0.25 = 25 %); null when either side has no honest base. */
+  value: number | null;
+  display: string;
+  hint: string | null;
+}
+
+export interface SalesEngineConversionModel {
+  available: boolean;
+  steps: SalesEngineConversionStep[];
+  wonValueDisplay: string;
+}
+
+/**
+ * Aggregate conversion rates of the sales-engine matrix (SAN-326): period
+ * volumes divided pairwise (Leads→Reuniones→Oportunidades→Ganadas) plus the
+ * won € total. A rate exists only when both stages carry real numbers and the
+ * denominator is > 0 — anything else is "—" with a "sin base" hint. These are
+ * same-window period rates, NOT per-lead cohort tracking.
+ */
+export function buildSalesEngineConversion(
+  model: SalesEngineMatrixModel,
+): SalesEngineConversionModel {
+  const stageTotal = (key: string): number | null => {
+    const stage = model.stages.find((item) => item.key === key);
+    return stage && stage.present ? stage.total : null;
+  };
+  const pair = (key: string, label: string, fromKey: string, toKey: string): SalesEngineConversionStep => {
+    const denominator = stageTotal(fromKey);
+    const numerator = stageTotal(toKey);
+    const computable = numerator != null && denominator != null && denominator > 0;
+    return {
+      key,
+      label,
+      value: computable ? numerator / denominator : null,
+      display: computable ? formatPercent(numerator / denominator) : "—",
+      hint: computable ? null : "sin base",
+    };
+  };
+  const wonValue = stageTotal("valor");
+  return {
+    available: model.available,
+    steps: [
+      pair("leads-reuniones", "Leads → Reuniones", "leads", "reuniones"),
+      pair("reuniones-oportunidades", "Reuniones → Oportunidades", "reuniones", "oportunidades"),
+      pair("oportunidades-ganadas", "Oportunidades → Ganadas", "oportunidades", "ganadas"),
+    ],
+    wonValueDisplay: wonValue == null ? "—" : formatCurrencyEur(wonValue),
+  };
+}
+
+function SalesEngineConversionStrip({ model }: { model: SalesEngineConversionModel }) {
+  if (!model.available) return null;
+  return (
+    <div className="m-conv-strip" data-sales-engine-conversion>
+      <div className="m-conv-strip-title">
+        Conversión del período
+        <small>tasas del mismo rango (volúmenes de la ventana), no cohortes por lead</small>
+      </div>
+      <div className="m-conv-strip-items">
+        {model.steps.map((step) => (
+          <span key={step.key} className="m-conv-step">
+            {step.label}
+            <b className={step.value == null ? "na" : undefined}>{step.display}</b>
+            {step.hint ? <i>{step.hint}</i> : null}
+          </span>
+        ))}
+        <span className="m-conv-step m-conv-won">
+          € ganado total
+          <b>{model.wonValueDisplay}</b>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function ChannelMatrix({
   model,
   isLoading,
   hasError,
+  drilldown,
 }: {
   model: SalesEngineMatrixModel;
   isLoading?: boolean;
   hasError?: boolean;
+  /** When present, cells with data open a live GHL lead list. */
+  drilldown?: SalesEngineDrilldownContext;
 }) {
+  const [selection, setSelection] = useState<SalesEngineCellSelection | null>(null);
+  const conversion = useMemo(() => buildSalesEngineConversion(model), [model]);
   if (!model.available) {
     if (isLoading) {
       return <div className="m-panel m-pad m-empty" role="status">Cargando el funnel por canal desde GHL…</div>;
@@ -1569,42 +1697,91 @@ export function ChannelMatrix({
       </div>
     );
   }
+
+  function select(stage: SalesEngineStageModel, bucket: ChannelBucketKey | null) {
+    const drillStage = drilldownStageForMatrixRow(stage.key);
+    if (!drillStage) return;
+    setSelection({
+      stage: drillStage,
+      stageLabel: stage.label,
+      bucket,
+      bucketLabel: bucket
+        ? CHANNEL_BUCKETS.find((item) => item.key === bucket)?.label ?? bucket
+        : "Total",
+    });
+  }
+
+  function cell(stage: SalesEngineStageModel, bucket: ChannelBucketKey | null, value: number | null, isTotal: boolean) {
+    const clickable = Boolean(
+      drilldown && value != null && value > 0 && drilldownStageForMatrixRow(stage.key),
+    );
+    const body = (
+      <>
+        {isTotal ? <b>{salesEngineCellValue(stage, value)}</b> : salesEngineCellValue(stage, value)}
+        {isTotal ? (
+          <QualityStatusBadge
+            status={stage.present ? stage.quality : "missing"}
+            provenance="GHL"
+          />
+        ) : null}
+      </>
+    );
+    if (!clickable) return <div className="m-mcell">{body}</div>;
+    return (
+      <button
+        type="button"
+        className="m-mcell m-mcell-btn"
+        title="Ver la lista de registros en GoHighLevel"
+        onClick={() => select(stage, bucket)}
+      >
+        {body}
+      </button>
+    );
+  }
+
   return (
-    <div className="m-panel m-table-panel" data-sales-engine-matrix>
-      <table className="m-matrix">
-        <thead>
-          <tr>
-            <th className="chan">Etapa</th>
-            {CHANNEL_BUCKETS.map((bucket) => <th key={bucket.key}>{bucket.label}</th>)}
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {model.stages.map((stage) => (
-            <tr key={stage.key}>
-              <td className="chan"><span>{stage.icon}</span>{stage.label}</td>
-              {stage.cells.map((cell) => (
-                <td key={`${stage.key}-${cell.bucket}`}>
-                  <div className="m-mcell">{salesEngineCellValue(stage, cell.value)}</div>
-                </td>
-              ))}
-              <td>
-                <div className="m-mcell">
-                  <b>{salesEngineCellValue(stage, stage.total)}</b>
-                  <QualityStatusBadge
-                    status={stage.present ? stage.quality : "missing"}
-                    provenance="GHL"
-                  />
-                </div>
-              </td>
+    <>
+      <div className="m-panel m-table-panel" data-sales-engine-matrix>
+        <table className="m-matrix">
+          <thead>
+            <tr>
+              <th className="chan">Etapa</th>
+              {CHANNEL_BUCKETS.map((bucket) => <th key={bucket.key}>{bucket.label}</th>)}
+              <th>Total</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="m-funnel-foot">
-        <span>Personas y € desde GoHighLevel; el canal sale del origen del contacto. Visitas web e inversión viven en sus superficies.</span>
+          </thead>
+          <tbody>
+            {model.stages.map((stage) => (
+              <tr key={stage.key}>
+                <td className="chan"><span>{stage.icon}</span>{stage.label}</td>
+                {stage.cells.map((item) => (
+                  <td key={`${stage.key}-${item.bucket}`}>
+                    {cell(stage, item.bucket, item.value, false)}
+                  </td>
+                ))}
+                <td>{cell(stage, null, stage.total, true)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <SalesEngineConversionStrip model={conversion} />
+        <div className="m-funnel-foot">
+          <span>
+            Personas y € desde GoHighLevel; el canal sale del origen del contacto. Visitas web e inversión viven en sus superficies.
+            {drilldown ? " Toca una celda con datos para ver sus registros." : ""}
+          </span>
+        </div>
       </div>
-    </div>
+      {drilldown && selection ? (
+        <SalesEngineDrilldownPanel
+          slug={drilldown.slug}
+          from={drilldown.from}
+          to={drilldown.to}
+          selection={selection}
+          onClose={() => setSelection(null)}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -3152,6 +3329,29 @@ function MockupStyles() {
       .m-mcell{border:1.5px solid var(--ink);border-radius:5px;padding:7px 4px;font-family:'Space Grotesk';font-weight:700;color:var(--ink-soft);min-width:84px;}
       .m-mcell.win{box-shadow:0 0 0 2px var(--sun);}
       .m-mcell span{display:block;font-size:8.5px;font-weight:700;color:inherit;opacity:.8;}
+      button.m-mcell-btn{display:block;width:100%;background:var(--paper2);text-align:center;font-size:inherit;transition:transform .08s,box-shadow .08s;}
+      button.m-mcell-btn:hover{transform:translate(-1px,-1px);box-shadow:var(--pop-xs);background:#fff7ea;}
+      .m-conv-strip{margin-top:13px;padding-top:12px;border-top:1.5px dashed var(--border-strong);}
+      .m-conv-strip-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--rust-600);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+      .m-conv-strip-title small{font-size:10px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--subtle);}
+      .m-conv-strip-items{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+      .m-conv-step{display:inline-flex;align-items:center;gap:7px;background:var(--paper2);border:1.5px solid var(--ink);border-radius:var(--r-pill);padding:4px 11px;font-size:11px;font-weight:700;color:var(--muted);box-shadow:var(--pop-xs);}
+      .m-conv-step b{font-family:'Space Grotesk';font-size:13px;color:var(--navy);}
+      .m-conv-step b.na{color:var(--subtle);}
+      .m-conv-step i{font-style:normal;font-size:9px;font-weight:800;color:var(--amber-ink);background:var(--amber);border:1px solid var(--ink);border-radius:var(--r-pill);padding:0 6px;}
+      .m-conv-won{background:var(--sage-tint);}
+      .m-conv-won b{color:var(--sage);}
+      .m-drill-overlay{position:fixed;inset:0;z-index:60;background:rgba(26,26,46,.42);display:flex;align-items:flex-start;justify-content:center;padding:6vh 18px 18px;overflow-y:auto;}
+      .m-drill{width:min(880px,100%);max-height:84vh;display:flex;flex-direction:column;background:var(--paper);}
+      .m-drill-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:2.5px solid var(--ink);background:var(--paper2);}
+      .m-drill-head b{display:block;font-family:'Space Grotesk';font-size:16px;font-weight:700;color:var(--navy);}
+      .m-drill-head small{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;}
+      .m-drill-close{padding:5px 10px;}
+      .m-drill-table{overflow:auto;}
+      .m-drill .m-detail-table{min-width:620px;}
+      .m-drill-state{padding:26px 18px;font-size:12.5px;font-weight:700;color:var(--muted);text-align:center;}
+      .m-drill-error{color:var(--red);}
+      .m-drill-foot{padding:9px 16px;border-top:1.5px dashed var(--border-strong);font-size:10.5px;font-weight:800;color:var(--subtle);}
       .m-ct{border-collapse:collapse;font-size:12.5px;}
       .m-ct th{text-align:left;padding:8px 9px;}
       .m-ct td{padding:9px;border-bottom:1.5px solid var(--border);}
