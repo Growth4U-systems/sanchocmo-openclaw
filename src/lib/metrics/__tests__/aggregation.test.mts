@@ -89,11 +89,18 @@ test("source-specific overrides: CRM running totals are latest, period values su
   assert.equal(aggFor("google-analytics", "totalUsers"), "avg");
   assert.equal(aggFor("ghl", "totalContacts"), "latest");
   assert.equal(aggFor("ghl", "totalOpportunities"), "latest");
+  // won totals and their channel splits are all-time state, never additive
+  for (const metric of ["wonOpportunities", "wonValue", "wonByChannel", "wonValueByChannel"]) {
+    assert.equal(aggFor("ghl", metric), "latest", metric);
+    assert.equal(aggFor("other", metric), "sum", `${metric} without ghl source`);
+  }
   // per-period increments still sum
   assert.equal(aggFor("ghl", "newContacts"), "sum");
   assert.equal(aggFor("ghl", "appointments"), "sum");
   assert.equal(aggFor("ghl", "opportunities"), "sum");
   assert.equal(aggFor("ghl", "pipelineValue"), "sum");
+  assert.equal(aggFor("ghl", "appointmentsByChannel"), "sum");
+  assert.equal(aggFor("ghl", "opportunitiesByChannel"), "sum");
   // the same bare name without the ghl source falls through to default sum
   assert.equal(aggFor("other", "totalContacts"), "sum");
 });

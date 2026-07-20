@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { MetricKpiResult, MetricKpiValue, MetricsHealthResult, PartnershipReport, SurfaceSummaryEntry } from "@/hooks/useMetrics";
+import type { MetricKpiResult, MetricKpiValue, MetricsHealthResult, PartnershipReport, SurfaceDetailResult, SurfaceSummaryEntry } from "@/hooks/useMetrics";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import {
   buildMetricStageRollupReadModel,
@@ -13,6 +13,7 @@ import {
   DashboardDataStateBanner,
   buildChannelRows,
   buildFunnelModel,
+  buildSalesEngineMatrix,
   ChannelMatrix,
   CustomMetricPanel,
   deltaTone,
@@ -226,18 +227,115 @@ test("UI separa el mismo lead de GA4, Meta y GHL y no publica total, tasa ni fug
     [1, 1, 1],
   );
 
-  const markup = renderToStaticMarkup(createElement("div", null,
-    createElement(UnifiedFunnel, { funnel }),
-    createElement(ChannelMatrix, { rows: providerRows, stages: funnel.stages }),
-  ));
+  // Las filas por proveedor siguen siendo series separadas (las consumen
+  // ContributionTable y ConversionMatrix; la matriz principal ahora es GHL-only).
+  const labels = providerRows.map((row) => row.label).join(" | ");
+  assert.match(labels, /Pipeline\/CRM · GHL/);
+  assert.match(labels, /Paid · Meta Ads/);
+  assert.match(labels, /Web\/SEO · GA4/);
+
+  const markup = renderToStaticMarkup(createElement(UnifiedFunnel, { funnel }));
   assert.match(markup, /3 series separadas/);
-  assert.match(markup, /Pipeline\/CRM · GHL/);
-  assert.match(markup, /Paid · Meta Ads/);
-  assert.match(markup, /Web\/SEO · GA4/);
   assert.match(markup, /No se suman ni se convierten en tasas/);
   assert.doesNotMatch(markup, /Conversión total/);
   assert.doesNotMatch(markup, /caída relativa/);
   assert.doesNotMatch(markup, /% del total/);
+});
+
+function salesEngineDetail(
+  metrics: Array<{
+    metric: string;
+    value: number;
+    quality?: string;
+    dimensions?: Record<string, string> | null;
+  }>,
+): SurfaceDetailResult {
+  return {
+    configured: true,
+    surface: "pipeline",
+    from: "2026-07-01",
+    to: "2026-07-15",
+    sources: [{
+      source: "ghl",
+      metrics: metrics.map((metric) => ({
+        aggregation: "sum",
+        quality: "ok",
+        dimensions: null,
+        ...metric,
+      })),
+    }],
+  } as unknown as SurfaceDetailResult;
+}
+
+test("Motor de ventas agrupa canales GHL en buckets y distingue ausencia de cero", () => {
+  const model = buildSalesEngineMatrix(salesEngineDetail([
+    { metric: "newContacts", value: 10 },
+    { metric: "newContacts", value: 4, dimensions: { channel: "LinkedIn Outreach" } },
+    { metric: "newContacts", value: 3, dimensions: { channel: "Explee AutoGTM" } },
+    { metric: "newContacts", value: 2, dimensions: { channel: "google / cpc" } },
+    { metric: "newContacts", value: 1, dimensions: { channel: "Reunión demo" } },
+    { metric: "appointmentsByChannel", value: 0 },
+    { metric: "wonOpportunities", value: 0 },
+    { metric: "wonValue", value: 0 },
+    // opportunitiesByChannel ausente adrede → etapa sin métrica recolectada
+  ]));
+  assert.equal(model.available, true);
+
+  const stage = (key: string) => {
+    const found = model.stages.find((item) => item.key === key);
+    assert.ok(found, key);
+    return found;
+  };
+  const cell = (key: string, bucket: string) =>
+    stage(key).cells.find((item) => item.bucket === bucket)?.value;
+
+  assert.equal(stage("leads").total, 10);
+  assert.equal(cell("leads", "linkedin"), 4);
+  assert.equal(cell("leads", "email"), 3);
+  assert.equal(cell("leads", "paid"), 2);
+  assert.equal(cell("leads", "web"), 1);
+  assert.equal(cell("leads", "trust"), 0);
+  assert.equal(cell("leads", "otros"), 0);
+
+  // Cero real observado (métrica recolectada) se conserva como 0.
+  assert.equal(stage("reuniones").present, true);
+  assert.equal(stage("reuniones").total, 0);
+  assert.equal(cell("reuniones", "web"), 0);
+
+  // Métrica no recolectada → ausencia honesta, nunca un 0 fabricado.
+  assert.equal(stage("oportunidades").present, false);
+  assert.equal(stage("oportunidades").total, null);
+  assert.equal(cell("oportunidades", "web"), null);
+
+  // Ganadas y € ganado usan los snapshots agregados como total honesto.
+  assert.equal(stage("ganadas").present, true);
+  assert.equal(stage("ganadas").total, 0);
+  assert.equal(stage("valor").present, true);
+  assert.equal(stage("valor").total, 0);
+
+  const markup = renderToStaticMarkup(createElement(ChannelMatrix, { model }));
+  assert.match(markup, /Email\/Outbound/);
+  assert.match(markup, /LinkedIn/);
+  assert.match(markup, /Trust Score/);
+  assert.match(markup, /Ganadas/);
+  assert.match(markup, /€ ganado/);
+  assert.match(markup, /—/);
+  assert.match(markup, /SIN DATO/);
+  assert.match(markup, /origen del contacto/);
+  assert.doesNotMatch(markup, /Proveedor · canal/);
+});
+
+test("Motor de ventas sin datos GHL muestra vacío honesto, no una matriz de ceros", () => {
+  const model = buildSalesEngineMatrix(salesEngineDetail([]));
+  assert.equal(model.available, false);
+  const markup = renderToStaticMarkup(createElement(ChannelMatrix, { model }));
+  assert.match(markup, /Sin datos de GHL/);
+  assert.doesNotMatch(markup, />0</);
+
+  const loading = renderToStaticMarkup(createElement(ChannelMatrix, { model, isLoading: true }));
+  assert.match(loading, /Cargando el funnel por canal/);
+  const failed = renderToStaticMarkup(createElement(ChannelMatrix, { model, hasError: true }));
+  assert.match(failed, /No se pudo cargar el detalle de GHL/);
 });
 
 test("Partnerships distingue conexión, demo, tracking real y fees incompletos", () => {
