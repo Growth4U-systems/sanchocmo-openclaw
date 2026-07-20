@@ -13,6 +13,7 @@ import {
   loadBrandEnv,
   readState,
   writeState,
+  syncConversationNote,
 } from '../explee-ghl-bridge.mjs';
 
 test('bridgeConfig requires both explee and ghl and reads the opt-in flag', () => {
@@ -96,21 +97,89 @@ test('loadBrandEnv layers brand .env over process.env and ignores comments', () 
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-test('state round-trips processed ids + field ids and tolerates a missing file', () => {
+test('state round-trips contacts + field ids + sweep day and tolerates a missing file', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-state-'));
-  assert.deepEqual(readState(root, 'acme'), { processedIds: [], fieldIds: {} });
-  writeState(root, 'acme', { processedIds: ['1', '2'], fieldIds: { summary: 'f1', status: 'f2' } });
+  assert.deepEqual(readState(root, 'acme'), { contacts: {}, fieldIds: {}, lastSweepDay: null });
+  writeState(root, 'acme', {
+    contacts: { 1: { threadHash: 'h1', status: 'hot_lead', noteId: 'n1' }, 2: { threadHash: 'h2', status: 'meeting_request' } },
+    fieldIds: { summary: 'f1', status: 'f2', hotSince: 'f3' },
+    lastSweepDay: '2026-07-20',
+  });
   assert.deepEqual(readState(root, 'acme'), {
-    processedIds: ['1', '2'],
-    fieldIds: { summary: 'f1', status: 'f2' },
+    contacts: { 1: { threadHash: 'h1', status: 'hot_lead', noteId: 'n1' }, 2: { threadHash: 'h2', status: 'meeting_request' } },
+    fieldIds: { summary: 'f1', status: 'f2', hotSince: 'f3' },
+    lastSweepDay: '2026-07-20',
   });
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-test('readState upgrades the v1 shape (bare processedIds)', () => {
+test('writeState mirrors contacts into processedIds for pre-v3 rollback safety', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-state-compat-'));
+  writeState(root, 'acme', { contacts: { 7: { threadHash: 'h' } }, fieldIds: {} });
+  const raw = JSON.parse(fs.readFileSync(path.join(root, '_system', 'explee-ghl-bridge.acme.json'), 'utf-8'));
+  assert.deepEqual(raw.processedIds, ['7']);
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('readState upgrades the pre-v3 shape (bare processedIds) into hash-less contacts', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-state-v1-'));
   fs.mkdirSync(path.join(root, '_system'), { recursive: true });
-  fs.writeFileSync(path.join(root, '_system', 'explee-ghl-bridge.acme.json'), '{"processedIds":["9"]}');
-  assert.deepEqual(readState(root, 'acme'), { processedIds: ['9'], fieldIds: {} });
+  fs.writeFileSync(
+    path.join(root, '_system', 'explee-ghl-bridge.acme.json'),
+    '{"processedIds":["9","10"],"fieldIds":{"summary":"f1","status":"f2"}}',
+  );
+  const state = readState(root, 'acme');
+  // Known (not re-pushed as new) but without threadHash/noteId, so the first
+  // daily sweep re-fetches the thread and adopts the existing [Explee] note.
+  assert.deepEqual(state, {
+    contacts: { 9: {}, 10: {} },
+    fieldIds: { summary: 'f1', status: 'f2' },
+    lastSweepDay: null,
+  });
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+function fakeFetchJson(routes, calls) {
+  return async (url, options = {}) => {
+    const method = options.method || 'GET';
+    calls.push({ method, url, body: options.body ? JSON.parse(options.body) : null });
+    const route = routes.find((r) => r.method === method && url.endsWith(r.suffix));
+    if (!route) throw new Error(`unexpected ${method} ${url}`);
+    if (route.error) throw new Error(route.error);
+    return route.response;
+  };
+}
+
+test('syncConversationNote updates the known note in place via PUT', async () => {
+  const calls = [];
+  const impl = fakeFetchJson([{ method: 'PUT', suffix: '/contacts/c1/notes/n1', response: {} }], calls);
+  const noteId = await syncConversationNote('key', 'c1', '[Explee] cuerpo', 'n1', impl);
+  assert.equal(noteId, 'n1');
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].body, { body: '[Explee] cuerpo' });
+  assert.equal(calls[0].method, 'PUT');
+});
+
+test('syncConversationNote adopts an existing [Explee] note when the id is unknown or stale', async () => {
+  const calls = [];
+  const impl = fakeFetchJson([
+    { method: 'PUT', suffix: '/contacts/c1/notes/gone', error: 'GHL note update HTTP 404' },
+    { method: 'GET', suffix: '/contacts/c1/notes', response: { notes: [{ id: 'other', body: 'manual' }, { id: 'n9', body: '[Explee] viejo' }] } },
+    { method: 'PUT', suffix: '/contacts/c1/notes/n9', response: {} },
+  ], calls);
+  const noteId = await syncConversationNote('key', 'c1', '[Explee] nuevo', 'gone', impl);
+  assert.equal(noteId, 'n9');
+  assert.deepEqual(calls.map((c) => c.method), ['PUT', 'GET', 'PUT']);
+  assert.deepEqual(calls[2].body, { body: '[Explee] nuevo' });
+});
+
+test('syncConversationNote creates the note when none exists yet', async () => {
+  const calls = [];
+  const impl = fakeFetchJson([
+    { method: 'GET', suffix: '/contacts/c1/notes', response: { notes: [{ id: 'other', body: 'manual' }] } },
+    { method: 'POST', suffix: '/contacts/c1/notes', response: { note: { id: 'nuevo1' } } },
+  ], calls);
+  const noteId = await syncConversationNote('key', 'c1', '[Explee] primero', null, impl);
+  assert.equal(noteId, 'nuevo1');
+  assert.deepEqual(calls.map((c) => c.method), ['GET', 'POST']);
 });
