@@ -46,7 +46,8 @@ test("Trust Score agrupa los touchpoints del Trust Engine", () => {
 });
 
 test("Paid agrupa ads de Meta y Google sin robarle el orgánico a Web", () => {
-  for (const raw of ["facebook", "Meta Ads", "google / cpc", "google-ads", "Paid Social"]) {
+  // Instagram lead forms are Meta placements → Paid, not Otros (SAN-326).
+  for (const raw of ["facebook", "Instagram", "instagram lead form", "Meta Ads", "google / cpc", "google-ads", "Paid Social"]) {
     assert.equal(mapChannelToBucket(raw), "paid", raw);
   }
   assert.equal(mapChannelToBucket("google / organic"), "web");

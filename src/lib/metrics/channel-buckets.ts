@@ -51,7 +51,7 @@ const BUCKET_RULES: Array<{ bucket: ChannelBucketKey; pattern: RegExp }> = [
   { bucket: "email", pattern: /explee|instantly|lemlist|email/i },
   // Trust Engine touchpoints (trust-bridge, Trust Score Analyzer…).
   { bucket: "trust", pattern: /trust/i },
-  { bucket: "paid", pattern: /facebook|meta|google.*(cpc|ads)|paid/i },
+  { bucket: "paid", pattern: /facebook|instagram|meta|google.*(cpc|ads)|paid/i },
   // Calendars, "Reunión"/demo forms and organic web forms.
   { bucket: "web", pattern: /calendar|reuni|demo|form|organic|website|web/i },
 ];
