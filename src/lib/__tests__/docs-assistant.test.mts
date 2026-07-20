@@ -118,6 +118,78 @@ test("direct Growie completion sends no tools and keeps Brain context optional",
   assert.match(JSON.stringify(requestBody.messages), /fuente principal/);
 });
 
+test("direct Growie completion retries an empty provider answer", async () => {
+  let calls = 0;
+  const answer = await requestDirectDocsAssistantAnswer(validQuestion, {
+    apiKey: "nan-test-key",
+    brainContext: "",
+    maxAttempts: 2,
+    retryDelayMs: 0,
+    fetcher: async () => {
+      calls += 1;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{ message: { content: calls === 1 ? "" : "Respuesta recuperada" } }],
+        }),
+      } as Response;
+    },
+  });
+
+  assert.equal(answer, "Respuesta recuperada");
+  assert.equal(calls, 2);
+});
+
+test("direct Growie completion retries a provider timeout", async () => {
+  let calls = 0;
+  const answer = await requestDirectDocsAssistantAnswer(validQuestion, {
+    apiKey: "nan-test-key",
+    brainContext: "",
+    maxAttempts: 2,
+    retryDelayMs: 0,
+    fetcher: async () => {
+      calls += 1;
+      if (calls === 1) {
+        const error = new Error("provider timed out");
+        error.name = "TimeoutError";
+        throw error;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ choices: [{ message: { content: "Respuesta tras timeout" } }] }),
+      } as Response;
+    },
+  });
+
+  assert.equal(answer, "Respuesta tras timeout");
+  assert.equal(calls, 2);
+});
+
+test("direct Growie completion does not retry permanent provider errors", async () => {
+  let calls = 0;
+  await assert.rejects(
+    requestDirectDocsAssistantAnswer(validQuestion, {
+      apiKey: "nan-test-key",
+      brainContext: "",
+      maxAttempts: 2,
+      retryDelayMs: 0,
+      fetcher: async () => {
+        calls += 1;
+        return {
+          ok: false,
+          status: 400,
+          json: async () => ({ error: "invalid request" }),
+        } as Response;
+      },
+    }),
+    /Growie provider failed \(400\)/,
+  );
+
+  assert.equal(calls, 1);
+});
+
 test("Brain excerpts are bounded, sourced and explicitly optional", () => {
   const context = buildDocsBrainContext({
     summary: "Cliente: Growth4U",
