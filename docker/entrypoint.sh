@@ -934,6 +934,40 @@ else
 fi
 
 # ===========================================================
+# 7a-quater. EXPLEE → GHL HOT-LEADS BRIDGE (background) — SAN-488
+# ===========================================================
+# GHL is the single source of truth for sales leads; Explee has no outbound
+# webhooks, so this loop polls its hot-leads API and upserts each new hot lead
+# as a GHL contact (source "Explee", tag "explee"). Near-real-time: every
+# EXPLEE_GHL_BRIDGE_INTERVAL seconds (default 900). Writes are opt-in PER BRAND
+# via integrations.json dataSources.explee.config.PUSH_HOT_LEADS_TO_GHL=true —
+# without that flag the bridge only dry-run-logs. Disable the loop entirely
+# with EXPLEE_GHL_BRIDGE=0.
+EXPLEE_GHL_BRIDGE_INTERVAL="${EXPLEE_GHL_BRIDGE_INTERVAL:-900}"
+EXPLEE_GHL_BRIDGE_LOG="/root/.openclaw/workspace-sancho/_system/explee-ghl-bridge.log"
+if [ "${EXPLEE_GHL_BRIDGE:-1}" != "0" ]; then
+  mkdir -p "$(dirname "$EXPLEE_GHL_BRIDGE_LOG")"
+  echo "[entrypoint] Starting Explee→GHL bridge loop (every ${EXPLEE_GHL_BRIDGE_INTERVAL}s)…"
+  (
+    sleep 240
+    while :; do
+      {
+        MC_WORKSPACE=/root/.openclaw/workspace-sancho \
+          node /root/.openclaw/skills/metrics-collector/scripts/explee-ghl-bridge.mjs 2>&1
+      } >> "$EXPLEE_GHL_BRIDGE_LOG" 2>&1 || true
+      if [ -f "$EXPLEE_GHL_BRIDGE_LOG" ] && [ "$(stat -c%s "$EXPLEE_GHL_BRIDGE_LOG" 2>/dev/null || echo 0)" -gt 5242880 ]; then
+        tail -c 2097152 "$EXPLEE_GHL_BRIDGE_LOG" > "${EXPLEE_GHL_BRIDGE_LOG}.tmp" && mv "${EXPLEE_GHL_BRIDGE_LOG}.tmp" "$EXPLEE_GHL_BRIDGE_LOG"
+      fi
+      sleep "$EXPLEE_GHL_BRIDGE_INTERVAL"
+    done
+  ) &
+  EXPLEE_GHL_BRIDGE_PID=$!
+else
+  echo "[entrypoint] Explee→GHL bridge disabled (EXPLEE_GHL_BRIDGE=0)"
+  EXPLEE_GHL_BRIDGE_PID=""
+fi
+
+# ===========================================================
 # 7b. START NEXT.JS MC (primary frontend on :3000)
 # ===========================================================
 echo "[entrypoint] Starting Next.js Mission Control on :3000..."
