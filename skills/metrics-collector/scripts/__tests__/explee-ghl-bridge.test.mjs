@@ -96,10 +96,21 @@ test('loadBrandEnv layers brand .env over process.env and ignores comments', () 
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-test('state round-trips processed ids and tolerates a missing file', () => {
+test('state round-trips processed ids + field ids and tolerates a missing file', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-state-'));
-  assert.deepEqual(readState(root, 'acme'), []);
-  writeState(root, 'acme', ['1', '2']);
-  assert.deepEqual(readState(root, 'acme'), ['1', '2']);
+  assert.deepEqual(readState(root, 'acme'), { processedIds: [], fieldIds: {} });
+  writeState(root, 'acme', { processedIds: ['1', '2'], fieldIds: { summary: 'f1', status: 'f2' } });
+  assert.deepEqual(readState(root, 'acme'), {
+    processedIds: ['1', '2'],
+    fieldIds: { summary: 'f1', status: 'f2' },
+  });
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('readState upgrades the v1 shape (bare processedIds)', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-state-v1-'));
+  fs.mkdirSync(path.join(root, '_system'), { recursive: true });
+  fs.writeFileSync(path.join(root, '_system', 'explee-ghl-bridge.acme.json'), '{"processedIds":["9"]}');
+  assert.deepEqual(readState(root, 'acme'), { processedIds: ['9'], fieldIds: {} });
   fs.rmSync(root, { recursive: true, force: true });
 });

@@ -23,6 +23,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildLeadContext, findContextFields, NOTE_MARKER, SUMMARY_FIELD_NAME, STATUS_FIELD_NAME } from './explee-ghl-bridge-context.mjs';
 
 const EXPLEE_BASE = 'https://api.explee.com/public/api/v1';
 const GHL_BASE = 'https://services.leadconnectorhq.com';
@@ -115,16 +116,19 @@ function statePath(workspaceDir, slug) {
 export function readState(workspaceDir, slug, fsImpl = fs) {
   try {
     const data = JSON.parse(fsImpl.readFileSync(statePath(workspaceDir, slug), 'utf-8'));
-    return Array.isArray(data.processedIds) ? data.processedIds.map(String) : [];
+    return {
+      processedIds: Array.isArray(data.processedIds) ? data.processedIds.map(String) : [],
+      fieldIds: data.fieldIds && typeof data.fieldIds === 'object' ? data.fieldIds : {},
+    };
   } catch {
-    return [];
+    return { processedIds: [], fieldIds: {} };
   }
 }
 
-export function writeState(workspaceDir, slug, processedIds, fsImpl = fs) {
+export function writeState(workspaceDir, slug, state, fsImpl = fs) {
   const file = statePath(workspaceDir, slug);
   fsImpl.mkdirSync(path.dirname(file), { recursive: true });
-  fsImpl.writeFileSync(file, `${JSON.stringify({ processedIds }, null, 2)}\n`);
+  fsImpl.writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`);
 }
 
 function log(message) {
@@ -171,7 +175,73 @@ async function upsertGhlContact(apiKey, payload) {
   }, 'GHL contacts/upsert');
 }
 
-async function runBrand(workspaceDir, slug, { applyOverride = false, limit = Infinity } = {}) {
+async function fetchThread(apiKey, campaignId, personId) {
+  try {
+    return await fetchJson(
+      `${EXPLEE_BASE}/autogtm/campaigns/${encodeURIComponent(campaignId)}/inbox/${encodeURIComponent(personId)}`,
+      { headers: { 'X-API-Key': apiKey, Accept: 'application/json' } },
+      'Explee thread',
+    );
+  } catch (error) {
+    log(`thread fetch failed for person ${personId} — ${error.message}`);
+    return null;
+  }
+}
+
+function ghlHeaders(apiKey) {
+  return {
+    Authorization: `Bearer ${apiKey}`,
+    Version: '2021-07-28',
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+}
+
+/** Find-or-create the two Explee context custom fields; ids cached in state. */
+async function ensureContextFields(apiKey, locationId, state) {
+  if (state.fieldIds.summary && state.fieldIds.status) return state.fieldIds;
+  const listing = await fetchJson(
+    `${GHL_BASE}/locations/${encodeURIComponent(locationId)}/customFields`,
+    { headers: ghlHeaders(apiKey) },
+    'GHL customFields list',
+  );
+  const found = findContextFields(listing.customFields);
+  for (const [key, name] of [['summary', SUMMARY_FIELD_NAME], ['status', STATUS_FIELD_NAME]]) {
+    if (found[key]) continue;
+    const created = await fetchJson(
+      `${GHL_BASE}/locations/${encodeURIComponent(locationId)}/customFields`,
+      {
+        method: 'POST',
+        headers: ghlHeaders(apiKey),
+        body: JSON.stringify({ name, dataType: key === 'summary' ? 'LARGE_TEXT' : 'TEXT' }),
+      },
+      `GHL customFields create ${name}`,
+    );
+    found[key] = created.customField?.id || created.id;
+    log(`custom field creado en GHL: ${name} (${found[key]})`);
+  }
+  state.fieldIds = found;
+  return found;
+}
+
+/** Add the conversation note unless the contact already has an Explee note. */
+async function addNoteIfMissing(apiKey, contactId, noteText) {
+  const listing = await fetchJson(
+    `${GHL_BASE}/contacts/${encodeURIComponent(contactId)}/notes`,
+    { headers: ghlHeaders(apiKey) },
+    'GHL notes list',
+  );
+  const exists = (listing.notes || []).some((n) => String(n.body || '').startsWith(NOTE_MARKER));
+  if (exists) return false;
+  await fetchJson(
+    `${GHL_BASE}/contacts/${encodeURIComponent(contactId)}/notes`,
+    { method: 'POST', headers: ghlHeaders(apiKey), body: JSON.stringify({ body: noteText }) },
+    'GHL note create',
+  );
+  return true;
+}
+
+async function runBrand(workspaceDir, slug, { applyOverride = false, limit = Infinity, refresh = false } = {}) {
   const intPath = path.join(workspaceDir, 'brand', slug, 'integrations.json');
   let integrations;
   try {
@@ -196,21 +266,51 @@ async function runBrand(workspaceDir, slug, { applyOverride = false, limit = Inf
   }
 
   const apply = config.apply || applyOverride;
-  const processed = readState(workspaceDir, slug);
+  const state = readState(workspaceDir, slug);
   const hotLeads = await fetchHotLeads(expleeKey);
-  const fresh = selectNewLeads(hotLeads, processed).slice(0, limit);
-  log(`${slug}: ${hotLeads.length} hot lead(s) en Explee, ${fresh.length} nuevo(s) ${apply ? '(APPLY)' : '(dry-run)'}`);
+  const fresh = refresh
+    ? hotLeads.filter((lead) => firstPresent(lead?.email)).slice(0, limit)
+    : selectNewLeads(hotLeads, state.processedIds).slice(0, limit);
+  log(`${slug}: ${hotLeads.length} hot lead(s) en Explee, ${fresh.length} a procesar ${refresh ? '(refresh) ' : ''}${apply ? '(APPLY)' : '(dry-run)'}`);
+
+  let fieldIds = { summary: null, status: null };
+  if (apply) {
+    try {
+      fieldIds = await ensureContextFields(ghlKey, config.ghlLocationId, state);
+    } catch (error) {
+      log(`${slug}: custom fields no disponibles (${error.message}) — sigo sin resumen/status en campos`);
+    }
+  }
 
   for (const lead of fresh) {
     const payload = toGhlContact(lead, config.ghlLocationId);
+    const thread = await fetchThread(expleeKey, lead.campaign_id, lead.person_id);
+    const context = buildLeadContext(lead, thread);
+    if (fieldIds.summary && fieldIds.status) {
+      payload.customFields = [
+        { id: fieldIds.status, value: context.statusText },
+        { id: fieldIds.summary, value: context.summaryText },
+      ];
+    }
     if (!apply) {
-      log(`${slug}: [dry] upsert ${payload.email} — ${payload.firstName} ${payload.lastName} @ ${payload.companyName || '-'} (campaign ${lead.campaign_id})`);
+      log(`${slug}: [dry] upsert ${payload.email} — ${payload.firstName} ${payload.lastName} @ ${payload.companyName || '-'} (status ${context.statusText})`);
       continue;
     }
     try {
-      await upsertGhlContact(ghlKey, payload);
-      processed.push(String(lead.person_id));
-      log(`${slug}: upserted ${payload.email} (person ${lead.person_id})`);
+      const result = await upsertGhlContact(ghlKey, payload);
+      const contactId = result.contact?.id || result.id;
+      if (contactId) {
+        try {
+          const added = await addNoteIfMissing(ghlKey, contactId, context.noteText);
+          if (added) log(`${slug}: nota de conversación añadida a ${payload.email}`);
+        } catch (error) {
+          log(`${slug}: nota falló para ${payload.email} — ${error.message}`);
+        }
+      }
+      if (!state.processedIds.includes(String(lead.person_id))) {
+        state.processedIds.push(String(lead.person_id));
+      }
+      log(`${slug}: upserted ${payload.email} (person ${lead.person_id}, status ${context.statusText})`);
     } catch (error) {
       // Stop the batch on the first failure: state only records confirmed
       // upserts, so the next tick retries this lead without skipping it.
@@ -219,7 +319,7 @@ async function runBrand(workspaceDir, slug, { applyOverride = false, limit = Inf
     }
   }
 
-  if (apply) writeState(workspaceDir, slug, processed);
+  if (apply) writeState(workspaceDir, slug, state);
 }
 
 function listBridgeBrands(workspaceDir) {
@@ -246,12 +346,13 @@ async function main() {
   }
   const onlySlug = getArg('slug');
   const applyOverride = args.includes('--apply');
+  const refresh = args.includes('--refresh');
   const limit = Number.parseInt(getArg('limit') || '', 10) || Infinity;
 
   const slugs = onlySlug ? [onlySlug] : listBridgeBrands(workspaceDir);
   for (const slug of slugs) {
     try {
-      await runBrand(workspaceDir, slug, { applyOverride, limit });
+      await runBrand(workspaceDir, slug, { applyOverride, limit, refresh });
     } catch (error) {
       log(`${slug}: ERROR — ${error.message}`);
     }
