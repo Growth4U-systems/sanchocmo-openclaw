@@ -3,9 +3,18 @@ import assert from "node:assert/strict";
 
 const {
   buildGrowieSupportContext,
+  buildGrowieSupportDoc,
+  GROWIE_DOC_EXCERPT_MAX_CHARS,
   GROWIE_HISTORY_MAX_MESSAGES,
   GROWIE_HISTORY_MAX_TEXT_CHARS,
+  GROWIE_RECENT_RUNS_MAX,
+  GROWIE_RECENT_THREADS_MAX,
+  GROWIE_RUN_TRACE_MAX_EVENTS,
+  growieDocPathFromPagePath,
   isGrowieSupportThreadId,
+  snapshotGrowieRecentRuns,
+  snapshotGrowieRecentThreads,
+  snapshotGrowieRunTrace,
   snapshotGrowieThreadHistory,
   supportPagePathFromReferrer,
 } = await import("../support/growie");
@@ -84,4 +93,87 @@ test("canonical history snapshot prefers recent messages within both bounds", ()
   assert.ok(charBounded.reduce((total, message) => total + message.text.length, 0)
     <= GROWIE_HISTORY_MAX_TEXT_CHARS);
   assert.equal(charBounded.at(-1)?.text.startsWith("19:"), true);
+});
+
+test("recent-thread evidence excludes support cases, sorts by recency, and stays bounded", () => {
+  const threads = [
+    { id: "acme:general", messageCount: 4, updatedAt: 100, lastMessage: { role: "bot", text: "x".repeat(500), ts: 100 } },
+    { id: "acme:support-growie-open-case", messageCount: 9, updatedAt: 900 },
+    { id: "acme:seo-plan", messageCount: 2, updatedAt: 300 },
+    { id: 42, updatedAt: 999 },
+    ...Array.from({ length: GROWIE_RECENT_THREADS_MAX + 5 }, (_, index) => ({
+      id: `acme:thread-${index}`,
+      updatedAt: index,
+    })),
+  ];
+  const snapshot = snapshotGrowieRecentThreads(threads);
+
+  assert.equal(snapshot.length, GROWIE_RECENT_THREADS_MAX);
+  assert.equal(snapshot[0].id, "acme:seo-plan");
+  assert.equal(snapshot[1].id, "acme:general");
+  assert.ok(snapshot.every((thread) => !thread.id.includes("support-growie")));
+  assert.ok((snapshot[1].lastMessage?.text.length ?? 0) <= 160);
+});
+
+test("recent-run evidence keeps every runtime path, newest first, errors bounded", () => {
+  const runs = [
+    { id: "run_old", threadId: "acme:general", status: "completed", createdAt: "2026-07-01T00:00:00Z" },
+    { id: "run_new", threadId: "acme:general", status: "failed", error: "e".repeat(900), createdAt: "2026-07-19T00:00:00Z", runtime: "openclaw" },
+    { id: "run_support", threadId: "acme:support-growie-case", status: "failed", createdAt: "2026-07-20T00:00:00Z" },
+    { id: "run_bad" },
+    ...Array.from({ length: GROWIE_RECENT_RUNS_MAX + 5 }, (_, index) => ({
+      id: `run_${index}`,
+      threadId: "acme:seo-plan",
+      status: "completed",
+      createdAt: `2026-06-${String((index % 28) + 1).padStart(2, "0")}T00:00:00Z`,
+    })),
+  ];
+  const snapshot = snapshotGrowieRecentRuns(runs);
+
+  assert.equal(snapshot.length, GROWIE_RECENT_RUNS_MAX);
+  assert.equal(snapshot[0].id, "run_new");
+  assert.equal(snapshot[0].error?.length, 300);
+  assert.ok(snapshot.every((run) => !run.threadId.includes("support-growie")));
+});
+
+test("run trace keeps the newest events and stringifies bounded detail", () => {
+  const events = [
+    ...Array.from({ length: GROWIE_RUN_TRACE_MAX_EVENTS + 4 }, (_, index) => ({
+      type: "progress",
+      ts: `2026-07-19T00:00:${String(index % 60).padStart(2, "0")}Z`,
+      data: { step: index },
+    })),
+    { type: "failed", ts: "2026-07-19T01:00:00Z", data: "d".repeat(900) },
+  ];
+  const trace = snapshotGrowieRunTrace("run_new", "acme:general", events);
+
+  assert.equal(trace?.runId, "run_new");
+  assert.equal(trace?.threadId, "acme:general");
+  assert.equal(trace?.events.length, GROWIE_RUN_TRACE_MAX_EVENTS);
+  assert.equal(trace?.events.at(-1)?.type, "failed");
+  assert.equal(trace?.events.at(-1)?.detail?.length, 400);
+  assert.equal(snapshotGrowieRunTrace(undefined, "acme:general", events), undefined);
+});
+
+test("doc path extraction is tenant-scoped and rejects traversal", () => {
+  assert.equal(
+    growieDocPathFromPagePath("/dashboard/acme/docs/brand/acme/estrategia/plan.md", "acme"),
+    "brand/acme/estrategia/plan.md",
+  );
+  assert.equal(
+    growieDocPathFromPagePath("/dashboard/acme/docs/notas%20internas/q3.md", "acme"),
+    "notas internas/q3.md",
+  );
+  assert.equal(growieDocPathFromPagePath("/dashboard/other/docs/plan.md", "acme"), undefined);
+  assert.equal(growieDocPathFromPagePath("/dashboard/acme/tasks", "acme"), undefined);
+  assert.equal(growieDocPathFromPagePath("/dashboard/acme/docs/../secrets.md", "acme"), undefined);
+  assert.equal(growieDocPathFromPagePath("/dashboard/acme/docs/a/%2e%2e/b.md", "acme"), undefined);
+});
+
+test("active-doc excerpt truncates and flags it", () => {
+  const doc = buildGrowieSupportDoc("brand/acme/plan.md", "y".repeat(GROWIE_DOC_EXCERPT_MAX_CHARS + 50));
+  assert.equal(doc?.excerpt.length, GROWIE_DOC_EXCERPT_MAX_CHARS);
+  assert.equal(doc?.truncated, true);
+  const short = buildGrowieSupportDoc("brand/acme/plan.md", "hola");
+  assert.equal(short?.truncated, false);
 });
