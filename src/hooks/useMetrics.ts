@@ -473,6 +473,72 @@ export function useSalesEngineLeads(
   });
 }
 
+export interface SalesEngineCountsBuckets {
+  web: number;
+  paid: number;
+  linkedin: number;
+  email: number;
+  trust: number;
+  otros: number;
+}
+
+export interface SalesEngineCountsStage {
+  stage: SalesEngineLeadsStage;
+  buckets: SalesEngineCountsBuckets;
+  total: number;
+  /** True when a GHL safety cap made the counts lower bounds (render "≥N"). */
+  truncated: boolean;
+}
+
+export interface SalesEngineCountsResponse {
+  configured: boolean;
+  slug: string;
+  from: string;
+  to: string;
+  /** Absent when `configured` is false. */
+  stages?: SalesEngineCountsStage[];
+  wonValue?: { buckets: SalesEngineCountsBuckets; total: number; truncated: boolean };
+  truncated?: boolean;
+  source?: "ghl-live";
+  error?: string;
+}
+
+/**
+ * Live "Motor de ventas" matrix counts (SAN-326): the whole stage×bucket grid
+ * in one call, computed by the API from the SAME GHL queries that feed the
+ * drill-down lists — cells and lists agree by construction. The server caches
+ * ~60 s per slug+window, so tab switches don't hammer GHL.
+ */
+export function useSalesEngineCounts(
+  slug: string | null,
+  window: { from: string; to: string } | null,
+) {
+  return useQuery<SalesEngineCountsResponse>({
+    queryKey: ["sales-engine-counts", slug, window?.from, window?.to],
+    queryFn: async () => {
+      if (!slug || !window) throw new Error("Sales engine counts require slug and window");
+      const search = new URLSearchParams({
+        slug,
+        view: "counts",
+        from: window.from,
+        to: window.to,
+      });
+      const res = await fetch(`/api/metrics/sales-engine-leads?${search.toString()}`);
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          (payload as { error?: string } | null)?.error
+          || "No se pudo consultar GoHighLevel",
+        );
+      }
+      return payload as SalesEngineCountsResponse;
+    },
+    enabled: !!slug && !!window,
+    retry: false,
+    staleTime: 60_000,
+  });
+}
+
 /** Persisted semantic KPI read model. The API may run a read-through recompute when snapshots changed. */
 export function useMetricKpis(slug: string | null, range: MetricKpiRange) {
   return useQuery<MetricKpiResult>({
