@@ -257,12 +257,28 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.equal(received[2]._source, "growie-support");
     assert.equal(received[2].threadName, "Growie · Soporte");
     assert.equal(received[2].linkedTo, "support/growie");
-    assert.deepEqual(received[2].supportContext, {
-      pagePath: "/dashboard/demo/content",
-      deployedCommit: "deployed-support-sha",
-      imageDigest: "sha256:support-image",
-      environment: "Staging",
-    });
+    const supportContext = received[2].supportContext as {
+      pagePath?: string;
+      deployedCommit?: string;
+      imageDigest?: string;
+      environment?: string;
+      recentThreads?: Array<{ id: string }>;
+      recentRuns?: Array<{ threadId: string }>;
+      lastRunTrace?: { threadId?: string; events?: unknown[] };
+    };
+    assert.equal(supportContext.pagePath, "/dashboard/demo/content");
+    assert.equal(supportContext.deployedCommit, "deployed-support-sha");
+    assert.equal(supportContext.imageDigest, "sha256:support-image");
+    assert.equal(supportContext.environment, "Staging");
+    // Growie sees the tenant's real activity: the trusted send earlier in this
+    // test left a plain agent run (no durable ledger involved), and it must
+    // surface here — while other Growie support cases stay excluded.
+    assert.ok((supportContext.recentThreads?.length ?? 0) > 0);
+    assert.ok(supportContext.recentThreads?.every((thread) => !thread.id.includes("support-growie")));
+    assert.ok((supportContext.recentRuns?.length ?? 0) > 0);
+    assert.ok(supportContext.recentRuns?.every((run) => !run.threadId.includes("support-growie")));
+    assert.equal(supportContext.lastRunTrace?.threadId, "demo:browser");
+    assert.ok((supportContext.lastRunTrace?.events?.length ?? 0) > 0);
     assert.deepEqual(received[2].priorThreadMessages, []);
 
     const supportFollowup = mockResponse();

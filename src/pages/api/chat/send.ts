@@ -80,6 +80,7 @@ import {
 } from "@/lib/chat/agent-turn-atomic-admission";
 import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 import { authorizeRuntimeRunRequest } from "@/lib/runtime/runtime-run-request-authority";
+import { gatherGrowieSupportDiagnostics } from "@/lib/support/growie-diagnostics";
 
 function normalizedIdempotencyKey(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -306,13 +307,25 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     ? "support/growie"
     : linkedTo || undefined;
   const effectiveSource = isGrowieSupport ? GROWIE_SUPPORT_SOURCE : _source;
-  const supportContext = isGrowieSupport
+  const baseSupportContext = isGrowieSupport
     ? buildGrowieSupportContext({
         referrer: req.headers.referer,
         deployedCommit: process.env.GIT_COMMIT,
         imageDigest: process.env.SANCHOCMO_IMAGE_DIGEST,
         environment: process.env.NEXT_PUBLIC_ENV_LABEL || process.env.NODE_ENV,
       })
+    : undefined;
+  // Growie must see everything that happened in Sancho for this tenant —
+  // threads, runs (ledger or not), and the doc on screen. Gathering is
+  // best-effort: missing evidence never blocks the support turn.
+  const supportContext = baseSupportContext
+    ? {
+        ...baseSupportContext,
+        ...(await gatherGrowieSupportDiagnostics({
+          slug: String(slug),
+          pagePath: baseSupportContext.pagePath,
+        })),
+      }
     : undefined;
   // Snapshot before any async routing work or current-message persistence. The
   // signed gateway payload can then bootstrap a newly isolated model session
