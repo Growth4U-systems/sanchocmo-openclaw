@@ -9,24 +9,36 @@ import {
   parseSalesEngineStage,
 } from "@/lib/metrics/sales-engine-drilldown";
 import {
+  fetchSalesEngineCountsCached,
   fetchSalesEngineLeads,
   SalesEngineGhlError,
 } from "@/lib/data/sales-engine-leads";
 
 /**
  * GET /api/metrics/sales-engine-leads (SAN-326)
+ *
+ * List mode (default) — the drill-down behind one matrix cell:
  *   ?slug=<slug>&stage=<leads|meetings|opportunities|won>&bucket=<bucket|total>
  *   &from=YYYY-MM-DD&to=YYYY-MM-DD
+ * Lists the GHL records (contacts, appointments, opportunities, won deals)
+ * whose collapsed acquisition channel maps to the requested bucket. `bucket`
+ * omitted or `total` lists the whole stage. `won` is CRM stock — from/to are
+ * ignored.
  *
- * Live drill-down behind a "Motor de ventas" matrix cell: lists the GHL
- * records (contacts, appointments, opportunities, won deals) whose collapsed
- * acquisition channel maps to the requested bucket. `bucket` omitted or
- * `total` lists the whole stage. `won` is CRM stock — from/to are ignored.
+ * Counts mode — the whole "Motor de ventas" matrix in ONE call:
+ *   ?slug=<slug>&view=counts&from=YYYY-MM-DD&to=YYYY-MM-DD
+ * → { configured, from, to, stages: [{ stage, buckets, total, truncated }],
+ *     wonValue: { buckets, total, truncated }, truncated }
+ * Computed live from GHL with the SAME scans as the lists, so a matrix cell
+ * always equals the length of the drill-down list it opens. `truncated: true`
+ * means a safety cap made the numbers lower bounds (UI shows "≥N"). Counts are
+ * cached in-process ~60 s per slug+window; lists stay uncached. When GHL is
+ * not connected, counts mode answers 200 `configured:false` (the matrix shows
+ * its connect state) while list mode keeps its 400.
  *
- * Queries GoHighLevel directly (no snapshots), so the list is as current as
- * the CRM; counts can differ slightly from persisted matrix cells until the
- * next collection. Failures from GHL surface as 502 with a clear message —
- * never the API key, and lead PII is never logged server-side.
+ * Both modes query GoHighLevel directly (no snapshots). Failures from GHL
+ * surface as 502 with a clear message — never the API key, and lead PII is
+ * never logged server-side.
  */
 
 const MAX_RANGE_DAYS = 366;
@@ -58,6 +70,84 @@ function configString(config: Record<string, unknown>, keys: string[]): string {
   return "";
 }
 
+function resolveGhlCredentials(slug: string): {
+  config: Record<string, unknown>;
+  locationId: string;
+  apiKey: string;
+} {
+  const config = readGhlConfig(slug);
+  const locationId = configString(config, ["locationId", "LOCATION_ID", "location_id"])
+    || readBrandSecret(slug, "ghl", "LOCATION_ID")
+    || "";
+  const apiKey = readBrandSecret(slug, "ghl", "API_KEY")
+    || readBrandSecret(slug, "ghl", "PRIVATE_INTEGRATION_TOKEN")
+    || readBrandSecret(slug, "ghl", "APIKEY")
+    || readBrandSecret(slug, "gohighlevel", "API_KEY")
+    || "";
+  return { config, locationId, apiKey };
+}
+
+const NOT_CONNECTED_MESSAGE =
+  "GoHighLevel no está conectado para este cliente (falta API key o Location ID)";
+
+function rangeDays(from: string, to: string): number {
+  return Math.floor(
+    (Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / DAY_MS,
+  ) + 1;
+}
+
+async function handleCounts(req: NextApiRequest, res: NextApiResponse, slug: string) {
+  const from = typeof req.query.from === "string" ? req.query.from : undefined;
+  const to = typeof req.query.to === "string" ? req.query.to : undefined;
+  const dateError = metricCalendarRangeError({ from, to }, { requireBoth: true });
+  if (dateError) return res.status(400).json({ error: dateError });
+  if (rangeDays(from!, to!) > MAX_RANGE_DAYS) {
+    return res.status(400).json({ error: `range cannot exceed ${MAX_RANGE_DAYS} days` });
+  }
+
+  const { config, locationId, apiKey } = resolveGhlCredentials(slug);
+  if (!locationId || !apiKey) {
+    // 200 (not 400): "GHL sin conectar" is a normal matrix state, not a caller
+    // error — the UI renders its connect prompt from `configured:false`.
+    return res.status(200).json({
+      configured: false,
+      slug,
+      from,
+      to,
+      error: NOT_CONNECTED_MESSAGE,
+    });
+  }
+
+  try {
+    const result = await fetchSalesEngineCountsCached(
+      `${slug}|${locationId}|${from}|${to}`,
+      {
+        from: from!,
+        to: to!,
+        locationId,
+        apiKey,
+        timezone: configString(config, ["timezone", "timeZone", "locationTimezone"]) || undefined,
+      },
+    );
+    return res.status(200).json({
+      configured: true,
+      slug,
+      from,
+      to,
+      stages: result.stages,
+      wonValue: result.wonValue,
+      truncated: result.truncated,
+      source: "ghl-live",
+    });
+  } catch (error) {
+    if (error instanceof SalesEngineGhlError) {
+      // Provider failure: explain without leaking credentials or lead data.
+      return res.status(502).json({ error: error.message });
+    }
+    throw error;
+  }
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -66,6 +156,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const slug = req.query.slug as string;
   if (!slug) return res.status(400).json({ error: "Missing slug" });
+  const view = typeof req.query.view === "string" ? req.query.view : "list";
+  if (view !== "list" && view !== "counts") {
+    return res.status(400).json({ error: "view must be list or counts" });
+  }
+  if (view === "counts") return handleCounts(req, res, slug);
+
   const stage = parseSalesEngineStage(req.query.stage);
   if (!stage) {
     return res.status(400).json({
@@ -84,29 +180,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (stage !== "won") {
     const dateError = metricCalendarRangeError({ from, to }, { requireBoth: true });
     if (dateError) return res.status(400).json({ error: dateError });
-    const days = Math.floor(
-      (Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / DAY_MS,
-    ) + 1;
-    if (days > MAX_RANGE_DAYS) {
+    if (rangeDays(from!, to!) > MAX_RANGE_DAYS) {
       return res.status(400).json({
         error: `range cannot exceed ${MAX_RANGE_DAYS} days`,
       });
     }
   }
 
-  const config = readGhlConfig(slug);
-  const locationId = configString(config, ["locationId", "LOCATION_ID", "location_id"])
-    || readBrandSecret(slug, "ghl", "LOCATION_ID")
-    || "";
-  const apiKey = readBrandSecret(slug, "ghl", "API_KEY")
-    || readBrandSecret(slug, "ghl", "PRIVATE_INTEGRATION_TOKEN")
-    || readBrandSecret(slug, "ghl", "APIKEY")
-    || readBrandSecret(slug, "gohighlevel", "API_KEY")
-    || "";
+  const { config, locationId, apiKey } = resolveGhlCredentials(slug);
   if (!locationId || !apiKey) {
     return res.status(400).json({
       configured: false,
-      error: "GoHighLevel no está conectado para este cliente (falta API key o Location ID)",
+      error: NOT_CONNECTED_MESSAGE,
     });
   }
 

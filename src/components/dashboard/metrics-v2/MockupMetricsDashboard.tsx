@@ -5,6 +5,7 @@ import {
   useMetricKpis,
   useMetricsHealth,
   usePartnershipReport,
+  useSalesEngineCounts,
   useSurfaceDetail,
   useSurfaceDetailWindow,
   useSurfaceSummary,
@@ -13,6 +14,7 @@ import {
   type MetricKpiResult,
   type MetricKpiValue,
   type MetricsHealthResult,
+  type SalesEngineCountsResponse,
   type MetricStageRollupChannelValue,
   type MetricStageRollupResult,
   type MetricStageRollupStageValue,
@@ -235,20 +237,35 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
   const funnel = useMemo(() => buildFunnelModel(kpiData), [kpiData]);
   const channelRows = useMemo(() => buildChannelRows(kpiData?.stageRollups, funnel.stages), [funnel.stages, kpiData?.stageRollups]);
   // Motor de ventas (SAN-326): people-numbers come only from GHL, split by the
-  // contact's acquisition channel. Reuses the pipeline surface-detail read but
-  // over an explicit window whose `to` is TODAY: the CRM funnel is expected to
-  // be current, so leads that entered GHL today must show up today. Every other
-  // surface/panel keeps its complete-days preset behavior.
+  // contact's acquisition channel, over an explicit window whose `to` is TODAY:
+  // the CRM funnel is expected to be current, so leads that entered GHL today
+  // must show up today. The matrix counts come LIVE from GHL through the same
+  // queries that feed the drill-down lists (cells == lists by construction);
+  // the snapshots-based read stays only as fallback when the live call fails.
   const salesEngineRange = useMemo(() => salesEngineWindow(range), [range]);
+  const salesEngineCounts = useSalesEngineCounts(slug, salesEngineRange);
   const pipelineDetail = useSurfaceDetailWindow(slug, "pipeline", salesEngineRange);
-  const salesEngine = useMemo(
+  const salesEngineFallback = salesEngineCounts.isError;
+  const liveSalesEngine = useMemo(
+    () => buildSalesEngineMatrixFromCounts(salesEngineCounts.data),
+    [salesEngineCounts.data],
+  );
+  const snapshotSalesEngine = useMemo(
     () => buildSalesEngineMatrix(pipelineDetail.data),
     [pipelineDetail.data],
   );
+  const salesEngine = salesEngineFallback ? snapshotSalesEngine : liveSalesEngine;
+  const salesEngineLoading = salesEngineFallback
+    ? pipelineDetail.isLoading
+    : salesEngineCounts.isLoading;
+  // Only relevant when the model is unavailable: live failed AND no snapshot
+  // fallback → honest error state instead of a silent empty matrix.
+  const salesEngineError = salesEngineFallback && (pipelineDetail.isError || !snapshotSalesEngine.available);
   const salesEngineDrilldown = useMemo(
     () => ({ slug, from: salesEngineRange.from, to: salesEngineRange.to }),
     [slug, salesEngineRange.from, salesEngineRange.to],
   );
+  const currentSalesEngineSubtitle = salesEngineSubtitle(salesEngineFallback ? "snapshots" : "live");
 
   function selectTab(next: MetricDashboardTab) {
     setLocalTab(next);
@@ -356,9 +373,10 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
                 kpiData={kpiData}
                 funnel={funnel}
                 salesEngine={salesEngine}
-                salesEngineLoading={pipelineDetail.isLoading}
-                salesEngineError={pipelineDetail.isError}
+                salesEngineLoading={salesEngineLoading}
+                salesEngineError={salesEngineError}
                 salesEngineDrilldown={salesEngineDrilldown}
+                salesEngineSubtitle={currentSalesEngineSubtitle}
                 surfaceCards={surfaceCards}
                 openSurface={openSurface}
               />
@@ -371,9 +389,10 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
                 funnel={funnel}
                 rows={channelRows}
                 salesEngine={salesEngine}
-                salesEngineLoading={pipelineDetail.isLoading}
-                salesEngineError={pipelineDetail.isError}
+                salesEngineLoading={salesEngineLoading}
+                salesEngineError={salesEngineError}
                 salesEngineDrilldown={salesEngineDrilldown}
+                salesEngineSubtitle={currentSalesEngineSubtitle}
               />
             )}
             {activeTab === "conversion" && (
@@ -619,6 +638,7 @@ function OverviewView({
   salesEngineLoading,
   salesEngineError,
   salesEngineDrilldown,
+  salesEngineSubtitle: salesEngineSubtitleText,
   surfaceCards,
   openSurface,
 }: {
@@ -629,6 +649,7 @@ function OverviewView({
   salesEngineLoading?: boolean;
   salesEngineError?: boolean;
   salesEngineDrilldown?: SalesEngineDrilldownContext;
+  salesEngineSubtitle?: string;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
 }) {
@@ -687,7 +708,7 @@ function OverviewView({
       <SectionTitle icon="🪜" title="Volúmenes por etapa y proveedor" subtitle="observaciones separadas; no son un embudo deduplicado" />
       <UnifiedFunnel funnel={funnel} />
 
-      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto · incluye hoy (parcial)" />
+      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle={salesEngineSubtitleText ?? salesEngineSubtitle("live")} />
       <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} drilldown={salesEngineDrilldown} />
 
       <SectionTitle icon="🗂️" title="Salud de las superficies" subtitle="cada tarjeta abre su detalle" />
@@ -721,6 +742,7 @@ function ChannelsView({
   salesEngineLoading,
   salesEngineError,
   salesEngineDrilldown,
+  salesEngineSubtitle: salesEngineSubtitleText,
 }: {
   funnel: ReturnType<typeof buildFunnelModel>;
   rows: ChannelMatrixRow[];
@@ -728,6 +750,7 @@ function ChannelsView({
   salesEngineLoading?: boolean;
   salesEngineError?: boolean;
   salesEngineDrilldown?: SalesEngineDrilldownContext;
+  salesEngineSubtitle?: string;
 }) {
   return (
     <div>
@@ -741,7 +764,7 @@ function ChannelsView({
 
       <CompactFunnel stages={funnel.stages} />
 
-      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto · incluye hoy (parcial)" />
+      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle={salesEngineSubtitleText ?? salesEngineSubtitle("live")} />
       <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} drilldown={salesEngineDrilldown} />
 
       <SectionTitle icon="🧾" title="Inventario de observaciones" subtitle="sin ranking ni porcentaje global entre universos solapados" />
@@ -1510,6 +1533,8 @@ export interface SalesEngineStageModel {
   present: boolean;
   quality: MetricKpiQualityStatus | null;
   total: number | null;
+  /** Live counts only: a GHL safety cap made this row a lower bound (≥N). */
+  truncated?: boolean;
   cells: Array<{ bucket: ChannelBucketKey; value: number | null }>;
 }
 
@@ -1569,9 +1594,68 @@ export function buildSalesEngineMatrix(
   };
 }
 
+/**
+ * Live matrix (SAN-326): builds the same `SalesEngineMatrixModel` the renderer
+ * consumes, but from the counts endpoint — the SAME GHL queries behind the
+ * drill-down lists, so every cell equals the list it opens by construction.
+ * A configured live read that returns zeros IS a real zero (present, not "—").
+ * `truncated` rows are lower bounds and render as "≥N".
+ */
+export function buildSalesEngineMatrixFromCounts(
+  counts?: SalesEngineCountsResponse | null,
+): SalesEngineMatrixModel {
+  if (!counts?.configured || !counts.stages || !counts.wonValue) {
+    return { available: false, stages: [] };
+  }
+  const byStage = new Map(counts.stages.map((stage) => [stage.stage, stage]));
+  const stages = SALES_ENGINE_STAGES.map((spec): SalesEngineStageModel => {
+    const live = spec.key === "valor"
+      ? counts.wonValue
+      : byStage.get(drilldownStageForMatrixRow(spec.key) ?? "leads");
+    if (!live) {
+      return {
+        key: spec.key,
+        label: spec.label,
+        icon: spec.icon,
+        currency: Boolean(spec.currency),
+        present: false,
+        quality: null,
+        total: null,
+        cells: CHANNEL_BUCKETS.map((bucket) => ({ bucket: bucket.key, value: null })),
+      };
+    }
+    return {
+      key: spec.key,
+      label: spec.label,
+      icon: spec.icon,
+      currency: Boolean(spec.currency),
+      present: true,
+      quality: "ok",
+      total: live.total,
+      truncated: live.truncated,
+      cells: CHANNEL_BUCKETS.map((bucket) => ({
+        bucket: bucket.key,
+        value: live.buckets[bucket.key] ?? 0,
+      })),
+    };
+  });
+  return { available: true, stages };
+}
+
+/** Section subtitle for the matrix: declares live GHL reads, or the snapshot
+ * fallback when the live endpoint failed — never claims "en vivo" for stale data. */
+export function salesEngineSubtitle(source: "live" | "snapshots"): string {
+  const base = "personas desde GHL, canal según el origen del contacto";
+  return source === "live"
+    ? `${base} · en vivo desde GoHighLevel, hasta ahora`
+    : `${base} · instantáneas recolectadas (no se pudo consultar GoHighLevel en vivo)`;
+}
+
 function salesEngineCellValue(stage: SalesEngineStageModel, value: number | null): string {
   if (value == null) return "—";
-  return stage.currency ? formatCurrencyEur(value) : formatCompact(value);
+  const text = stage.currency ? formatCurrencyEur(value) : formatCompact(value);
+  // A truncated live scan yields lower bounds — say so instead of undercounting.
+  return stage.truncated && value > 0 ? `≥${text}` : text;
 }
 
 /**

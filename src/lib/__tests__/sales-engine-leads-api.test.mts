@@ -1,8 +1,10 @@
 /**
- * Sales-engine drill-down (SAN-326): live GHL reads behind
- * /api/metrics/sales-engine-leads. Covers the pure fetch layer (mocked fetch —
- * bucket filtering, joins, paging caps, shapes) and the route contract
- * (validation, not-connected, 502 on provider failure, no key leakage).
+ * Sales-engine drill-down + live matrix counts (SAN-326): GHL reads behind
+ * /api/metrics/sales-engine-leads. Covers the shared fetch layer (mocked fetch
+ * — bucket filtering, joins, paging caps, shapes), the counts mode (lists and
+ * counts agree on the same fixture BY CONSTRUCTION, truncation as honest lower
+ * bounds, the 60s in-process cache) and the route contract (validation,
+ * not-connected, 502 on provider failure, no key leakage).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -27,8 +29,14 @@ for (const key of [
 }
 
 const dataMod = await import("../data/sales-engine-leads");
-const { fetchSalesEngineLeads, SalesEngineGhlError, zonedRangeBounds } =
-  (dataMod as unknown as { default: typeof dataMod }).default ?? dataMod;
+const {
+  clearSalesEngineCountsCache,
+  fetchSalesEngineCounts,
+  fetchSalesEngineCountsCached,
+  fetchSalesEngineLeads,
+  SalesEngineGhlError,
+  zonedRangeBounds,
+} = (dataMod as unknown as { default: typeof dataMod }).default ?? dataMod;
 // The route's default export is the composed handler (a function), so unwrap
 // only the named raw handler here.
 const { salesEngineLeadsHandler } = await import("../../pages/api/metrics/sales-engine-leads");
@@ -422,6 +430,319 @@ test("ruta e2e: fallo del proveedor → 502 con mensaje claro y sin la key", asy
       from: "2026-07-01",
       to: "2026-07-20",
     });
+    assert.equal(result.statusCode, 502);
+    const message = String((result.payload as { error?: string }).error);
+    assert.match(message, /GoHighLevel respondió HTTP 503/);
+    assert.doesNotMatch(message, new RegExp(API_KEY));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+// ── Counts mode (SAN-326: matrix cells live from GHL) ────────────────────────
+
+/**
+ * One GHL world reused by counts mode AND every list read, so the tests can
+ * assert the doctrine literally: each matrix cell equals the length of the
+ * drill-down list behind it — same scans, same channel collapse.
+ */
+function ghlWorldFetch(calls: FetchCall[] = []) {
+  const contactsById: Record<string, unknown> = {
+    "c-linkedin": { contact: { contactName: "Sofía", email: "sofia@example.com", source: "LinkedIn Outreach" } },
+    "c-email": { contact: { contactName: "Explee Guy", email: "guy@example.com", source: "Explee AutoGTM" } },
+    "c-paid": { contact: { contactName: "Paid Guy", email: "paid@example.com", source: "google / cpc" } },
+  };
+  return async (url: string, init?: FetchInit) => {
+    calls.push({ url, init });
+    if (/contacts\/search$/.test(url)) {
+      return jsonResponse({
+        contacts: [
+          { contactName: "Lead Email", email: "a@example.com", source: "Explee AutoGTM", dateAdded: "2026-07-18T10:00:00.000Z" },
+          { contactName: "Lead Web", email: "b@example.com", source: "google / organic", dateAdded: "2026-07-17T10:00:00.000Z" },
+          { contactName: "Lead LinkedIn", email: "c@example.com", source: "LinkedIn Outreach", dateAdded: "2026-07-16T10:00:00.000Z" },
+          { contactName: "Lead Sin Origen", email: "d@example.com", dateAdded: "2026-07-15T10:00:00.000Z" },
+        ],
+      });
+    }
+    if (/\/calendars\/\?/.test(url)) return jsonResponse({ calendars: [{ id: "cal-1" }] });
+    if (/\/calendars\/events/.test(url)) {
+      return jsonResponse({
+        events: [
+          { contactId: "c-linkedin", startTime: "2026-07-18T09:00:00.000Z", appointmentStatus: "confirmed" },
+          { contactId: "c-email", startTime: "2026-07-17T09:00:00.000Z", appointmentStatus: "showed" },
+          { contactId: "c-deleted", startTime: "2026-07-16T09:00:00.000Z" },
+        ],
+      });
+    }
+    if (/opportunities\/pipelines/.test(url)) return jsonResponse({ pipelines: [] });
+    if (/opportunities\/search/.test(url)) {
+      if (/status=won/.test(url)) {
+        return jsonResponse({
+          opportunities: [
+            { status: "won", contact: { id: "c-email" }, createdAt: "2026-06-01T00:00:00.000Z", monetaryValue: 5000 },
+            { status: "won", contact: { id: "c-paid" }, createdAt: "2026-05-01T00:00:00.000Z", monetaryValue: 1500 },
+            // Defensa: la API a veces devuelve estados mezclados — solo cuenta won.
+            { status: "open", contact: { id: "c-linkedin" }, createdAt: "2026-05-02T00:00:00.000Z", monetaryValue: 900 },
+          ],
+        });
+      }
+      return jsonResponse({
+        opportunities: [
+          { contact: { id: "c-linkedin" }, createdAt: "2026-07-18T08:00:00.000Z", monetaryValue: 100 },
+          { contact: { id: "c-paid" }, createdAt: "2026-07-17T08:00:00.000Z", monetaryValue: 250 },
+          { status: "won", contact: { id: "c-email" }, createdAt: "2026-07-16T08:00:00.000Z", monetaryValue: 999 },
+        ],
+      });
+    }
+    const contactMatch = url.match(/\/contacts\/([^/?]+)$/);
+    if (contactMatch) {
+      const contact = contactsById[decodeURIComponent(contactMatch[1])];
+      return contact ? jsonResponse(contact) : jsonResponse({}, 404);
+    }
+    throw new Error(`unexpected URL ${url}`);
+  };
+}
+
+const COUNTS_WINDOW = { from: "2026-07-01", to: "2026-07-19" } as const;
+const BUCKET_KEYS = ["web", "paid", "linkedin", "email", "trust", "otros"] as const;
+
+test("counts: la matriz entera en una llamada, con la atribución del adapter", async () => {
+  const counts = await fetchSalesEngineCounts({
+    ...COUNTS_WINDOW,
+    locationId: "loc-1",
+    apiKey: API_KEY,
+    timezone: "UTC",
+    fetchImpl: ghlWorldFetch(),
+  });
+
+  const stage = (key: string) => {
+    const found = counts.stages.find((item) => item.stage === key);
+    assert.ok(found, key);
+    return found;
+  };
+  assert.deepEqual(stage("leads").buckets, { web: 1, paid: 0, linkedin: 1, email: 1, trust: 0, otros: 1 });
+  assert.equal(stage("leads").total, 4);
+  assert.deepEqual(stage("meetings").buckets, { web: 0, paid: 0, linkedin: 1, email: 1, trust: 0, otros: 1 });
+  assert.equal(stage("meetings").total, 3);
+  assert.deepEqual(stage("opportunities").buckets, { web: 0, paid: 1, linkedin: 1, email: 1, trust: 0, otros: 0 });
+  assert.equal(stage("opportunities").total, 3);
+  // Won = stock del CRM con status won estricto (la fila open no cuenta).
+  assert.deepEqual(stage("won").buckets, { web: 0, paid: 1, linkedin: 0, email: 1, trust: 0, otros: 0 });
+  assert.equal(stage("won").total, 2);
+  assert.deepEqual(counts.wonValue.buckets, { web: 0, paid: 1500, linkedin: 0, email: 5000, trust: 0, otros: 0 });
+  assert.equal(counts.wonValue.total, 6500);
+  assert.equal(counts.truncated, false);
+  // Cada total es la suma de sus celdas — consistencia por construcción.
+  for (const item of counts.stages) {
+    assert.equal(Object.values(item.buckets).reduce((sum, value) => sum + value, 0), item.total);
+  }
+});
+
+test("counts == listas: cada celda es exactamente el total del drill-down que abre", async () => {
+  const counts = await fetchSalesEngineCounts({
+    ...COUNTS_WINDOW,
+    locationId: "loc-1",
+    apiKey: API_KEY,
+    timezone: "UTC",
+    fetchImpl: ghlWorldFetch(),
+  });
+
+  for (const stageCounts of counts.stages) {
+    for (const bucket of [null, ...BUCKET_KEYS] as const) {
+      const list = await fetchSalesEngineLeads({
+        stage: stageCounts.stage,
+        bucket,
+        ...COUNTS_WINDOW,
+        locationId: "loc-1",
+        apiKey: API_KEY,
+        timezone: "UTC",
+        fetchImpl: ghlWorldFetch(),
+      });
+      const expected = bucket == null ? stageCounts.total : stageCounts.buckets[bucket];
+      assert.equal(
+        list.total,
+        expected,
+        `${stageCounts.stage} × ${bucket ?? "total"}: lista ${list.total} ≠ celda ${expected}`,
+      );
+    }
+  }
+});
+
+test("counts: un cap de paginación trunca honesto (cota inferior, no fallo)", async () => {
+  const fullPage = Array.from({ length: 100 }, (_, index) => ({
+    contactName: `Bulk ${index}`,
+    email: `bulk${index}@example.com`,
+    source: "Explee AutoGTM",
+    dateAdded: "2026-07-18T10:00:00.000Z",
+  }));
+  const counts = await fetchSalesEngineCounts({
+    ...COUNTS_WINDOW,
+    locationId: "loc-1",
+    apiKey: API_KEY,
+    timezone: "UTC",
+    limits: { contactsPageCap: 2 },
+    fetchImpl: async (url: string) => {
+      if (/contacts\/search$/.test(url)) return jsonResponse({ contacts: fullPage });
+      if (/\/calendars\/\?/.test(url)) return jsonResponse({ calendars: [] });
+      if (/opportunities\/search/.test(url)) return jsonResponse({ opportunities: [] });
+      throw new Error(`unexpected URL ${url}`);
+    },
+  });
+  const leads = counts.stages.find((item) => item.stage === "leads");
+  assert.ok(leads);
+  assert.equal(leads.total, 200);
+  assert.equal(leads.truncated, true);
+  assert.equal(counts.truncated, true);
+  const meetings = counts.stages.find((item) => item.stage === "meetings");
+  assert.equal(meetings?.truncated, false);
+});
+
+test("counts: el cap del join de contactos detiene el scan y marca truncated", async () => {
+  const counts = await fetchSalesEngineCounts({
+    ...COUNTS_WINDOW,
+    locationId: "loc-1",
+    apiKey: API_KEY,
+    timezone: "UTC",
+    limits: { contactJoinCap: 1 },
+    fetchImpl: async (url: string) => {
+      if (/contacts\/search$/.test(url)) return jsonResponse({ contacts: [] });
+      if (/\/calendars\/\?/.test(url)) return jsonResponse({ calendars: [{ id: "cal-1" }] });
+      if (/\/calendars\/events/.test(url)) {
+        return jsonResponse({
+          events: [
+            { contactId: "c1", startTime: "2026-07-18T09:00:00.000Z" },
+            { contactId: "c2", startTime: "2026-07-17T09:00:00.000Z" },
+          ],
+        });
+      }
+      if (/opportunities\/search/.test(url)) return jsonResponse({ opportunities: [] });
+      if (/\/contacts\/c1$/.test(url)) return jsonResponse({ contact: { contactName: "Uno", source: "LinkedIn" } });
+      throw new Error(`unexpected URL ${url}`);
+    },
+  });
+  const meetings = counts.stages.find((item) => item.stage === "meetings");
+  assert.ok(meetings);
+  // Solo el primer contacto entró antes del cap: cota inferior honesta.
+  assert.equal(meetings.total, 1);
+  assert.equal(meetings.truncated, true);
+  assert.equal(counts.truncated, true);
+});
+
+test("counts cache: TTL 60s por clave, dedupe en vuelo y errores sin cachear", async () => {
+  clearSalesEngineCountsCache();
+  let searches = 0;
+  let failing = false;
+  const fetchImpl = async (url: string) => {
+    if (failing) return jsonResponse({ message: "boom" }, 503);
+    if (/contacts\/search$/.test(url)) {
+      searches += 1;
+      return jsonResponse({ contacts: [] });
+    }
+    if (/\/calendars\/\?/.test(url)) return jsonResponse({ calendars: [] });
+    if (/opportunities\/search/.test(url)) return jsonResponse({ opportunities: [] });
+    throw new Error(`unexpected URL ${url}`);
+  };
+  let clock = 1_000_000;
+  const now = () => clock;
+  const query = { ...COUNTS_WINDOW, locationId: "loc-1", apiKey: API_KEY, timezone: "UTC" as const, fetchImpl };
+
+  // Dos peticiones concurrentes comparten UNA lectura de GHL.
+  await Promise.all([
+    fetchSalesEngineCountsCached("acme|loc-1|w", query, now),
+    fetchSalesEngineCountsCached("acme|loc-1|w", query, now),
+  ]);
+  assert.equal(searches, 1);
+
+  // Dentro del TTL: hit; otra clave: miss; pasado el TTL: refetch.
+  clock += 59_000;
+  await fetchSalesEngineCountsCached("acme|loc-1|w", query, now);
+  assert.equal(searches, 1);
+  await fetchSalesEngineCountsCached("acme|loc-1|otro", query, now);
+  assert.equal(searches, 2);
+  clock += 2_000;
+  await fetchSalesEngineCountsCached("acme|loc-1|w", query, now);
+  assert.equal(searches, 3);
+
+  // Un fallo del proveedor no queda cacheado: el siguiente intento reintenta.
+  clock += 61_000;
+  failing = true;
+  await assert.rejects(
+    fetchSalesEngineCountsCached("acme|loc-1|w", query, now),
+    SalesEngineGhlError,
+  );
+  failing = false;
+  await fetchSalesEngineCountsCached("acme|loc-1|w", query, now);
+  assert.equal(searches, 4);
+});
+
+// ── Route contract: counts mode ──────────────────────────────────────────────
+
+test("ruta counts: valida fechas y responde 200 configured:false sin credenciales", async () => {
+  const missingDates = await invoke({ slug: "acme-desconectado", view: "counts" });
+  assert.equal(missingDates.statusCode, 400);
+
+  const badView = await invoke({ slug: "acme", view: "grid" });
+  assert.equal(badView.statusCode, 400);
+
+  const unconfigured = await invoke({
+    slug: "acme-desconectado",
+    view: "counts",
+    from: "2026-07-01",
+    to: "2026-07-19",
+  });
+  // 200 (no 400): "sin conectar" es un estado normal de la matriz, no un
+  // error del caller — la UI muestra su prompt de conexión.
+  assert.equal(unconfigured.statusCode, 200);
+  const payload = unconfigured.payload as { configured: boolean; error?: string };
+  assert.equal(payload.configured, false);
+  assert.match(String(payload.error), /no está conectado/);
+});
+
+test("ruta e2e counts: matriz completa en una llamada y cacheada 60s", async () => {
+  clearSalesEngineCountsCache();
+  seedConnectedBrand("acme");
+  const calls: FetchCall[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = ghlWorldFetch(calls) as unknown as typeof fetch;
+  try {
+    const result = await invoke({ slug: "acme", view: "counts", ...COUNTS_WINDOW });
+    assert.equal(result.statusCode, 200);
+    const payload = result.payload as {
+      configured: boolean;
+      source: string;
+      from: string;
+      to: string;
+      truncated: boolean;
+      stages: Array<{ stage: string; buckets: Record<string, number>; total: number; truncated: boolean }>;
+      wonValue: { buckets: Record<string, number>; total: number; truncated: boolean };
+    };
+    assert.equal(payload.configured, true);
+    assert.equal(payload.source, "ghl-live");
+    assert.equal(payload.from, COUNTS_WINDOW.from);
+    assert.equal(payload.to, COUNTS_WINDOW.to);
+    assert.deepEqual(payload.stages.map((item) => item.stage), ["leads", "meetings", "opportunities", "won"]);
+    assert.equal(payload.stages[0].total, 4);
+    assert.equal(payload.stages[0].buckets.email, 1);
+    assert.equal(payload.wonValue.total, 6500);
+    assert.equal(payload.truncated, false);
+
+    // Segunda petición dentro del TTL: servida desde caché, cero llamadas a GHL.
+    const callsAfterFirst = calls.length;
+    const cachedResult = await invoke({ slug: "acme", view: "counts", ...COUNTS_WINDOW });
+    assert.equal(cachedResult.statusCode, 200);
+    assert.equal(calls.length, callsAfterFirst);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("ruta counts: fallo del proveedor → 502 con mensaje claro y sin la key", async () => {
+  clearSalesEngineCountsCache();
+  seedConnectedBrand("acme");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async () => jsonResponse({ message: "boom" }, 503)) as typeof fetch;
+  try {
+    const result = await invoke({ slug: "acme", view: "counts", from: "2026-07-02", to: "2026-07-19" });
     assert.equal(result.statusCode, 502);
     const message = String((result.payload as { error?: string }).error);
     assert.match(message, /GoHighLevel respondió HTTP 503/);

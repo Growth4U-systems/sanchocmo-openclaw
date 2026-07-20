@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { MetricKpiResult, MetricKpiValue, MetricsHealthResult, PartnershipReport, SurfaceDetailResult, SurfaceSummaryEntry } from "@/hooks/useMetrics";
+import type { MetricKpiResult, MetricKpiValue, MetricsHealthResult, PartnershipReport, SalesEngineCountsResponse, SurfaceDetailResult, SurfaceSummaryEntry } from "@/hooks/useMetrics";
 import type { DashboardDefinition } from "@/lib/metrics/dashboard-schema";
 import {
   buildMetricStageRollupReadModel,
@@ -15,7 +15,9 @@ import {
   buildFunnelModel,
   buildSalesEngineConversion,
   buildSalesEngineMatrix,
+  buildSalesEngineMatrixFromCounts,
   ChannelMatrix,
+  salesEngineSubtitle,
   salesEngineWindow,
   CustomMetricPanel,
   deltaTone,
@@ -427,6 +429,120 @@ test("Motor de ventas sin datos GHL muestra vacío honesto, no una matriz de cer
   assert.match(loading, /Cargando el funnel por canal/);
   const failed = renderToStaticMarkup(createElement(ChannelMatrix, { model, hasError: true }));
   assert.match(failed, /No se pudo cargar el detalle de GHL/);
+});
+
+function salesEngineCountsResponse(
+  overrides: Partial<SalesEngineCountsResponse> = {},
+): SalesEngineCountsResponse {
+  const zero = { web: 0, paid: 0, linkedin: 0, email: 0, trust: 0, otros: 0 };
+  return {
+    configured: true,
+    slug: "acme",
+    from: "2026-06-20",
+    to: "2026-07-20",
+    stages: [
+      { stage: "leads", buckets: { ...zero, web: 8, email: 30, trust: 10, linkedin: 2, otros: 13 }, total: 63, truncated: false },
+      { stage: "meetings", buckets: { ...zero, web: 3, email: 2 }, total: 5, truncated: false },
+      { stage: "opportunities", buckets: { ...zero, email: 2, paid: 1 }, total: 3, truncated: false },
+      { stage: "won", buckets: { ...zero, email: 1 }, total: 1, truncated: false },
+    ],
+    wonValue: { buckets: { ...zero, email: 5000 }, total: 5000, truncated: false },
+    truncated: false,
+    source: "ghl-live",
+    ...overrides,
+  };
+}
+
+test("Motor de ventas EN VIVO: la matriz sale del endpoint de counts (celdas == listas por construcción)", () => {
+  const model = buildSalesEngineMatrixFromCounts(salesEngineCountsResponse());
+  assert.equal(model.available, true);
+  const stage = (key: string) => {
+    const found = model.stages.find((item) => item.key === key);
+    assert.ok(found, key);
+    return found;
+  };
+  const cell = (key: string, bucket: string) =>
+    stage(key).cells.find((item) => item.bucket === bucket)?.value;
+
+  // Los mismos números en vivo que verían las listas: la celda Web de Leads es 8
+  // (el bug era 2 desde snapshots dispersos) y el total 63 (no 43).
+  assert.equal(stage("leads").total, 63);
+  assert.equal(cell("leads", "web"), 8);
+  assert.equal(cell("leads", "trust"), 10);
+  assert.equal(stage("reuniones").total, 5);
+  assert.equal(stage("oportunidades").total, 3);
+  assert.equal(stage("ganadas").total, 1);
+  assert.equal(stage("valor").total, 5000);
+  assert.equal(cell("valor", "email"), 5000);
+  // Cada total es la suma de sus celdas.
+  for (const item of model.stages) {
+    assert.equal(item.cells.reduce((sum, value) => sum + (value.value ?? 0), 0), item.total);
+  }
+  // Dato en vivo: sin badge de calidad degradada.
+  const markup = renderToStaticMarkup(createElement(ChannelMatrix, { model }));
+  assert.match(markup, /63/);
+  assert.doesNotMatch(markup, /SIN DATO/);
+
+  // La tira de conversión se calcula de los MISMOS totales en vivo.
+  const conversion = buildSalesEngineConversion(model);
+  assert.equal(conversion.available, true);
+  assert.equal(conversion.steps[0].value, 5 / 63);
+  assert.equal(conversion.steps[1].value, 3 / 5);
+  assert.equal(conversion.steps[2].value, 1 / 3);
+  assert.match(conversion.wonValueDisplay, /5\.?000/u);
+});
+
+test("Motor de ventas EN VIVO: ceros reales cuentan como matriz disponible y truncado se muestra como ≥N", () => {
+  // GHL conectado con ventana sin actividad → ceros honestos, no "sin datos".
+  const zero = { web: 0, paid: 0, linkedin: 0, email: 0, trust: 0, otros: 0 };
+  const empty = buildSalesEngineMatrixFromCounts(salesEngineCountsResponse({
+    stages: [
+      { stage: "leads", buckets: { ...zero }, total: 0, truncated: false },
+      { stage: "meetings", buckets: { ...zero }, total: 0, truncated: false },
+      { stage: "opportunities", buckets: { ...zero }, total: 0, truncated: false },
+      { stage: "won", buckets: { ...zero }, total: 0, truncated: false },
+    ],
+    wonValue: { buckets: { ...zero }, total: 0, truncated: false },
+  }));
+  assert.equal(empty.available, true);
+  assert.equal(empty.stages.every((item) => item.present && item.total === 0), true);
+
+  // Cap de seguridad alcanzado → cota inferior explícita, nunca un undercount mudo.
+  const truncated = buildSalesEngineMatrixFromCounts(salesEngineCountsResponse({
+    stages: [
+      { stage: "leads", buckets: { ...zero, email: 1900, web: 100 }, total: 2000, truncated: true },
+      { stage: "meetings", buckets: { ...zero, web: 3 }, total: 3, truncated: false },
+      { stage: "opportunities", buckets: { ...zero }, total: 0, truncated: false },
+      { stage: "won", buckets: { ...zero }, total: 0, truncated: false },
+    ],
+    truncated: true,
+  }));
+  const markup = renderToStaticMarkup(createElement(ChannelMatrix, { model: truncated }));
+  assert.match(markup, /≥2000|≥2\.000/u);
+  assert.match(markup, /≥1900|≥1\.900/u);
+  // Las filas no truncadas no llevan el prefijo.
+  assert.doesNotMatch(markup, /≥3\b/u);
+
+  // Respuesta sin conexión GHL → matriz no disponible (estado de conexión).
+  const unconfigured = buildSalesEngineMatrixFromCounts({
+    configured: false,
+    slug: "acme",
+    from: "2026-06-20",
+    to: "2026-07-20",
+    error: "GoHighLevel no está conectado",
+  });
+  assert.equal(unconfigured.available, false);
+  assert.equal(buildSalesEngineMatrixFromCounts(undefined).available, false);
+});
+
+test("Motor de ventas: el subtítulo declara en vivo, y el fallback nunca dice 'en vivo'", () => {
+  assert.equal(
+    salesEngineSubtitle("live"),
+    "personas desde GHL, canal según el origen del contacto · en vivo desde GoHighLevel, hasta ahora",
+  );
+  assert.match(salesEngineSubtitle("snapshots"), /instantáneas recolectadas/);
+  // El fallback jamás afirma que el dato es en vivo.
+  assert.doesNotMatch(salesEngineSubtitle("snapshots"), /· en vivo desde GoHighLevel/);
 });
 
 test("Partnerships distingue conexión, demo, tracking real y fees incompletos", () => {

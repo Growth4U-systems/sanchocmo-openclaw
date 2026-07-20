@@ -1,12 +1,22 @@
 /**
  * Live GHL reads behind `GET /api/metrics/sales-engine-leads` (SAN-326).
  *
- * The sales-engine matrix counts come from persisted `metric_snapshots`; the
- * drill-down instead asks GoHighLevel directly so the list is current. The
- * request/filter semantics deliberately mirror the metrics-collector adapter
- * (`skills/metrics-collector/scripts/adapters/ghl.js`): same endpoints, same
- * Version headers, same paging caps, and the same contactId→contact join for
- * records that embed no source — so lists reconcile with the counts.
+ * ONE scan layer feeds BOTH modes of the endpoint:
+ *   - list mode (`fetchSalesEngineLeads`): the drill-down behind a matrix cell —
+ *     one stage × bucket, newest rows first, capped at 100 visible rows;
+ *   - counts mode (`fetchSalesEngineCounts`): the whole matrix in one call —
+ *     every bucket of every stage tallied from the SAME scans.
+ * A matrix cell and its drill-down list therefore agree by construction: the
+ * count is exactly `rows.length` of the scan the list renders (the row cap only
+ * limits what the list shows, never what gets counted).
+ *
+ * The request/filter semantics deliberately mirror the metrics-collector
+ * adapter (`skills/metrics-collector/scripts/adapters/ghl.js`): same endpoints,
+ * same Version headers, and the same contactId→contact join for records that
+ * embed no source. Safety caps: list mode keeps the adapter-aligned paging caps
+ * and throws when the contact join would exceed its cap; counts mode uses
+ * higher caps and, when one is still hit, STOPS scanning and marks the stage
+ * `truncated` (counts become honest lower bounds — the UI renders "≥N").
  *
  * PII: lead rows flow through to the response only. Nothing here logs contact
  * data, and provider errors carry status+operation, never the API key or
@@ -15,7 +25,6 @@
 
 import {
   channelMatchesBucket,
-  contactChannel,
   SALES_ENGINE_DRILLDOWN_ROW_LIMIT,
   shapeLeadRow,
   shapeMeetingRow,
@@ -24,16 +33,25 @@ import {
   type SalesEngineLeadRow,
   type SalesEngineLeadsResult,
 } from "@/lib/metrics/sales-engine-drilldown";
-import type { ChannelBucketKey } from "@/lib/metrics/channel-buckets";
+import {
+  CHANNEL_BUCKETS,
+  mapChannelToBucket,
+  type ChannelBucketKey,
+} from "@/lib/metrics/channel-buckets";
 
 const BASE_URL = "https://services.leadconnectorhq.com";
 const CONTACTS_VERSION = "2021-07-28";
 const CALENDARS_VERSION = "2021-04-15";
 const OPPORTUNITIES_VERSION = "v3";
-// Paging caps aligned with the adapter's safety limits.
+// List-mode paging caps aligned with the adapter's safety limits.
 const CONTACTS_PAGE_CAP = 10;
 const OPPORTUNITIES_PAGE_CAP = 5;
 const CONTACT_JOIN_CAP = 500;
+// Counts mode reads every stage in one request, so it loops further before
+// giving up: enough for real volumes (hundreds–low thousands) per window.
+const COUNTS_CONTACTS_PAGE_CAP = 20; // ×100 = 2 000 contacts
+const COUNTS_OPPORTUNITIES_PAGE_CAP = 10; // ×100 = 1 000 opportunities
+const COUNTS_CONTACT_JOIN_CAP = 1500;
 const DAY_MS = 86_400_000;
 
 export type FetchLike = (
@@ -141,6 +159,18 @@ interface GhlContext {
   fetchImpl: FetchLike;
 }
 
+function buildContext(query: { locationId: string; apiKey: string; fetchImpl?: FetchLike }): GhlContext {
+  return {
+    locationId: query.locationId,
+    fetchImpl: query.fetchImpl ?? (fetch as unknown as FetchLike),
+    headers: {
+      Authorization: `Bearer ${query.apiKey}`,
+      "Content-Type": "application/json",
+      Version: CONTACTS_VERSION,
+    },
+  };
+}
+
 async function ghlJson(
   ctx: GhlContext,
   operation: string,
@@ -205,16 +235,30 @@ async function resolveTimezone(ctx: GhlContext, configured?: string): Promise<st
   return "UTC";
 }
 
+/** Returned by the counts-mode contact resolver when the join cap is reached:
+ * the scan stops and reports `truncated` instead of failing the whole matrix. */
+const CONTACT_JOIN_CAPPED = Symbol("sales-engine-contact-join-capped");
+
+type ContactResolver = (
+  contactId: string | null | undefined,
+) => Promise<GhlContact | null | typeof CONTACT_JOIN_CAPPED>;
+
 /** contactId→contact join with a per-request cache. 404 → null (deleted
- * contact reads as 'Unknown', matching the adapter). */
-function createContactResolver(ctx: GhlContext) {
+ * contact reads as 'Unknown', matching the adapter). At the cap, list mode
+ * throws (acota el rango) while counts mode flags so the scan can stop and
+ * report an honest lower bound. Already-cached contacts keep resolving. */
+function createContactResolver(
+  ctx: GhlContext,
+  options: { cap: number; onCap: "throw" | "flag" },
+): ContactResolver {
   const cache = new Map<string, GhlContact | null>();
-  return async function resolveContact(contactId: string | null | undefined): Promise<GhlContact | null> {
+  return async function resolveContact(contactId) {
     if (!contactId) return null;
     if (cache.has(contactId)) return cache.get(contactId) ?? null;
-    if (cache.size >= CONTACT_JOIN_CAP) {
+    if (cache.size >= options.cap) {
+      if (options.onCap === "flag") return CONTACT_JOIN_CAPPED;
       throw new SalesEngineGhlError(
-        `La consulta supera el límite de ${CONTACT_JOIN_CAP} contactos por lista; acota el rango de fechas`,
+        `La consulta supera el límite de ${options.cap} contactos por lista; acota el rango de fechas`,
       );
     }
     const response = await ctx.fetchImpl(
@@ -238,19 +282,29 @@ function createContactResolver(ctx: GhlContext) {
   };
 }
 
-// ── Stage readers ────────────────────────────────────────────────────────────
+// ── Stage scans (shared by list mode and counts mode) ───────────────────────
+//
+// Each scan reads a full stage window from GHL and shapes EVERY record into a
+// `SalesEngineLeadRow` whose `source` is the collapsed acquisition channel.
+// List mode filters/sorts/caps those rows; counts mode tallies them. Both see
+// the same records, so cell counts and drill-down lists cannot diverge.
 
-async function listLeads(
+interface StageScan {
+  rows: SalesEngineLeadRow[];
+  /** True when a paging or contact-join cap stopped the scan early. */
+  truncated: boolean;
+}
+
+async function scanLeads(
   ctx: GhlContext,
-  bucket: ChannelBucketKey | null,
   fromIso: string,
   toIso: string,
-): Promise<{ rows: SalesEngineLeadRow[]; total: number; truncated: boolean }> {
+  pageCap: number,
+): Promise<StageScan> {
   const rows: SalesEngineLeadRow[] = [];
-  let total = 0;
   let page = 1;
   let hasMore = true;
-  while (hasMore && page <= CONTACTS_PAGE_CAP) {
+  while (hasMore && page <= pageCap) {
     const data = await ghlJson(ctx, "contacts/search", `${BASE_URL}/contacts/search`, {
       method: "POST",
       body: JSON.stringify({
@@ -267,23 +321,19 @@ async function listLeads(
       }),
     });
     const contacts = asArray(data.contacts, "contacts/search", "contacts") as GhlContact[];
-    for (const contact of contacts) {
-      if (!channelMatchesBucket(contactChannel(contact), bucket)) continue;
-      total += 1;
-      if (rows.length < SALES_ENGINE_DRILLDOWN_ROW_LIMIT) rows.push(shapeLeadRow(contact));
-    }
+    for (const contact of contacts) rows.push(shapeLeadRow(contact));
     hasMore = contacts.length === 100;
     page += 1;
   }
-  return { rows, total, truncated: hasMore };
+  return { rows, truncated: hasMore };
 }
 
-async function listMeetings(
+async function scanMeetings(
   ctx: GhlContext,
-  bucket: ChannelBucketKey | null,
+  resolveContact: ContactResolver,
   fromTs: number,
   toTs: number,
-): Promise<{ rows: SalesEngineLeadRow[]; total: number; truncated: boolean }> {
+): Promise<StageScan> {
   const calendarsData = await ghlJson(
     ctx,
     "calendars",
@@ -310,17 +360,17 @@ async function listMeetings(
     );
   }
 
-  const resolveContact = createContactResolver(ctx);
   const rows: SalesEngineLeadRow[] = [];
-  let total = 0;
+  let truncated = false;
   for (const event of events) {
     const contact = await resolveContact(event.contactId || event.contact?.id || null);
-    const channel = contact ? contactChannel(contact) : "Unknown";
-    if (!channelMatchesBucket(channel, bucket)) continue;
-    total += 1;
-    if (rows.length < SALES_ENGINE_DRILLDOWN_ROW_LIMIT) rows.push(shapeMeetingRow(event, contact));
+    if (contact === CONTACT_JOIN_CAPPED) {
+      truncated = true;
+      break;
+    }
+    rows.push(shapeMeetingRow(event, contact));
   }
-  return { rows, total, truncated: false };
+  return { rows, truncated };
 }
 
 async function pipelineStageNames(ctx: GhlContext): Promise<Map<string, string>> {
@@ -344,11 +394,17 @@ async function pipelineStageNames(ctx: GhlContext): Promise<Map<string, string>>
   return names;
 }
 
-async function listOpportunities(
+async function scanOpportunities(
   ctx: GhlContext,
-  bucket: ChannelBucketKey | null,
-  options: { wonOnly: boolean; from?: string; to?: string },
-): Promise<{ rows: SalesEngineLeadRow[]; total: number; truncated: boolean }> {
+  resolveContact: ContactResolver,
+  options: {
+    wonOnly: boolean;
+    from?: string;
+    to?: string;
+    pageCap: number;
+    stageNames: Map<string, string>;
+  },
+): Promise<StageScan> {
   type GhlOpportunity = Parameters<typeof shapeOpportunityRow>[0] & {
     status?: string | null;
     contactId?: string | null;
@@ -361,7 +417,7 @@ async function listOpportunities(
     ? `&date=${toMMDDYYYY(options.from)}&endDate=${toMMDDYYYY(options.to)}`
     : "";
   const status = options.wonOnly ? "won" : "all";
-  while (hasMore && page <= OPPORTUNITIES_PAGE_CAP) {
+  while (hasMore && page <= options.pageCap) {
     const data = await ghlJson(
       ctx,
       "opportunities/search",
@@ -374,75 +430,241 @@ async function listOpportunities(
     page += 1;
   }
 
-  const stageNames = await pipelineStageNames(ctx);
-  const resolveContact = createContactResolver(ctx);
   const rows: SalesEngineLeadRow[] = [];
-  let total = 0;
+  let truncated = hasMore;
   for (const opportunity of opportunities) {
-    // The won list mirrors the adapter: trust only status === 'won'.
+    // The won stage mirrors the adapter: trust only status === 'won'.
     if (options.wonOnly && (opportunity.status || "").toLowerCase() !== "won") continue;
     const contact = await resolveContact(
       opportunity.contact?.id || opportunity.contactId || null,
     );
-    const channel = contact ? contactChannel(contact) : "Unknown";
-    if (!channelMatchesBucket(channel, bucket)) continue;
-    total += 1;
-    if (rows.length < SALES_ENGINE_DRILLDOWN_ROW_LIMIT) {
-      rows.push(shapeOpportunityRow(
-        opportunity,
-        contact,
-        opportunity.pipelineStageId ? stageNames.get(opportunity.pipelineStageId) : null,
-      ));
+    if (contact === CONTACT_JOIN_CAPPED) {
+      truncated = true;
+      break;
     }
+    rows.push(shapeOpportunityRow(
+      opportunity,
+      contact,
+      opportunity.pipelineStageId ? options.stageNames.get(opportunity.pipelineStageId) : null,
+    ));
   }
-  return { rows, total, truncated: hasMore };
+  return { rows, truncated };
 }
 
-// ── Entry point ──────────────────────────────────────────────────────────────
+// ── List mode (drill-down) ───────────────────────────────────────────────────
 
 export async function fetchSalesEngineLeads(
   query: SalesEngineLeadsQuery,
 ): Promise<SalesEngineLeadsResult> {
-  const fetchImpl = query.fetchImpl ?? (fetch as unknown as FetchLike);
-  const ctx: GhlContext = {
-    locationId: query.locationId,
-    fetchImpl,
-    headers: {
-      Authorization: `Bearer ${query.apiKey}`,
-      "Content-Type": "application/json",
-      Version: CONTACTS_VERSION,
-    },
-  };
+  const ctx = buildContext(query);
+  const resolveContact = createContactResolver(ctx, {
+    cap: CONTACT_JOIN_CAP,
+    onCap: "throw",
+  });
 
-  let result: { rows: SalesEngineLeadRow[]; total: number; truncated: boolean };
+  let scan: StageScan;
   if (query.stage === "won") {
-    result = await listOpportunities(ctx, query.bucket, { wonOnly: true });
+    scan = await scanOpportunities(ctx, resolveContact, {
+      wonOnly: true,
+      pageCap: OPPORTUNITIES_PAGE_CAP,
+      stageNames: await pipelineStageNames(ctx),
+    });
   } else {
     if (!query.from || !query.to) {
       throw new Error(`sales-engine-leads: stage ${query.stage} requires from/to`);
     }
     if (query.stage === "opportunities") {
-      result = await listOpportunities(ctx, query.bucket, {
+      scan = await scanOpportunities(ctx, resolveContact, {
         wonOnly: false,
         from: query.from,
         to: query.to,
+        pageCap: OPPORTUNITIES_PAGE_CAP,
+        stageNames: await pipelineStageNames(ctx),
       });
     } else {
       const timezone = await resolveTimezone(ctx, query.timezone);
       const bounds = zonedRangeBounds(query.from, query.to, timezone);
-      result = query.stage === "leads"
-        ? await listLeads(ctx, query.bucket, bounds.fromIso, bounds.toIso)
-        : await listMeetings(ctx, query.bucket, bounds.fromTs, bounds.toTs);
+      scan = query.stage === "leads"
+        ? await scanLeads(ctx, bounds.fromIso, bounds.toIso, CONTACTS_PAGE_CAP)
+        : await scanMeetings(ctx, resolveContact, bounds.fromTs, bounds.toTs);
     }
   }
 
-  // Newest first — the drill-down is a "who just came in" list.
-  const rows = [...result.rows].sort((left, right) => right.date.localeCompare(left.date));
+  // The bucket filter runs on the shaped row's collapsed channel — the same
+  // value counts mode tallies — so list totals equal matrix cells.
+  const matching = scan.rows.filter((row) => channelMatchesBucket(row.source, query.bucket));
+  // Newest first — the drill-down is a "who just came in" list. The row cap
+  // only limits the visible rows; `total` counts the full matching set.
+  const rows = [...matching]
+    .sort((left, right) => right.date.localeCompare(left.date))
+    .slice(0, SALES_ENGINE_DRILLDOWN_ROW_LIMIT);
   return {
     stage: query.stage,
     bucket: query.bucket,
     rows,
-    total: result.total,
-    truncated: result.truncated,
+    total: matching.length,
+    truncated: scan.truncated,
   };
+}
+
+// ── Counts mode (whole matrix in one call) ───────────────────────────────────
+
+export type SalesEngineCountsStageKey = "leads" | "meetings" | "opportunities" | "won";
+
+export interface SalesEngineStageCounts {
+  stage: SalesEngineCountsStageKey;
+  buckets: Record<ChannelBucketKey, number>;
+  total: number;
+  /** True when a safety cap stopped the scan: counts are lower bounds (≥N). */
+  truncated: boolean;
+}
+
+export interface SalesEngineWonValueCounts {
+  buckets: Record<ChannelBucketKey, number>;
+  total: number;
+  truncated: boolean;
+}
+
+export interface SalesEngineCountsResult {
+  from: string;
+  to: string;
+  stages: SalesEngineStageCounts[];
+  /** € sum of the won stock's monetaryValue, split by the same buckets. */
+  wonValue: SalesEngineWonValueCounts;
+  truncated: boolean;
+}
+
+export interface SalesEngineCountsQuery {
+  from: string;
+  to: string;
+  locationId: string;
+  apiKey: string;
+  timezone?: string;
+  fetchImpl?: FetchLike;
+  /** Test/QA hook only — production callers use the module defaults. */
+  limits?: Partial<{
+    contactsPageCap: number;
+    opportunitiesPageCap: number;
+    contactJoinCap: number;
+  }>;
+}
+
+function emptyBucketCounts(): Record<ChannelBucketKey, number> {
+  const buckets = {} as Record<ChannelBucketKey, number>;
+  for (const bucket of CHANNEL_BUCKETS) buckets[bucket.key] = 0;
+  return buckets;
+}
+
+function tallyStage(stage: SalesEngineCountsStageKey, scan: StageScan): SalesEngineStageCounts {
+  const buckets = emptyBucketCounts();
+  for (const row of scan.rows) buckets[mapChannelToBucket(row.source)] += 1;
+  return { stage, buckets, total: scan.rows.length, truncated: scan.truncated };
+}
+
+function tallyWonValue(scan: StageScan): SalesEngineWonValueCounts {
+  const buckets = emptyBucketCounts();
+  let total = 0;
+  for (const row of scan.rows) {
+    const value = Number.isFinite(row.monetaryValue) ? Number(row.monetaryValue) : 0;
+    buckets[mapChannelToBucket(row.source)] += value;
+    total += value;
+  }
+  return { buckets, total, truncated: scan.truncated };
+}
+
+/**
+ * The whole sales-engine matrix, live from GHL: contacts by dateAdded window,
+ * appointments in window, opportunities created in window, won = current CRM
+ * stock (with € value). Same scans as the drill-down lists — a cell always
+ * equals `rows.length` of the list it opens.
+ */
+export async function fetchSalesEngineCounts(
+  query: SalesEngineCountsQuery,
+): Promise<SalesEngineCountsResult> {
+  const ctx = buildContext(query);
+  const limits = {
+    contactsPageCap: COUNTS_CONTACTS_PAGE_CAP,
+    opportunitiesPageCap: COUNTS_OPPORTUNITIES_PAGE_CAP,
+    contactJoinCap: COUNTS_CONTACT_JOIN_CAP,
+    ...query.limits,
+  };
+  // One resolver across meetings/opportunities/won: the join cache is shared,
+  // so a contact appearing in several stages costs one GHL read.
+  const resolveContact = createContactResolver(ctx, {
+    cap: limits.contactJoinCap,
+    onCap: "flag",
+  });
+  // Stage names are cosmetic (only the list view shows them) — skip the fetch.
+  const stageNames = new Map<string, string>();
+
+  const timezone = await resolveTimezone(ctx, query.timezone);
+  const bounds = zonedRangeBounds(query.from, query.to, timezone);
+  const leads = await scanLeads(ctx, bounds.fromIso, bounds.toIso, limits.contactsPageCap);
+  const meetings = await scanMeetings(ctx, resolveContact, bounds.fromTs, bounds.toTs);
+  const opportunities = await scanOpportunities(ctx, resolveContact, {
+    wonOnly: false,
+    from: query.from,
+    to: query.to,
+    pageCap: limits.opportunitiesPageCap,
+    stageNames,
+  });
+  const won = await scanOpportunities(ctx, resolveContact, {
+    wonOnly: true,
+    pageCap: limits.opportunitiesPageCap,
+    stageNames,
+  });
+
+  const stages = [
+    tallyStage("leads", leads),
+    tallyStage("meetings", meetings),
+    tallyStage("opportunities", opportunities),
+    tallyStage("won", won),
+  ];
+  const wonValue = tallyWonValue(won);
+  return {
+    from: query.from,
+    to: query.to,
+    stages,
+    wonValue,
+    truncated: stages.some((stage) => stage.truncated) || wonValue.truncated,
+  };
+}
+
+// ── Counts cache (in-process, per slug+window) ──────────────────────────────
+//
+// The matrix re-requests its counts on every tab switch; a short TTL keeps
+// those from hammering GHL while staying "live enough" (the drill-down lists
+// remain uncached). In-flight promises are shared so concurrent requests for
+// the same window trigger a single GHL read. Failures are never cached.
+
+export const SALES_ENGINE_COUNTS_CACHE_TTL_MS = 60_000;
+const COUNTS_CACHE_MAX_ENTRIES = 256;
+
+const countsCache = new Map<string, { at: number; promise: Promise<SalesEngineCountsResult> }>();
+
+export function clearSalesEngineCountsCache(): void {
+  countsCache.clear();
+}
+
+export async function fetchSalesEngineCountsCached(
+  cacheKey: string,
+  query: SalesEngineCountsQuery,
+  now: () => number = Date.now,
+): Promise<SalesEngineCountsResult> {
+  const cached = countsCache.get(cacheKey);
+  if (cached && now() - cached.at < SALES_ENGINE_COUNTS_CACHE_TTL_MS) {
+    return cached.promise;
+  }
+  const promise = fetchSalesEngineCounts(query);
+  countsCache.set(cacheKey, { at: now(), promise });
+  promise.catch(() => {
+    // Never serve a cached failure; the next request retries GHL.
+    if (countsCache.get(cacheKey)?.promise === promise) countsCache.delete(cacheKey);
+  });
+  if (countsCache.size > COUNTS_CACHE_MAX_ENTRIES) {
+    for (const [key, entry] of countsCache) {
+      if (now() - entry.at >= SALES_ENGINE_COUNTS_CACHE_TTL_MS) countsCache.delete(key);
+    }
+  }
+  return promise;
 }
