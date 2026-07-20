@@ -98,6 +98,13 @@ const BY_SOURCE_METRIC: Record<string, AggStrategy> = {
   // pulls would multiply the same open opportunities across the selected range.
   "ghl:pipeline": "latest",
   "ghl:pipelineStage": "latest",
+  // Won totals (and their per-channel splits) are all-time CRM state observed
+  // once per routine run (SAN-326). Summing daily observations would multiply
+  // the same closed deals across the selected range.
+  "ghl:wonOpportunities": "latest",
+  "ghl:wonValue": "latest",
+  "ghl:wonByChannel": "latest",
+  "ghl:wonValueByChannel": "latest",
   // Post detail is a provider snapshot of a post's cumulative counters, not a
   // daily increment. Keep the newest observation for each post dimension.
   "metricool:postDetail": "latest",

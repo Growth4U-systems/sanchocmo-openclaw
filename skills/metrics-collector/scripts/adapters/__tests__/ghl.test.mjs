@@ -74,6 +74,9 @@ function successfulGhlResponse(url, options = {}) {
     assert.equal(request.searchParams.has('location_id'), false);
     assert.equal(request.searchParams.has('pipeline_id'), false);
     assert.equal(options.headers?.Version, 'v3');
+    if (request.searchParams.get('status') === 'won') {
+      return Response.json({ opportunities: [] });
+    }
     return value.includes('&date=')
       ? Response.json({ opportunities: [] })
       : Response.json({ meta: { total: 0 } });
@@ -110,18 +113,28 @@ test('GHL adapter persists legitimate zeros only after successful core responses
       newContacts: 0,
       totalContacts: 0,
       appointments: 0,
+      appointmentsByChannel: 0,
       opportunities: 0,
+      opportunitiesByChannel: 0,
       pipelineValue: 0,
       totalOpportunities: 0,
+      wonOpportunities: 0,
+      wonValue: 0,
     });
     assert.equal(result.metrics.find((metric) => metric.name === 'newContacts')?.date, '2026-07-01');
     assert.equal(result.metrics.find((metric) => metric.name === 'totalContacts')?.date, '2026-07-02');
+    assert.equal(result.metrics.find((metric) => metric.name === 'wonOpportunities')?.date, '2026-07-02');
+    assert.equal(result.metrics.find((metric) => metric.name === 'wonValue')?.date, '2026-07-02');
     assert.deepEqual(result.attemptedDates, ['2026-07-01', '2026-07-02']);
     assert.deepEqual(
       result.restatedScopes.filter((scope) => scope.metricDate === '2026-07-02'),
       [
         { metricDate: '2026-07-02', metricName: 'pipeline' },
         { metricDate: '2026-07-02', metricName: 'pipelineStage' },
+        { metricDate: '2026-07-02', metricName: 'wonOpportunities' },
+        { metricDate: '2026-07-02', metricName: 'wonValue' },
+        { metricDate: '2026-07-02', metricName: 'wonByChannel' },
+        { metricDate: '2026-07-02', metricName: 'wonValueByChannel' },
       ],
     );
   } finally {
@@ -223,6 +236,7 @@ test('GHL paginates the optional pipeline-stage snapshot atomically', async (t) 
       });
     }
     if (value.includes('/opportunities/search')) {
+      if (value.includes('status=won')) return Response.json({ opportunities: [] });
       return value.includes('&date=')
         ? Response.json({ opportunities: [] })
         : Response.json({ meta: { total: 0 } });
@@ -302,10 +316,27 @@ test('GHL historical repair keeps daily events and omits current-only totals and
   );
   const dateOf = (name) => result.metrics.find((metric) => metric.name === name)?.date;
 
-  for (const name of ['newContacts', 'appointments', 'opportunities', 'pipelineValue']) {
+  for (const name of [
+    'newContacts',
+    'appointments',
+    'appointmentsByChannel',
+    'opportunities',
+    'opportunitiesByChannel',
+    'pipelineValue',
+  ]) {
     assert.equal(dateOf(name), '2026-04-01', `${name} is an event/day measurement`);
   }
-  for (const name of ['totalContacts', 'totalOpportunities', 'pipeline', 'pipelineStage', 'recentConversation']) {
+  for (const name of [
+    'totalContacts',
+    'totalOpportunities',
+    'pipeline',
+    'pipelineStage',
+    'recentConversation',
+    'wonOpportunities',
+    'wonValue',
+    'wonByChannel',
+    'wonValueByChannel',
+  ]) {
     assert.equal(dateOf(name), undefined, `${name} waits for the final routine snapshot`);
   }
   assert.equal(currentOnlyCalls, 0);
@@ -323,6 +354,95 @@ test('GHL marks an unavailable optional pipeline snapshot partial without persis
   assert.equal(result.quality, 'partial');
   assert.equal(result.metrics.some((metric) =>
     metric.name === 'pipeline' || metric.name === 'pipelineStage'), false);
+});
+
+test('GHL atribuye reuniones, oportunidades y ganadas al canal del contacto vía join', async (t) => {
+  const contactLookups = [];
+  t.mock.method(globalThis, 'fetch', async (url, options = {}) => {
+    const value = String(url);
+    if (value.endsWith('/contacts/search')) {
+      const body = JSON.parse(String(options.body || '{}'));
+      if (body.pageLimit === 1) return Response.json({ total: 0 });
+      return Response.json({ contacts: [] });
+    }
+    const contactMatch = value.match(/\/contacts\/([^/?]+)$/);
+    if (contactMatch) {
+      contactLookups.push(contactMatch[1]);
+      if (contactMatch[1] === 'contact-a') {
+        return Response.json({ contact: { source: 'Explee outbound' } });
+      }
+      if (contactMatch[1] === 'contact-b') {
+        return Response.json({
+          contact: { attributions: [{ medium: 'social', utmSessionSource: 'linkedin.com' }] },
+        });
+      }
+      return Response.json({ message: 'not found' }, { status: 404 });
+    }
+    if (value.includes('/calendars/?')) return Response.json({ calendars: [{ id: 'cal-1' }] });
+    if (value.includes('/calendars/events')) {
+      return Response.json({ events: [
+        { contactId: 'contact-a', appointmentStatus: 'confirmed' },
+        { contactId: 'contact-b', appointmentStatus: 'showed' },
+        { appointmentStatus: 'noshow' },
+      ] });
+    }
+    if (value.includes('/opportunities/pipelines')) return Response.json({ pipelines: [] });
+    if (value.includes('/opportunities/search')) {
+      if (value.includes('status=won')) {
+        return Response.json({ opportunities: [
+          { id: 'opp-9', status: 'won', monetaryValue: 1200, contact: { id: 'contact-b' } },
+        ] });
+      }
+      if (value.includes('&date=')) {
+        return Response.json({ opportunities: [
+          { id: 'opp-1', monetaryValue: 0, contact: { id: 'contact-a' } },
+          { id: 'opp-2', monetaryValue: 0, contactId: 'contact-c' },
+        ] });
+      }
+      return Response.json({ meta: { total: 2 } });
+    }
+    if (value.includes('/conversations/search')) return Response.json({ conversations: [] });
+    throw new Error(`Unexpected GHL test URL: ${value}`);
+  });
+
+  const result = await collectEmptyGhl();
+  const dims = (name) => Object.fromEntries(
+    result.metrics
+      .filter((metric) => metric.name === name && metric.dimensions)
+      .map((metric) => [metric.dimensions.channel, metric.value]),
+  );
+  const rollup = (name) => result.metrics.find((metric) => metric.name === name && !metric.dimensions);
+
+  // Daily channel splits keep the rollup+dimension emission pattern.
+  assert.equal(rollup('appointmentsByChannel')?.value, 3);
+  assert.equal(rollup('appointmentsByChannel')?.date, '2026-07-01');
+  assert.deepEqual(dims('appointmentsByChannel'), {
+    'Explee outbound': 1,
+    'social/linkedin.com': 1,
+    Unknown: 1,
+  });
+
+  assert.equal(rollup('opportunitiesByChannel')?.value, 2);
+  assert.equal(rollup('opportunitiesByChannel')?.date, '2026-07-01');
+  // contact-c no longer exists (404) → honest 'Unknown', not a fabricated channel.
+  assert.deepEqual(dims('opportunitiesByChannel'), {
+    'Explee outbound': 1,
+    Unknown: 1,
+  });
+
+  // Won totals are observation-dated snapshots with per-channel variants.
+  assert.equal(rollup('wonOpportunities')?.value, 1);
+  assert.equal(rollup('wonOpportunities')?.date, '2026-07-02');
+  assert.equal(rollup('wonValue')?.value, 1200);
+  assert.equal(rollup('wonValue')?.date, '2026-07-02');
+  assert.deepEqual(dims('wonByChannel'), { 'social/linkedin.com': 1 });
+  assert.deepEqual(dims('wonValueByChannel'), { 'social/linkedin.com': 1200 });
+
+  assert.equal(
+    contactLookups.filter((id) => id === 'contact-a').length,
+    1,
+    'shared join cache fetches each contact once',
+  );
 });
 
 test('GHL rejects impossible dates before making a request', async (t) => {

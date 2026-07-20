@@ -17,10 +17,23 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const GHL_DAILY_METRIC_NAMES = [
   'newContacts',
   'appointments',
+  'appointmentsByChannel',
   'opportunities',
+  'opportunitiesByChannel',
   'pipelineValue',
 ];
 const GHL_OPTIONAL_SNAPSHOT_METRIC_NAMES = ['pipeline', 'pipelineStage'];
+// Won totals are all-time CRM state observed once per routine run (SAN-326):
+// point-in-time like totalContacts, skipped on explicit-range backfills.
+const GHL_WON_SNAPSHOT_METRIC_NAMES = [
+  'wonOpportunities',
+  'wonValue',
+  'wonByChannel',
+  'wonValueByChannel',
+];
+// Hard cap on contactId→contact lookups per run, aligned with the 500-row
+// safety limits used elsewhere in this adapter.
+const CONTACT_CHANNEL_JOIN_LIMIT = 500;
 
 function firstEnv(env, keys) {
   for (const key of keys) {
@@ -58,6 +71,61 @@ function requireText(value, operation, field) {
     throw new Error(`GHL ${operation}: response missing ${field}`);
   }
   return value.trim();
+}
+
+/**
+ * Collapse a GHL contact's acquisition channel: explicit source first, then the
+ * first attribution (medium/utmSessionSource), else 'Unknown'. Single shared
+ * rule so contacts, appointments, opportunities and won splits agree (SAN-326).
+ */
+export function contactChannel(contact) {
+  const source = contact?.source || '';
+  const attr = contact?.attributions?.[0];
+  const medium = attr?.medium || '';
+  const utmSource = attr?.utmSessionSource || '';
+  return source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
+}
+
+/**
+ * contactId→channel join for records that embed no source (calendar events,
+ * opportunities). Caches per run so the same contact is fetched once across
+ * appointments/opportunities/won. A 404 (deleted contact) is an honest
+ * 'Unknown'; any other failure throws so the area fails instead of persisting
+ * a silently wrong split.
+ */
+function createContactChannelResolver(headers) {
+  const cache = new Map();
+  return async function resolveContactChannels(contactIds) {
+    const unique = [...new Set(contactIds.filter(Boolean))];
+    const pending = unique.filter((id) => !cache.has(id));
+    if (cache.size + pending.length > CONTACT_CHANNEL_JOIN_LIMIT) {
+      throw new Error(
+        `GHL contact channel join exceeded the ${CONTACT_CHANNEL_JOIN_LIMIT}-contact safety limit; refusing a partial channel split`,
+      );
+    }
+    for (const id of pending) {
+      const response = await fetch(`${BASE_URL}/contacts/${encodeURIComponent(id)}`, { headers });
+      if (response.status === 404) {
+        cache.set(id, 'Unknown');
+        continue;
+      }
+      await requireOk(response, `contact lookup (${id})`);
+      const data = await response.json();
+      cache.set(id, contactChannel(data?.contact ?? data));
+    }
+    return new Map(unique.map((id) => [id, cache.get(id)]));
+  };
+}
+
+/** Count records per channel via the contactId join; no contact → 'Unknown'. */
+async function channelCountsFor(contactIds, resolveContactChannels) {
+  const channels = await resolveContactChannels(contactIds);
+  const counts = {};
+  for (const id of contactIds) {
+    const channel = (id && channels.get(id)) || 'Unknown';
+    counts[channel] = (counts[channel] || 0) + 1;
+  }
+  return counts;
 }
 
 function isCalendarDate(value) {
@@ -215,6 +283,8 @@ export async function collect(config, env, dateRange) {
     Version: '2021-07-28',
   };
   const opportunityHeaders = { ...headers, Version: 'v3' };
+  // Shared per-run contactId→channel join (appointments, opportunities, won).
+  const resolveContactChannels = createContactChannelResolver(headers);
 
   const metrics = [];
   const timezone = await resolveLocationTimezone(config, env, slugUpper, locationId, headers);
@@ -285,11 +355,7 @@ export async function collect(config, env, dateRange) {
 
       for (const c of contacts) {
         newContacts++;
-        const source = c.source || '';
-        const attr = c.attributions?.[0];
-        const medium = attr?.medium || '';
-        const utmSource = attr?.utmSessionSource || '';
-        const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
+        const channel = contactChannel(c);
         channelCounts[channel] = (channelCounts[channel] || 0) + 1;
       }
 
@@ -332,6 +398,7 @@ export async function collect(config, env, dateRange) {
   try {
     let totalAppointments = 0;
     const statuses = {};
+    const appointmentContactIds = [];
 
     // Get all calendars for this location
     const calResp = await fetch(`${BASE_URL}/calendars/?locationId=${locationId}`, {
@@ -356,12 +423,25 @@ export async function collect(config, env, dateRange) {
         totalAppointments++;
         const status = e.appointmentStatus || e.status || 'scheduled';
         statuses[status] = (statuses[status] || 0) + 1;
+        appointmentContactIds.push(e.contactId || e.contact?.id || null);
       }
     }
 
     metrics.push({ name: 'appointments', value: totalAppointments, date: dateRange.from });
     for (const [status, count] of Object.entries(statuses)) {
       metrics.push({ name: 'appointments', value: count, date: dateRange.from, dimensions: { status } });
+    }
+
+    // Channel split (SAN-326): calendar events only carry contactId, so the
+    // acquisition channel comes from the contact join. Rollup row first, then
+    // one row per observed channel (same emission pattern as newContacts).
+    const appointmentChannelCounts = await channelCountsFor(
+      appointmentContactIds,
+      resolveContactChannels,
+    );
+    metrics.push({ name: 'appointmentsByChannel', value: totalAppointments, date: dateRange.from });
+    for (const [channel, count] of Object.entries(appointmentChannelCounts)) {
+      metrics.push({ name: 'appointmentsByChannel', value: count, date: dateRange.from, dimensions: { channel } });
     }
   } catch (err) {
     rethrowCollectionError('appointments', err);
@@ -373,6 +453,7 @@ export async function collect(config, env, dateRange) {
   try {
     let newOpps = 0;
     let newValue = 0;
+    const opportunityContactIds = [];
     let page = 1;
     let hasMore = true;
 
@@ -388,6 +469,8 @@ export async function collect(config, env, dateRange) {
       for (const opp of opportunities) {
         newOpps++;
         newValue += requireCount(opp.monetaryValue ?? 0, 'opportunities/search', 'monetaryValue');
+        // v3 embeds contact without source; the channel needs the contact join.
+        opportunityContactIds.push(opp.contact?.id || opp.contactId || null);
       }
 
       hasMore = opportunities.length === 100;
@@ -402,6 +485,17 @@ export async function collect(config, env, dateRange) {
       { name: 'opportunities', value: newOpps, date: dateRange.from },
       { name: 'pipelineValue', value: newValue, date: dateRange.from },
     );
+
+    // Channel split (SAN-326): rollup row first, then one row per channel.
+    const opportunityChannelCounts = await channelCountsFor(
+      opportunityContactIds,
+      resolveContactChannels,
+    );
+    metrics.push({ name: 'opportunitiesByChannel', value: newOpps, date: dateRange.from });
+    for (const [channel, count] of Object.entries(opportunityChannelCounts)) {
+      metrics.push({ name: 'opportunitiesByChannel', value: count, date: dateRange.from, dimensions: { channel } });
+    }
+
     if (includeCurrentState) {
       // Current total is deliberately not queried once per historical day.
       const totalResp = await fetch(`${BASE_URL}/opportunities/search?locationId=${locationId}&status=all&limit=1`, { headers: opportunityHeaders });
@@ -409,6 +503,59 @@ export async function collect(config, env, dateRange) {
       const totalData = await totalResp.json();
       const totalOpps = requireCount(totalData.meta?.total, 'opportunities total', 'meta.total');
       metrics.push({ name: 'totalOpportunities', value: totalOpps, date: observationDate });
+
+      // Won totals (SAN-326): all-time CRM state, observation-dated like
+      // totalOpportunities. Zeros are legitimate while the team starts marking
+      // won/lost; a failed query fails the source instead of writing zeros.
+      const wonOpps = [];
+      let wonPage = 1;
+      let wonHasMore = true;
+      while (wonHasMore && wonPage <= 5) {
+        const wonResp = await fetch(
+          `${BASE_URL}/opportunities/search?locationId=${locationId}&status=won&limit=100&page=${wonPage}`,
+          { headers: opportunityHeaders },
+        );
+        await requireOk(wonResp, 'opportunities/search (won)');
+        const wonData = await wonResp.json();
+        const pageRows = requireArray(wonData.opportunities, 'opportunities/search (won)', 'opportunities');
+        wonOpps.push(...pageRows);
+        wonHasMore = pageRows.length === 100;
+        wonPage++;
+      }
+      if (wonHasMore) {
+        throw new Error('GHL won opportunities exceeded the 500-row safety limit; refusing to persist partial won totals');
+      }
+
+      const wonEntries = [];
+      for (const opp of wonOpps) {
+        if ((opp.status || '').toLowerCase() !== 'won') continue;
+        wonEntries.push({
+          value: requireCount(opp.monetaryValue ?? 0, 'opportunities/search (won)', 'monetaryValue'),
+          contactId: opp.contact?.id || opp.contactId || null,
+        });
+      }
+      const wonChannels = await resolveContactChannels(
+        wonEntries.map((entry) => entry.contactId),
+      );
+      let wonTotalValue = 0;
+      const wonByChannel = {};
+      const wonValueByChannel = {};
+      for (const entry of wonEntries) {
+        const channel = (entry.contactId && wonChannels.get(entry.contactId)) || 'Unknown';
+        wonTotalValue += entry.value;
+        wonByChannel[channel] = (wonByChannel[channel] || 0) + 1;
+        wonValueByChannel[channel] = (wonValueByChannel[channel] || 0) + entry.value;
+      }
+      metrics.push(
+        { name: 'wonOpportunities', value: wonEntries.length, date: observationDate },
+        { name: 'wonValue', value: wonTotalValue, date: observationDate },
+      );
+      for (const [channel, count] of Object.entries(wonByChannel)) {
+        metrics.push({ name: 'wonByChannel', value: count, date: observationDate, dimensions: { channel } });
+      }
+      for (const [channel, value] of Object.entries(wonValueByChannel)) {
+        metrics.push({ name: 'wonValueByChannel', value, date: observationDate, dimensions: { channel } });
+      }
     }
   } catch (err) {
     rethrowCollectionError('opportunities', err);
@@ -599,10 +746,12 @@ export async function collect(config, env, dateRange) {
         metricName,
       })),
       ...(includeCurrentState
-        ? GHL_OPTIONAL_SNAPSHOT_METRIC_NAMES.map((metricName) => ({
-            metricDate: observationDate,
-            metricName,
-          }))
+        ? [...GHL_OPTIONAL_SNAPSHOT_METRIC_NAMES, ...GHL_WON_SNAPSHOT_METRIC_NAMES].map(
+            (metricName) => ({
+              metricDate: observationDate,
+              metricName,
+            }),
+          )
         : []),
     ],
     ...(pipelineSnapshotPartial ? { quality: 'partial' } : {}),
@@ -640,11 +789,7 @@ async function collectContactsFallback(
       const created = new Date(c.dateAdded || c.createdAt).getTime();
       if (created >= fromTs && created <= toTs) {
         newContacts++;
-        const source = c.source || '';
-        const attr = c.attributions?.[0];
-        const medium = attr?.medium || '';
-        const utmSource = attr?.utmSessionSource || '';
-        const channel = source || (utmSource ? `${medium}/${utmSource}` : medium) || 'Unknown';
+        const channel = contactChannel(c);
         channelCounts[channel] = (channelCounts[channel] || 0) + 1;
       }
       if (created < fromTs) {

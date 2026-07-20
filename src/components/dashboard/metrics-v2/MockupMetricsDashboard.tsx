@@ -18,8 +18,14 @@ import {
   type PartnershipReport,
   type PartnershipReportCreatorRow,
   type PartnershipReportPeriodDays,
+  type SurfaceDetailResult,
   type SurfaceSummaryEntry,
 } from "@/hooks/useMetrics";
+import {
+  CHANNEL_BUCKETS,
+  mapChannelToBucket,
+  type ChannelBucketKey,
+} from "@/lib/metrics/channel-buckets";
 import { useOpenChat } from "@/hooks/useChat";
 import { buildMetricsEditThread } from "@/lib/chat-openers";
 import {
@@ -220,6 +226,13 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
   );
   const funnel = useMemo(() => buildFunnelModel(kpiData), [kpiData]);
   const channelRows = useMemo(() => buildChannelRows(kpiData?.stageRollups, funnel.stages), [funnel.stages, kpiData?.stageRollups]);
+  // Motor de ventas (SAN-326): people-numbers come only from GHL, split by the
+  // contact's acquisition channel. Reuses the pipeline surface-detail read.
+  const pipelineDetail = useSurfaceDetail(slug, "pipeline", range);
+  const salesEngine = useMemo(
+    () => buildSalesEngineMatrix(pipelineDetail.data),
+    [pipelineDetail.data],
+  );
 
   function selectTab(next: MetricDashboardTab) {
     setLocalTab(next);
@@ -326,7 +339,9 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
                 dashboardDefinition={dashboard?.definition}
                 kpiData={kpiData}
                 funnel={funnel}
-                rows={channelRows}
+                salesEngine={salesEngine}
+                salesEngineLoading={pipelineDetail.isLoading}
+                salesEngineError={pipelineDetail.isError}
                 surfaceCards={surfaceCards}
                 openSurface={openSurface}
               />
@@ -338,6 +353,9 @@ export function MockupMetricsDashboard({ slug }: { slug: string }) {
               <ChannelsView
                 funnel={funnel}
                 rows={channelRows}
+                salesEngine={salesEngine}
+                salesEngineLoading={pipelineDetail.isLoading}
+                salesEngineError={pipelineDetail.isError}
               />
             )}
             {activeTab === "conversion" && (
@@ -579,14 +597,18 @@ function OverviewView({
   dashboardDefinition,
   kpiData,
   funnel,
-  rows,
+  salesEngine,
+  salesEngineLoading,
+  salesEngineError,
   surfaceCards,
   openSurface,
 }: {
   dashboardDefinition?: DashboardDefinition | null;
   kpiData?: MetricKpiResult;
   funnel: ReturnType<typeof buildFunnelModel>;
-  rows: ChannelMatrixRow[];
+  salesEngine: SalesEngineMatrixModel;
+  salesEngineLoading?: boolean;
+  salesEngineError?: boolean;
   surfaceCards: SurfaceCardModel[];
   openSurface: (surface: SurfaceKey) => void;
 }) {
@@ -644,7 +666,9 @@ function OverviewView({
 
       <SectionTitle icon="🪜" title="Volúmenes por etapa y proveedor" subtitle="observaciones separadas; no son un embudo deduplicado" />
       <UnifiedFunnel funnel={funnel} />
-      <ChannelMatrix rows={rows} stages={funnel.stages} />
+
+      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto" />
+      <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} />
 
       <SectionTitle icon="🗂️" title="Salud de las superficies" subtitle="cada tarjeta abre su detalle" />
       <SurfaceGrid cards={surfaceCards} onOpen={openSurface} />
@@ -673,9 +697,15 @@ function SurfacesView({
 function ChannelsView({
   funnel,
   rows,
+  salesEngine,
+  salesEngineLoading,
+  salesEngineError,
 }: {
   funnel: ReturnType<typeof buildFunnelModel>;
   rows: ChannelMatrixRow[];
+  salesEngine: SalesEngineMatrixModel;
+  salesEngineLoading?: boolean;
+  salesEngineError?: boolean;
 }) {
   return (
     <div>
@@ -689,8 +719,8 @@ function ChannelsView({
 
       <CompactFunnel stages={funnel.stages} />
 
-      <SectionTitle icon="📊" title="Matriz proveedor × etapa" subtitle="cada celda conserva el volumen informado por ese proveedor" />
-      <ChannelMatrix rows={rows} stages={funnel.stages} />
+      <SectionTitle icon="🧲" title="Motor de ventas · funnel por canal" subtitle="personas desde GHL, canal según el origen del contacto" />
+      <ChannelMatrix model={salesEngine} isLoading={salesEngineLoading} hasError={salesEngineError} />
 
       <SectionTitle icon="🧾" title="Inventario de observaciones" subtitle="sin ranking ni porcentaje global entre universos solapados" />
       <ContributionTable rows={rows} />
@@ -1425,44 +1455,155 @@ function SurfaceGrid({
   );
 }
 
+/**
+ * Motor de ventas (SAN-326): one funnel, people-numbers from GHL only, split by
+ * the contact's acquisition channel. Stages are rows; channel buckets are
+ * columns. Each stage reads a GHL surface-detail metric: the undimensioned
+ * rollup carries the honest total (a real 0 stays 0), the `{channel}` rows are
+ * grouped into buckets. A stage whose metric was never collected shows "—".
+ */
+const SALES_ENGINE_STAGES: Array<{
+  key: string;
+  label: string;
+  icon: string;
+  channelMetric: string;
+  totalMetric: string;
+  currency?: boolean;
+}> = [
+  { key: "leads", label: "Leads", icon: "👥", channelMetric: "newContacts", totalMetric: "newContacts" },
+  { key: "reuniones", label: "Reuniones", icon: "📅", channelMetric: "appointmentsByChannel", totalMetric: "appointmentsByChannel" },
+  { key: "oportunidades", label: "Oportunidades", icon: "📈", channelMetric: "opportunitiesByChannel", totalMetric: "opportunitiesByChannel" },
+  { key: "ganadas", label: "Ganadas", icon: "🏆", channelMetric: "wonByChannel", totalMetric: "wonOpportunities" },
+  { key: "valor", label: "€ ganado", icon: "💶", channelMetric: "wonValueByChannel", totalMetric: "wonValue", currency: true },
+];
+
+export interface SalesEngineStageModel {
+  key: string;
+  label: string;
+  icon: string;
+  currency: boolean;
+  /** false → the metric was never collected for this range; render "—". */
+  present: boolean;
+  quality: MetricKpiQualityStatus | null;
+  total: number | null;
+  cells: Array<{ bucket: ChannelBucketKey; value: number | null }>;
+}
+
+export interface SalesEngineMatrixModel {
+  available: boolean;
+  stages: SalesEngineStageModel[];
+}
+
+export function buildSalesEngineMatrix(
+  detail?: SurfaceDetailResult,
+): SalesEngineMatrixModel {
+  const ghl = (detail?.sources ?? []).find(
+    (source) => qualitySourceKey(source.source) === "ghl",
+  );
+  const metrics = ghl?.metrics ?? [];
+  const stages = SALES_ENGINE_STAGES.map((spec) => {
+    const channelRows = metrics.filter(
+      (metric) => metric.metric === spec.channelMetric && metric.dimensions?.channel,
+    );
+    const totalRow = metrics.find(
+      (metric) => metric.metric === spec.totalMetric && !metric.dimensions,
+    );
+    const present = Boolean(totalRow) || channelRows.length > 0;
+    const bucketTotals = new Map<ChannelBucketKey, number>();
+    for (const row of channelRows) {
+      const bucket = mapChannelToBucket(row.dimensions?.channel ?? "");
+      bucketTotals.set(bucket, (bucketTotals.get(bucket) ?? 0) + row.value);
+    }
+    const total = totalRow
+      ? totalRow.value
+      : present
+        ? channelRows.reduce((sum, row) => sum + row.value, 0)
+        : null;
+    return {
+      key: spec.key,
+      label: spec.label,
+      icon: spec.icon,
+      currency: Boolean(spec.currency),
+      present,
+      quality: worstQualityStatus([
+        totalRow?.quality ?? null,
+        ...channelRows.map((row) => row.quality),
+      ]),
+      total,
+      cells: CHANNEL_BUCKETS.map((bucket) => ({
+        bucket: bucket.key,
+        value: present ? bucketTotals.get(bucket.key) ?? 0 : null,
+      })),
+    };
+  });
+  return {
+    available: Boolean(detail?.configured) && stages.some((stage) => stage.present),
+    stages,
+  };
+}
+
+function salesEngineCellValue(stage: SalesEngineStageModel, value: number | null): string {
+  if (value == null) return "—";
+  return stage.currency ? formatCurrencyEur(value) : formatCompact(value);
+}
+
 export function ChannelMatrix({
-  rows,
-  stages,
+  model,
+  isLoading,
+  hasError,
 }: {
-  rows: ChannelMatrixRow[];
-  stages: FunnelStageModel[];
+  model: SalesEngineMatrixModel;
+  isLoading?: boolean;
+  hasError?: boolean;
 }) {
-  if (!rows.length) {
-    return <div className="m-panel m-pad m-empty">Sin desglose por canal para este rango.</div>;
+  if (!model.available) {
+    if (isLoading) {
+      return <div className="m-panel m-pad m-empty" role="status">Cargando el funnel por canal desde GHL…</div>;
+    }
+    if (hasError) {
+      return <div className="m-panel m-pad m-empty" role="alert">No se pudo cargar el detalle de GHL; no se muestran cifras del motor de ventas.</div>;
+    }
+    return (
+      <div className="m-panel m-pad m-empty">
+        Sin datos de GHL para este rango. Las etapas del motor de ventas salen del CRM; conecta GoHighLevel o espera la próxima recolección.
+      </div>
+    );
   }
   return (
-    <div className="m-panel m-table-panel">
+    <div className="m-panel m-table-panel" data-sales-engine-matrix>
       <table className="m-matrix">
         <thead>
           <tr>
-            <th className="chan">Proveedor · canal</th>
-            {stages.map((stage) => <th key={stage.id}>{stage.label}</th>)}
+            <th className="chan">Etapa</th>
+            {CHANNEL_BUCKETS.map((bucket) => <th key={bucket.key}>{bucket.label}</th>)}
+            <th>Total</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td className="chan"><span>{row.icon}</span>{row.label}</td>
-              {stages.map((stage, index) => {
-                const cell = row.stages[index];
-                return (
-                  <td key={`${row.id}-${stage.id}`}>
-                    <div className="m-mcell">
-                      {cell?.displayValue ?? "-"}
-                      <QualityStatusBadge status={cell?.qualityStatus} />
-                    </div>
-                  </td>
-                );
-              })}
+          {model.stages.map((stage) => (
+            <tr key={stage.key}>
+              <td className="chan"><span>{stage.icon}</span>{stage.label}</td>
+              {stage.cells.map((cell) => (
+                <td key={`${stage.key}-${cell.bucket}`}>
+                  <div className="m-mcell">{salesEngineCellValue(stage, cell.value)}</div>
+                </td>
+              ))}
+              <td>
+                <div className="m-mcell">
+                  <b>{salesEngineCellValue(stage, stage.total)}</b>
+                  <QualityStatusBadge
+                    status={stage.present ? stage.quality : "missing"}
+                    provenance="GHL"
+                  />
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="m-funnel-foot">
+        <span>Personas y € desde GoHighLevel; el canal sale del origen del contacto. Visitas web e inversión viven en sus superficies.</span>
+      </div>
     </div>
   );
 }
