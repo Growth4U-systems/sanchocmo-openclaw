@@ -317,22 +317,39 @@ def counter_entry():
     return {
         "model_calls": 0,
         "fireworks_calls": 0,
+        "error_calls": 0,
         "tool_calls": 0,
         "reported_usage": empty_usage(),
+        "fireworks_reported_usage": empty_usage(),
         "reported_cost_usd": 0.0,
+        "fireworks_reported_cost_usd": 0.0,
     }
 
 
-def increment_group(day, group_name, group_key, amount_key, amount=1, usage=None, is_fireworks=False):
+def increment_group(
+    day,
+    group_name,
+    group_key,
+    amount_key,
+    amount=1,
+    usage=None,
+    is_fireworks=False,
+    is_error=False,
+):
     if not group_key:
         group_key = "unknown"
     group = day[group_name].setdefault(group_key, counter_entry())
     group[amount_key] += amount
     if amount_key == "model_calls" and is_fireworks:
         group["fireworks_calls"] += amount
+    if amount_key == "model_calls" and is_error:
+        group["error_calls"] += amount
     if usage:
         add_usage(group["reported_usage"], usage)
         group["reported_cost_usd"] += usage_cost_usd(usage)
+        if is_fireworks:
+            add_usage(group["fireworks_reported_usage"], usage)
+            group["fireworks_reported_cost_usd"] += usage_cost_usd(usage)
 
 
 def ensure_day(days, day_key):
@@ -341,6 +358,7 @@ def ensure_day(days, day_key):
         {
             "model_calls": 0,
             "fireworks_calls": 0,
+            "error_calls": 0,
             "zero_prompt_fireworks_calls": 0,
             "tool_calls": 0,
             "sessions": set(),
@@ -359,9 +377,24 @@ def ensure_day(days, day_key):
     )
 
 
+def nan_replaces_fireworks_glm(provider):
+    return (
+        str(provider or "").lower() == "nan"
+        and os.environ.get("NAN_REPLACE_FIREWORKS_GLM", "").strip().lower() in ("1", "true", "yes", "on")
+    )
+
+
+def normalize_inference_route(provider, model):
+    if nan_replaces_fireworks_glm(provider):
+        return "fireworks", "accounts/fireworks/models/glm-5p2"
+    return provider, model
+
+
 def is_fireworks_call(provider, model):
     provider = (provider or "").lower()
     model = (model or "").lower()
+    if nan_replaces_fireworks_glm(provider):
+        return True
     return provider == "fireworks" or "fireworks" in model or "glm-5" in model or "glm5" in model
 
 
@@ -407,12 +440,14 @@ def scan_transcript(jsonl_file, agent_id, session_index, valid_slugs, start_utc,
 
                 provider = msg.get("provider") or current_provider or "unknown"
                 model = msg.get("model") or current_model or "unknown"
+                provider, model = normalize_inference_route(provider, model)
                 usage = msg.get("usage") if isinstance(msg.get("usage"), dict) else {}
                 day_key = date_key_for(ts, tz)
                 day = ensure_day(days, day_key)
                 day["sessions"].add(session_id)
 
                 call_is_fireworks = is_fireworks_call(provider, model)
+                call_is_error = msg.get("stopReason") == "error" or bool(msg.get("errorMessage"))
                 day["model_calls"] += 1
                 model_calls += 1
                 if call_is_fireworks:
@@ -422,14 +457,21 @@ def scan_transcript(jsonl_file, agent_id, session_index, valid_slugs, start_utc,
                     prompt_like = to_int(usage.get("input")) + to_int(usage.get("cacheRead"))
                     if prompt_like == 0:
                         day["zero_prompt_fireworks_calls"] += 1
+                if call_is_error:
+                    day["error_calls"] += 1
                 add_usage(day["reported_usage"], usage)
                 day["reported_cost_usd"] += usage_cost_usd(usage)
 
-                increment_group(day, "by_agent", session_meta["agent"], "model_calls", usage=usage, is_fireworks=call_is_fireworks)
-                increment_group(day, "by_client", session_meta["client"], "model_calls", usage=usage, is_fireworks=call_is_fireworks)
-                increment_group(day, "by_model", model, "model_calls", usage=usage, is_fireworks=call_is_fireworks)
-                increment_group(day, "by_provider", provider, "model_calls", usage=usage, is_fireworks=call_is_fireworks)
-                increment_group(day, "by_source", session_meta["source"], "model_calls", usage=usage, is_fireworks=call_is_fireworks)
+                group_kwargs = {
+                    "usage": usage,
+                    "is_fireworks": call_is_fireworks,
+                    "is_error": call_is_error,
+                }
+                increment_group(day, "by_agent", session_meta["agent"], "model_calls", **group_kwargs)
+                increment_group(day, "by_client", session_meta["client"], "model_calls", **group_kwargs)
+                increment_group(day, "by_model", model, "model_calls", **group_kwargs)
+                increment_group(day, "by_provider", provider, "model_calls", **group_kwargs)
+                increment_group(day, "by_source", session_meta["source"], "model_calls", **group_kwargs)
 
                 thread_key = "|".join(
                     [
@@ -451,14 +493,21 @@ def scan_transcript(jsonl_file, agent_id, session_index, valid_slugs, start_utc,
                         "model": model,
                         "model_calls": 0,
                         "fireworks_calls": 0,
+                        "error_calls": 0,
                         "tool_calls": 0,
                         "reported_usage": empty_usage(),
+                        "fireworks_reported_usage": empty_usage(),
                         "reported_cost_usd": 0.0,
+                        "fireworks_reported_cost_usd": 0.0,
                     },
                 )
                 thread_entry["model_calls"] += 1
                 if call_is_fireworks:
                     thread_entry["fireworks_calls"] += 1
+                    add_usage(thread_entry["fireworks_reported_usage"], usage)
+                    thread_entry["fireworks_reported_cost_usd"] += usage_cost_usd(usage)
+                if call_is_error:
+                    thread_entry["error_calls"] += 1
                 add_usage(thread_entry["reported_usage"], usage)
                 thread_entry["reported_cost_usd"] += usage_cost_usd(usage)
 
@@ -488,6 +537,8 @@ def finalize_group(group, limit=None):
         item = {"name": key, **data}
         if "reported_cost_usd" in item:
             item["reported_cost_usd"] = round(item["reported_cost_usd"], 4)
+        if "fireworks_reported_cost_usd" in item:
+            item["fireworks_reported_cost_usd"] = round(item["fireworks_reported_cost_usd"], 4)
         items.append(item)
     items.sort(
         key=lambda x: (
@@ -510,6 +561,7 @@ def finalize_days(days, top_limit):
         final[day_key] = {
             "model_calls": day["model_calls"],
             "fireworks_calls": day["fireworks_calls"],
+            "error_calls": day["error_calls"],
             "zero_prompt_fireworks_calls": day["zero_prompt_fireworks_calls"],
             "tool_calls": day["tool_calls"],
             "sessions": len(day["sessions"]),
@@ -536,6 +588,7 @@ def aggregate_totals(final_days):
     totals = {
         "model_calls": 0,
         "fireworks_calls": 0,
+        "error_calls": 0,
         "zero_prompt_fireworks_calls": 0,
         "tool_calls": 0,
         "sessions": 0,
@@ -547,6 +600,7 @@ def aggregate_totals(final_days):
     for day in final_days.values():
         totals["model_calls"] += day.get("model_calls", 0)
         totals["fireworks_calls"] += day.get("fireworks_calls", 0)
+        totals["error_calls"] += day.get("error_calls", 0)
         totals["zero_prompt_fireworks_calls"] += day.get("zero_prompt_fireworks_calls", 0)
         totals["tool_calls"] += day.get("tool_calls", 0)
         totals["sessions"] += day.get("sessions", 0)
@@ -929,20 +983,160 @@ def allocate_actual_cost_to_billing_breakdowns(day, actual_cost_usd):
             item["cost_basis"] = "fireworks_account_daily_actual_allocated_by_estimated_cost_or_tokens"
 
 
+def fireworks_api_key_match_terms():
+    explicit = os.environ.get("LLM_USAGE_FIREWORKS_API_KEY_MATCH")
+    if explicit:
+        return [term.strip().lower() for term in explicit.split(",") if term.strip()]
+
+    raw_values = [
+        os.environ.get("LLM_USAGE_REPORT_LABEL"),
+        os.environ.get("LLM_USAGE_ENV_LABEL"),
+        os.environ.get("NEXT_PUBLIC_ENV_LABEL"),
+        os.environ.get("SANCHO_ENV"),
+        os.environ.get("APP_ENV"),
+        os.environ.get("BASE_URL"),
+        os.environ.get("NEXTAUTH_URL"),
+    ]
+    haystack = " ".join(str(value or "").lower() for value in raw_values)
+    terms = []
+    if "staging" in haystack:
+        terms.append("staging")
+    if "production" in haystack or "prod" in haystack or "app.sanchocmo.ai" in haystack:
+        terms.append("production")
+    return terms
+
+
+def scoped_fireworks_billing_day(billing_day):
+    """Return the Fireworks billing slice for this environment.
+
+    Fireworks account-costs are account-wide. When several Sancho environments
+    share the same Fireworks account, using the day total would make each
+    environment claim the full account spend. The billingUsage payload includes
+    an API-key breakdown, so prefer the key whose label matches the current env.
+    """
+    if not isinstance(billing_day, dict):
+        return {"cost_usd": 0.0, "estimated_cost_usd": 0.0, "status": "missing"}
+
+    terms = fireworks_api_key_match_terms()
+    items = billing_day.get("by_api_key")
+    if (not isinstance(items, list) or not items) and terms:
+        return {
+            "cost_usd": 0.0,
+            "estimated_cost_usd": 0.0,
+            "status": "api_key_breakdown_missing",
+            "scope": "api_key",
+            "match_terms": terms,
+            "account_cost_usd": to_float(billing_day.get("cost_usd")),
+        }
+    if not isinstance(items, list) or not items:
+        return {
+            "cost_usd": to_float(billing_day.get("cost_usd")),
+            "estimated_cost_usd": to_float(billing_day.get("estimated_cost_usd")),
+            "status": "account_total",
+            "scope": "account",
+        }
+
+    matches = []
+    if terms:
+        for item in items:
+            label = str(item.get("name") or "").lower()
+            if any(term in label for term in terms):
+                matches.append(item)
+
+    if matches:
+        return {
+            "cost_usd": round(sum(to_float(item.get("cost_usd")) for item in matches), 4),
+            "estimated_cost_usd": round(sum(to_float(item.get("estimated_cost_usd")) for item in matches), 4),
+            "status": "api_key_matched",
+            "scope": "api_key",
+            "match_terms": terms,
+            "matched_api_keys": [str(item.get("name") or "unknown") for item in matches],
+            "account_cost_usd": to_float(billing_day.get("cost_usd")),
+            "account_api_key_count": len(items),
+        }
+
+    if len(items) == 1:
+        item = items[0]
+        return {
+            "cost_usd": to_float(item.get("cost_usd")),
+            "estimated_cost_usd": to_float(item.get("estimated_cost_usd")),
+            "status": "single_api_key",
+            "scope": "api_key",
+            "matched_api_keys": [str(item.get("name") or "unknown")],
+            "account_cost_usd": to_float(billing_day.get("cost_usd")),
+            "account_api_key_count": 1,
+        }
+
+    return {
+        "cost_usd": 0.0,
+        "estimated_cost_usd": 0.0,
+        "status": "api_key_unmatched",
+        "scope": "api_key",
+        "match_terms": terms,
+        "account_cost_usd": to_float(billing_day.get("cost_usd")),
+        "account_api_key_count": len(items),
+    }
+
+
 def allocate_actual_cost_to_local_groups(day, actual_cost_usd):
-    if not isinstance(day, dict) or actual_cost_usd <= 0:
+    if not isinstance(day, dict):
         return
+    pricing_table = fireworks_pricing_table()
+    default_pricing = pricing_for_model("glm-5p2", pricing_table) or {}
+
+    def local_fireworks_weight(item):
+        reported = to_float(item.get("fireworks_reported_cost_usd"))
+        if reported > 0:
+            return reported
+        usage = item.get("fireworks_reported_usage") if isinstance(item.get("fireworks_reported_usage"), dict) else {}
+        pricing = pricing_for_model(item.get("name"), pricing_table) or default_pricing
+        weighted_usage = (
+            to_int(usage.get("input")) * to_float(pricing.get("input_per_mtok"))
+            + to_int(usage.get("cache_read")) * to_float(pricing.get("cached_input_per_mtok"))
+            + to_int(usage.get("output")) * to_float(pricing.get("output_per_mtok"))
+        )
+        return weighted_usage or to_int(item.get("fireworks_calls"))
+
     for group_name in ("by_agent", "by_client", "by_model", "by_provider", "by_source", "top_threads"):
         items = day.get(group_name)
         if not isinstance(items, list) or not items:
             continue
         for item in items:
             reported = to_float(item.get("reported_cost_usd"))
-            item["total_cost_usd"] = round(reported, 4)
-        for item, amount in allocate_amounts(items, actual_cost_usd, lambda x: to_int(x.get("fireworks_calls"))):
+            fireworks_reported = to_float(item.get("fireworks_reported_cost_usd"))
+            item["non_fireworks_cost_usd"] = round(max(reported - fireworks_reported, 0.0), 4)
+            item["total_cost_usd"] = item["non_fireworks_cost_usd"]
+        for item, amount in allocate_amounts(items, actual_cost_usd, local_fireworks_weight):
             item["fireworks_actual_cost_usd"] = round(amount, 4)
-            item["total_cost_usd"] = round(to_float(item.get("reported_cost_usd")) + amount, 4)
-            item["cost_basis"] = "reported_cost_plus_fireworks_actual_allocated_by_fireworks_calls"
+            item["total_cost_usd"] = round(to_float(item.get("non_fireworks_cost_usd")) + amount, 4)
+            item["cost_basis"] = "non_fireworks_reported_plus_fireworks_actual_allocated_by_metered_usage"
+
+
+def provider_cost_statuses(day, has_actual_fireworks_cost):
+    missing = []
+    providers = day.get("by_provider") if isinstance(day.get("by_provider"), list) else []
+    for item in providers:
+        provider = str(item.get("name") or "unknown").lower()
+        calls = to_int(item.get("model_calls"))
+        errors = to_int(item.get("error_calls"))
+        usage = item.get("reported_usage") if isinstance(item.get("reported_usage"), dict) else {}
+        cost = to_float(item.get("total_cost_usd", item.get("reported_cost_usd")))
+        if is_fireworks_call(provider, ""):
+            status = "actual" if has_actual_fireworks_cost else "missing"
+        elif provider in ("openclaw", "unknown"):
+            status = "internal"
+        elif cost > 0:
+            status = "runtime_reported"
+        elif calls > 0 and errors >= calls:
+            status = "failed_before_usage"
+        elif calls > 0 and to_int(usage.get("total")) <= 0:
+            status = "missing"
+        else:
+            status = "zero_reported"
+        item["cost_status"] = status
+        if status == "missing":
+            missing.append(item.get("name") or "unknown")
+    return missing
 
 
 def reconcile_sancho_costs(report):
@@ -962,8 +1156,9 @@ def reconcile_sancho_costs(report):
         reported_cost = to_float(day.get("reported_cost_usd"))
         local_fireworks_cost = to_float(day.get("fireworks_reported_cost_usd"))
         billing_day = billing_days.get(day_key) if isinstance(billing_days, dict) else None
-        billing_cost = to_float((billing_day or {}).get("cost_usd")) if billing_ok else 0.0
-        estimated_cost = to_float((billing_day or {}).get("estimated_cost_usd")) if billing_ok else 0.0
+        scoped_billing = scoped_fireworks_billing_day(billing_day) if billing_ok else {"cost_usd": 0.0, "estimated_cost_usd": 0.0, "status": "missing"}
+        billing_cost = to_float(scoped_billing.get("cost_usd")) if billing_ok else 0.0
+        estimated_cost = to_float(scoped_billing.get("estimated_cost_usd")) if billing_ok else 0.0
         has_actual_fireworks_cost = billing_cost > 0
 
         if has_actual_fireworks_cost:
@@ -977,11 +1172,17 @@ def reconcile_sancho_costs(report):
         day["fireworks_estimated_cost_usd"] = round(estimated_cost, 4)
         day["fireworks_billing_cost_usd"] = round(billing_cost, 4)
         day["fireworks_cost_status"] = "actual" if has_actual_fireworks_cost else ("estimated_only" if estimated_cost > 0 else "missing")
+        day["fireworks_billing_scope"] = scoped_billing
         day["sancho_total_cost_usd"] = round(sancho_cost, 4)
         day["sancho_cost_basis"] = basis
         day["sancho_cost_complete"] = bool(has_actual_fireworks_cost or day.get("fireworks_calls", 0) == 0)
-        if has_actual_fireworks_cost:
-            allocate_actual_cost_to_local_groups(day, billing_cost)
+        allocate_actual_cost_to_local_groups(day, billing_cost)
+        missing_providers = provider_cost_statuses(day, has_actual_fireworks_cost)
+        day["unmetered_providers"] = missing_providers
+        day["sancho_cost_complete"] = bool(
+            (has_actual_fireworks_cost or day.get("fireworks_calls", 0) == 0)
+            and not missing_providers
+        )
 
         total_sancho += sancho_cost
         total_reported += reported_cost

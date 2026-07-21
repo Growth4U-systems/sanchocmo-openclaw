@@ -13,13 +13,16 @@ Required env to post:
   LLM_USAGE_SLACK_BOT_TOKEN or SLACK_BOT_TOKEN
 
 Optional env:
-  LLM_USAGE_SLACK_CHANNEL=C0AHWST8Y5C
+  LLM_USAGE_SLACK_CHANNEL=C096X3WUQP9
   LLM_USAGE_SLACK_REPORT_HOUR=9
   LLM_USAGE_SLACK_REPORT_MINUTE=0
   LLM_USAGE_SLACK_REPORT_TIMEZONE=Europe/Madrid
   LLM_USAGE_SLACK_REPORT_ENABLED=1
   LLM_USAGE_SLACK_REQUIRE_BILLING=0
   LLM_USAGE_SLACK_ALLOW_DEFAULT_TOKEN=1
+  LLM_USAGE_REPORT_LABEL=Sancho Produccion
+  LLM_USAGE_PEER_STAGING_URL=https://staging.sanchocmo.ai
+  LLM_USAGE_PEER_STAGING_ADMIN_TOKEN=...
 """
 
 import argparse
@@ -43,7 +46,7 @@ DEFAULT_INPUT = WORKSPACE / "memory" / "costs" / "llm-usage-daily.json"
 STATE_FILE = WORKSPACE / "memory" / "costs" / "llm-usage-slack-report-state.json"
 SLACK_API = "https://slack.com/api/chat.postMessage"
 SLACK_AUTH_TEST_API = "https://slack.com/api/auth.test"
-DEFAULT_SLACK_CHANNEL = "C0AHWST8Y5C"
+DEFAULT_SLACK_CHANNEL = "C096X3WUQP9"
 
 
 def env_bool(name, default=True):
@@ -171,6 +174,75 @@ def pick_report_date(data, now_local, forced_date=None):
     return yesterday
 
 
+def display_environment_label(value):
+    raw = str(value or "").strip()
+    normalized = raw.lower().replace("-", " ").replace("_", " ")
+    if normalized in ("prod", "production", "produccion", "sancho production", "sancho produccion"):
+        return "Sancho Produccion"
+    if normalized in ("stage", "staging", "sancho stage", "sancho staging"):
+        return "Sancho Staging"
+    return raw or "Sancho Produccion"
+
+
+def local_report_label():
+    return display_environment_label(
+        os.environ.get("LLM_USAGE_REPORT_LABEL")
+        or os.environ.get("NEXT_PUBLIC_ENV_LABEL")
+        or os.environ.get("SANCHO_ENV")
+        or "Sancho Produccion"
+    )
+
+
+def configured_peers():
+    peers = []
+    staging_url = os.environ.get("LLM_USAGE_PEER_STAGING_URL") or os.environ.get("LLM_USAGE_STAGING_URL")
+    staging_token = (
+        os.environ.get("LLM_USAGE_PEER_STAGING_ADMIN_TOKEN")
+        or os.environ.get("LLM_USAGE_STAGING_ADMIN_TOKEN")
+    )
+    if staging_url:
+        peers.append(
+            {
+                "label": display_environment_label(
+                    os.environ.get("LLM_USAGE_PEER_STAGING_LABEL") or "Sancho Staging"
+                ),
+                "url": staging_url,
+                "token": staging_token,
+            }
+        )
+    return peers
+
+
+def fetch_remote_usage(peer):
+    token = (peer.get("token") or "").strip()
+    if not token:
+        return {"label": peer.get("label") or "remote", "status": "error", "error": "missing_admin_token"}
+    base_url = str(peer.get("url") or "").rstrip("/")
+    if not base_url:
+        return {"label": peer.get("label") or "remote", "status": "error", "error": "missing_url"}
+    url = f"{base_url}/api/system/llm-usage"
+    req = urllib.request.Request(
+        url,
+        method="GET",
+        headers={
+            "x-admin-token": token,
+            "Accept": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return {
+                "label": peer.get("label") or base_url,
+                "status": "ok",
+                "data": json.loads(resp.read().decode("utf-8")),
+                "url": base_url,
+            }
+    except urllib.error.HTTPError as exc:
+        return {"label": peer.get("label") or base_url, "status": "error", "error": f"http_{exc.code}"}
+    except Exception as exc:
+        return {"label": peer.get("label") or base_url, "status": "error", "error": str(exc)}
+
+
 def top_line(item, rate, metric="fireworks_calls"):
     name = item.get("name") or item.get("agent") or "unknown"
     fw = to_int(item.get("fireworks_calls"))
@@ -235,6 +307,256 @@ def concise_model_summary(models, rate, limit=3):
     return " · ".join(f"{friendly_model_name(m.get('name'))} {fmt_eur(model_cost_eur(m, rate))}" for m in priced[:limit])
 
 
+def day_cost_eur(data, day, rate):
+    total = money_eur(day, "sancho_total_cost_usd", rate)
+    if total <= 0 and to_float(day.get("sancho_total_cost_usd")) > 0:
+        total = eur_from_usd(day.get("sancho_total_cost_usd"), rate)
+    return total
+
+
+def source_day_summary(source, report_date):
+    label = source.get("label") or "Entorno"
+    if source.get("status") != "ok":
+        return {"label": label, "exists": False, "error": source.get("error") or "unavailable"}
+
+    data = source.get("data") if isinstance(source.get("data"), dict) else {}
+    day = ((data.get("days") or {}).get(report_date) or {})
+    if not day:
+        return {"label": label, "exists": False, "error": "sin datos"}
+
+    rate = usd_to_eur_rate(data)
+    billing_source = ((data.get("sources") or {}).get("fireworks_billing_usage") or {})
+    billing_day = ((billing_source.get("days") or {}).get(report_date) or {})
+    provider = money_eur(day, "fireworks_actual_cost_usd", rate) or money_eur(day, "fireworks_billing_cost_usd", rate)
+    estimated = money_eur(day, "fireworks_estimated_cost_usd", rate)
+    complete = bool(day.get("sancho_cost_complete", provider > 0 or to_int(day.get("fireworks_calls")) == 0))
+    scope = day.get("fireworks_billing_scope") if isinstance(day.get("fireworks_billing_scope"), dict) else {}
+
+    return {
+        "label": label,
+        "exists": True,
+        "cost_eur": day_cost_eur(data, day, rate),
+        "provider_eur": provider if provider > 0 else estimated,
+        "provider_label": "real" if provider > 0 else ("estimado" if estimated > 0 else "sin coste"),
+        "model_calls": to_int(day.get("model_calls")),
+        "tool_calls": to_int(day.get("tool_calls")),
+        "fireworks_calls": to_int(day.get("fireworks_calls")),
+        "sessions": to_int(day.get("sessions")),
+        "complete": complete,
+        "billing_status": billing_source.get("status") or "not_configured",
+        "fireworks_cost_status": day.get("fireworks_cost_status") or "missing",
+        "scope_status": scope.get("status"),
+        "models": day.get("by_model") if isinstance(day.get("by_model"), list) else [],
+        "providers": day.get("by_provider") if isinstance(day.get("by_provider"), list) else [],
+        "agents": day.get("by_agent") if isinstance(day.get("by_agent"), list) else [],
+        "unmetered_providers": day.get("unmetered_providers") if isinstance(day.get("unmetered_providers"), list) else [],
+        "account_api_keys": billing_day.get("by_api_key") if isinstance(billing_day.get("by_api_key"), list) else [],
+        "fireworks_account_eur": money_eur(billing_day, "cost_usd", rate),
+        "rate": rate,
+    }
+
+
+def combined_model_summary(summaries, limit=3):
+    totals = {}
+    for summary in summaries:
+        if not summary.get("exists"):
+            continue
+        rate = summary.get("rate") or 0.92
+        for item in summary.get("models") or []:
+            cost = model_cost_eur(item, rate)
+            if cost <= 0:
+                continue
+            name = friendly_model_name(item.get("name"))
+            totals[name] = totals.get(name, 0.0) + cost
+    if not totals:
+        return "Sin desglose por modelo"
+    ordered = sorted(totals.items(), key=lambda item: item[1], reverse=True)
+    return " · ".join(f"{name} {fmt_eur(cost)}" for name, cost in ordered[:limit])
+
+
+def friendly_provider_name(name):
+    raw = str(name or "unknown")
+    known = {
+        "anthropic": "Anthropic",
+        "fireworks": "Fireworks",
+        "google": "Google",
+        "openai": "OpenAI",
+        "openrouter": "OpenRouter",
+        "xai": "xAI",
+        "minimax": "MiniMax",
+    }
+    return known.get(raw.lower(), short(raw, 24))
+
+
+def combined_provider_summary(summaries):
+    totals = {}
+    for summary in summaries:
+        if not summary.get("exists"):
+            continue
+        rate = summary.get("rate") or 0.92
+        for item in summary.get("providers") or []:
+            name = str(item.get("name") or "unknown")
+            if name.lower() in ("openclaw", "unknown"):
+                continue
+            bucket = totals.setdefault(name, {"cost_eur": 0.0, "calls": 0, "errors": 0, "statuses": set()})
+            bucket["cost_eur"] += model_cost_eur(item, rate)
+            bucket["calls"] += to_int(item.get("model_calls"))
+            bucket["errors"] += to_int(item.get("error_calls"))
+            if item.get("cost_status"):
+                bucket["statuses"].add(item.get("cost_status"))
+
+    if not totals:
+        return "Sin proveedores registrados"
+
+    parts = []
+    ordered = sorted(totals.items(), key=lambda pair: (pair[1]["cost_eur"], pair[1]["calls"]), reverse=True)
+    for name, bucket in ordered:
+        calls = bucket["calls"]
+        errors = bucket["errors"]
+        if "missing" in bucket["statuses"]:
+            value = "sin medicion"
+        elif calls > 0 and errors >= calls:
+            value = f"{fmt_eur(bucket['cost_eur'])} ({fmt_int(errors)} intentos rechazados)"
+        else:
+            value = f"{fmt_eur(bucket['cost_eur'])} ({fmt_int(calls)} llamadas)"
+        parts.append(f"{friendly_provider_name(name)} {value}")
+    return " · ".join(parts)
+
+
+def top_agent_summary(summaries):
+    totals = {}
+    for summary in summaries:
+        if not summary.get("exists"):
+            continue
+        rate = summary.get("rate") or 0.92
+        for item in summary.get("agents") or []:
+            name = str(item.get("name") or "unknown")
+            bucket = totals.setdefault(name, {"cost_eur": 0.0, "calls": 0})
+            bucket["cost_eur"] += model_cost_eur(item, rate)
+            bucket["calls"] += to_int(item.get("model_calls"))
+    if not totals:
+        return "Sin agente atribuible"
+    name, bucket = max(totals.items(), key=lambda pair: (pair[1]["cost_eur"], pair[1]["calls"]))
+    return f"{short(name, 32)} {fmt_eur(bucket['cost_eur'])}"
+
+
+def external_account_projects(summaries):
+    for summary in summaries:
+        items = summary.get("account_api_keys") if summary.get("exists") else []
+        if not items:
+            continue
+        rate = summary.get("rate") or 0.92
+        external = []
+        for item in items:
+            raw_name = str(item.get("name") or "unknown")
+            if "sanchocmo" in raw_name.lower():
+                continue
+            project_name = raw_name.split(" (", 1)[0]
+            cost = money_eur(item, "cost_usd", rate)
+            if cost > 0:
+                external.append((project_name, cost))
+        if external:
+            external.sort(key=lambda pair: pair[1], reverse=True)
+            return [{"name": short(name, 28), "cost_eur": cost} for name, cost in external]
+    return []
+
+
+def fireworks_account_total(summaries):
+    for summary in summaries:
+        total = to_float(summary.get("fireworks_account_eur")) if summary.get("exists") else 0.0
+        if total > 0:
+            return total
+    return 0.0
+
+
+def format_unified_report(sources, report_date):
+    summaries = [source_day_summary(source, report_date) for source in sources]
+    available = [summary for summary in summaries if summary.get("exists")]
+
+    total_cost = sum(to_float(summary.get("cost_eur")) for summary in available)
+    model_calls = sum(to_int(summary.get("model_calls")) for summary in available)
+    tool_calls = sum(to_int(summary.get("tool_calls")) for summary in available)
+    fireworks_calls = sum(to_int(summary.get("fireworks_calls")) for summary in available)
+    sessions = sum(to_int(summary.get("sessions")) for summary in available)
+    complete = bool(available) and all(summary.get("complete") for summary in available)
+    total_label = "Total Sancho" if complete else "Total parcial Sancho"
+    models_text = combined_model_summary(summaries)
+    providers_text = combined_provider_summary(summaries)
+    top_agent_text = top_agent_summary(summaries)
+    external_projects = external_account_projects(summaries)
+    account_total = fireworks_account_total(summaries)
+
+    env_lines = []
+    warnings = []
+    for summary in summaries:
+        label = summary.get("label")
+        if not summary.get("exists"):
+            env_lines.append(f"*{label}:* sin datos ({summary.get('error')})")
+            warnings.append(f"{label}: {summary.get('error')}")
+            continue
+        env_lines.append(
+            f"*{label}:* {fmt_eur(summary.get('cost_eur'))} · "
+            f"{fmt_int(summary.get('model_calls'))} model · "
+            f"{fmt_int(summary.get('fireworks_calls'))} Fireworks"
+        )
+        if summary.get("billing_status") != "ok" and summary.get("fireworks_calls", 0) > 0:
+            warnings.append(f"{label}: billing {summary.get('billing_status')}")
+        elif summary.get("fireworks_cost_status") != "actual" and summary.get("fireworks_calls", 0) > 0:
+            warnings.append(f"{label}: coste {summary.get('fireworks_cost_status')}")
+        if summary.get("scope_status") == "api_key_unmatched":
+            warnings.append(f"{label}: Fireworks sin match de API key")
+        elif summary.get("scope_status") == "api_key_breakdown_missing":
+            warnings.append(f"{label}: Fireworks sin desglose por API key")
+        if summary.get("unmetered_providers"):
+            warnings.append(f"{label}: sin medicion {', '.join(summary.get('unmetered_providers'))}")
+
+    title = f"Sancho coste LLM · {report_date}"
+    fallback_lines = [title, f"{total_label}: {fmt_eur(total_cost)}", *env_lines]
+    fallback_lines.extend(f"{item['name']}: {fmt_eur(item['cost_eur'])}" for item in external_projects)
+    if account_total > 0:
+        fallback_lines.append(f"Total cuenta Fireworks: {fmt_eur(account_total)}")
+    fallback_lines.extend(
+        [
+            f"Proveedores Sancho: {providers_text}",
+            f"Agente Sancho que mas consumio: {top_agent_text}",
+            f"Uso Sancho: {fmt_int(model_calls)} model · {fmt_int(tool_calls)} tools",
+            f"Top modelos Sancho: {models_text}",
+        ]
+    )
+    fallback = "\n".join(fallback_lines)
+
+    summary_lines = [f"*{total_label}:* {fmt_eur(total_cost)}", *env_lines]
+    summary_lines.extend(f"*{item['name']}:* {fmt_eur(item['cost_eur'])}" for item in external_projects)
+    if account_total > 0:
+        summary_lines.append(f"*Total cuenta Fireworks:* {fmt_eur(account_total)}")
+    summary_lines.extend(
+        [
+            f"*Proveedores Sancho:* {providers_text}",
+            f"*Agente Sancho que mas consumio:* {top_agent_text}",
+            f"*Uso Sancho:* {fmt_int(model_calls)} model calls · {fmt_int(tool_calls)} tool calls",
+            f"*Top modelos Sancho:* {models_text}",
+        ]
+    )
+    summary = "\n".join(summary_lines)
+    if warnings:
+        summary += "\n*Atencion:* " + "; ".join(short(warning, 48) for warning in warnings[:4])
+
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": title[:150]}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": summary}},
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"Dia cerrado: `{report_date}` · Sesiones: `{fmt_int(sessions)}` · Produccion + Staging · EUR.",
+                }
+            ],
+        },
+    ]
+    return fallback, blocks
+
+
 def cost_source_text(bucket):
     sources = bucket.get("cost_sources") if isinstance(bucket, dict) else {}
     if not isinstance(sources, dict) or not sources:
@@ -295,28 +617,48 @@ def format_report(data, report_date):
     total_label = "Total" if sancho_cost_complete else "Total estimado"
     top_models = day.get("by_model") or []
     models_text = concise_model_summary(top_models, rate)
+    single_summary = source_day_summary({"label": local_report_label(), "status": "ok", "data": data}, report_date)
+    providers_text = combined_provider_summary([single_summary])
+    top_agent_text = top_agent_summary([single_summary])
+    external_projects = external_account_projects([single_summary])
+    account_total = fireworks_account_total([single_summary])
 
     title = f"Sancho coste LLM · {report_date}"
-    fallback = (
-        f"{title}\n"
-        f"{total_label} LLM {fmt_eur(sancho_total_cost)} · Proveedor medido {fmt_eur(provider_metered_cost)} {provider_metered_label} · Otros proveedores {fmt_eur(local_non_fireworks_cost)}\n"
-        f"{fmt_int(model_calls)} model calls · {fmt_int(tool_calls)} tool calls · {fmt_int(fireworks_calls)} provider-metered calls\n"
-        f"{models_text}"
+    fallback_lines = [title, f"{total_label} Sancho: {fmt_eur(sancho_total_cost)}"]
+    fallback_lines.extend(f"{item['name']}: {fmt_eur(item['cost_eur'])}" for item in external_projects)
+    if account_total > 0:
+        fallback_lines.append(f"Total cuenta Fireworks: {fmt_eur(account_total)}")
+    fallback_lines.extend(
+        [
+            f"Proveedores Sancho: {providers_text}",
+            f"Agente Sancho que mas consumio: {top_agent_text}",
+            f"{fmt_int(model_calls)} model calls · {fmt_int(tool_calls)} tool calls · {fmt_int(fireworks_calls)} provider-metered calls",
+            models_text,
+        ]
     )
+    fallback = "\n".join(fallback_lines)
 
-    summary = (
-        f"*{total_label} LLM:* {fmt_eur(sancho_total_cost)}\n"
-        f"*Proveedor medido:* {fmt_eur(provider_metered_cost)} {provider_metered_label} ({fmt_int(fireworks_calls)} llamadas)\n"
-        f"*Otros proveedores:* {fmt_eur(local_non_fireworks_cost)}\n"
-        f"*Uso:* {fmt_int(model_calls)} model calls · {fmt_int(tool_calls)} tool calls\n"
-        f"*Top modelos:* {models_text}"
+    summary_lines = [f"*{total_label} Sancho:* {fmt_eur(sancho_total_cost)}"]
+    summary_lines.extend(f"*{item['name']}:* {fmt_eur(item['cost_eur'])}" for item in external_projects)
+    if account_total > 0:
+        summary_lines.append(f"*Total cuenta Fireworks:* {fmt_eur(account_total)}")
+    summary_lines.extend(
+        [
+            f"*Proveedores Sancho:* {providers_text}",
+            f"*Agente Sancho que mas consumio:* {top_agent_text}",
+            f"*Uso Sancho:* {fmt_int(model_calls)} model calls · {fmt_int(tool_calls)} tool calls",
+            f"*Top modelos Sancho:* {models_text}",
+        ]
     )
+    summary = "\n".join(summary_lines)
     if billing_status != "ok" and fireworks_calls > 0:
         summary += f"\n*Atencion:* billing del proveedor medido `{billing_status}`; esa parte del coste puede estar incompleta."
     elif fireworks_cost_status != "actual" and fireworks_calls > 0:
         summary += "\n*Atencion:* coste del proveedor medido sin confirmacion real."
     if not sancho_cost_complete and fireworks_calls > 0:
         summary += "\n*Nota:* se envia el reporte con coste estimado de proveedor para no perder el cierre diario."
+    if day.get("unmetered_providers"):
+        summary += "\n*Atencion:* sin medicion de coste para " + ", ".join(day.get("unmetered_providers")) + "."
 
     blocks = [
         {"type": "header", "text": {"type": "plain_text", "text": title[:150]}},
@@ -417,21 +759,37 @@ def main():
 
     data = load_json(args.input, {})
     report_date = pick_report_date(data, now_local, args.date)
-    day_exists = report_date in (data.get("days") or {})
+    sources = [{"label": local_report_label(), "status": "ok", "data": data, "local": True}]
+    for peer in configured_peers():
+        sources.append(fetch_remote_usage(peer))
+
+    day_exists = any(
+        source.get("status") == "ok" and report_date in ((source.get("data") or {}).get("days") or {})
+        for source in sources
+    )
     if not day_exists:
         print(f"llm-usage-slack-report: no usage data for {report_date}")
         return 0
 
-    billing_source = ((data.get("sources") or {}).get("fireworks_billing_usage") or {})
-    billing_day = ((billing_source.get("days") or {}).get(report_date) or {})
-    day = ((data.get("days") or {}).get(report_date) or {})
-    fireworks_calls = to_int(day.get("fireworks_calls"))
-    if env_bool("LLM_USAGE_SLACK_REQUIRE_BILLING", False) and fireworks_calls > 0 and (billing_source.get("status") != "ok" or not billing_day):
-        print(
-            "llm-usage-slack-report: skipped "
-            f"(provider billing not ready for {report_date}; status={billing_source.get('status') or 'missing'})"
-        )
-        return 0
+    if env_bool("LLM_USAGE_SLACK_REQUIRE_BILLING", False):
+        not_ready = []
+        for source in sources:
+            if source.get("status") != "ok":
+                not_ready.append(f"{source.get('label')}: {source.get('error')}")
+                continue
+            source_data = source.get("data") if isinstance(source.get("data"), dict) else {}
+            billing_source = ((source_data.get("sources") or {}).get("fireworks_billing_usage") or {})
+            billing_day = ((billing_source.get("days") or {}).get(report_date) or {})
+            day = ((source_data.get("days") or {}).get(report_date) or {})
+            fireworks_calls = to_int(day.get("fireworks_calls"))
+            if fireworks_calls > 0 and (billing_source.get("status") != "ok" or not billing_day):
+                not_ready.append(f"{source.get('label')}: {billing_source.get('status') or 'missing'}")
+        if not_ready:
+            print(
+                "llm-usage-slack-report: skipped "
+                f"(provider billing not ready for {report_date}; {', '.join(not_ready)})"
+            )
+            return 0
 
     state = load_json(STATE_FILE, {"sent": {}})
     sent = state.setdefault("sent", {})
@@ -439,7 +797,10 @@ def main():
         print(f"llm-usage-slack-report: already sent for {report_date}")
         return 0
 
-    text, blocks = format_report(data, report_date)
+    if len(sources) > 1:
+        text, blocks = format_unified_report(sources, report_date)
+    else:
+        text, blocks = format_report(data, report_date)
     token, token_source = resolve_slack_token()
     channel = (
         os.environ.get("LLM_USAGE_SLACK_CHANNEL")
@@ -449,7 +810,22 @@ def main():
     )
 
     if args.dry_run:
-        print(json.dumps({"date": report_date, "channel": channel, "text": text, "blocks": blocks}, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "date": report_date,
+                    "channel": channel,
+                    "sources": [
+                        {"label": source.get("label"), "status": source.get("status"), "error": source.get("error")}
+                        for source in sources
+                    ],
+                    "text": text,
+                    "blocks": blocks,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
         return 0
 
     if not token:
