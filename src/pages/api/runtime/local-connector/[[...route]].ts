@@ -83,6 +83,16 @@ function bridgeScriptPath(provider: LocalConnectorProviderId): string {
   return path.join(process.cwd(), cliBridgeProvider(provider).scriptPath);
 }
 
+function bridgeSharedScriptPath(asset: string): string | null {
+  const files: Record<string, string> = {
+    "callback-authority": "callback-authority.mjs",
+  };
+  const filename = files[asset];
+  return filename
+    ? path.join(process.cwd(), "docker", "runtimes", filename)
+    : null;
+}
+
 function contractScriptPath(asset = "mc-chat-context"): string | null {
   const files: Record<string, string> = {
     "mc-chat-context": "mc-chat-context.mjs",
@@ -199,13 +209,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return text(res, 200, fs.readFileSync(localScriptPath(), "utf-8"), "text/javascript; charset=utf-8");
   }
 
-  if (route === "bridge") {
+  if (route === "bridge" || route.startsWith("bridge/")) {
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
     const session = authenticateLocalConnectorToken(bearerToken(req));
     if (!session || !isCliBridgeProviderId(session.provider)) {
       return res.status(401).json({ error: "Pairing inválido o caducado" });
     }
-    return text(res, 200, fs.readFileSync(bridgeScriptPath(session.provider), "utf-8"), "text/javascript; charset=utf-8");
+    const scriptPath =
+      route === "bridge"
+        ? bridgeScriptPath(session.provider)
+        : bridgeSharedScriptPath(route.slice("bridge/".length));
+    if (!scriptPath) return res.status(404).json({ error: "Bridge asset not found" });
+    return text(
+      res,
+      200,
+      fs.readFileSync(scriptPath, "utf-8"),
+      "text/javascript; charset=utf-8",
+    );
   }
 
   if (route === "contract" || route.startsWith("contract/")) {

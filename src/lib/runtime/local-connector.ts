@@ -451,7 +451,8 @@ SANCHO_BASE_URL=${safeBase}
 SANCHO_CONNECTOR_TOKEN=${safeToken}
 SANCHO_CONNECTOR_PROVIDER=${safeProvider}
 SANCHO_CONNECTOR_DIR="\${SANCHO_CONNECTOR_DIR:-$HOME/.sancho/runtime-connector}"
-SANCHO_CONNECTOR_BRIDGE_DIR="$SANCHO_CONNECTOR_DIR/docker/runtimes/$SANCHO_CONNECTOR_PROVIDER"
+SANCHO_CONNECTOR_RUNTIMES_DIR="$SANCHO_CONNECTOR_DIR/docker/runtimes"
+SANCHO_CONNECTOR_BRIDGE_DIR="$SANCHO_CONNECTOR_RUNTIMES_DIR/$SANCHO_CONNECTOR_PROVIDER"
 SANCHO_CONNECTOR_CONTRACT_DIR="$SANCHO_CONNECTOR_DIR/src/lib/runtime/agent-contract"
 
 if ! command -v node >/dev/null 2>&1; then
@@ -462,6 +463,7 @@ fi
 mkdir -p "$SANCHO_CONNECTOR_BRIDGE_DIR" "$SANCHO_CONNECTOR_CONTRACT_DIR"
 curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/script?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_DIR/connector.mjs"
 curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/bridge?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_BRIDGE_DIR/bridge.mjs"
+curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/bridge/callback-authority?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_RUNTIMES_DIR/callback-authority.mjs"
 curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/contract?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_CONTRACT_DIR/mc-chat-context.mjs"
 curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/contract/error-rewriter?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_CONTRACT_DIR/error-rewriter.mjs"
 curl -fsSL "$SANCHO_BASE_URL/api/runtime/local-connector/contract/runtime-cli-failure?token=$SANCHO_CONNECTOR_TOKEN" -o "$SANCHO_CONNECTOR_CONTRACT_DIR/runtime-cli-failure.mjs"

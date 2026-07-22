@@ -140,7 +140,18 @@ test("local connector installer preserves the bridge shared-module layout", () =
   );
 
   assert.match(installer, /SANCHO_CONNECTOR_PROVIDER="codex"/);
-  assert.match(installer, /docker\/runtimes\/\$SANCHO_CONNECTOR_PROVIDER/);
+  assert.match(
+    installer,
+    /SANCHO_CONNECTOR_RUNTIMES_DIR="\$SANCHO_CONNECTOR_DIR\/docker\/runtimes"/,
+  );
+  assert.match(
+    installer,
+    /SANCHO_CONNECTOR_BRIDGE_DIR="\$SANCHO_CONNECTOR_RUNTIMES_DIR\/\$SANCHO_CONNECTOR_PROVIDER"/,
+  );
+  assert.match(
+    installer,
+    /local-connector\/bridge\/callback-authority\?token=\$SANCHO_CONNECTOR_TOKEN/,
+  );
   assert.match(installer, /src\/lib\/runtime\/agent-contract/);
   assert.match(installer, /local-connector\/contract\?token=\$SANCHO_CONNECTOR_TOKEN/);
   assert.match(installer, /local-connector\/contract\/error-rewriter\?token=\$SANCHO_CONNECTOR_TOKEN/);
@@ -148,6 +159,17 @@ test("local connector installer preserves the bridge shared-module layout", () =
   assert.match(installer, /SANCHO_CONNECTOR_BRIDGE_PATH="\$SANCHO_CONNECTOR_BRIDGE_DIR\/bridge\.mjs"/);
 
   const bridgePath = path.join("runtime-connector", "docker", "runtimes", "codex", "bridge.mjs");
+  const importedAuthority = path.resolve(
+    path.dirname(bridgePath),
+    "../callback-authority.mjs",
+  );
+  const installedAuthority = path.resolve(
+    "runtime-connector",
+    "docker",
+    "runtimes",
+    "callback-authority.mjs",
+  );
+  assert.equal(importedAuthority, installedAuthority);
   const importedContract = path.resolve(path.dirname(bridgePath), "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs");
   const installedContract = path.resolve(
     "runtime-connector",
@@ -158,4 +180,10 @@ test("local connector installer preserves the bridge shared-module layout", () =
     "mc-chat-context.mjs",
   );
   assert.equal(importedContract, installedContract);
+
+  const dockerfile = fs.readFileSync(path.join(process.cwd(), "Dockerfile"), "utf8");
+  assert.match(
+    dockerfile,
+    /COPY docker\/runtimes\/callback-authority\.mjs \.\/docker\/runtimes\/callback-authority\.mjs/,
+  );
 });
