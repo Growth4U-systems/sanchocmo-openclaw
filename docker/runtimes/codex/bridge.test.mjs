@@ -168,6 +168,8 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
   };
   const received = [];
+  const receivedHeaders = [];
+  const runtimeToolCapability = "c".repeat(64);
 
   const webhook = http.createServer((req, res) => {
     let raw = "";
@@ -177,6 +179,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     });
     req.on("end", () => {
       received.push(JSON.parse(raw));
+      receivedHeaders.push(req.headers);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
     });
@@ -203,6 +206,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
         slug: "acme",
         threadId: "acme:general",
         missionControlRunId: "run_mc_codex",
+        runtimeToolCapability,
         text: "hola",
         agent: "sancho",
       }),
@@ -215,13 +219,31 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     await waitFor(() => received.some((item) => item.role === "progress") && received.some((item) => !item.role));
     const progress = received.find((item) => item.role === "progress");
     const final = received.find((item) => !item.role);
+    const progressIndex = received.indexOf(progress);
+    const finalIndex = received.indexOf(final);
     assert.equal(progress.agent, "sancho");
     assert.equal(progress.missionControlRunId, "run_mc_codex");
+    assert.equal(
+      receivedHeaders[progressIndex]["x-mission-control-run-id"],
+      "run_mc_codex",
+    );
+    assert.equal(
+      receivedHeaders[progressIndex]["x-sancho-run-capability"],
+      runtimeToolCapability,
+    );
     assert.equal(progress.event.kind, "thinking");
     assert.equal(final.slug, "acme");
     assert.equal(final.threadId, "acme:general");
     assert.equal(final.agent, "sancho");
     assert.equal(final.missionControlRunId, "run_mc_codex");
+    assert.equal(
+      receivedHeaders[finalIndex]["x-mission-control-run-id"],
+      "run_mc_codex",
+    );
+    assert.equal(
+      receivedHeaders[finalIndex]["x-sancho-run-capability"],
+      runtimeToolCapability,
+    );
     assert.match(final.text, /exec/);
   } finally {
     await close(bridge);

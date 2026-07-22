@@ -886,7 +886,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     slug,
     threadId: tid,
     missionControlRunId: run.id,
-    ...(runtime.id === "openclaw" ? { runtimeToolCapability } : {}),
+    // Every authenticated runtime must return this one-turn capability in its
+    // callback headers. Mission Control persists only the digest.
+    runtimeToolCapability,
     traceId: run.traceId ?? traceContext.traceId,
     traceparent: traceContext.traceparent,
     controlDepth,

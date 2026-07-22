@@ -10,6 +10,7 @@ import {
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
+import { callbackAuthorityHeaders } from "../callback-authority.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18793;
@@ -114,8 +115,11 @@ function webhookUrl() {
   return `${trimTrailingSlash(base)}/api/chat/webhook`;
 }
 
-async function postWebhook(payload) {
-  const headers = { "Content-Type": "application/json" };
+async function postWebhook(payload, message) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...callbackAuthorityHeaders(message),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
   const res = await fetch(webhookUrl(), {
@@ -140,7 +144,7 @@ function postTerminalOnce(message, payload, label) {
   if (!entry || entry.terminalPosted) return false;
   entry.terminalPosted = true;
   if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
-  postWebhook({ ...payload, ...callbackIdentity(message) })
+  postWebhook({ ...payload, ...callbackIdentity(message) }, message)
     .catch((e) => console.error(`[codex bridge] ${label} webhook failed:`, e.message));
   return true;
 }
@@ -319,7 +323,7 @@ async function postProgress(message, runId, label, detail) {
       detail,
       target: runId,
     },
-  });
+  }, message);
 }
 
 async function startCodexRun(message, runId) {

@@ -147,6 +147,7 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.equal(received[0].userId, "mc-client-demo");
     assert.equal(received[0].controlDepth, 1);
     assert.equal(typeof received[0].missionControlRunId, "string");
+    assert.match(String(received[0].runtimeToolCapability), /^[a-f0-9]{64}$/);
     assert.equal(received[0].traceId, "trace-chat-send-1");
     assert.match(
       String(received[0].traceparent),

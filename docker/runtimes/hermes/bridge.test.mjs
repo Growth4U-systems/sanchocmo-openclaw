@@ -333,6 +333,8 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
   const previousTimeout = process.env.HERMES_RUN_TIMEOUT_MS;
   const previousContextEnabled = process.env.HERMES_CONTEXT_PACK_ENABLED;
   const received = [];
+  const receivedHeaders = [];
+  const runtimeToolCapability = "a".repeat(64);
 
   const webhook = http.createServer((req, res) => {
     let raw = "";
@@ -342,6 +344,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     });
     req.on("end", () => {
       received.push(JSON.parse(raw));
+      receivedHeaders.push(req.headers);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
     });
@@ -368,6 +371,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
         slug: "acme",
         threadId: "acme:general",
         missionControlRunId: "run_mc_hermes",
+        runtimeToolCapability,
         text: "Hola Hermes",
         userId: "mc-admin",
         userName: "Admin",
@@ -383,11 +387,28 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     await waitFor(() => received.some((payload) => payload.text), 3000);
     assert.equal(received[0].role, "progress");
     assert.equal(received[0].missionControlRunId, "run_mc_hermes");
+    assert.equal(
+      receivedHeaders[0]["x-mission-control-run-id"],
+      "run_mc_hermes",
+    );
+    assert.equal(
+      receivedHeaders[0]["x-sancho-run-capability"],
+      runtimeToolCapability,
+    );
     const final = received.find((payload) => payload.text);
+    const finalIndex = received.indexOf(final);
     assert.equal(final.slug, "acme");
     assert.equal(final.threadId, "acme:general");
     assert.equal(final.agent, "hermes");
     assert.equal(final.missionControlRunId, "run_mc_hermes");
+    assert.equal(
+      receivedHeaders[finalIndex]["x-mission-control-run-id"],
+      "run_mc_hermes",
+    );
+    assert.equal(
+      receivedHeaders[finalIndex]["x-sancho-run-capability"],
+      runtimeToolCapability,
+    );
     assert.match(final.text, /Hola Hermes/);
   } finally {
     await close(bridge);
