@@ -93,7 +93,7 @@ const SERVICE_ENV_MAP: Record<
     {
       key: "LLM_USAGE_SLACK_CHANNEL",
       label: "Canal reporte costes",
-      placeholder: "C0AHWST8Y5C",
+      placeholder: "C096X3WUQP9",
       help: "Canal Slack donde Sancho envia el reporte diario de coste LLM.",
     },
     {
