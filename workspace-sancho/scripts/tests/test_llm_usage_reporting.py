@@ -48,6 +48,14 @@ class BillingScopeTests(unittest.TestCase):
 
 
 class UnifiedSlackReportTests(unittest.TestCase):
+    def test_migrates_old_cost_report_channel_to_reportes(self):
+        with patch.dict(
+            os.environ,
+            {"LLM_USAGE_SLACK_CHANNEL": slack_report.LEGACY_SLACK_CHANNEL},
+            clear=False,
+        ):
+            self.assertEqual(slack_report.resolve_slack_channel(), "C0B7KH5SR5X")
+
     def test_normalizes_legacy_environment_labels(self):
         self.assertEqual(slack_report.display_environment_label("Produccion"), "Sancho Produccion")
         self.assertEqual(slack_report.display_environment_label("Staging"), "Sancho Staging")

@@ -13,7 +13,7 @@ Required env to post:
   LLM_USAGE_SLACK_BOT_TOKEN or SLACK_BOT_TOKEN
 
 Optional env:
-  LLM_USAGE_SLACK_CHANNEL=C096X3WUQP9
+  LLM_USAGE_SLACK_CHANNEL=C0B7KH5SR5X
   LLM_USAGE_SLACK_REPORT_HOUR=9
   LLM_USAGE_SLACK_REPORT_MINUTE=0
   LLM_USAGE_SLACK_REPORT_TIMEZONE=Europe/Madrid
@@ -46,7 +46,8 @@ DEFAULT_INPUT = WORKSPACE / "memory" / "costs" / "llm-usage-daily.json"
 STATE_FILE = WORKSPACE / "memory" / "costs" / "llm-usage-slack-report-state.json"
 SLACK_API = "https://slack.com/api/chat.postMessage"
 SLACK_AUTH_TEST_API = "https://slack.com/api/auth.test"
-DEFAULT_SLACK_CHANNEL = "C096X3WUQP9"
+DEFAULT_SLACK_CHANNEL = "C0B7KH5SR5X"
+LEGACY_SLACK_CHANNEL = "C096X3WUQP9"
 
 
 def env_bool(name, default=True):
@@ -54,6 +55,17 @@ def env_bool(name, default=True):
     if raw is None:
         return default
     return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
+def resolve_slack_channel():
+    configured = (
+        os.environ.get("LLM_USAGE_SLACK_CHANNEL")
+        or os.environ.get("COST_TRACKER_SLACK_CHANNEL")
+        or os.environ.get("SLACK_COST_REPORT_CHANNEL")
+    )
+    if not configured or configured == LEGACY_SLACK_CHANNEL:
+        return DEFAULT_SLACK_CHANNEL
+    return configured
 
 
 def to_int(value):
@@ -802,12 +814,7 @@ def main():
     else:
         text, blocks = format_report(data, report_date)
     token, token_source = resolve_slack_token()
-    channel = (
-        os.environ.get("LLM_USAGE_SLACK_CHANNEL")
-        or os.environ.get("COST_TRACKER_SLACK_CHANNEL")
-        or os.environ.get("SLACK_COST_REPORT_CHANNEL")
-        or DEFAULT_SLACK_CHANNEL
-    )
+    channel = resolve_slack_channel()
 
     if args.dry_run:
         print(
