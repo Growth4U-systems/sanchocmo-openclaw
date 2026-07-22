@@ -195,7 +195,7 @@ test(
       plugin,
       executionControl,
       admission,
-      effects,
+      _effects,
       completion,
       createSearch,
       worker,
@@ -543,7 +543,7 @@ test(
       };
       let yalcAssignmentCalls = 0;
       const yalcAssignEffectDependencies: Parameters<
-        typeof effects.createPartnershipsYalcAssignEffectV5
+        typeof _effects.createPartnershipsYalcAssignEffectV5
       >[0] = {
         transport: async (config, requestPath, input) => {
           yalcAssignmentCalls += 1;
