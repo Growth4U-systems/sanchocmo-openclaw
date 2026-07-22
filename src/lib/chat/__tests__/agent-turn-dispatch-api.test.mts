@@ -12,6 +12,8 @@ import {
 
 const leaseToken = "l".repeat(48);
 const capability = "a".repeat(64);
+const terminalGrant = "terminal.callback.grant";
+const terminalGrantExpiresAt = "2026-07-23T12:00:00.000Z";
 const leaseExpiresAt = "2026-07-16T12:00:00.000Z";
 
 function remoteClaim(): ChatAgentTurnRemoteClaim {
@@ -48,7 +50,12 @@ function dependencies(
   return {
     sharedSecret: () => "runtime-secret",
     enabled: () => true,
+    terminalGrantReady: () => true,
     claim: async () => remoteClaim(),
+    issueTerminalCallbackGrant: async () => ({
+      token: terminalGrant,
+      expiresAt: terminalGrantExpiresAt,
+    }),
     authorize: async () => authority(),
     markStarted: async () => ({ status: "running" }),
     complete: async () => ({ status: "completed" }),
@@ -122,7 +129,14 @@ test("claim returns one server-owned durable envelope only to the authenticated 
   );
   assert.equal(mocked.state.status, 200);
   assert.equal(workerId, "openclaw-staging-1");
-  assert.deepEqual(mocked.state.body, { ok: true, claim: remoteClaim() });
+  assert.deepEqual(mocked.state.body, {
+    ok: true,
+    claim: {
+      ...remoteClaim(),
+      runtimeTerminalCallbackGrant: terminalGrant,
+      runtimeTerminalCallbackGrantExpiresAt: terminalGrantExpiresAt,
+    },
+  });
   assert.match(mocked.state.headers["cache-control"], /no-store/);
 });
 

@@ -36,6 +36,10 @@ test("durable turns allow explicit read-only, internal and Ledger admission tool
   const release = boundary.registerTurn({
     runId: "durable-run",
     sessionKey: "agent:sancho:mc-chat:growth4u:task",
+    allowedLedgerAdmissions: [
+      "leads_search_start",
+      "partnerships_discovery_start",
+    ],
   });
   assert.equal(typeof release, "function");
 

@@ -1,9 +1,8 @@
-import crypto from "node:crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 import { getAgentRunByIdAsync } from "@/lib/data/agent-runs";
 import { loadClient } from "@/lib/data/clients";
-import { getRuntime } from "@/lib/runtime";
+import { createRuntimeAdapter, resolveRuntimeId } from "@/lib/runtime";
 import {
   admitPartnershipsDiscoveryFromAgent,
   PartnershipsDiscoveryAgentBridgeError,
@@ -15,6 +14,7 @@ import {
   authorizeRuntimeRunRequest,
   type RuntimeRunRequestAuthorityDependencies,
 } from "@/lib/runtime/runtime-run-request-authority";
+import { authorizeRuntimeTransportSecret } from "@/lib/runtime/runtime-transport-secret";
 import { traceContextFromHeaders } from "@/lib/trace-context";
 
 const BODY_FIELDS = new Set(["plan"]);
@@ -35,7 +35,7 @@ type AdmitPort = (
 ) => Promise<PartnershipsDiscoveryAgentAdmissionResult>;
 
 export interface AgentPartnershipsDiscoveryRouteDependencies extends RuntimeRunRequestAuthorityDependencies {
-  sharedSecret(): string | undefined;
+  sharedSecret(runtime: string): string | undefined;
   clientExists(slug: string): boolean;
   admit?: AdmitPort;
   bridge?: PartnershipsDiscoveryAgentBridgeDependencies;
@@ -61,16 +61,6 @@ function singleHeader(req: NextApiRequest, name: string): string | undefined {
   return Array.isArray(value) ? undefined : value;
 }
 
-function safeEqual(left: string | undefined, right: string): boolean {
-  if (!left) return false;
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    crypto.timingSafeEqual(leftBuffer, rightBuffer)
-  );
-}
-
 function bridgeError(
   code: ConstructorParameters<typeof PartnershipsDiscoveryAgentBridgeError>[0],
   status: ConstructorParameters<
@@ -84,13 +74,6 @@ async function trustedRuntimeAuthority(
   req: NextApiRequest,
   dependencies: AgentPartnershipsDiscoveryRouteDependencies,
 ): Promise<AgentPartnershipsDiscoveryAuthority> {
-  const expectedSecret = dependencies.sharedSecret();
-  if (!expectedSecret) {
-    throw bridgeError("partnerships_discovery_runtime_disabled", 503);
-  }
-  if (!safeEqual(singleHeader(req, "x-mc-secret"), expectedSecret)) {
-    throw bridgeError("partnerships_discovery_agent_context_invalid", 403);
-  }
   // Reject public/model tenant claims. Scope comes exclusively from the exact
   // parent run authorized by the currently leased chat dispatch.
   if (singleHeader(req, "x-sancho-client-slug") !== undefined) {
@@ -112,15 +95,29 @@ async function trustedRuntimeAuthority(
   );
   const run = authority?.run;
   const input = authority?.input;
+  const transportAuthorization =
+    authority && run && input
+      ? authorizeRuntimeTransportSecret({
+          suppliedSecret: singleHeader(req, "x-mc-secret"),
+          runInput: input,
+          resolveLegacySecret: () => dependencies.sharedSecret(run.runtime),
+        })
+      : "forbidden";
+  if (transportAuthorization === "legacy_secret_missing") {
+    throw bridgeError("partnerships_discovery_runtime_disabled", 503);
+  }
   if (
     !authority ||
     !run ||
     !input ||
+    transportAuthorization !== "authorized" ||
     input.runtimeDispatchMode !== "ledger-v1" ||
     input.isAdmin !== true ||
     input.senderRole !== "admin" ||
     input.readOnly !== false ||
     input.userId !== "mc-admin" ||
+    input.controlDepth !== 0 ||
+    input.temporaryAgent === true ||
     !dependencies.clientExists(authority.slug)
   ) {
     throw bridgeError("partnerships_discovery_agent_context_invalid", 403);
@@ -223,7 +220,12 @@ export function createAgentPartnershipsDiscoveryHandler(
 }
 
 const defaultHandler = createAgentPartnershipsDiscoveryHandler({
-  sharedSecret: () => getRuntime().messaging.getSharedSecret?.(),
+  sharedSecret: (runtime) => {
+    const runtimeId = resolveRuntimeId(runtime);
+    return runtimeId
+      ? createRuntimeAdapter(runtimeId).messaging.getSharedSecret?.()
+      : undefined;
+  },
   clientExists: (slug) => Boolean(loadClient(slug)),
   resolveAgentRun: getAgentRunByIdAsync,
   authorizeDispatchLease: (input) =>

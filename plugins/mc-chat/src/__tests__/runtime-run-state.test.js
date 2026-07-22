@@ -94,11 +94,13 @@ test("tool authority requires an exact agent turn and a valid one-turn capabilit
     missionControlRunId: "run_authorized",
     runtimeToolCapability: capability,
     allowExternalEffects: true,
+    allowedExternalEffects: ["leads_search_start"],
   });
   assert.deepEqual(runtimeRunAuthorityFor("acme", "task-1", "sancho"), {
     missionControlRunId: "run_authorized",
     runtimeToolCapability: capability,
     allowExternalEffects: true,
+    allowedExternalEffects: ["leads_search_start"],
   });
   assert.equal(runtimeRunAuthorityFor("acme", "task-1", "rocinante"), undefined);
   release();
@@ -139,15 +141,18 @@ test("durable dispatch credentials stay in memory and propagate only as a comple
   resetRuntimeRunStateForTest();
   const capability = "c".repeat(64);
   const leaseToken = "lease-token-" + "d".repeat(32);
+  const terminalCallbackGrant = "signed-terminal.callback-grant";
   registerRuntimeRun({
     slug: "acme",
     threadId: "task-1",
     agent: "sancho",
     missionControlRunId: "run_durable",
     runtimeToolCapability: capability,
+    runtimeTerminalCallbackGrant: terminalCallbackGrant,
     dispatchRunId: "dispatch-1",
     dispatchLeaseToken: leaseToken,
     allowExternalEffects: true,
+    allowedExternalEffects: ["leads_search_start"],
   });
   assert.deepEqual(runtimeRunAuthorityFor("acme", "task-1", "sancho"), {
     missionControlRunId: "run_durable",
@@ -155,6 +160,7 @@ test("durable dispatch credentials stay in memory and propagate only as a comple
     dispatchRunId: "dispatch-1",
     dispatchLeaseToken: leaseToken,
     allowExternalEffects: true,
+    allowedExternalEffects: ["leads_search_start"],
   });
   assert.deepEqual(
     runtimeRunCallbackAuthorityFor("acme", "task-1", "sancho"),
@@ -163,6 +169,7 @@ test("durable dispatch credentials stay in memory and propagate only as a comple
       runtimeToolCapability: capability,
       dispatchRunId: "dispatch-1",
       dispatchLeaseToken: leaseToken,
+      runtimeTerminalCallbackGrant: terminalCallbackGrant,
     },
   );
 
@@ -176,9 +183,8 @@ test("durable dispatch credentials stay in memory and propagate only as a comple
     dispatchRunId: "dispatch-1",
     allowExternalEffects: true,
   });
-  assert.deepEqual(runtimeRunAuthorityFor("acme", "task-1", "sancho"), {
-    missionControlRunId: "run_partial",
-    runtimeToolCapability: capability,
-    allowExternalEffects: true,
-  });
+  assert.equal(
+    runtimeRunAuthorityFor("acme", "task-1", "sancho"),
+    undefined,
+  );
 });

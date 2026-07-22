@@ -78,7 +78,10 @@ function canonicalRuntimeTarget(context, dependencies) {
     !SAFE_RUN_ID_PATTERN.test(authority.dispatchRunId) ||
     typeof authority.dispatchLeaseToken !== "string" ||
     !LEASE_TOKEN_PATTERN.test(authority.dispatchLeaseToken) ||
-    authority.allowExternalEffects !== true
+    authority.allowExternalEffects !== true ||
+    !authority.allowedExternalEffects?.includes(
+      PARTNERSHIPS_DISCOVERY_START_TOOL,
+    )
   ) {
     return null;
   }

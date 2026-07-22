@@ -69,6 +69,7 @@ export class HermesAdapter implements RuntimeAdapter {
   }
 
   readonly messaging = {
+    terminalDeliveryMode: (): "callback" => "callback",
     sendInbound: (message: InboundMessage, opts?: SendInboundOptions) => sendHermesInbound(message, opts, this.connection),
     cancel: cancelHermesThread,
     getSharedSecret: (): string | undefined => getHermesChatSecret(this.connection),

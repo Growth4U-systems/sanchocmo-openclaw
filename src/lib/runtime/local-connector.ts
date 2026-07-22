@@ -9,6 +9,7 @@ import {
   type CliBridgeProviderId,
 } from "@/lib/cli-runtime-bridge";
 import { RUNTIME_TOOL_CAPABILITY_MAX_AGE_MS } from "@/lib/runtime/runtime-tool-capability";
+import { RUNTIME_TERMINAL_CALLBACK_GRANT_TTL_MS } from "@/lib/runtime/runtime-terminal-callback-grant";
 import type { InboundMessage } from "@/lib/runtime/types";
 
 export type LocalConnectorProviderId = Extract<CliBridgeProviderId, "claude-code" | "codex">;
@@ -86,6 +87,8 @@ export interface LocalConnectorJob {
   completedAt?: string;
   connectorSessionId?: string;
   assignmentGeneration?: number;
+  /** Server-issued terminal authority deadline retained without the bearer. */
+  terminalCallbackGrantExpiresAt?: string;
   error?: string;
   /** Present only while the connector still needs to dispatch the job. */
   message?: InboundMessage;
@@ -132,13 +135,13 @@ export interface RegisteredLocalConnectorSession {
 const PAIRING_TTL_MS = 15 * 60 * 1000;
 const SESSION_LEASE_MS = 24 * 60 * 60 * 1000;
 const ONLINE_FRESHNESS_MS = 45_000;
-const CLAIM_STALE_MS = 2 * 60 * 1000;
 const TERMINAL_JOB_RETENTION_MS = 24 * 60 * 60 * 1000;
 const PENDING_ORPHAN_MS = 2 * 60 * 1000;
 const FAILED_CALLBACK_GRACE_MS = 30_000;
 const RECOVERY_CLAIM_STALE_MS = 30_000;
 const RECOVERY_RETRY_MS = 5_000;
 const CAPABILITY_EXPIRY_SAFETY_MS = 1_000;
+const TERMINAL_CALLBACK_RECOVERY_SAFETY_MS = 60_000;
 const STORE_LOCK_TIMEOUT_MS = 2_000;
 const STORE_LOCK_STALE_MS = 10_000;
 const STORE_LOCK_RETRY_MS = 10;
@@ -383,6 +386,42 @@ function callbackAuthorityExpiryMs(): number {
   return RUNTIME_TOOL_CAPABILITY_MAX_AGE_MS + CAPABILITY_EXPIRY_SAFETY_MS;
 }
 
+function terminalCallbackGrantExpiry(
+  message: InboundMessage,
+  createdAtMs: number,
+): string | undefined {
+  const grant = message.runtimeTerminalCallbackGrant;
+  const expiresAt = Date.parse(
+    message.runtimeTerminalCallbackGrantExpiresAt || "",
+  );
+  if (
+    typeof grant !== "string" ||
+    grant.length === 0 ||
+    !Number.isFinite(expiresAt) ||
+    expiresAt <= createdAtMs ||
+    expiresAt - createdAtMs >
+      RUNTIME_TERMINAL_CALLBACK_GRANT_TTL_MS +
+        TERMINAL_CALLBACK_RECOVERY_SAFETY_MS
+  ) {
+    return undefined;
+  }
+  return nowIso(expiresAt);
+}
+
+/**
+ * The short-lived runtime capability limits tools/progress; it does not own a
+ * terminal result. New jobs retain the grant deadline (never its bearer) so a
+ * valid callback/outbox cannot be preempted by the old ~36-minute watchdog.
+ * Persisted legacy jobs without that field retain their previous deadline.
+ */
+function terminalCallbackRecoveryAt(job: LocalConnectorJob): number {
+  const grantExpiresAt = Date.parse(job.terminalCallbackGrantExpiresAt || "");
+  if (Number.isFinite(grantExpiresAt)) {
+    return grantExpiresAt + TERMINAL_CALLBACK_RECOVERY_SAFETY_MS;
+  }
+  return Date.parse(job.createdAt) + callbackAuthorityExpiryMs();
+}
+
 function failedCallbackGraceMs(): number {
   const configured = Number(
     process.env.SANCHO_LOCAL_CONNECTOR_FAILED_CALLBACK_GRACE_MS || FAILED_CALLBACK_GRACE_MS,
@@ -575,10 +614,11 @@ function maintainStore(store: LocalConnectorStore, nowMs = Date.now()): boolean 
         changed = true;
       }
     } else if (job.status === "claimed") {
-      const createdAt = Date.parse(job.createdAt);
-      if (Number.isFinite(createdAt) && nowMs - createdAt >= callbackAuthorityExpiryMs()) {
+      const recoveryAt = terminalCallbackRecoveryAt(job);
+      if (Number.isFinite(recoveryAt) && nowMs >= recoveryAt) {
         // Never reassign a claimed job: the original bridge may already have
-        // accepted it. Wait until callback authority expires, then fail closed.
+        // accepted it. Wait until terminal callback authority expires, then
+        // fail closed.
         failOrphanedJob(job, "orphaned_after_claim", nowMs);
         changed = true;
       }
@@ -592,8 +632,10 @@ function maintainStore(store: LocalConnectorStore, nowMs = Date.now()): boolean 
         job.status === "failed" ? "connector_failed" : "callback_timeout";
       const dueAt =
         job.status === "failed"
-          ? terminalAt + failedCallbackGraceMs()
-          : Date.parse(job.createdAt) + callbackAuthorityExpiryMs();
+          ? job.terminalCallbackGrantExpiresAt
+            ? terminalCallbackRecoveryAt(job)
+            : terminalAt + failedCallbackGraceMs()
+          : terminalCallbackRecoveryAt(job);
       if (Number.isFinite(dueAt) && scheduleAgentRunRecovery(job, reason, dueAt)) {
         changed = true;
       }
@@ -830,6 +872,7 @@ export function enqueueLocalConnectorJob(
     if (!onlineSession) return null;
 
     const timestamp = nowIso(nowMs);
+    const terminalGrantExpiresAt = terminalCallbackGrantExpiry(message, nowMs);
     const job: LocalConnectorJob = {
       id: randomId("lcjob"),
       provider,
@@ -838,6 +881,11 @@ export function enqueueLocalConnectorJob(
       updatedAt: timestamp,
       connectorSessionId: onlineSession.id,
       assignmentGeneration: 1,
+      ...(terminalGrantExpiresAt
+        ? {
+            terminalCallbackGrantExpiresAt: terminalGrantExpiresAt,
+          }
+        : {}),
       message,
     };
     store.jobs[job.id] = job;
@@ -856,21 +904,10 @@ export function claimLocalConnectorJob(
       return null;
     }
 
-    for (const job of Object.values(store.jobs)) {
-      if (
-        job.connectorSessionId === session.id &&
-        job.provider === session.provider &&
-        job.status === "claimed" &&
-        job.claimedAt &&
-        nowMs - new Date(job.claimedAt).getTime() > CLAIM_STALE_MS
-      ) {
-        job.status = "pending";
-        job.claimedAt = undefined;
-        job.updatedAt = nowIso(nowMs);
-        markChanged();
-      }
-    }
-
+    // `claimed` is an execution ownership fence, not a polling lease. The
+    // bridge may have accepted the turn even when its completion ACK was lost;
+    // only the terminal-grant watchdog may recover it. Re-queueing here would
+    // execute the same model/tools twice.
     const job = Object.values(store.jobs)
       .filter(
         (item) =>
@@ -1041,7 +1078,7 @@ export function nextLocalConnectorRecoveryAt(nowMs = Date.now()): number | null 
       } else if (job.status === "claimed") {
         nextAt = Math.min(
           nextAt,
-          Date.parse(job.createdAt) + callbackAuthorityExpiryMs(),
+          terminalCallbackRecoveryAt(job),
         );
       }
     }

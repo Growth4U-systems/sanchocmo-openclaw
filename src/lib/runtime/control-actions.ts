@@ -1,5 +1,10 @@
 import { parseRuntimeControlReply } from "./agent-contract/control-reply.mjs";
 import { createHash } from "node:crypto";
+import {
+  dispatchRuntimeEffectActions,
+  type RuntimeEffectActionDependencies,
+  type RuntimeEffectRequest,
+} from "./effect-actions";
 
 export interface RuntimeControlTurnContext {
   slug: string;
@@ -18,6 +23,8 @@ export interface RuntimeControlTurnContext {
   userName?: string;
   isAdmin: boolean;
   senderRole: "admin" | "client";
+  readOnly?: boolean;
+  traceId?: string;
   source?: string;
   linkedTo?: string;
   docPath?: string;
@@ -29,6 +36,7 @@ export interface RuntimeControlResult {
   text: string;
   followupMessages: string[];
   actionsDispatched: number;
+  effectsDispatched: number;
 }
 
 interface FetchResponseLike {
@@ -118,7 +126,12 @@ function actionIdempotencyKey(
 export async function processRuntimeControlReply(
   rawText: string,
   context: RuntimeControlTurnContext,
-  options: { secret?: string; fetchImpl?: FetchLike; nextBaseUrl?: string } = {},
+  options: {
+    secret?: string;
+    fetchImpl?: FetchLike;
+    nextBaseUrl?: string;
+    effectDependencies?: RuntimeEffectActionDependencies;
+  } = {},
 ): Promise<RuntimeControlResult> {
   const parsed = parseRuntimeControlReply(rawText, {
     respondingAgent: context.respondingAgent,
@@ -130,13 +143,35 @@ export async function processRuntimeControlReply(
 export async function dispatchRuntimeControlActions(
   parsed: ReturnType<typeof parseRuntimeControlReply>,
   context: RuntimeControlTurnContext,
-  options: { secret?: string; fetchImpl?: FetchLike; nextBaseUrl?: string } = {},
+  options: {
+    secret?: string;
+    fetchImpl?: FetchLike;
+    nextBaseUrl?: string;
+    effectDependencies?: RuntimeEffectActionDependencies;
+  } = {},
 ): Promise<RuntimeControlResult> {
   const result: RuntimeControlResult = {
     text: parsed.text,
     followupMessages: [],
     actionsDispatched: 0,
+    effectsDispatched: 0,
   };
+  const effectRequests = Array.isArray(parsed.effectRequests)
+    ? (parsed.effectRequests as RuntimeEffectRequest[])
+    : [];
+  if (effectRequests.length > 0) {
+    const effects = await dispatchRuntimeEffectActions(
+      effectRequests,
+      context,
+      options.effectDependencies,
+    );
+    result.actionsDispatched += effects.dispatched;
+    result.effectsDispatched = effects.dispatched;
+    if (effects.messages.length > 0) {
+      result.text = [result.text, ...effects.messages].filter(Boolean).join("\n\n");
+    }
+  }
+
   const hasActions = Boolean(parsed.intervention || parsed.routeRequests.length);
   if (!hasActions) return result;
   if ((context.controlDepth ?? 0) >= 1) {

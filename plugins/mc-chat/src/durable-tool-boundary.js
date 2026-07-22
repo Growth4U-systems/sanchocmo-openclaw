@@ -51,7 +51,12 @@ export function createDurableToolBoundary({ ledgerAdmissionTools = [] } = {}) {
   const activeByRunId = new Map();
   const activeBySessionKey = new Map();
 
-  function registerTurn({ runId, sessionKey, readOnly = false } = {}) {
+  function registerTurn({
+    runId,
+    sessionKey,
+    readOnly = false,
+    allowedLedgerAdmissions: turnLedgerAdmissions = [],
+  } = {}) {
     const safeRunId = nonEmptyString(runId);
     const safeSessionKey = nonEmptyString(sessionKey);
     if (!safeRunId || !safeSessionKey) return null;
@@ -60,6 +65,13 @@ export function createDurableToolBoundary({ ledgerAdmissionTools = [] } = {}) {
       runId: safeRunId,
       sessionKey: safeSessionKey,
       readOnly: readOnly === true,
+      allowedLedgerAdmissions: new Set(
+        Array.isArray(turnLedgerAdmissions)
+          ? turnLedgerAdmissions
+              .map(canonicalToolName)
+              .filter((name) => allowedLedgerAdmissions.has(name))
+          : [],
+      ),
     });
     activeByRunId.set(safeRunId, turn);
     activeBySessionKey.set(safeSessionKey, turn);
@@ -104,7 +116,7 @@ export function createDurableToolBoundary({ ledgerAdmissionTools = [] } = {}) {
     if (
       !resolved.turn.readOnly &&
       (DIRECT_INTERNAL_TOOLS.has(toolName) ||
-        allowedLedgerAdmissions.has(toolName))
+        resolved.turn.allowedLedgerAdmissions.has(toolName))
     ) {
       return undefined;
     }

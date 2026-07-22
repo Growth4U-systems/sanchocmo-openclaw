@@ -416,6 +416,144 @@ test("orphaned and callback-timeout jobs durably terminalize their AgentRun reco
   assert.equal(callbackRecovery?.missionControlRunId, "run_callback_timeout");
 });
 
+test("a dispatched modern job keeps terminal callback authority for the full grant window", () => {
+  const startedAt = Date.UTC(2026, 6, 22, 12, 30, 0);
+  const grantExpiresAt = startedAt + 25 * 60 * 60 * 1_000;
+  const created = createLocalConnectorSession("codex", startedAt);
+  const registered = registerLocalConnector(
+    created.pairingToken,
+    { runtime: { ok: true, command: "codex" } },
+    startedAt + 1_000,
+  );
+  assert.ok(registered);
+
+  const job = enqueueLocalConnectorJob(
+    "codex",
+    inboundMessage({
+      missionControlRunId: "run_grant_window_dispatched",
+      runtimeToolCapability: "d".repeat(64),
+      runtimeTerminalCallbackGrant: `grant_window.${"g".repeat(43)}`,
+      runtimeTerminalCallbackGrantExpiresAt: new Date(
+        grantExpiresAt,
+      ).toISOString(),
+    }),
+    startedAt + 2_000,
+  );
+  assert.ok(job);
+  assert.equal(
+    claimLocalConnectorJob(registered.sessionCredential, startedAt + 3_000)
+      ?.id,
+    job.id,
+  );
+  assert.equal(
+    finishLocalConnectorJob(
+      registered.sessionCredential,
+      job.id,
+      "dispatched",
+      undefined,
+      startedAt + 4_000,
+    )?.status,
+    "dispatched",
+  );
+
+  const stored = persistedStore().jobs[job.id];
+  assert.equal(
+    stored.terminalCallbackGrantExpiresAt,
+    new Date(grantExpiresAt).toISOString(),
+  );
+  assert.equal(stored.message, undefined);
+  assert.doesNotMatch(JSON.stringify(stored), /grant_window\.|d{64}/);
+  assert.equal(
+    claimLocalConnectorAgentRunRecovery(startedAt + 36 * 60 * 1_000),
+    null,
+    "tool capability expiry must not preempt terminal callback authority",
+  );
+  assert.equal(
+    claimLocalConnectorAgentRunRecovery(grantExpiresAt + 59_999),
+    null,
+  );
+  const recovery = claimLocalConnectorAgentRunRecovery(grantExpiresAt + 60_000);
+  assert.equal(recovery?.jobId, job.id);
+  assert.equal(recovery?.reason, "callback_timeout");
+});
+
+test("a claimed modern job is never redispatched and its finish ACK remains replay-safe", () => {
+  const startedAt = Date.UTC(2026, 6, 22, 13, 30, 0);
+  const grantExpiresAt = startedAt + 25 * 60 * 60 * 1_000;
+  const created = createLocalConnectorSession("claude-code", startedAt);
+  const registered = registerLocalConnector(
+    created.pairingToken,
+    { runtime: { ok: true, command: "claude" } },
+    startedAt + 1_000,
+  );
+  assert.ok(registered);
+  const job = enqueueLocalConnectorJob(
+    "claude-code",
+    inboundMessage({
+      missionControlRunId: "run_grant_window_claimed",
+      runtimeToolCapability: "e".repeat(64),
+      runtimeTerminalCallbackGrant: `claimed_grant.${"c".repeat(43)}`,
+      runtimeTerminalCallbackGrantExpiresAt: new Date(
+        grantExpiresAt,
+      ).toISOString(),
+    }),
+    startedAt + 2_000,
+  );
+  assert.equal(
+    claimLocalConnectorJob(registered.sessionCredential, startedAt + 3_000)
+      ?.id,
+    job?.id,
+  );
+
+  assert.equal(
+    claimLocalConnectorJob(
+      registered.sessionCredential,
+      startedAt + 3 * 60 * 1_000,
+    ),
+    null,
+    "a polling claim is execution ownership and must never be leased again",
+  );
+  const stillClaimed = persistedStore().jobs[job!.id];
+  assert.equal(stillClaimed.status, "claimed");
+  assert.equal(stillClaimed.assignmentGeneration, 1);
+  assert.equal(
+    finishLocalConnectorJob(
+      registered.sessionCredential,
+      job!.id,
+      "dispatched",
+      undefined,
+      startedAt + 3 * 60 * 1_000 + 1,
+    )?.status,
+    "dispatched",
+  );
+  assert.equal(
+    finishLocalConnectorJob(
+      registered.sessionCredential,
+      job!.id,
+      "dispatched",
+      undefined,
+      startedAt + 3 * 60 * 1_000 + 2,
+    )?.id,
+    job?.id,
+    "the original connector may retry only its idempotent finish ACK",
+  );
+  assert.equal(
+    claimLocalConnectorJob(
+      registered.sessionCredential,
+      startedAt + 4 * 60 * 1_000,
+    ),
+    null,
+  );
+
+  assert.equal(
+    claimLocalConnectorAgentRunRecovery(startedAt + 36 * 60 * 1_000),
+    null,
+  );
+  const recovery = claimLocalConnectorAgentRunRecovery(grantExpiresAt + 60_000);
+  assert.equal(recovery?.jobId, job?.id);
+  assert.equal(recovery?.reason, "callback_timeout");
+});
+
 test("a claimed job is never stolen and fails closed only after callback authority expires", () => {
   const startedAt = Date.UTC(2026, 6, 22, 13, 0, 0);
   const owner = createLocalConnectorSession("codex", startedAt);

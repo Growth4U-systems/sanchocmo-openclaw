@@ -12,12 +12,36 @@ function canonicalThreadId(slug, threadId) {
 }
 
 function keyFor(slug, threadId, agent) {
-  return `${canonicalThreadId(slug, threadId)}\0${String(agent || "sancho").trim().toLowerCase()}`;
+  return `${canonicalThreadId(slug, threadId)}\0${String(agent || "sancho")
+    .trim()
+    .toLowerCase()}`;
 }
 
 const CAPABILITY_PATTERN = /^[a-f0-9]{64}$/;
 const RUN_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$/;
 const LEASE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,256}$/;
+const TERMINAL_CALLBACK_GRANT_PATTERN = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const TERMINAL_CALLBACK_GRANT_MAX_BYTES = 4_096;
+
+function normalizedTerminalCallbackGrant(value) {
+  return typeof value === "string" &&
+    Buffer.byteLength(value, "utf8") <= TERMINAL_CALLBACK_GRANT_MAX_BYTES &&
+    TERMINAL_CALLBACK_GRANT_PATTERN.test(value)
+    ? value
+    : undefined;
+}
+
+export function safeTerminalCallbackGrantEnvelope(
+  grant,
+  expiresAt,
+  now = Date.now(),
+) {
+  const token = normalizedTerminalCallbackGrant(grant);
+  const expiry = typeof expiresAt === "string" ? Date.parse(expiresAt) : NaN;
+  return token && Number.isFinite(expiry) && expiry > now
+    ? { token, expiresAt: new Date(expiry).toISOString() }
+    : null;
+}
 
 function pruneInboundAdmissions(now) {
   for (const [runId, admission] of admittedInboundRuns) {
@@ -68,12 +92,16 @@ export function registerRuntimeRun({
   threadId,
   agent,
   missionControlRunId,
+  sessionKey,
   runtimeToolCapability,
+  runtimeTerminalCallbackGrant,
   dispatchRunId,
   dispatchLeaseToken,
   allowExternalEffects = false,
+  allowedExternalEffects = [],
 }) {
-  if (typeof missionControlRunId !== "string" || !missionControlRunId.trim()) return () => {};
+  if (typeof missionControlRunId !== "string" || !missionControlRunId.trim())
+    return () => {};
   const key = keyFor(slug, threadId, agent);
   const capability =
     typeof runtimeToolCapability === "string" &&
@@ -86,11 +114,33 @@ export function registerRuntimeRun({
     typeof dispatchLeaseToken === "string" &&
     LEASE_TOKEN_PATTERN.test(dispatchLeaseToken);
   const durableDispatch = hasDispatchRunId && hasDispatchLeaseToken;
+  const terminalCallbackGrant = normalizedTerminalCallbackGrant(
+    runtimeTerminalCallbackGrant,
+  );
+  const exactExternalEffects =
+    allowExternalEffects === true && Array.isArray(allowedExternalEffects)
+      ? [
+          ...new Set(
+            allowedExternalEffects.filter(
+              (name) =>
+                name === "leads_search_start" ||
+                name === "partnerships_discovery_start",
+            ),
+          ),
+        ]
+      : [];
   const token = {
     missionControlRunId: missionControlRunId.trim(),
+    ...(typeof sessionKey === "string" &&
+    sessionKey.trim() &&
+    Buffer.byteLength(sessionKey, "utf8") <= 1_024
+      ? { sessionKey: sessionKey.trim() }
+      : {}),
     ...(capability ? { runtimeToolCapability: capability } : {}),
     ...(durableDispatch ? { dispatchRunId, dispatchLeaseToken } : {}),
-    allowExternalEffects: allowExternalEffects === true,
+    ...(terminalCallbackGrant ? { runtimeTerminalCallbackGrant } : {}),
+    allowExternalEffects: exactExternalEffects.length > 0,
+    allowedExternalEffects: exactExternalEffects,
   };
   activeRuns.set(key, token);
   return () => {
@@ -100,9 +150,9 @@ export function registerRuntimeRun({
 
 /**
  * Return tool authority only for the exact active agent turn. The raw
- * capability stays in this process-local map and is never added to prompts,
- * session history, logs, callback bodies or durable storage. Exact-run HTTP
- * callback headers may carry it back to Mission Control.
+ * capability stays out of prompts, session history, logs and callback bodies.
+ * Exact-run HTTP callback headers may carry it back to Mission Control; the
+ * private terminal outbox can persist those headers until acknowledgement.
  */
 export function runtimeRunAuthorityFor(slug, threadId, agent) {
   if (typeof agent !== "string" || !agent.trim()) return undefined;
@@ -124,6 +174,7 @@ export function runtimeRunAuthorityFor(slug, threadId, agent) {
         }
       : {}),
     allowExternalEffects: true,
+    allowedExternalEffects: [...active.allowedExternalEffects],
   };
 }
 
@@ -156,12 +207,52 @@ export function runtimeRunCallbackAuthorityFor(slug, threadId, agent) {
           dispatchLeaseToken: active.dispatchLeaseToken,
         }
       : {}),
+    ...(active.runtimeTerminalCallbackGrant
+      ? {
+          runtimeTerminalCallbackGrant: active.runtimeTerminalCallbackGrant,
+        }
+      : {}),
   };
 }
 
 export function missionControlRunIdFor(slug, threadId, agent) {
   return runtimeRunCallbackAuthorityFor(slug, threadId, agent)
     ?.missionControlRunId;
+}
+
+/**
+ * Authorize a control-plane cancellation only for the exact run currently
+ * owning this thread+agent slot. The shared transport secret authenticates the
+ * caller at the HTTP boundary; this process-local binding prevents a stale
+ * Stop from aborting a newer turn in the same OpenClaw session.
+ */
+export function runtimeRunStopAuthorityFor({
+  slug,
+  threadId,
+  agent,
+  missionControlRunId,
+}) {
+  if (
+    typeof slug !== "string" ||
+    !/^[a-z0-9][a-z0-9-]{0,119}$/.test(slug) ||
+    typeof threadId !== "string" ||
+    threadId !== canonicalThreadId(slug, threadId) ||
+    typeof agent !== "string" ||
+    !/^[a-z0-9][a-z0-9_-]{0,63}$/.test(agent) ||
+    typeof missionControlRunId !== "string" ||
+    !RUN_ID_PATTERN.test(missionControlRunId)
+  ) {
+    return null;
+  }
+  const active = activeRuns.get(keyFor(slug, threadId, agent));
+  if (
+    active?.missionControlRunId !== missionControlRunId ||
+    typeof active.sessionKey !== "string" ||
+    !active.sessionKey
+  ) {
+    return null;
+  }
+  return { sessionKey: active.sessionKey };
 }
 
 export function resetRuntimeRunStateForTest() {

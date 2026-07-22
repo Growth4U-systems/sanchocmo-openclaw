@@ -393,6 +393,8 @@ test("non-admin, read-only and cross-tenant persisted runs fail before Ledger mu
       },
     }),
     activeAgentRun({ input: { ...baseInput, readOnly: true } }),
+    activeAgentRun({ input: { ...baseInput, controlDepth: 1 } }),
+    activeAgentRun({ input: { ...baseInput, temporaryAgent: true } }),
     activeAgentRun({
       threadId: "other-client:general",
       input: { ...baseInput },
@@ -414,6 +416,40 @@ test("non-admin, read-only and cross-tenant persisted runs fail before Ledger mu
     assert.equal(mocked.state.status, 403);
   }
   assert.equal(admissions, 0);
+});
+
+test("transport authentication stays bound to the admitted parent after secret rotation", async () => {
+  const admittedSecret = "admitted-runtime-secret";
+  const parent = activeAgentRun({
+    input: {
+      ...(activeAgentRun().input as Record<string, unknown>),
+      runtimeTransportSecretSha256: createHash("sha256")
+        .update(admittedSecret)
+        .digest("hex"),
+    },
+  });
+  let legacyLookups = 0;
+  const handler = createAgentLeadsSearchHandler(
+    dependencies({
+      sharedSecret: () => {
+        legacyLookups += 1;
+        return "rotated-runtime-secret";
+      },
+      resolveAgentRun: async () => parent,
+    }),
+  );
+  const mocked = response();
+  await handler(
+    request({
+      headers: {
+        ...request().headers,
+        "x-mc-secret": admittedSecret,
+      },
+    }),
+    mocked.res,
+  );
+  assert.equal(mocked.state.status, 202);
+  assert.equal(legacyLookups, 0);
 });
 
 test("GET is not a model-facing status surface", async () => {

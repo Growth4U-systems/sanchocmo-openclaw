@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-07-15T00:00:00Z",
+  "updatedAt": "2026-07-22T00:00:00Z",
   "capabilities": [
     {
       "id": "mission-control.chat.run",
@@ -98,8 +98,11 @@
       "sourceFiles": [
         "src/components/chat/chat-sidebar.tsx",
         "src/pages/api/chat/send.ts",
+        "src/pages/api/chat/webhook.ts",
         "src/pages/api/chat/thread/[threadId].ts",
-        "src/lib/data/agent-runs.ts"
+        "src/lib/data/agent-runs.ts",
+        "src/lib/runtime/effect-actions.ts",
+        "src/lib/runtime/mc-chat-execution-origin.ts"
       ],
       "featureFlags": [],
       "acceptanceTests": [
@@ -112,6 +115,11 @@
           "id": "agent-run-terminal-monotonicity",
           "description": "Una respuesta tardía no puede reabrir ni sobrescribir un agent-run terminal.",
           "sourcePath": "src/lib/data/__tests__/agent-runs.test.mts"
+        },
+        {
+          "id": "runtime-neutral-durable-effects",
+          "description": "OpenClaw, Hermes y runtimes HTTP comparten un contrato cerrado para admitir una sola operación durable y devolver su resultado al hilo de origen.",
+          "sourcePath": "src/lib/__tests__/runtime-effect-conformance.test.mts"
         }
       ],
       "runbooks": [

@@ -92,8 +92,12 @@ By default the bridge calls:
 
 ```text
 POST {SANCHO_BASE_URL}/api/chat/context-pack
-X-MC-Secret: {CLAUDE_CODE_SANCHO_SECRET | CLAUDE_CODE_BRIDGE_SECRET | SANCHO_EXTERNAL_SECRET}
+X-MC-Secret: {the same effective CLAUDE_CODE_BRIDGE_SECRET/SANCHO_EXTERNAL_SECRET that admitted the run}
 ```
+
+Context-pack and webhook callbacks deliberately reuse the inbound transport
+secret. `CLAUDE_CODE_SANCHO_SECRET` is not an independent callback credential;
+a different value cannot authorize a run bound to the bridge secret.
 
 That gives Claude Code the same native Sancho grounding pattern as the Hermes
 bridge. Disable it with:

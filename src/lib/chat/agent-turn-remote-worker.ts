@@ -13,6 +13,11 @@ import {
   markAgentRunFailedAsync,
   type AgentRun,
 } from "@/lib/data/agent-runs";
+import { TERMINAL_CALLBACK_CLAIM_LEASE_MS } from "@/lib/data/agent-run-callback-claim";
+import {
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE,
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR,
+} from "@/lib/data/agent-run-synthetic-runtime-loss";
 import { clearStatus } from "@/lib/data/mc-chat";
 import { appendDurableChatDelivery } from "@/lib/data/mc-chat-durable-delivery";
 import type { InboundMessage } from "@/lib/runtime";
@@ -46,8 +51,13 @@ export {
 } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 
 export const CHAT_AGENT_TURN_REMOTE_POLL_MS = 2_000 as const;
+export const CHAT_AGENT_TURN_TERMINAL_RECOVERY_GRACE_MS =
+  TERMINAL_CALLBACK_CLAIM_LEASE_MS + 2 * CHAT_AGENT_TURN_REMOTE_POLL_MS;
 
 const WORKER_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$/;
+const TERMINAL_RECOVERY_WAIT_STEP = "terminal_recovery_wait";
+const TERMINAL_RECOVERY_WAIT_ERROR =
+  "runtime_terminal_callback_recovery_wait";
 
 export interface ChatAgentTurnRemoteDependencies {
   repository?: ExecutionControlRepository;
@@ -93,7 +103,7 @@ export interface ChatAgentTurnRemoteClaim {
 
 const defaultRepository = new PostgresExecutionControlRepository();
 const COMMITTED_RUNTIME_LOSS_MESSAGE =
-  "El runtime se reinició después de iniciar este turno. No lo reejecuté para evitar duplicar búsquedas, herramientas o cambios. Puedes reintentarlo con seguridad.";
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR;
 
 function projectCommittedRuntimeLoss(input: {
   parentRun: AgentRun;
@@ -177,6 +187,18 @@ function stringArray(value: unknown): string[] | undefined {
     : undefined;
 }
 
+function runtimeEffectIntent(
+  value: unknown,
+): InboundMessage["runtimeEffectIntent"] {
+  if (!Array.isArray(value)) return undefined;
+  const effects = [...new Set(value.filter(
+    (item): item is NonNullable<InboundMessage["runtimeEffectIntent"]>[number] =>
+      item === "leads_search_start" ||
+      item === "partnerships_discovery_start",
+  ))];
+  return effects.length > 0 ? effects : undefined;
+}
+
 function buildEnvelope(
   parent: AgentRun,
   runtimeToolCapability: string,
@@ -186,6 +208,9 @@ function buildEnvelope(
   const slug = optionalString(input.slug);
   const userId = optionalString(input.userId);
   const userName = optionalString(input.userName);
+  const authorizedRuntimeEffectIntent = runtimeEffectIntent(
+    input.runtimeEffectIntent,
+  );
   if (!rawText || !slug || !userId || !userName || !parent.agent) {
     throw new Error("chat_agent_turn_parent_envelope_invalid");
   }
@@ -194,6 +219,9 @@ function buildEnvelope(
     threadId: parent.threadId,
     missionControlRunId: parent.id,
     runtimeToolCapability,
+    ...(authorizedRuntimeEffectIntent
+      ? { runtimeEffectIntent: authorizedRuntimeEffectIntent }
+      : {}),
     traceId: parent.traceId,
     controlDepth: input.controlDepth === 1 ? 1 : 0,
     threadName: optionalString(input.threadName),
@@ -323,6 +351,52 @@ async function acknowledgeDispatchCancellation(
   return receipt?.run ?? null;
 }
 
+/**
+ * Give OpenClaw's fsynced terminal callback outbox one fixed recovery window
+ * before projecting synthetic runtime loss. The deadline lives in the
+ * dispatch run's persisted `availableAt`; `currentStep` records that the
+ * window has already been granted, so an early or repeated claim reuses the
+ * same deadline instead of extending it indefinitely.
+ */
+async function deferCommittedRuntimeLoss(
+  repository: ExecutionControlRepository,
+  lease: ExecutionLeaseReceipt,
+  now: Date,
+): Promise<boolean> {
+  const alreadyWaiting =
+    lease.run.currentStep === TERMINAL_RECOVERY_WAIT_STEP;
+  const persistedDeadlineMs = alreadyWaiting
+    ? Date.parse(lease.run.availableAt)
+    : Number.NaN;
+  if (alreadyWaiting && !Number.isFinite(persistedDeadlineMs)) {
+    throw new Error("chat_agent_turn_terminal_recovery_deadline_invalid");
+  }
+  if (alreadyWaiting && persistedDeadlineMs <= now.getTime()) {
+    return false;
+  }
+  const availableAt = alreadyWaiting
+    ? new Date(persistedDeadlineMs)
+    : new Date(
+        now.getTime() + CHAT_AGENT_TURN_TERMINAL_RECOVERY_GRACE_MS,
+      );
+  await repository.requeueRun({
+    tenantKey: lease.run.tenantKey,
+    operation: CHAT_AGENT_TURN_OPERATION,
+    mode: "canary",
+    runId: lease.run.id,
+    token: lease.token,
+    availableAt,
+    currentStep: TERMINAL_RECOVERY_WAIT_STEP,
+    error: TERMINAL_RECOVERY_WAIT_ERROR,
+    eventData: {
+      terminalRecoveryDeadline: availableAt.toISOString(),
+      recoveryWindowMs: CHAT_AGENT_TURN_TERMINAL_RECOVERY_GRACE_MS,
+      reusedDeadline: alreadyWaiting,
+    },
+  });
+  return true;
+}
+
 export async function claimNextChatAgentTurn(
   workerIdValue: unknown,
   dependencies: ChatAgentTurnRemoteDependencies = {},
@@ -426,6 +500,17 @@ export async function claimNextChatAgentTurn(
     }
     const existingCheckpoint = parseCheckpoint(lease.run);
     if (existingCheckpoint?.stage === "runtime_committed") {
+      const now = dependencies.now?.() ?? new Date();
+      if (Number.isNaN(now.getTime())) {
+        throw new Error("chat_agent_turn_terminal_recovery_clock_invalid");
+      }
+      if (await deferCommittedRuntimeLoss(repository, lease, now)) {
+        // Never yield a committed turn to the model again. While this dispatch
+        // is unavailable, the terminal callback grant/outbox can converge the
+        // parent; a later claim observes that terminal parent before reaching
+        // synthetic-loss projection below.
+        continue;
+      }
       // Publish first, then terminalize. If this process dies between those
       // steps the immutable delivery is replay-safe and the next lease can
       // retry the state transition; the inverse order could leave a terminal
@@ -445,7 +530,7 @@ export async function claimNextChatAgentTurn(
         COMMITTED_RUNTIME_LOSS_MESSAGE,
         "runtime_unreachable",
         {
-          code: "runtime_committed_worker_lost",
+          code: AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE,
           dispatchRunId: lease.run.id,
           recovered: lease.recovered,
         },

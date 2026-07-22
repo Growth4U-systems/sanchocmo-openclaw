@@ -10,7 +10,10 @@ import {
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
-import { callbackAuthorityHeaders } from "../callback-authority.mjs";
+import {
+  callbackAuthorityHeaders,
+  terminalCallbackAuthorityHeaders,
+} from "../callback-authority.mjs";
 import {
   createCallbackOutbox,
   resolveCallbackOutboxDir,
@@ -134,14 +137,10 @@ function secret() {
 }
 
 function sanchoSharedSecret() {
-  return (
-    process.env.HERMES_SANCHO_SECRET ||
-    process.env.HERMES_CHAT_SECRET ||
-    process.env.HERMES_SHARED_SECRET ||
-    process.env.MC_CHAT_SECRET ||
-    process.env.HERMES_BRIDGE_SECRET ||
-    ""
-  );
+  // Context-pack and callbacks belong to the exact transport that admitted
+  // the parent run. A second outbound-only secret would never match the
+  // immutable digest stored by Mission Control and would strand every run.
+  return secret();
 }
 
 function safeEqual(a, b) {
@@ -206,10 +205,12 @@ function webhookUrl() {
   return `${trimTrailingSlash(base)}/api/chat/webhook`;
 }
 
-function callbackHeaders(message) {
+function callbackHeaders(message, { terminal = false } = {}) {
   const headers = {
     "Content-Type": "application/json",
-    ...callbackAuthorityHeaders(message),
+    ...(terminal
+      ? terminalCallbackAuthorityHeaders(message)
+      : callbackAuthorityHeaders(message)),
   };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
@@ -260,7 +261,7 @@ function postTerminalOnce(message, payload, label) {
     terminalCallbackOutbox().enqueueTerminal({
       deliveryId: message.missionControlRunId || entry.runId,
       url: webhookUrl(),
-      headers: callbackHeaders(message),
+      headers: callbackHeaders(message, { terminal: true }),
       payload: { ...payload, ...callbackIdentity(message) },
     });
   } catch (error) {
@@ -445,11 +446,19 @@ function opaquePathSegment(label, value) {
   return `${label}-${digest}`;
 }
 
-export function buildHermesWorkdir(message, tempRoot = HERMES_PROCESS_TMP_ROOT) {
+export function buildHermesWorkdir(
+  message,
+  runId,
+  tempRoot = HERMES_PROCESS_TMP_ROOT,
+) {
+  if (typeof runId !== "string" || !runId.trim()) {
+    throw new Error("Hermes workdir requires a unique run id");
+  }
   const root = resolve(tempRoot);
   const tenant = opaquePathSegment("tenant", message?.slug);
   const thread = opaquePathSegment("thread", message?.threadId);
-  const workdir = resolve(root, tenant, thread);
+  const run = opaquePathSegment("run", runId);
+  const workdir = resolve(root, tenant, thread, run);
   if (!workdir.startsWith(`${root}${sep}`)) {
     throw new Error("Refusing Hermes workdir outside the isolated temp root");
   }
@@ -468,9 +477,10 @@ export async function cleanupHermesWorkdir(
     relativeTarget &&
     !relativeTarget.startsWith(`..${sep}`) &&
     !relativeTarget.includes(`${sep}..${sep}`) &&
-    segments.length === 2 &&
+    segments.length === 3 &&
     /^tenant-[a-f0-9]{24}$/.test(segments[0]) &&
-    /^thread-[a-f0-9]{24}$/.test(segments[1]);
+    /^thread-[a-f0-9]{24}$/.test(segments[1]) &&
+    /^run-[a-f0-9]{24}$/.test(segments[2]);
   if (!isExactRunDirectory) {
     throw new Error("Refusing to remove a non-isolated Hermes workdir");
   }
@@ -495,12 +505,16 @@ function hermesAuthSourceDir(baseEnv = process.env) {
 export async function stageHermesAuthFiles(
   workdir,
   baseEnv = process.env,
+  { signal } = {},
 ) {
+  signal?.throwIfAborted();
   const sourceDir = hermesAuthSourceDir(baseEnv);
   const targetDir = join(resolve(workdir), ".hermes");
   await mkdir(targetDir, { recursive: true, mode: 0o700 });
+  signal?.throwIfAborted();
   const copied = [];
   for (const filename of HERMES_AUTH_FILES) {
+    signal?.throwIfAborted();
     const source = join(sourceDir, filename);
     let stat;
     try {
@@ -509,6 +523,7 @@ export async function stageHermesAuthFiles(
       if (error?.code === "ENOENT") continue;
       throw error;
     }
+    signal?.throwIfAborted();
     if (!stat.isFile() || stat.isSymbolicLink()) {
       throw new Error(`Refusing non-regular Hermes auth file: ${filename}`);
     }
@@ -516,9 +531,12 @@ export async function stageHermesAuthFiles(
       throw new Error(`Hermes auth file exceeds safe limit: ${filename}`);
     }
     const contents = await readFile(source);
+    signal?.throwIfAborted();
     const target = join(targetDir, filename);
     await writeFile(target, contents, { mode: 0o600 });
+    signal?.throwIfAborted();
     await chmod(target, 0o600);
+    signal?.throwIfAborted();
     copied.push(filename);
   }
   return copied;
@@ -553,7 +571,7 @@ export function buildHermesChildEnv(
   message,
   runId,
   baseEnv = process.env,
-  workdir = buildHermesWorkdir(message),
+  workdir = buildHermesWorkdir(message, runId),
 ) {
   const env = {};
   copyAllowedEnv(env, baseEnv, HERMES_CHILD_OS_ENV_KEYS);
@@ -631,7 +649,7 @@ async function postProgress(message, runId, label, detail) {
   }, message);
 }
 
-async function startHermesRun(message, runId, admittedEntry) {
+async function startHermesRun(message, runId, admittedEntry, dependencies) {
   let contextPack = null;
   try {
     contextPack = await fetchContextPack(message);
@@ -645,23 +663,24 @@ async function startHermesRun(message, runId, admittedEntry) {
   const prompt = buildHermesPrompt(message, contextPack);
   const args = buildHermesArgs(message, prompt);
   const command = process.env.HERMES_CLI || "hermes";
-  const workdir = buildHermesWorkdir(message);
+  const workdir = buildHermesWorkdir(message, runId);
+  admittedEntry.workdir = workdir;
   const existing = activeRuns.get(message.threadId);
   if (admittedEntry.killed || existing !== admittedEntry) {
-    if (existing === admittedEntry) activeRuns.delete(message.threadId);
     return;
   }
-  await stageHermesAuthFiles(workdir);
+  await dependencies.stageAuthFiles(workdir, process.env, {
+    signal: admittedEntry.startupAbortController.signal,
+  });
   // Auth staging yields to the event loop. Re-check the exact admission
   // immediately before spawn so a /stop received during preparation cannot
   // resurrect the cancelled run.
   const afterPrepare = activeRuns.get(message.threadId);
   if (admittedEntry.killed || afterPrepare !== admittedEntry) {
-    if (afterPrepare === admittedEntry) activeRuns.delete(message.threadId);
     await cleanupHermesWorkdir(workdir);
     return;
   }
-  const child = spawn(command, args, {
+  const child = dependencies.spawnProcess(command, args, {
     cwd: workdir,
     env: buildHermesChildEnv(message, runId, process.env, workdir),
     stdio: ["ignore", "pipe", "pipe"],
@@ -780,25 +799,36 @@ async function startHermesRun(message, runId, admittedEntry) {
   });
 }
 
-function cancelThread(threadId, missionControlRunId) {
+async function cancelThread(threadId, missionControlRunId) {
   const entry = activeRuns.get(threadId);
   if (!entry) return false;
   if (
-    missionControlRunId &&
+    !missionControlRunId ||
     entry.missionControlRunId !== missionControlRunId
   ) return false;
   entry.killed = true;
-  if (!entry.child) {
+  entry.startupAbortController?.abort();
+  if (entry.child) {
+    entry.child.kill("SIGTERM");
+    setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
     if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
     return true;
   }
-  entry.child.kill("SIGTERM");
-  setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
-  activeRuns.delete(threadId);
+
+  // Cancellation is not acknowledged until every asynchronous startup step
+  // has settled. Otherwise an already-issued mkdir/write can complete after a
+  // successful response and briefly recreate a cancelled execution.
+  await entry.startupPromise;
+  if (entry.child) {
+    entry.child.kill("SIGTERM");
+    setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
+  }
+  if (entry.workdir) await cleanupHermesWorkdir(entry.workdir);
+  if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
   return true;
 }
 
-async function handleInbound(req, res) {
+async function handleInbound(req, res, dependencies) {
   if (!verifySecret(req)) return json(res, 403, { error: "Forbidden" });
   let message;
   try {
@@ -816,11 +846,24 @@ async function handleInbound(req, res) {
       : `${message.slug}:general`;
 
   if (message.text.trim() === "/stop") {
-    const cancelled = cancelThread(
+    const missionControlRunId =
+      typeof message.missionControlRunId === "string"
+        ? message.missionControlRunId.trim()
+        : "";
+    if (!missionControlRunId) {
+      return json(res, 400, { error: "Missing missionControlRunId" });
+    }
+    const cancelled = await cancelThread(
       message.threadId,
-      message.missionControlRunId,
+      missionControlRunId,
     );
     return json(res, 200, { ok: true, cancelled });
+  }
+
+  if (Object.keys(terminalCallbackAuthorityHeaders(message)).length === 0) {
+    return json(res, 400, {
+      error: "Missing or expired terminal callback authority",
+    });
   }
 
   if (activeRuns.has(message.threadId)) {
@@ -832,15 +875,33 @@ async function handleInbound(req, res) {
     runId,
     missionControlRunId:
       typeof message.missionControlRunId === "string"
-        ? message.missionControlRunId
+        ? message.missionControlRunId.trim()
         : undefined,
     child: null,
     killed: false,
     pending: true,
     terminalPosted: false,
+    startupAbortController: new AbortController(),
+    startupPromise: null,
   };
   activeRuns.set(message.threadId, admittedEntry);
-  startHermesRun(message, runId, admittedEntry).catch((e) => {
+  admittedEntry.startupPromise = startHermesRun(
+    message,
+    runId,
+    admittedEntry,
+    dependencies,
+  ).catch(async (e) => {
+    if (admittedEntry.workdir) {
+      try {
+        await cleanupHermesWorkdir(admittedEntry.workdir);
+      } catch (cleanupError) {
+        console.error(
+          "[hermes bridge] startup cleanup failed:",
+          cleanupError instanceof Error ? cleanupError.message : "unknown cleanup error",
+        );
+      }
+    }
+    if (admittedEntry.killed) return;
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
@@ -870,14 +931,21 @@ async function handleCancel(req, res) {
   const missionControlRunId =
     typeof body?.missionControlRunId === "string"
       ? body.missionControlRunId.trim()
-      : undefined;
+      : "";
+  if (!missionControlRunId) {
+    return json(res, 400, { error: "Missing missionControlRunId" });
+  }
   return json(res, 200, {
     ok: true,
-    cancelled: cancelThread(threadId, missionControlRunId),
+    cancelled: await cancelThread(threadId, missionControlRunId),
   });
 }
 
-export function createServer() {
+export function createServer({
+  stageAuthFiles = stageHermesAuthFiles,
+  spawnProcess = spawn,
+} = {}) {
+  const dependencies = { stageAuthFiles, spawnProcess };
   // Starting the bridge also replays any terminal callback persisted by a
   // previous process before it crashed or restarted.
   terminalCallbackOutbox();
@@ -887,7 +955,7 @@ export function createServer() {
       return json(res, 200, { ok: true, activeRuns: activeRuns.size });
     }
     if (req.method === "POST" && url.pathname === "/sancho/inbound") {
-      handleInbound(req, res).catch((e) => json(res, 500, { error: e.message || String(e) }));
+      handleInbound(req, res, dependencies).catch((e) => json(res, 500, { error: e.message || String(e) }));
       return;
     }
     if (req.method === "POST" && url.pathname === "/sancho/cancel") {

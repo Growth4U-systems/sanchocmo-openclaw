@@ -17,6 +17,13 @@ import {
   stageHermesAuthFiles,
 } from "./bridge.mjs";
 
+const terminalCallbackGrant = `${"a".repeat(24)}.${"b".repeat(43)}`;
+const terminalCallbackAuthority = (runtimeToolCapability) => ({
+  runtimeToolCapability,
+  runtimeTerminalCallbackGrant: terminalCallbackGrant,
+  runtimeTerminalCallbackGrantExpiresAt: "2099-01-01T00:00:00.000Z",
+});
+
 test("buildHermesChildEnv exposes bounded Sancho metadata to CLI wrappers", () => {
   const env = buildHermesChildEnv(
     {
@@ -134,32 +141,53 @@ test("buildHermesChildEnv only forwards the selected provider and OS plumbing", 
   }
 });
 
-test("buildHermesWorkdir is isolated by tenant/thread and resists traversal", () => {
+test("buildHermesWorkdir is isolated by tenant/thread/run and resists traversal", () => {
   const tempRoot = "/tmp/sancho-hermes-adversarial-root";
   const escaped = buildHermesWorkdir(
     {
       slug: "../../../../root/.openclaw",
       threadId: "../../../../etc/passwd\0acme",
     },
+    "../../../../previous-run",
     tempRoot,
   );
   const otherTenant = buildHermesWorkdir(
     { slug: "other", threadId: "../../../../etc/passwd\0acme" },
+    "../../../../previous-run",
     tempRoot,
   );
   const otherThread = buildHermesWorkdir(
     { slug: "../../../../root/.openclaw", threadId: "other-thread" },
+    "../../../../previous-run",
+    tempRoot,
+  );
+  const otherRun = buildHermesWorkdir(
+    {
+      slug: "../../../../root/.openclaw",
+      threadId: "../../../../etc/passwd\0acme",
+    },
+    "next-run",
     tempRoot,
   );
 
   assert.match(
     escaped,
-    /^\/tmp\/sancho-hermes-adversarial-root\/tenant-[a-f0-9]{24}\/thread-[a-f0-9]{24}$/,
+    /^\/tmp\/sancho-hermes-adversarial-root\/tenant-[a-f0-9]{24}\/thread-[a-f0-9]{24}\/run-[a-f0-9]{24}$/,
   );
   assert.equal(escaped.includes(".."), false);
   assert.equal(escaped.includes("openclaw"), false);
   assert.notEqual(escaped, otherTenant);
   assert.notEqual(escaped, otherThread);
+  assert.notEqual(escaped, otherRun);
+  assert.throws(
+    () =>
+      buildHermesWorkdir(
+        { slug: "acme", threadId: "acme:private" },
+        "",
+        tempRoot,
+      ),
+    /requires a unique run id/,
+  );
 });
 
 test("Hermes isolation stages credentials but not host rules or plugins", async () => {
@@ -209,6 +237,7 @@ test("cleanupHermesWorkdir removes only an exact hashed run directory", async ()
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-cleanup-"));
   const workdir = buildHermesWorkdir(
     { slug: "acme", threadId: "acme:private" },
+    "run-cleanup",
     tempRoot,
   );
   fs.mkdirSync(workdir, { recursive: true, mode: 0o700 });
@@ -224,6 +253,30 @@ test("cleanupHermesWorkdir removes only an exact hashed run directory", async ()
     await assert.rejects(
       cleanupHermesWorkdir(path.dirname(tempRoot), tempRoot),
       /Refusing to remove a non-isolated Hermes workdir/,
+    );
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("cleanup of a completed Hermes run cannot remove the next run for the same thread", async () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-run-race-"));
+  const message = { slug: "acme", threadId: "acme:private" };
+  const completedWorkdir = buildHermesWorkdir(message, "run-completed", tempRoot);
+  const nextWorkdir = buildHermesWorkdir(message, "run-next", tempRoot);
+  fs.mkdirSync(completedWorkdir, { recursive: true, mode: 0o700 });
+  fs.mkdirSync(nextWorkdir, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(path.join(nextWorkdir, "auth-ready"), "next run", {
+    mode: 0o600,
+  });
+
+  try {
+    await cleanupHermesWorkdir(completedWorkdir, tempRoot);
+    assert.equal(fs.existsSync(completedWorkdir), false);
+    assert.equal(fs.existsSync(nextWorkdir), true);
+    assert.equal(
+      fs.readFileSync(path.join(nextWorkdir, "auth-ready"), "utf8"),
+      "next run",
     );
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -254,6 +307,27 @@ test("buildHermesPrompt preserves Sancho routing metadata", () => {
   assert.match(prompt, /allowed_skills: seo-content, content-review/);
   assert.match(prompt, /"docPath": "brand\/acme\/content\/draft.md"/);
   assert.match(prompt, /Revisa este draft/);
+});
+
+test("Hermes receives the closed durable-effect envelope only for a writable root admin turn", () => {
+  const prompt = buildHermesPrompt({
+    slug: "acme",
+    threadId: "acme:leads",
+    text: "Busca founders",
+    userId: "mc-admin",
+    isAdmin: true,
+    senderRole: "admin",
+    readOnly: false,
+    controlDepth: 0,
+    runtimeEffectIntent: [
+      "leads_search_start",
+      "partnerships_discovery_start",
+    ],
+  });
+  assert.match(prompt, /:::sancho-effect/);
+  assert.match(prompt, /leads_search_start/);
+  assert.match(prompt, /partnerships_discovery_start/);
+  assert.doesNotMatch(prompt, /runtimeToolCapability/);
 });
 
 test("Hermes keeps Sancho generalist and specialist skill-auto roles distinct", () => {
@@ -464,6 +538,7 @@ function waitFor(predicate, timeoutMs = 2000) {
 
 test("fetchContextPack calls Sancho with transport and run authority", async () => {
   const previousUrl = process.env.SANCHO_CONTEXT_PACK_URL;
+  const previousBridgeSecret = process.env.HERMES_BRIDGE_SECRET;
   const previousSecret = process.env.HERMES_SANCHO_SECRET;
   const previousEnabled = process.env.HERMES_CONTEXT_PACK_ENABLED;
   const calls = [];
@@ -481,7 +556,8 @@ test("fetchContextPack calls Sancho with transport and run authority", async () 
   });
   const address = await listen(server);
   process.env.SANCHO_CONTEXT_PACK_URL = `http://127.0.0.1:${address.port}/api/chat/context-pack`;
-  process.env.HERMES_SANCHO_SECRET = "sancho-secret";
+  process.env.HERMES_BRIDGE_SECRET = "transport-secret";
+  process.env.HERMES_SANCHO_SECRET = "must-not-override-transport";
   delete process.env.HERMES_CONTEXT_PACK_ENABLED;
 
   try {
@@ -498,7 +574,7 @@ test("fetchContextPack calls Sancho with transport and run authority", async () 
     assert.deepEqual(pack, { slug: "acme", skill: "seo-content", verdict: "ok" });
     assert.equal(calls.length, 1);
     assert.equal(calls[0].path, "/api/chat/context-pack");
-    assert.equal(calls[0].headers["x-mc-secret"], "sancho-secret");
+    assert.equal(calls[0].headers["x-mc-secret"], "transport-secret");
     assert.equal(
       calls[0].headers["x-mission-control-run-id"],
       "run_mc_hermes_context",
@@ -512,6 +588,8 @@ test("fetchContextPack calls Sancho with transport and run authority", async () 
     await close(server);
     if (previousUrl === undefined) delete process.env.SANCHO_CONTEXT_PACK_URL;
     else process.env.SANCHO_CONTEXT_PACK_URL = previousUrl;
+    if (previousBridgeSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+    else process.env.HERMES_BRIDGE_SECRET = previousBridgeSecret;
     if (previousSecret === undefined) delete process.env.HERMES_SANCHO_SECRET;
     else process.env.HERMES_SANCHO_SECRET = previousSecret;
     if (previousEnabled === undefined) delete process.env.HERMES_CONTEXT_PACK_ENABLED;
@@ -521,6 +599,7 @@ test("fetchContextPack calls Sancho with transport and run authority", async () 
 
 test("bridge accepts Sancho inbound and posts progress/final webhooks", async () => {
   const previousSecret = process.env.HERMES_BRIDGE_SECRET;
+  const previousSanchoSecret = process.env.HERMES_SANCHO_SECRET;
   const previousCli = process.env.HERMES_CLI;
   const previousWebhook = process.env.SANCHO_WEBHOOK_URL;
   const previousTimeout = process.env.HERMES_RUN_TIMEOUT_MS;
@@ -549,6 +628,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
   const webhookAddr = await listen(webhook);
 
   process.env.HERMES_BRIDGE_SECRET = "test-secret";
+  process.env.HERMES_SANCHO_SECRET = "must-not-override-transport";
   process.env.HERMES_CLI = "/bin/echo";
   process.env.HERMES_RUN_TIMEOUT_MS = "5000";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
@@ -571,7 +651,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
         slug: "acme",
         threadId: "acme:general",
         missionControlRunId: "run_mc_hermes",
-        runtimeToolCapability,
+        ...terminalCallbackAuthority(runtimeToolCapability),
         text: "Hola Hermes",
         userId: "mc-admin",
         userName: "Admin",
@@ -595,6 +675,11 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
       receivedHeaders[0]["x-sancho-run-capability"],
       runtimeToolCapability,
     );
+    assert.equal(receivedHeaders[0]["x-mc-secret"], "test-secret");
+    assert.equal(
+      receivedHeaders[0]["x-sancho-terminal-callback-grant"],
+      undefined,
+    );
     const final = received.find((payload) => payload.text);
     const finalIndex = received.indexOf(final);
     assert.equal(final.slug, "acme");
@@ -609,12 +694,19 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
       receivedHeaders[finalIndex]["x-sancho-run-capability"],
       runtimeToolCapability,
     );
+    assert.equal(receivedHeaders[finalIndex]["x-mc-secret"], "test-secret");
+    assert.equal(
+      receivedHeaders[finalIndex]["x-sancho-terminal-callback-grant"],
+      terminalCallbackGrant,
+    );
     assert.match(final.text, /Hola Hermes/);
   } finally {
     await close(bridge);
     await close(webhook);
     if (previousSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
     else process.env.HERMES_BRIDGE_SECRET = previousSecret;
+    if (previousSanchoSecret === undefined) delete process.env.HERMES_SANCHO_SECRET;
+    else process.env.HERMES_SANCHO_SECRET = previousSanchoSecret;
     if (previousCli === undefined) delete process.env.HERMES_CLI;
     else process.env.HERMES_CLI = previousCli;
     if (previousWebhook === undefined) delete process.env.SANCHO_WEBHOOK_URL;
@@ -629,6 +721,127 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     else process.env.HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS = previousUnsafeToolsets;
     if (previousOutboxDir === undefined) delete process.env.SANCHO_CALLBACK_OUTBOX_DIR;
     else process.env.SANCHO_CALLBACK_OUTBOX_DIR = previousOutboxDir;
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
+  }
+});
+
+test("Hermes cancellation drains pending preparation before acknowledging success", async () => {
+  const previous = {
+    HERMES_BRIDGE_SECRET: process.env.HERMES_BRIDGE_SECRET,
+    HERMES_CONTEXT_PACK_ENABLED: process.env.HERMES_CONTEXT_PACK_ENABLED,
+    SANCHO_CALLBACK_OUTBOX_DIR: process.env.SANCHO_CALLBACK_OUTBOX_DIR,
+  };
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-cancel-outbox-"));
+  let stagedWorkdir;
+  let spawnCalls = 0;
+  let markStageStarted;
+  let markAbortObserved;
+  let releaseStage;
+  const stageStarted = new Promise((resolve) => {
+    markStageStarted = resolve;
+  });
+  const abortObserved = new Promise((resolve) => {
+    markAbortObserved = resolve;
+  });
+  const stageReleased = new Promise((resolve) => {
+    releaseStage = resolve;
+  });
+
+  process.env.HERMES_BRIDGE_SECRET = "cancel-secret";
+  process.env.HERMES_CONTEXT_PACK_ENABLED = "0";
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
+
+  const bridge = createServer({
+    async stageAuthFiles(workdir, _baseEnv, { signal }) {
+      stagedWorkdir = workdir;
+      markStageStarted();
+      if (!signal.aborted) {
+        await new Promise((resolve) => {
+          signal.addEventListener("abort", resolve, { once: true });
+        });
+      }
+      markAbortObserved();
+      await stageReleased;
+      // Model an fs operation that was already in flight when cancellation
+      // arrived. The bridge must wait for it and remove its output before 200.
+      await fs.promises.mkdir(path.join(workdir, ".hermes"), {
+        recursive: true,
+        mode: 0o700,
+      });
+      return [];
+    },
+    spawnProcess() {
+      spawnCalls += 1;
+      throw new Error("cancelled preparation must never spawn Hermes");
+    },
+  });
+  const bridgeAddr = await listen(bridge);
+  let cancelRequest;
+
+  try {
+    const inbound = await fetch(`http://127.0.0.1:${bridgeAddr.port}/sancho/inbound`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-MC-Secret": "cancel-secret",
+      },
+      body: JSON.stringify({
+        slug: "acme",
+        threadId: "acme:hermes-cancel-race",
+        missionControlRunId: "run_mc_hermes_cancel_race",
+        ...terminalCallbackAuthority("c".repeat(64)),
+        text: "Empieza Hermes",
+      }),
+    });
+    assert.equal(inbound.status, 202);
+    await stageStarted;
+
+    let cancelSettled = false;
+    cancelRequest = fetch(`http://127.0.0.1:${bridgeAddr.port}/sancho/cancel`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-MC-Secret": "cancel-secret",
+      },
+      body: JSON.stringify({
+        threadId: "acme:hermes-cancel-race",
+        missionControlRunId: "run_mc_hermes_cancel_race",
+      }),
+    }).then(async (response) => {
+      const body = await response.json();
+      cancelSettled = true;
+      return { response, body };
+    });
+
+    await abortObserved;
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(cancelSettled, false, "cancel must wait for in-flight preparation");
+
+    releaseStage();
+    const { response, body } = await cancelRequest;
+    assert.equal(response.status, 200);
+    assert.deepEqual(body, { ok: true, cancelled: true });
+    assert.equal(spawnCalls, 0);
+    assert.equal(fs.existsSync(stagedWorkdir), false);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.equal(spawnCalls, 0, "no spawn may occur after cancelled:true");
+    assert.equal(
+      fs.existsSync(stagedWorkdir),
+      false,
+      "no late mkdir may recreate the cancelled workdir",
+    );
+  } finally {
+    releaseStage();
+    if (cancelRequest) await cancelRequest.catch(() => {});
+    await close(bridge);
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    if (stagedWorkdir) {
+      fs.rmSync(stagedWorkdir, { recursive: true, force: true });
+    }
     fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });
@@ -670,6 +883,7 @@ test("Hermes spawn error emits exactly one terminal callback", async () => {
         slug: "acme",
         threadId: "acme:hermes-error",
         missionControlRunId: "run_mc_hermes_error",
+        ...terminalCallbackAuthority("d".repeat(64)),
         text: "hola",
       }),
     });

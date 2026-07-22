@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  cancelSealedExecutionOriginChildren,
   requestExecutionOriginCancellation,
+  sealExecutionOriginCancellation,
   type ExecutionOriginCancellationRepository,
 } from "../durable-execution/origin-cancellation";
 import type {
@@ -156,6 +158,30 @@ const cancellationInput = {
   actor: { type: "user" as const, id: "user:martin-fila" },
   reasonCode: "user_requested" as const,
 };
+
+test("origin seal is independently durable before bounded child draining begins", async () => {
+  const repository = new OriginCancellationRepository([
+    executionRun("child-running", "running"),
+  ]);
+
+  const sealed = await sealExecutionOriginCancellation(
+    cancellationInput,
+    repository,
+  );
+  assert.equal(sealed.origin.parentAgentRunId, "run-parent-1");
+  assert.equal(repository.lookupInputs.length, 0);
+  assert.equal(repository.cancellationInputs.length, 0);
+
+  // Chat Stop installs its AgentRun tombstone at this boundary. Only then may
+  // it enumerate and cancel children without a post-scan control-route race.
+  const drained = await cancelSealedExecutionOriginChildren(
+    cancellationInput,
+    sealed,
+    repository,
+  );
+  assert.deepEqual(drained.requestedRunIds, ["child-running"]);
+  assert.equal(repository.lookupInputs.length, 1);
+});
 
 test("origin cancellation skips terminal children and distinguishes direct from cooperative cancellation", async () => {
   const children = [

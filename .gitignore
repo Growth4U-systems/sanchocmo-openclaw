@@ -113,6 +113,7 @@ devices/
 
 # === OpenClaw internal runtime state ===
 .openclaw/
+.runtime-callback-outbox/
 workspace-*/.openclaw/
 
 # === Instance-specific workspace files (OpenClaw auto-creates, unique per deploy) ===

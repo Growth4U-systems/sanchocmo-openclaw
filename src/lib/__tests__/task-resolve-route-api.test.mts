@@ -7,6 +7,9 @@ import os from "node:os";
 import path from "node:path";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+process.env.SANCHO_RUNTIME_TERMINAL_GRANT_SECRET =
+  "task-route-terminal-grant-secret".padEnd(64, "x");
+
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-task-route-api-"));
 process.env.MC_WORKSPACE = tmp;
 process.env.MC_TASKS_BACKEND = "json";

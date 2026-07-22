@@ -204,7 +204,6 @@ export function managedBridgeBootVarsForCliBridge(
     HERMES_BRIDGE_ENABLED: "1",
     HERMES_BRIDGE_PORT: String(gatewayPortOrDefault(providerId, gatewayUrl)),
     HERMES_BRIDGE_SECRET: secret,
-    HERMES_SANCHO_SECRET: secret,
   };
 }
 
@@ -248,9 +247,6 @@ export function buildCliBridgeEnv(
 
   if (providerId === "claude-code") {
     env.CLAUDE_CODE_SANCHO_MCP_ENABLED = "0";
-  }
-  if (providerId === "hermes") {
-    env.HERMES_SANCHO_SECRET = options.secret;
   }
   if (provider.runtimeModelEnv && (options.model || provider.defaultModel)) {
     env[provider.runtimeModelEnv] = options.model || provider.defaultModel || "";

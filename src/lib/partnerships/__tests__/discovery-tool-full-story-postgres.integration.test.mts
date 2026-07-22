@@ -667,6 +667,7 @@ test(
             dispatchRunId,
             dispatchLeaseToken,
             allowExternalEffects: true,
+            allowedExternalEffects: ["partnerships_discovery_start"],
           }),
           loadConfig: () => ({
             channels: {

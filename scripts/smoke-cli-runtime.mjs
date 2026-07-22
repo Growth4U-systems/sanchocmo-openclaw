@@ -47,11 +47,29 @@ const expectedText =
 const artifactDir = path.join(root, ".context", "cli-runtime-smoke", runtime);
 const workspace = path.join(artifactDir, "workspace");
 const summaryFile = path.join(artifactDir, "latest.json");
-const secret = process.env.SMOKE_CLI_RUNTIME_SECRET || `sancho-${runtime}-runtime-smoke-secret`;
+const secret =
+  process.env.SMOKE_CLI_RUNTIME_SECRET || randomBytes(32).toString("hex");
 const adminToken =
   process.env.SMOKE_CLI_RUNTIME_ADMIN_TOKEN || randomBytes(32).toString("hex");
-if (Buffer.byteLength(adminToken, "utf8") < 32) {
-  throw new Error("SMOKE_CLI_RUNTIME_ADMIN_TOKEN must be at least 32 bytes");
+const terminalGrantSecret =
+  process.env.SMOKE_CLI_RUNTIME_TERMINAL_GRANT_SECRET ||
+  randomBytes(32).toString("hex");
+const encryptionKey =
+  process.env.SMOKE_CLI_RUNTIME_ENCRYPTION_KEY ||
+  randomBytes(32).toString("hex");
+const internalApiToken =
+  process.env.SMOKE_CLI_RUNTIME_INTERNAL_API_TOKEN ||
+  randomBytes(32).toString("hex");
+for (const [name, value] of [
+  ["SMOKE_CLI_RUNTIME_SECRET", secret],
+  ["SMOKE_CLI_RUNTIME_ADMIN_TOKEN", adminToken],
+  ["SMOKE_CLI_RUNTIME_TERMINAL_GRANT_SECRET", terminalGrantSecret],
+  ["SMOKE_CLI_RUNTIME_ENCRYPTION_KEY", encryptionKey],
+  ["SMOKE_CLI_RUNTIME_INTERNAL_API_TOKEN", internalApiToken],
+]) {
+  if (Buffer.byteLength(value, "utf8") < 32) {
+    throw new Error(`${name} must be at least 32 bytes`);
+  }
 }
 const slug = process.env.SMOKE_CLI_RUNTIME_SLUG || "smoke";
 const threadShortId = process.env.SMOKE_CLI_RUNTIME_THREAD || `${runtimeAgent}-runtime`;
@@ -181,9 +199,10 @@ function startSancho(port, bridgePort) {
       SANCHO_EXTERNAL_INBOUND_PATH: "/sancho/inbound",
       SANCHO_EXTERNAL_HEALTH_PATH: "/healthz",
       SANCHO_EXTERNAL_SECRET: secret,
-      NEXTAUTH_SECRET: "cli-runtime-smoke-nextauth",
-      ENCRYPTION_KEY: "cli-runtime-smoke-encryption",
-      SANCHO_INTERNAL_API_TOKEN: "cli-runtime-smoke-token",
+      SANCHO_RUNTIME_TERMINAL_GRANT_SECRET: terminalGrantSecret,
+      NEXTAUTH_SECRET: terminalGrantSecret,
+      ENCRYPTION_KEY: encryptionKey,
+      SANCHO_INTERNAL_API_TOKEN: internalApiToken,
       LOCAL_DASHBOARD_BYPASS: "0",
       NEXT_TELEMETRY_DISABLED: "1",
     },
@@ -228,7 +247,6 @@ function startBridge(port, sanchoPort) {
     bridgeEnv.HERMES_BRIDGE_HOST = "127.0.0.1";
     bridgeEnv.HERMES_BRIDGE_PORT = String(port);
     bridgeEnv.HERMES_BRIDGE_SECRET = secret;
-    bridgeEnv.HERMES_SANCHO_SECRET = secret;
     bridgeEnv.HERMES_RUN_TIMEOUT_MS = String(timeoutMs);
     bridgeEnv.HERMES_CLI_PROVIDER = hermesProvider;
     bridgeEnv.HERMES_CLI_MODEL = hermesModel;

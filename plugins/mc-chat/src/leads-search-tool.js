@@ -276,7 +276,8 @@ function canonicalRuntimeTarget(context, dependencies) {
     !SAFE_RUN_ID_PATTERN.test(missionControlRunId) ||
     typeof runtimeToolCapability !== "string" ||
     !RUNTIME_CAPABILITY_PATTERN.test(runtimeToolCapability) ||
-    authority.allowExternalEffects !== true
+    authority.allowExternalEffects !== true ||
+    !authority.allowedExternalEffects?.includes(LEADS_SEARCH_START_TOOL)
   ) {
     return null;
   }

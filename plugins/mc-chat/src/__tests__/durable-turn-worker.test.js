@@ -13,6 +13,7 @@ import {
 const leaseToken = "l".repeat(48);
 const parentAgentRunId = "parent-1";
 const dispatchRunId = "dispatch-1";
+const runtimeTerminalCallbackGrant = "signed-terminal.callback-grant";
 const runtimeToolCapability = createHash("sha256")
   .update(
     [
@@ -30,6 +31,8 @@ const claim = {
   leaseExpiresAt: "2026-07-16T12:01:00.000Z",
   recovered: false,
   runtimeToolCapability,
+  runtimeTerminalCallbackGrant,
+  runtimeTerminalCallbackGrantExpiresAt: "2099-07-23T12:00:00.000Z",
   envelope: {
     slug: "hospital-capilar",
     threadId: "hospital-capilar:general",
@@ -72,6 +75,24 @@ test("claim validates the server envelope and never sends a lease token in the b
     safeDurableTurnClaim({ ...claim, runtimeToolCapability: "f".repeat(64) }),
     null,
   );
+  assert.equal(
+    safeDurableTurnClaim({ ...claim, runtimeTerminalCallbackGrant: "invalid" }),
+    null,
+  );
+  assert.equal(
+    safeDurableTurnClaim({
+      ...claim,
+      runtimeTerminalCallbackGrantExpiresAt: "2020-01-01T00:00:00.000Z",
+    }),
+    null,
+  );
+  assert.equal(
+    safeDurableTurnClaim({
+      ...claim,
+      runtimeTerminalCallbackGrant: `${"a".repeat(4_096)}.b`,
+    }),
+    null,
+  );
 });
 
 test("control actions carry the exact lease tuple in headers, never in the body", async () => {
@@ -94,6 +115,10 @@ test("control actions carry the exact lease tuple in headers, never in the body"
   assert.equal(
     calls[0].headers["X-Sancho-Dispatch-Lease-Token"],
     leaseToken,
+  );
+  assert.equal(
+    calls[0].headers["X-Sancho-Terminal-Callback-Grant"],
+    undefined,
   );
   assert.deepEqual(JSON.parse(calls[0].body), { action: "started" });
   assert.doesNotMatch(calls[0].body, new RegExp(leaseToken));

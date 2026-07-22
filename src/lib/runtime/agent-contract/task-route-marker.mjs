@@ -17,7 +17,8 @@ export function parseTaskRouteMarkers(text) {
 
   const routes = [];
   const malformed = [];
-  let cleaned = text.replace(TASK_ROUTE_BLOCK_RE, (block, json) => {
+  const normalized = text.replace(/\r\n?/g, "\n");
+  let cleaned = normalized.replace(TASK_ROUTE_BLOCK_RE, (block, json) => {
     const parsed = parseOne(json);
     if (parsed) routes.push(parsed);
     else malformed.push(block);

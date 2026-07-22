@@ -24,6 +24,8 @@ const previousSecretEnv = new Map(
 for (const name of secretEnvNames) delete process.env[name];
 process.env.SANCHO_EXTERNAL_SECRET = "edge-secret";
 process.env.MC_CHAT_SECRET = "openclaw-run-secret";
+process.env.SANCHO_RUNTIME_TERMINAL_GRANT_SECRET =
+  "chat-edge-terminal-grant-secret".padEnd(64, "x");
 delete process.env.LOCAL_DASHBOARD_BYPASS;
 
 const clients = [

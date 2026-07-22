@@ -5,13 +5,16 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { callbackAuthorityHeaders } from "../docker/runtimes/callback-authority.mjs";
+import { terminalCallbackAuthorityHeaders } from "../docker/runtimes/callback-authority.mjs";
+import { createCallbackOutbox } from "../docker/runtimes/callback-outbox.mjs";
 
 const scriptPath = fileURLToPath(import.meta.url);
 const scriptDir = path.dirname(scriptPath);
-const sessionFile =
-  process.env.SANCHO_CONNECTOR_SESSION_FILE ||
-  path.resolve(scriptDir, "..", "session-credential.json");
+const connectorInstallDir = path.resolve(scriptDir, "..");
+const configuredSessionFile = process.env.SANCHO_CONNECTOR_SESSION_FILE?.trim();
+const sessionFile = configuredSessionFile
+  ? path.resolve(connectorInstallDir, configuredSessionFile)
+  : path.join(connectorInstallDir, "session-credential.json");
 const connectorStateDir = path.dirname(sessionFile);
 const storedSession = readStoredSession();
 const requestedBaseUrl = trimTrailingSlash(process.env.SANCHO_BASE_URL || "");
@@ -34,6 +37,9 @@ let bridge = null;
 let bridgeInfo = null;
 let runtimeSecret = "";
 let shuttingDown = false;
+let failureCallbackOutbox = null;
+
+const FAILURE_CALLBACK_RUNTIME_ID = "local-connector";
 
 function trimTrailingSlash(value) {
   return String(value || "").replace(/\/+$/, "");
@@ -105,6 +111,58 @@ function connectorUrl(route) {
   return `${baseUrl}/api/runtime/local-connector/${route}`;
 }
 
+function localConnectorCallbackOutboxDirectory(
+  stateDir = connectorStateDir,
+  env = process.env,
+) {
+  const stableStateDir = path.resolve(connectorInstallDir, stateDir);
+  const configuredRoot = env.SANCHO_CALLBACK_OUTBOX_DIR?.trim();
+  const root = configuredRoot
+    ? path.resolve(stableStateDir, configuredRoot)
+    : path.join(stableStateDir, "callback-outbox");
+  return path.join(root, FAILURE_CALLBACK_RUNTIME_ID);
+}
+
+export function createLocalConnectorFailureOutbox(options = {}) {
+  const {
+    stateDir = connectorStateDir,
+    directory = localConnectorCallbackOutboxDirectory(stateDir, options.env),
+    logger,
+    ...outboxOptions
+  } = options;
+  return createCallbackOutbox({
+    ...outboxOptions,
+    runtimeId: FAILURE_CALLBACK_RUNTIME_ID,
+    directory,
+    logger:
+      typeof logger === "function"
+        ? logger
+        : (event) => {
+            if (
+              event.event !== "retry_scheduled" &&
+              event.event !== "expired" &&
+              event.event !== "pruned_invalid"
+            ) {
+              return;
+            }
+            const status = event.status ? ` status=${event.status}` : "";
+            console.warn(
+              `[sancho connector] failure callback ${event.event}` +
+                ` id=${String(event.callbackId || "unknown").slice(0, 12)}` +
+                ` attempts=${event.attempts || 0}${status}`,
+            );
+          },
+  });
+}
+
+function terminalFailureCallbackOutbox() {
+  if (!failureCallbackOutbox) {
+    failureCallbackOutbox = createLocalConnectorFailureOutbox();
+  }
+  failureCallbackOutbox.start();
+  return failureCallbackOutbox;
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -137,6 +195,40 @@ async function postJson(route, body) {
     throw new Error(payload.error || payload.raw || `${route} failed with ${res.status}`);
   }
   return payload;
+}
+
+const pendingJobHandoffAcks = new Set();
+
+/**
+ * Confirm only the server-side handoff state. This operation is idempotent and
+ * intentionally separate from bridge dispatch: losing this HTTP response must
+ * never execute the model a second time.
+ */
+export async function acknowledgeJobHandoff(jobId, options = {}) {
+  const normalizedJobId = typeof jobId === "string" ? jobId.trim() : "";
+  if (!normalizedJobId) return false;
+  const finishJob = options.finishJob ?? ((body) => postJson("jobs", body));
+  try {
+    await finishJob({ jobId: normalizedJobId, status: "dispatched" });
+    pendingJobHandoffAcks.delete(normalizedJobId);
+    return true;
+  } catch {
+    pendingJobHandoffAcks.add(normalizedJobId);
+    return false;
+  }
+}
+
+export async function retryPendingJobHandoffs(options = {}) {
+  const jobIds = [...pendingJobHandoffAcks];
+  let acknowledged = 0;
+  for (const jobId of jobIds) {
+    if (await acknowledgeJobHandoff(jobId, options)) acknowledged += 1;
+  }
+  return {
+    attempted: jobIds.length,
+    acknowledged,
+    pending: pendingJobHandoffAcks.size,
+  };
 }
 
 async function getJson(route) {
@@ -207,7 +299,14 @@ export function localBridgeSpawnOptions(
     SANCHO_CONNECTOR_TOKEN: _pairingOrSessionToken,
     ...bridgeParentEnv
   } = parentEnv;
-  const stableStateDir = path.resolve(stateDir);
+  // Resolve every connector-owned relative path from the installation root,
+  // never from the shell directory that happened to launch the connector.
+  const stableStateDir = path.resolve(connectorInstallDir, stateDir);
+  const configuredOutboxDir = (
+    env.SANCHO_CALLBACK_OUTBOX_DIR ||
+    bridgeParentEnv.SANCHO_CALLBACK_OUTBOX_DIR ||
+    ""
+  ).trim();
   return {
     cwd: stableStateDir,
     env: {
@@ -215,10 +314,9 @@ export function localBridgeSpawnOptions(
       ...env,
       // Keep terminal callback replay anchored to connector state, regardless
       // of the shell directory used to launch or relaunch the connector.
-      SANCHO_CALLBACK_OUTBOX_DIR:
-        env.SANCHO_CALLBACK_OUTBOX_DIR ||
-        bridgeParentEnv.SANCHO_CALLBACK_OUTBOX_DIR ||
-        path.join(stableStateDir, "callback-outbox"),
+      SANCHO_CALLBACK_OUTBOX_DIR: configuredOutboxDir
+        ? path.resolve(stableStateDir, configuredOutboxDir)
+        : path.join(stableStateDir, "callback-outbox"),
     },
     stdio: ["ignore", "inherit", "inherit"],
   };
@@ -239,19 +337,24 @@ function startBridge(env) {
 export async function postFailureWebhook(message, provider, error, options = {}) {
   const targetBaseUrl = trimTrailingSlash(options.baseUrl ?? baseUrl);
   const targetRuntimeSecret = options.runtimeSecret ?? runtimeSecret;
-  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
-  if (!targetBaseUrl || !targetRuntimeSecret || typeof fetchImpl !== "function") return false;
+  const deliveryId = options.deliveryId || message?.missionControlRunId;
+  if (!targetBaseUrl || !targetRuntimeSecret || !deliveryId) return false;
+  const authorityHeaders = terminalCallbackAuthorityHeaders(message);
+  if (Object.keys(authorityHeaders).length === 0) return false;
   const rawError = error instanceof Error ? error.stack || error.message : String(error);
   const safeError = redactRuntimeCapability(message, rawError);
   try {
-    const res = await fetchImpl(`${targetBaseUrl}/api/chat/webhook`, {
-      method: "POST",
+    const outbox = options.outbox || terminalFailureCallbackOutbox();
+    outbox.start();
+    outbox.enqueueTerminal({
+      deliveryId,
+      url: `${targetBaseUrl}/api/chat/webhook`,
       headers: {
         "Content-Type": "application/json",
         "X-MC-Secret": targetRuntimeSecret,
-        ...callbackAuthorityHeaders(message),
+        ...authorityHeaders,
       },
-      body: JSON.stringify({
+      payload: {
         slug: message.slug,
         threadId: message.threadId,
         missionControlRunId: message.missionControlRunId,
@@ -263,40 +366,108 @@ export async function postFailureWebhook(message, provider, error, options = {})
           provider,
           classifiedAt: Date.now(),
         },
-      }),
+      },
     });
-    return res.ok;
+    return true;
   } catch {
     return false;
   }
 }
 
-async function dispatchJob(job) {
+export async function dispatchJob(job, options = {}) {
+  const inboundUrl = options.inboundUrl ?? bridgeInfo?.inboundUrl;
+  const targetRuntimeSecret = options.runtimeSecret ?? runtimeSecret;
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  const persistFailure =
+    options.persistFailure ??
+    ((message, provider, error, failureOptions) =>
+      postFailureWebhook(message, provider, error, failureOptions));
+  let dispatchError = null;
   try {
-    const res = await fetch(bridgeInfo.inboundUrl, {
+    if (!inboundUrl || typeof fetchImpl !== "function") {
+      throw new Error("local bridge dispatch is unavailable");
+    }
+    const res = await fetchImpl(inboundUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-MC-Secret": runtimeSecret,
+        "X-MC-Secret": targetRuntimeSecret,
       },
       body: JSON.stringify(job.message),
     });
     const raw = await res.text().catch(() => "");
     if (!res.ok) throw new Error(raw || `local bridge rejected ${res.status}`);
-    await postJson("jobs", { jobId: job.id, status: "dispatched" });
-    console.log(`[sancho connector] job ${job.id} dispatched to local bridge.`);
   } catch (error) {
+    dispatchError = error;
+  }
+
+  if (!dispatchError) {
+    const serverAcknowledged = await acknowledgeJobHandoff(job.id, {
+      ...(options.finishJob ? { finishJob: options.finishJob } : {}),
+    });
+    if (serverAcknowledged) {
+      console.log(`[sancho connector] job ${job.id} dispatched to local bridge.`);
+    } else {
+      console.error(
+        `[sancho connector] job ${job.id} was accepted by the bridge; server handoff acknowledgement will be retried without redispatch.`,
+      );
+    }
+    return {
+      accepted: true,
+      terminalHandoffPersisted: true,
+      serverAcknowledged,
+    };
+  }
+
+  {
+    const error = dispatchError;
     const errorMessage = redactRuntimeCapability(
       job.message,
       error instanceof Error ? error.message : error,
     );
-    await postJson("jobs", {
-      jobId: job.id,
-      status: "failed",
-      error: errorMessage,
-    }).catch(() => null);
-    await postFailureWebhook(job.message, job.provider, error);
-    console.error(`[sancho connector] job ${job.id} failed:`, errorMessage);
+    const failurePersisted = await persistFailure(
+      job.message,
+      job.provider,
+      error,
+      { deliveryId: job.message.missionControlRunId || job.id },
+    );
+    if (!failurePersisted) {
+      // Do not terminally consume the claimed job when its user-visible failure
+      // could not be made durable. The server will make the claim stale and
+      // retry/recover it instead of silently losing the terminal result.
+      console.error(
+        `[sancho connector] job ${job.id} failure callback could not be persisted; leaving the job claimed for recovery.`,
+      );
+      return {
+        accepted: false,
+        terminalHandoffPersisted: false,
+        serverAcknowledged: false,
+      };
+    }
+    // The bridge rejected the job, but the exact terminal failure is now in a
+    // durable callback outbox. From the server queue's perspective ownership
+    // has been handed off just like a successful bridge dispatch. Marking the
+    // job `failed` here used to start a 30-second generic recovery that could
+    // irreversibly preempt this valid callback.
+    const serverAcknowledged = await acknowledgeJobHandoff(job.id, {
+      ...(options.finishJob ? { finishJob: options.finishJob } : {}),
+    });
+    if (serverAcknowledged) {
+      console.error(
+        `[sancho connector] job ${job.id} bridge dispatch failed; terminal callback queued:`,
+        errorMessage,
+      );
+    } else {
+      console.error(
+        `[sancho connector] job ${job.id} terminal callback is queued; server handoff acknowledgement will be retried without redispatch:`,
+        errorMessage,
+      );
+    }
+    return {
+      accepted: false,
+      terminalHandoffPersisted: true,
+      serverAcknowledged,
+    };
   }
 }
 
@@ -315,6 +486,10 @@ async function main() {
     console.error("Sancho Connector necesita Node.js 18 o superior.");
     process.exit(1);
   }
+
+  // Replay connector-owned dispatch failures even when no new job arrives.
+  // Records include the exact callback authority captured at failure time.
+  terminalFailureCallbackOutbox();
 
   const runtime = detectRuntime(configuredProvider);
   const registered = await postJson("register", {
@@ -352,6 +527,7 @@ async function main() {
 
   while (!shuttingDown) {
     try {
+      await retryPendingJobHandoffs();
       const payload = await getJson("jobs");
       if (payload?.job) await dispatchJob(payload.job);
       else await sleep(1500);
@@ -366,6 +542,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const signal of ["SIGINT", "SIGTERM"]) {
     process.once(signal, () => {
       shuttingDown = true;
+      failureCallbackOutbox?.stop();
       if (bridge && !bridge.killed) bridge.kill("SIGTERM");
       process.exit(0);
     });
@@ -373,6 +550,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   main().catch((error) => {
     console.error("[sancho connector]", error instanceof Error ? error.stack || error.message : error);
+    failureCallbackOutbox?.stop();
     if (bridge && !bridge.killed) bridge.kill("SIGTERM");
     process.exit(1);
   });

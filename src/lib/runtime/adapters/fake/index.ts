@@ -91,6 +91,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   readonly capabilities = FAKE_CAPABILITIES;
 
   readonly messaging = {
+    terminalDeliveryMode: (): "inline" => "inline",
     sendInbound: async (
       message: InboundMessage,
       _opts?: SendInboundOptions,

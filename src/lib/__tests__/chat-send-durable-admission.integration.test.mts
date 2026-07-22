@@ -4,6 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import type { NextApiRequest, NextApiResponse } from "next";
+
+process.env.SANCHO_RUNTIME_TERMINAL_GRANT_SECRET =
+  "durable-send-terminal-grant-secret".padEnd(64, "x");
 import postgres from "postgres";
 
 const databaseUrl = process.env.CHAT_AGENT_TURN_SEND_TEST_DATABASE_URL;

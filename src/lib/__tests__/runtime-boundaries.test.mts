@@ -67,17 +67,25 @@ test("OpenClaw routes with the server grant before terminalizing its parent", ()
   );
 });
 
-test("external HTTP smoke callback carries the exact run in header and body", () => {
+test("external HTTP smoke callback validates and carries the exact run in header and body", () => {
   const source = fs.readFileSync(
     path.join(REPO_ROOT, "scripts/smoke-external-http.mjs"),
     "utf8",
   );
   assert.match(
     source,
-    /missionControlRunId:\s*payload\.missionControlRunId/,
+    /typeof payload\.missionControlRunId === "string"[\s\S]*payload\.missionControlRunId\.trim\(\)/,
   );
   assert.match(
     source,
-    /"x-mission-control-run-id":\s*payload\.missionControlRunId/,
+    /const webhookPayload = \{[\s\S]*missionControlRunId,[\s\S]*"x-mission-control-run-id":\s*missionControlRunId/,
+  );
+  assert.match(
+    source,
+    /"x-sancho-terminal-callback-grant":\s*terminalCallbackGrant/,
+  );
+  assert.match(
+    source,
+    /terminalCallbackGrantExpiresAt[\s\S]*terminalCallbackGrantExpiresAt <= Date\.now\(\)/,
   );
 });

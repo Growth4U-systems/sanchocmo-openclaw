@@ -107,6 +107,15 @@ jobs:
           NEXT_PUBLIC_ENV_LABEL: ci
         run: npm run build
 
+      # Contract/unit tests do not prove that the compiled Next server, a
+      # runtime adapter, terminal callback authority and AgentRun projection
+      # still converge together. Exercise both external runtime delivery modes
+      # against disposable fake runtimes before the build can merge.
+      - name: Runtime full-story smokes
+        run: |
+          npm run smoke:runtime:external-http
+          npm run smoke:runtime:external-http:bridge
+
       # A production build can succeed while auth redirects or the top-level
       # dashboard fail at runtime. Exercise the compiled app before allowing a
       # support/observability change onto the trunk.

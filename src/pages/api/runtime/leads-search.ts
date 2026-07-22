@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getAgentRunByIdAsync } from "@/lib/data/agent-runs";
 import { loadClient } from "@/lib/data/clients";
@@ -13,12 +12,13 @@ import {
   prepareLeadsSearchApiResponse,
   safeLeadsSearchApiLog,
 } from "@/lib/leads/search-api-boundary";
-import { getRuntime } from "@/lib/runtime";
+import { createRuntimeAdapter, resolveRuntimeId } from "@/lib/runtime";
 import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 import {
   authorizeRuntimeRunRequest,
   type RuntimeRunRequestAuthorityDependencies,
 } from "@/lib/runtime/runtime-run-request-authority";
+import { authorizeRuntimeTransportSecret } from "@/lib/runtime/runtime-transport-secret";
 
 const POST_BODY_KEYS = new Set(["criteria", "limit"]);
 const TERMINAL_STATUSES = new Set([
@@ -32,7 +32,7 @@ export interface AgentLeadsSearchRouteDependencies
   extends
     LeadsSearchAgentBridgeDependencies,
     RuntimeRunRequestAuthorityDependencies {
-  sharedSecret(): string | undefined;
+  sharedSecret(runtime: string): string | undefined;
   clientExists(slug: string): boolean;
   logError?: (message: string) => void;
 }
@@ -49,16 +49,6 @@ function singleHeader(req: NextApiRequest, name: string): string | undefined {
   return Array.isArray(value) ? undefined : value;
 }
 
-function safeEqual(left: string | undefined, right: string): boolean {
-  if (!left) return false;
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    crypto.timingSafeEqual(leftBuffer, rightBuffer)
-  );
-}
-
 function invalidAgentContext(): LeadsSearchAgentBridgeError {
   return new LeadsSearchAgentBridgeError(
     "leads_search_agent_context_invalid",
@@ -70,19 +60,6 @@ async function trustedRuntimeAuthority(
   req: NextApiRequest,
   dependencies: AgentLeadsSearchRouteDependencies,
 ): Promise<AgentLeadsSearchAuthority> {
-  const expectedSecret = dependencies.sharedSecret();
-  if (!expectedSecret) {
-    throw new LeadsSearchAgentBridgeError(
-      "leads_search_agent_bridge_unavailable",
-      503,
-    );
-  }
-  if (!safeEqual(singleHeader(req, "x-mc-secret"), expectedSecret)) {
-    throw new LeadsSearchAgentBridgeError(
-      "leads_search_agent_unauthorized",
-      403,
-    );
-  }
   // Tenant claims are never part of this trust boundary. Reject the legacy
   // header rather than accidentally reintroducing it during a rolling deploy.
   if (singleHeader(req, "x-sancho-client-slug") !== undefined) {
@@ -99,14 +76,31 @@ async function trustedRuntimeAuthority(
   );
   const run = authority?.run;
   const input = authority?.input;
+  const transportAuthorization =
+    authority && run && input
+      ? authorizeRuntimeTransportSecret({
+          suppliedSecret: singleHeader(req, "x-mc-secret"),
+          runInput: input,
+          resolveLegacySecret: () => dependencies.sharedSecret(run.runtime),
+        })
+      : "forbidden";
+  if (transportAuthorization === "legacy_secret_missing") {
+    throw new LeadsSearchAgentBridgeError(
+      "leads_search_agent_bridge_unavailable",
+      503,
+    );
+  }
   if (
     !authority ||
     !run ||
     !input ||
+    transportAuthorization !== "authorized" ||
     input.isAdmin !== true ||
     input.senderRole !== "admin" ||
     input.readOnly !== false ||
     input.userId !== "mc-admin" ||
+    input.controlDepth !== 0 ||
+    input.temporaryAgent === true ||
     !dependencies.clientExists(authority.slug)
   ) {
     throw invalidAgentContext();
@@ -216,7 +210,12 @@ export function createAgentLeadsSearchHandler(
 }
 
 const defaultHandler = createAgentLeadsSearchHandler({
-  sharedSecret: () => getRuntime().messaging.getSharedSecret?.(),
+  sharedSecret: (runtime) => {
+    const runtimeId = resolveRuntimeId(runtime);
+    return runtimeId
+      ? createRuntimeAdapter(runtimeId).messaging.getSharedSecret?.()
+      : undefined;
+  },
   clientExists: (slug) => Boolean(loadClient(slug)),
   resolveAgentRun: getAgentRunByIdAsync,
   authorizeDispatchLease: (input) =>

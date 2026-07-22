@@ -236,7 +236,10 @@ export async function resolveRouteHandler(req: NextApiRequest, res: NextApiRespo
         authorizeChatAgentTurnRuntimeRequest(input),
     },
   );
-  if (!authority || authority.input.controlDepth !== 0) {
+  if (
+    !authority ||
+    authority.input.controlDepth !== 0
+  ) {
     return res.status(403).json({ error: "Runtime parent authority invalid" });
   }
   const parentRuntimeId = resolveRuntimeId(authority.run.runtime);

@@ -11,6 +11,7 @@ import { db, type Db } from "@/db/drizzle";
 import { agentRunEvents, agentRuns } from "@/db/schema";
 import { PostgresAgentRunsRepository } from "@/lib/data/agent-runs-postgres";
 import {
+  AgentRunParentInactiveError,
   resolveAgentRunsBackend,
   type AgentRun,
   type CreateAgentRunInput,
@@ -203,22 +204,32 @@ export async function admitChatAgentTurnAtomically(
     dispatchOperation: executionInput.operation,
   };
   const commandFingerprint = executionCommandFingerprint(executionInput);
+  const activeParentGate = input.activeParent
+    ? drizzleSql`
+        SELECT 1 AS "allowed"
+        FROM "agent_runs"
+        WHERE "id" = ${input.activeParent.runId}
+          AND "thread_id" = ${input.activeParent.threadId}
+          AND "status" IN ('queued', 'running')
+        FOR UPDATE
+      `
+    : drizzleSql`SELECT 1 AS "allowed"`;
 
   await database.execute(drizzleSql`
-    WITH inserted_parent AS (
+    WITH active_parent_gate AS (${activeParentGate}), inserted_parent AS (
       INSERT INTO "agent_runs" (
         "id", "idempotency_key", "thread_id", "trace_id", "runtime",
         "agent", "skill", "skills", "skill_mode", "task_id",
         "task_contract", "status", "input", "callback_fingerprints",
         "created_at", "updated_at"
-      ) VALUES (
+      ) SELECT
         ${runId}, ${input.idempotencyKey ?? null}, ${input.threadId},
         ${traceId}, ${input.runtime}, ${input.agent ?? null},
         ${input.skill ?? null}, ${jsonValue(input.skills)},
         ${input.skillMode ?? null}, ${input.taskId ?? null},
         ${jsonValue(input.taskContract)}, 'queued', ${jsonValue(input.input)},
         '[]'::jsonb, ${timestampValue(now)}, ${timestampValue(now)}
-      )
+      FROM active_parent_gate
       ON CONFLICT DO NOTHING
       RETURNING "id", "thread_id", "trace_id"
     ), inserted_parent_event AS (
@@ -271,6 +282,7 @@ export async function admitChatAgentTurnAtomically(
   let persistedParent = await agentRepository.getById(runId);
   if (!persistedParent) persistedParent = await activeIdempotencyWinner(database, input);
   if (!persistedParent) {
+    if (input.activeParent) throw new AgentRunParentInactiveError();
     throw new Error("chat_agent_turn_atomic_parent_missing");
   }
   assertIdempotencyBinding(persistedParent, parent);

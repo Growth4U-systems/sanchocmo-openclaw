@@ -44,7 +44,6 @@ test("a verified managed Hermes bridge persists its restart contract", () => {
       HERMES_BRIDGE_ENABLED: "1",
       HERMES_BRIDGE_PORT: "19998",
       HERMES_BRIDGE_SECRET: "secret",
-      HERMES_SANCHO_SECRET: "secret",
     },
   );
   assert.deepEqual(
@@ -95,7 +94,7 @@ test("buildCliBridgeCommand emits a single runnable Hermes command", () => {
   assert.match(command, /SANCHO_WEBHOOK_URL=https:\/\/sancho\.example\.com\/api\/chat\/webhook/);
   assert.match(command, /HERMES_BRIDGE_PORT=18795/);
   assert.match(command, /HERMES_BRIDGE_SECRET='shared secret'/);
-  assert.match(command, /HERMES_SANCHO_SECRET='shared secret'/);
+  assert.doesNotMatch(command, /HERMES_SANCHO_SECRET/);
   assert.match(command, /HERMES_RUN_TIMEOUT_MS=900000/);
   assert.match(command, /node docker\/runtimes\/hermes\/bridge\.mjs$/);
 });

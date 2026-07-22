@@ -24,6 +24,8 @@ import { fetchContextPack, buildClientContextBlock, buildFoundationDirective } f
 import { parseDelegateMarkers } from "./delegate-marker.js";
 import { parseTaskRouteMarkers } from "./task-route-marker.js";
 import { parseSanchoInterventionMarkers } from "./sancho-intervention-marker.js";
+import { parseRuntimeEffectMarkers } from "../../../src/lib/runtime/agent-contract/runtime-effect-marker.mjs";
+import { createRuntimeEffectTurnArbitrator } from "./runtime-effect-turn.js";
 import { resolveChatUserId } from "./sender-identity.js";
 import {
   buildMcChatContextBlock,
@@ -33,6 +35,11 @@ import { sanitizeAgentThinkingHistory } from "./thinking-sanitizer.js";
 import { buildAgentSessionKey, resolveAgentModel } from "./session-key.js";
 import { buildTurnReplyOptions, resolveTurnModelOverride } from "./model-routing.js";
 import { hasRecentVisibleDelivery, markVisibleDelivery } from "./delivery-state.js";
+import {
+  enqueueOpenClawTerminalCallback,
+  initializeOpenClawCallbackDelivery,
+  isTerminalCallbackDeliveryError,
+} from "./callback-delivery.js";
 import {
   shouldRetryTransportAbort,
   TRANSPORT_ABORT_RETRY_DELAY_MS,
@@ -50,7 +57,9 @@ import {
   claimRuntimeInbound,
   registerRuntimeRun,
   releaseRuntimeInbound,
+  safeTerminalCallbackGrantEnvelope,
 } from "./runtime-run-state.js";
+import { processRuntimeStopControl } from "./runtime-stop-control.js";
 import { buildCanonicalHistoryBootstrapIfNeeded } from "./canonical-history.js";
 import { createTerminalDeliveryBuffer } from "./terminal-delivery-buffer.js";
 import {
@@ -203,6 +212,31 @@ export default defineChannelPluginEntry({
 
   registerFull(api) {
     const logger = api.logger;
+    const callbackDelivery = initializeOpenClawCallbackDelivery({
+      logger(event) {
+        const detail = [
+          `event=${event?.event || "unknown"}`,
+          event?.callbackId ? `callbackId=${event.callbackId}` : "",
+          Number.isInteger(event?.attempts)
+            ? `attempts=${event.attempts}`
+            : "",
+          Number.isInteger(event?.status) ? `status=${event.status}` : "",
+          Number.isFinite(event?.delayMs) ? `delayMs=${event.delayMs}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        if (
+          event?.event === "retry_scheduled" ||
+          event?.event === "retry_state_persist_failed" ||
+          event?.event === "expired" ||
+          event?.event === "pruned_invalid"
+        ) {
+          logger.warn(`[mc-chat] terminal callback outbox ${detail}`);
+        } else {
+          logger.info(`[mc-chat] terminal callback outbox ${detail}`);
+        }
+      },
+    });
     registerLeadsSearchTools(api, { loadConfig });
     registerPartnershipsDiscoveryTools(api, { loadConfig });
     const durableToolBoundary = createDurableToolBoundary({
@@ -307,6 +341,34 @@ export default defineChannelPluginEntry({
           return true;
         }
 
+        // `/api/chat/cancel` tombstones the parent before contacting the
+        // runtime, so an ordinary chat-turn preflight must reject it. It also
+        // reuses the already-admitted run id. Give Stop its own narrow rail:
+        // authenticated transport + explicit action + exact active run binding.
+        const runtimeStop = processRuntimeStopControl({
+          controlAction: singleRequestHeader(
+            req,
+            "x-sancho-control-action",
+          ),
+          payload,
+          cancelRun: (sessionKey, reason) =>
+            mcChatCostGuard.cancelRun(sessionKey, reason),
+        });
+        if (runtimeStop.handled) {
+          if (runtimeStop.status !== 200) {
+            logger.warn(
+              "[mc-chat] Rejected Stop without exact active-run authority",
+            );
+          } else {
+            logger.info(
+              `[mc-chat] control-plane Stop processed run=${payload.missionControlRunId} cancelled=${runtimeStop.body.cancelled}`,
+            );
+          }
+          res.statusCode = runtimeStop.status;
+          res.end(JSON.stringify(runtimeStop.body));
+          return true;
+        }
+
         const dispatchRunId = singleRequestHeader(
           req,
           "x-sancho-dispatch-run-id",
@@ -334,6 +396,23 @@ export default defineChannelPluginEntry({
           res.statusCode = 403;
           res.end(
             JSON.stringify({ error: "Invalid durable dispatch authority" }),
+          );
+          return true;
+        }
+
+        const adapterTerminalCallbackAuthority = durableTurnClaim
+          ? null
+          : safeTerminalCallbackGrantEnvelope(
+              payload.runtimeTerminalCallbackGrant,
+              payload.runtimeTerminalCallbackGrantExpiresAt,
+            );
+        if (!durableTurnClaim && !adapterTerminalCallbackAuthority) {
+          logger.warn(
+            "[mc-chat] Rejected turn without durable terminal callback authority",
+          );
+          res.statusCode = 403;
+          res.end(
+            JSON.stringify({ error: "Invalid terminal callback authority" }),
           );
           return true;
         }
@@ -401,6 +480,7 @@ export default defineChannelPluginEntry({
           supportContext,
           priorThreadMessages,
           taskRouteProposal,
+          runtimeEffectIntent,
         } = payload;
         const {
           slug,
@@ -416,6 +496,7 @@ export default defineChannelPluginEntry({
           isAdmin,
           senderRole,
           readOnly,
+          runtimeEffectIntent: authorizedRuntimeEffectIntent,
           userId,
           userName,
           source: _source,
@@ -488,6 +569,10 @@ export default defineChannelPluginEntry({
           canDelegate: !isTemporarySancho && !isControlFollowup,
           temporaryAgent: isTemporarySancho,
           controlDepth: controlDepth === 1 ? 1 : 0,
+          isAdmin: isAdmin === true,
+          senderRole: senderRole === "admin" ? "admin" : "client",
+          nativeEffectTools: Boolean(durableTurnClaim),
+          runtimeEffectIntent: authorizedRuntimeEffectIntent,
           taskRouteProposal,
           readOnly: isReadOnly,
           channelMode,
@@ -600,6 +685,8 @@ export default defineChannelPluginEntry({
               runId: guardRunId,
               sessionKey,
               readOnly: isReadOnly,
+              allowedLedgerAdmissions:
+                authorizedRuntimeEffectIntent ?? [],
             })
           : () => {};
         if (durableTurnClaim && !releaseDurableToolBoundary) {
@@ -698,10 +785,21 @@ export default defineChannelPluginEntry({
           threadId,
           agent: requestedAgent,
           missionControlRunId,
+          sessionKey,
           runtimeToolCapability,
+          runtimeTerminalCallbackGrant:
+            durableTurnClaim?.runtimeTerminalCallbackGrant ??
+            adapterTerminalCallbackAuthority?.token,
           dispatchRunId: durableTurnClaim?.dispatchRunId,
           dispatchLeaseToken: durableTurnClaim?.leaseToken,
-          allowExternalEffects: resolvedSenderId === "mc-admin" && !isReadOnly,
+          allowExternalEffects:
+            resolvedSenderId === "mc-admin" &&
+            !isReadOnly &&
+            !isTemporarySancho &&
+            !isControlFollowup &&
+            Boolean(durableTurnClaim) &&
+            Boolean(authorizedRuntimeEffectIntent?.length),
+          allowedExternalEffects: authorizedRuntimeEffectIntent ?? [],
         });
 
         // Dispatch to agent asynchronously
@@ -709,6 +807,7 @@ export default defineChannelPluginEntry({
         let runtimeErrorPromise = null;
         let visibleReplyPosted = false;
         const terminalDeliveryBuffer = createTerminalDeliveryBuffer();
+        const runtimeEffectTurn = createRuntimeEffectTurnArbitrator();
         let turnControlAction = null;
         let temporaryInterventionDispatched = false;
         const turnSeenRouteRequests = new Set();
@@ -731,6 +830,67 @@ export default defineChannelPluginEntry({
               );
             }, guardLimits.maxWallClockMs)
           : null;
+        const callbackUrl = `${controlPlaneOrigin}/api/chat/webhook`;
+        const secret = channelCfg?.sharedSecret;
+        const callbackIdentity = missionControlRunId
+          ? { missionControlRunId }
+          : {};
+        const callbackRunAuthorityHeaders = {
+          "X-Mission-Control-Run-Id": missionControlRunId,
+          "X-Sancho-Run-Capability": runtimeToolCapability,
+          ...(durableTurnClaim
+            ? {
+                "X-Sancho-Dispatch-Run-Id":
+                  durableTurnClaim.dispatchRunId,
+                "X-Sancho-Dispatch-Lease-Token":
+                  durableTurnClaim.leaseToken,
+              }
+            : {}),
+        };
+        const terminalCallbackAuthorityHeaders = {
+          ...callbackRunAuthorityHeaders,
+          ...(durableTurnClaim?.runtimeTerminalCallbackGrant ||
+          adapterTerminalCallbackAuthority?.token
+            ? {
+                "X-Sancho-Terminal-Callback-Grant":
+                  durableTurnClaim?.runtimeTerminalCallbackGrant ??
+                  adapterTerminalCallbackAuthority.token,
+              }
+            : {}),
+        };
+        const postTerminalDurably = async (payload, label) => {
+          let queued;
+          try {
+            queued = enqueueOpenClawTerminalCallback({
+              deliveryId: missionControlRunId,
+              url: callbackUrl,
+              headers: {
+                "Content-Type": "application/json",
+                ...(secret ? { "X-MC-Secret": secret } : {}),
+                ...terminalCallbackAuthorityHeaders,
+              },
+              payload,
+            });
+          } catch (error) {
+            logger.error(
+              `[mc-chat] ${label} persistence failed code=${error?.code || "unknown"}`,
+            );
+            throw error;
+          }
+          // Persistence is the local ownership boundary; acknowledgement is
+          // still awaited so the durable dispatch cannot complete first.
+          visibleReplyPosted = true;
+          markVisibleDelivery(slug, threadId);
+          try {
+            await queued.delivery;
+            return queued;
+          } catch (error) {
+            logger.error(
+              `[mc-chat] ${label} delivery failed code=${error?.code || "unknown"}`,
+            );
+            throw error;
+          }
+        };
         try {
           if (turnModelOverride) {
             logger.info(`[mc-chat] skipping global thinking-history scan for isolated model override session=${sessionKey}`);
@@ -749,22 +909,9 @@ export default defineChannelPluginEntry({
           // the strangler-fig migration. mc-server.js's /webhook/mc-chat/response
           // is dead code but still proxied through Next's fallback rewrite.
           const mcUrl = controlPlaneOrigin;
-          const callbackUrl = `${mcUrl}/api/chat/webhook`;
           const threadLinkUrlBase = `${mcUrl}/api/chat/thread`;
           const sendUrl = `${mcUrl}/api/chat/send`;
           const taskRouteUrl = `${mcUrl}/api/tasks/resolve-route`;
-          const secret = channelCfg?.sharedSecret;
-          const callbackIdentity = missionControlRunId ? { missionControlRunId } : {};
-          const callbackRunAuthorityHeaders = {
-            "X-Mission-Control-Run-Id": missionControlRunId,
-            "X-Sancho-Run-Capability": runtimeToolCapability,
-            ...(durableTurnClaim
-              ? {
-                  "X-Sancho-Dispatch-Run-Id": durableTurnClaim.dispatchRunId,
-                  "X-Sancho-Dispatch-Lease-Token": durableTurnClaim.leaseToken,
-                }
-              : {}),
-          };
           const parentRunAuthorityHeaders = {
             "X-Mission-Control-Parent-Run-Id": missionControlRunId,
             "X-Sancho-Parent-Run-Capability": runtimeToolCapability,
@@ -828,7 +975,7 @@ export default defineChannelPluginEntry({
                 anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
               };
               const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
-              await postWithRetry(callbackUrl, {
+              await postTerminalDurably({
                 slug,
                 threadId,
                 ...callbackIdentity,
@@ -950,7 +1097,9 @@ export default defineChannelPluginEntry({
                 let taskRoutes = [];
                 let sanchoInterventions = [];
                 let malformedControlBlocks = 0;
+                let malformedEffectBlocks = 0;
                 let blockedControlBlocks = 0;
+                let deliveryEffects = [];
                 try {
                   const cleaned = [];
                   for (const rawText of texts) {
@@ -998,7 +1147,13 @@ export default defineChannelPluginEntry({
                       malformedControlBlocks += parsedIntervention.malformed.length;
                       logger.warn(`[mc-chat] ${parsedIntervention.malformed.length} malformed :::sancho-intervene block(s) thread=${threadId}`);
                     }
-                    if (parsedIntervention.text) cleaned.push(parsedIntervention.text);
+                    const parsedEffects = parseRuntimeEffectMarkers(parsedIntervention.text);
+                    deliveryEffects.push(...parsedEffects.effects);
+                    if (parsedEffects.malformed.length) {
+                      malformedEffectBlocks += parsedEffects.malformed.length;
+                      logger.warn(`[mc-chat] ${parsedEffects.malformed.length} malformed :::sancho-effect block(s) thread=${threadId}`);
+                    }
+                    if (parsedEffects.text) cleaned.push(parsedEffects.text);
                   }
                   // The four-way policy is exclusive. When a model emits both
                   // a temporary intervention and a task/agent change, choose
@@ -1041,12 +1196,19 @@ export default defineChannelPluginEntry({
                       turnControlAction = "route";
                     }
                   }
+                  const effectDecision = runtimeEffectTurn.observe({
+                    effects: deliveryEffects,
+                    controlAction: Boolean(turnControlAction),
+                  });
+                  blockedControlBlocks += effectDecision.blockedCount;
                   texts.length = 0;
                   texts.push(...cleaned);
                   if (sanchoInterventions.length && texts.length === 0) {
                     texts.push("🛡️ Pido una intervención puntual de Sancho en esta misma tarea.");
                   } else if ((delegations.length || taskRoutes.length) && texts.length === 0) {
                     texts.push("🧭 Voy a ubicar la tarea correcta dentro de este grupo.");
+                  } else if (effectDecision.acceptedCount > 0 && texts.length === 0) {
+                    texts.push("He preparado la solicitud para la ejecución durable de Sancho.");
                   }
                   if (blockedControlBlocks > 0) {
                     texts.push("⚠️ Bloqueé una instrucción de control no autorizada o incompatible. El harness original sigue intacto.");
@@ -1054,11 +1216,15 @@ export default defineChannelPluginEntry({
                   if (malformedControlBlocks > 0) {
                     texts.push("⚠️ El agente devolvió una instrucción de routing inválida. No cambié la tarea ni el agente por esa instrucción.");
                   }
+                  if (malformedEffectBlocks > 0) {
+                    texts.push("⚠️ El agente devolvió una solicitud de operación inválida. No inicié ningún efecto externo por esa instrucción.");
+                  }
                 } catch (e) {
                   logger.warn(`[mc-chat] task route marker parse skipped: ${e?.message || e}`);
                   delegations = [];
                   taskRoutes = [];
                   sanchoInterventions = [];
+                  deliveryEffects = [];
                 }
 
                 // Check if thread is linked to Discord
@@ -1466,16 +1632,17 @@ export default defineChannelPluginEntry({
             };
             const { text: rewritten, errorDetail: classified } =
               classifyAndRewriteError(terminalDelivery.text, authInfo);
+            const callbackText = runtimeEffectTurn.appendToCallback(rewritten);
             let errorDetail = classified;
             if (errorDetail?.category === "watchdog_abort") {
               const prior = errorTracker.getRecent(respondingAgent);
               if (prior) errorDetail = mergeWithPriorCategory(errorDetail, prior);
             }
-            const posted = await postWithRetry(callbackUrl, {
+            const posted = await postTerminalDurably({
               slug,
               threadId,
               ...callbackIdentity,
-              text: rewritten,
+              text: callbackText,
               role: "bot",
               agent: respondingAgent,
               ts: new Date().toISOString(),
@@ -1524,56 +1691,34 @@ export default defineChannelPluginEntry({
               : "runtime_dispatch_unavailable",
           });
           logger.error(`[mc-chat] Dispatch error: ${err?.message}`);
-          try {
-            if (runtimeErrorPromise) {
-              await runtimeErrorPromise;
-              return true;
-            }
-            runtimeErrorPosted = true;
-            const mcUrl = controlPlaneOrigin;
-            const callbackUrl = `${mcUrl}/api/chat/webhook`;
-            const secret = channelCfg?.sharedSecret;
-            const callbackRunAuthorityHeaders = {
-              "X-Mission-Control-Run-Id": missionControlRunId,
-              "X-Sancho-Run-Capability": runtimeToolCapability,
-              ...(durableTurnClaim
-                ? {
-                    "X-Sancho-Dispatch-Run-Id": durableTurnClaim.dispatchRunId,
-                    "X-Sancho-Dispatch-Lease-Token": durableTurnClaim.leaseToken,
-                  }
-                : {}),
-            };
-            const headers = {
-              "Content-Type": "application/json",
-              ...(secret ? { "X-MC-Secret": secret } : {}),
-              ...callbackRunAuthorityHeaders,
-            };
-            const raw =
-              mcChatCostGuard.abortMessageFor(guardRunId, sessionKey) ||
-              err?.message ||
-              String(err);
-            const authInfo = {
-              ...(readCodexAuthInfo(requestedAgent || "sancho") || {}),
-              anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
-            };
-            const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
-            await fetch(callbackUrl, {
-              method: "POST",
-              headers,
-              body: JSON.stringify({
-                slug,
-                threadId,
-                ...(missionControlRunId ? { missionControlRunId } : {}),
-                role: "bot",
-                agent: requestedAgent || "sancho",
-                text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
-                ts: new Date().toISOString(),
-                ...(errorDetail ? { errorDetail } : {}),
-              }),
-              redirect: "error",
-              signal: AbortSignal.timeout(8_000),
-            }).catch(() => {});
-          } catch {}
+          // A terminal transport failure must keep the durable parent open;
+          // replacing it with another callback under the same delivery id
+          // would either overwrite intent or falsely complete the dispatch.
+          if (isTerminalCallbackDeliveryError(err)) throw err;
+          if (runtimeErrorPromise) {
+            await runtimeErrorPromise;
+            return true;
+          }
+          runtimeErrorPosted = true;
+          const raw =
+            mcChatCostGuard.abortMessageFor(guardRunId, sessionKey) ||
+            err?.message ||
+            String(err);
+          const authInfo = {
+            ...(readCodexAuthInfo(requestedAgent || "sancho") || {}),
+            anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+          };
+          const { text: rewritten, errorDetail } = classifyAndRewriteError(raw, authInfo);
+          await postTerminalDurably({
+            slug,
+            threadId,
+            ...callbackIdentity,
+            role: "bot",
+            agent: requestedAgent || "sancho",
+            text: rewritten || "⚠️ El agente terminó sin devolver una respuesta visible. Reintentá en un hilo nuevo.",
+            ts: new Date().toISOString(),
+            ...(errorDetail ? { errorDetail } : {}),
+          }, "Dispatch-error callback");
         } finally {
           admissionBoundary.resolve({
             ok: durableStarted,
@@ -1758,6 +1903,7 @@ export default defineChannelPluginEntry({
       api.registerService({
         id: "mc-chat-agent-turn-worker",
         start() {
+          callbackDelivery.start();
           stopDurableWorker = startDurableTurnWorker({
             loadConfig,
             logger,
@@ -1766,6 +1912,10 @@ export default defineChannelPluginEntry({
           });
         },
         async stop() {
+          // Release any active durable turn that is waiting for a webhook ACK
+          // before waiting for the worker itself. The fsynced callback record
+          // remains in the outbox and is replayed on the next service start.
+          callbackDelivery.stop();
           await stopDurableWorker();
         },
       });

@@ -39,6 +39,7 @@ import {
   toThreadRouting,
 } from "@/lib/runtime/agent-execution-policy";
 import {
+  AgentRunParentInactiveError,
   createAgentRunWithReceiptAsync,
   getAgentRunByIdAsync,
   getAgentRunByIdempotencyKeyAsync,
@@ -54,6 +55,11 @@ import {
   isExplicitTaskCreationRejection,
 } from "@/lib/data/task-route-proposals";
 import { dispatchRuntimeControlActions } from "@/lib/runtime/control-actions";
+import {
+  isRuntimeEffectTurnEligible,
+  resolveRuntimeEffectIntent,
+  RUNTIME_EFFECT_ORIGIN_MODE,
+} from "@/lib/runtime/effect-actions";
 import { parseRuntimeControlReply } from "@/lib/runtime/agent-contract/control-reply.mjs";
 import { resolveChatUserId } from "@/lib/runtime/agent-contract/chat-principal.mjs";
 import { resolveOutboundWorkflowChoice } from "@/lib/outreach/structured-choice";
@@ -90,6 +96,10 @@ import {
   authorizeRuntimeTransportSecret,
   runtimeTransportSecretSha256,
 } from "@/lib/runtime/runtime-transport-secret";
+import {
+  issueRuntimeTerminalCallbackGrant,
+  runtimeTerminalCallbackGrantConfigured,
+} from "@/lib/runtime/runtime-terminal-callback-grant";
 import { gatherGrowieSupportDiagnostics } from "@/lib/support/growie-diagnostics";
 import {
   consumeRuntimeRouteDispatchGrant,
@@ -576,6 +586,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   const durableTurnSupported = runtime.capabilities.durableChatTurns;
   const durableTurnEnabled =
     durableTurnRollout?.enabled === true && durableTurnSupported;
+  const asyncTerminalCallbacks =
+    ordinaryAgentTurn &&
+    runtime.messaging.terminalDeliveryMode() === "callback";
   if (
     durableTurnSupported &&
     durableTurnRollout &&
@@ -824,6 +837,21 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   const activeOutboundWorkflow = isGrowieSupport
     ? undefined
     : resolveActiveOutboundWorkflow(getThread(tid));
+  // After accepting an ordinary adapter-delivered turn, the runtime owns its
+  // terminal response. Do not start it unless that response can be replayed
+  // across a control-plane outage longer than the ordinary tool-capability
+  // freshness window.
+  if (
+    asyncTerminalCallbacks &&
+    !durableTurnEnabled &&
+    (!outboundTransportSecretDigest ||
+      !runtimeTerminalCallbackGrantConfigured())
+  ) {
+    return res.status(503).json({
+      error: "Runtime terminal callback authority is not configured",
+      retryable: true,
+    });
+  }
   // The raw capability crosses the authenticated runtime transport once. Only
   // its digest is durable, so database access or MC_CHAT_SECRET alone cannot
   // authorize a runtime-owned tool effect.
@@ -854,6 +882,18 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       }),
     )
     .digest("hex");
+  const runtimeEffectIntent = resolveRuntimeEffectIntent(text);
+  const runtimeEffectEligible =
+    ordinaryAgentTurn &&
+    runtimeEffectIntent.length > 0 &&
+    isRuntimeEffectTurnEligible({
+      userId: resolvedUserId,
+      controlDepth,
+      temporaryAgent: isTemporarySancho,
+      isAdmin,
+      senderRole,
+      readOnly,
+    });
   const agentRunInput: CreateAgentRunInput = {
     idempotencyKey: acceptedIdempotencyKey,
     threadId: tid,
@@ -865,6 +905,14 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     skillMode: policy.skillMode,
     taskId: resolvedTaskId,
     taskContract: taskContractSnapshot,
+    ...(runtimeParent
+      ? {
+          activeParent: {
+            runId: runtimeParent.runId,
+            threadId: runtimeParent.sourceThreadId,
+          },
+        }
+      : {}),
     input: {
       slug,
       threadId: tid,
@@ -895,6 +943,18 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       threadState: threadState || undefined,
       controlBaseUrl: runtimeControlBaseUrl,
       runtimeIdempotencyFingerprint,
+      ...(runtimeParent
+        ? {
+            controlParentAgentRunId: runtimeParent.runId,
+            controlParentThreadId: runtimeParent.sourceThreadId,
+          }
+        : {}),
+      ...(runtimeEffectEligible
+        ? {
+            runtimeEffectMode: RUNTIME_EFFECT_ORIGIN_MODE,
+            runtimeEffectIntent,
+          }
+        : {}),
       ...(outboundTransportSecretDigest
         ? { runtimeTransportSecretSha256: outboundTransportSecretDigest }
         : {}),
@@ -908,18 +968,29 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     created: boolean;
     dispatchRun?: { id: string };
   };
-  if (durableTurnEnabled) {
-    try {
+  try {
+    if (durableTurnEnabled) {
       admission = await admitChatAgentTurnAtomically(agentRunInput);
-    } catch (error) {
-      if (error instanceof ChatAgentTurnIdempotencyConflictError) {
-        return res.status(409).json({
-          error:
-            "Este envío ya fue admitido con otro contenido. Vuelve a enviarlo como una nueva solicitud.",
-          code: error.code,
-          retryable: false,
-        });
-      }
+    } else {
+      admission = await createAgentRunWithReceiptAsync(agentRunInput);
+    }
+  } catch (error) {
+    if (error instanceof AgentRunParentInactiveError) {
+      return res.status(409).json({
+        error: "El turno padre ya no está activo",
+        code: error.code,
+        retryable: false,
+      });
+    }
+    if (error instanceof ChatAgentTurnIdempotencyConflictError) {
+      return res.status(409).json({
+        error:
+          "Este envío ya fue admitido con otro contenido. Vuelve a enviarlo como una nueva solicitud.",
+        code: error.code,
+        retryable: false,
+      });
+    }
+    if (durableTurnEnabled) {
       console.error(
         "[chat-agent-turn] atomic admission failed:",
         error instanceof Error ? error.message : error,
@@ -929,8 +1000,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         retryable: true,
       });
     }
-  } else {
-    admission = await createAgentRunWithReceiptAsync(agentRunInput);
+    throw error;
   }
   const { run, created: runCreated } = admission;
   // The repository owns the unique idempotency claim. A second process may
@@ -948,6 +1018,36 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       status: run.status,
       chatId: tid,
     });
+  }
+
+  let terminalCallbackGrant:
+    | { token: string; expiresAt: string }
+    | undefined;
+  if (asyncTerminalCallbacks && !durableTurnEnabled) {
+    try {
+      terminalCallbackGrant = issueRuntimeTerminalCallbackGrant({
+        parentAgentRunId: run.id,
+        runtimeId: runtime.id,
+        runtimeToolCapability,
+        // Guaranteed by the fail-closed preflight above.
+        transportSecretSha256: outboundTransportSecretDigest!,
+      });
+    } catch (error) {
+      const detail =
+        error instanceof Error
+          ? error.message
+          : "runtime_terminal_callback_grant_unavailable";
+      await markAgentRunFailedAsync(
+        run.id,
+        tid,
+        detail,
+        "runtime_unreachable",
+      );
+      return res.status(503).json({
+        error: "Runtime terminal callback authority is unavailable",
+        retryable: true,
+      });
+    }
   }
 
   // Agent ownership and auto/pinned policy are server state, not browser
@@ -1007,6 +1107,14 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     // Every authenticated runtime must return this one-turn capability in its
     // callback headers. Mission Control persists only the digest.
     runtimeToolCapability,
+    ...(runtimeEffectEligible ? { runtimeEffectIntent } : {}),
+    ...(terminalCallbackGrant
+      ? {
+          runtimeTerminalCallbackGrant: terminalCallbackGrant.token,
+          runtimeTerminalCallbackGrantExpiresAt:
+            terminalCallbackGrant.expiresAt,
+        }
+      : {}),
     traceId: run.traceId ?? traceContext.traceId,
     traceparent: traceContext.traceparent,
     controlDepth,
@@ -1118,6 +1226,8 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         userName: resolvedUserName,
         isAdmin,
         senderRole,
+        readOnly,
+        traceId: run.traceId ?? traceContext.traceId,
         source: effectiveSource,
         linkedTo: resolvedLinkedTo,
         docPath: docPath || undefined,
@@ -1125,13 +1235,14 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         attachments: parsedAttachments,
       };
       const parsedControl =
-        runtime.id === "openclaw" || readOnly
+        readOnly
           ? null
           : parseRuntimeControlReply(result.finalText, {
               respondingAgent: finalAgent,
               temporaryAgent: isTemporarySancho,
             });
-      const visibleText = parsedControl?.text ?? result.finalText;
+      let visibleText = parsedControl?.text ?? result.finalText;
+      let controlFollowups: string[] = [];
       clearStatus(tid);
       // Child control actions validate against an active parent, so dispatch
       // them before the parent is terminalized.
@@ -1141,16 +1252,31 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
           controlContext,
           { secret: outboundSharedSecret },
         );
-        for (const followup of controlled.followupMessages) {
-          addMessage(tid, "bot", followup, "sancho");
-        }
+        visibleText = controlled.text;
+        controlFollowups = controlled.followupMessages;
       }
-      await markAgentRunCompletedAsync(run.id, tid, {
+      const terminalRun = await markAgentRunCompletedAsync(run.id, tid, {
         agent: finalAgent,
-        text: visibleText.slice(0, 4096),
+        text: visibleText.slice(0, 64_000),
         synchronous: true,
       });
+      if (!terminalRun || terminalRun.status !== "completed") {
+        // Stop may win on another replica after the synchronous runtime
+        // returned. The AgentRun transition is the shared tombstone; never
+        // recreate a bot card from this stale in-process result.
+        return res.status(200).json({
+          ok: true,
+          runId: run.id,
+          traceId: run.traceId ?? traceContext.traceId,
+          chatId: result.chatId || tid,
+          stale: true,
+          cancelled: terminalRun?.status === "cancelled",
+        });
+      }
       addMessage(tid, "bot", visibleText, finalAgent);
+      for (const followup of controlFollowups) {
+        addMessage(tid, "bot", followup, "sancho");
+      }
       return res.status(200).json({
         ok: true,
         runId: run.id,

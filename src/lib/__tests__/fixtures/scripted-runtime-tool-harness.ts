@@ -178,6 +178,7 @@ export class ScriptedRuntimeToolAdapter implements RuntimeAdapter {
   }
 
   readonly messaging = {
+    terminalDeliveryMode: (): "inline" => "inline",
     sendInbound: async (
       message: InboundMessage,
       sendOptions?: SendInboundOptions,

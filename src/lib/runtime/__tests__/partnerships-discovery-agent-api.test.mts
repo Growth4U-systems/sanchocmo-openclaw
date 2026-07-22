@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { AgentRun } from "@/lib/data/agent-runs";
@@ -31,6 +32,7 @@ function parentRun(inputOverrides: Record<string, unknown> = {}): AgentRun {
       isAdmin: true,
       senderRole: "admin",
       readOnly: false,
+      controlDepth: 0,
       runtimeDispatchMode: "ledger-v1",
       ...inputOverrides,
     },
@@ -256,6 +258,8 @@ test("non-admin, read-only, client and non-ledger parents fail closed", async ()
     { isAdmin: false },
     { readOnly: true },
     { senderRole: "client", userId: "mc-client-hospital-capilar" },
+    { controlDepth: 1 },
+    { temporaryAgent: true },
     { runtimeDispatchMode: "gateway" },
   ];
   for (const inputOverrides of cases) {
@@ -281,6 +285,37 @@ test("non-admin, read-only, client and non-ledger parents fail closed", async ()
     assert.equal(mocked.state.status, 403);
   }
   assert.equal(admissions, 0);
+});
+
+test("transport authentication stays bound to the admitted parent after secret rotation", async () => {
+  const admittedSecret = "admitted-runtime-secret";
+  const parent = parentRun({
+    runtimeTransportSecretSha256: createHash("sha256")
+      .update(admittedSecret)
+      .digest("hex"),
+  });
+  let legacyLookups = 0;
+  const handler = createAgentPartnershipsDiscoveryHandler(
+    dependencies({
+      sharedSecret: () => {
+        legacyLookups += 1;
+        return "rotated-runtime-secret";
+      },
+      authorizeDispatchLease: async () => ({ parentRun: parent }),
+    }),
+  );
+  const mocked = response();
+  await handler(
+    request({
+      headers: {
+        ...request().headers,
+        "x-mc-secret": admittedSecret,
+      },
+    }),
+    mocked.res,
+  );
+  assert.equal(mocked.state.status, 202);
+  assert.equal(legacyLookups, 0);
 });
 
 test("method and bridge failures expose only stable codes", async () => {

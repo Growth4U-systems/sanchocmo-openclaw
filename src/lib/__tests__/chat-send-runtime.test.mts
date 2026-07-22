@@ -7,6 +7,9 @@ import os from "node:os";
 import path from "node:path";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+process.env.SANCHO_RUNTIME_TERMINAL_GRANT_SECRET =
+  "chat-send-runtime-terminal-grant-secret".padEnd(64, "x");
+
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-chat-send-runtime-"));
 process.env.MC_WORKSPACE = tmp;
 process.env.MC_TASKS_BACKEND = "json";
@@ -191,6 +194,14 @@ test("an in-flight Hermes parent survives runtime selection and secret rotation"
       String(parentRuntimeSecret.read().payload.runId),
     );
     assert.equal(childRun?.runtime, "external-http");
+    assert.equal(
+      (childRun?.input as Record<string, unknown>).controlParentAgentRunId,
+      parentHeaders["x-mission-control-parent-run-id"],
+    );
+    assert.equal(
+      (childRun?.input as Record<string, unknown>).controlParentThreadId,
+      "demo:hermes-switch",
+    );
     assert.equal(
       (childRun?.input as Record<string, unknown>)
         .runtimeTransportSecretSha256,

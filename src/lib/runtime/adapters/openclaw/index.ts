@@ -56,6 +56,7 @@ export class OpenclawAdapter implements RuntimeAdapter {
   readonly capabilities = OPENCLAW_CAPABILITIES;
 
   readonly messaging = {
+    terminalDeliveryMode: (): "callback" => "callback",
     sendInbound: sendOpenclawInbound,
     cancel: async (threadId: string): Promise<void> => {
       markCancelled(threadId);

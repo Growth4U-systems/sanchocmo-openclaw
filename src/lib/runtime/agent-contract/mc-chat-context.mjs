@@ -38,6 +38,13 @@ const SANCHO_INTERVENTION_PROTOCOL_LINES = [
   `Sancho tomará únicamente ese turno en este mismo hilo. No cambia el propietario, el agente persistido, la tarea ni su harness; al turno siguiente vuelves tú automáticamente. No uses esta intervención para un entregable que ya salió de tu dominio: en ese caso corresponde cambio de agente/tarea.`,
 ];
 
+const RUNTIME_EFFECT_PROTOCOL_LINES = [
+  `⚙️ OPERACIONES DURABLES DE SANCHO: puedes iniciar una sola de estas operaciones acotadas por turno cuando el usuario administrador la haya pedido o confirmado explícitamente: leads_search_start o partnerships_discovery_start. Nunca la infieras de una aprobación genérica de plan.`,
+  `Leads: :::sancho-effect\n{"name":"leads_search_start","arguments":{"criteria":{"query":"<búsqueda opcional>","titles":["<cargo>"],"seniorities":["owner|founder|c_suite|partner|vp|head|director|manager|senior|entry|intern"],"personLocations":["<lugar>"],"organizationLocations":["<lugar>"],"organizationDomains":["example.com"],"employeeRanges":["1,50"],"emailStatuses":["verified|unverified|likely to engage|unavailable"]},"limit":10}}\n:::`,
+  `Partnerships: :::sancho-effect\n{"name":"partnerships_discovery_start","arguments":{"plan":{"title":"<título>","sectors":["<sector>"],"networks":["instagram"],"hashtags":["#tag"],"tiers":["nano|micro|mid|macro"],"audienceEsMinPct":60,"targetVolume":25}}}\n:::`,
+  `Incluye solo campos necesarios y valores reales confirmados. No inventes tenant, run IDs, callbacks, credenciales ni modo de ejecución. No uses Bash/curl, no esperes, no hagas polling y no declares que fue admitida: el servidor añadirá el recibo autoritativo.`,
+];
+
 /**
  * Resolve the runtime-neutral skill policy for a turn.
  * Legacy messages with one seed skill remain pinned; agent-scoped messages are
@@ -81,6 +88,9 @@ export function groundingSkillForTurn(input = {}) {
  *   canDelegate?: boolean,
  *   temporaryAgent?: boolean,
  *   controlDepth?: number,
+ *   isAdmin?: boolean,
+ *   senderRole?: "admin" | "client",
+ *   nativeEffectTools?: boolean,
  *   readOnly?: boolean,
  *   channelMode?: "docs-review" | "support-diagnostic",
  *   supportContext?: { pagePath?: string, deployedCommit?: string, imageDigest?: string, environment?: string,
@@ -91,6 +101,7 @@ export function groundingSkillForTurn(input = {}) {
  *   taskRouteProposal?: { id?: string, groupId?: string, agent?: string, skill?: string, skills?: string[], name?: string, brief?: string },
  *   priorThreadMessages?: Array<{ role?: string, text?: string, ts?: number, agent?: string, attachments?: unknown[] }>,
  *   attachments?: unknown[],
+ *   runtimeEffectIntent?: string[],
  * }} input
  * @returns {string}
  */
@@ -112,12 +123,16 @@ export function buildMcChatContextBlock(input) {
     canDelegate = true,
     temporaryAgent = false,
     controlDepth = 0,
+    isAdmin = false,
+    senderRole,
+    nativeEffectTools = false,
     readOnly = false,
     channelMode,
     supportContext,
     taskRouteProposal,
     priorThreadMessages,
     attachments,
+    runtimeEffectIntent,
   } = input || {};
 
   const lines = [
@@ -130,6 +145,12 @@ export function buildMcChatContextBlock(input) {
     lines.push(`runtime_id: ${runtimeId.trim()}`);
   }
   const boundedControlDepth = controlDepth === 1 ? 1 : 0;
+  const permittedRuntimeEffects = Array.isArray(runtimeEffectIntent)
+    ? runtimeEffectIntent.filter((name) =>
+        name === "leads_search_start" ||
+        name === "partnerships_discovery_start",
+      )
+    : [];
   const supportDiagnostic = readOnly && channelMode === "support-diagnostic";
   if (readOnly) {
     lines.push(`channel_mode: ${supportDiagnostic ? "support-diagnostic" : "docs-review"}`);
@@ -371,6 +392,30 @@ export function buildMcChatContextBlock(input) {
   }
   if (requestedAgent === "sancho" && canDelegate && !readOnly) {
     lines.push(...DELEGATE_PROTOCOL_LINES);
+  }
+  if (
+    isAdmin === true &&
+    senderRole === "admin" &&
+    !readOnly &&
+    boundedControlDepth === 0 &&
+    !temporaryAgent &&
+    permittedRuntimeEffects.length > 0
+  ) {
+    lines.push(`authorized_runtime_effects: ${permittedRuntimeEffects.join(", ")}`);
+    lines.push(RUNTIME_EFFECT_PROTOCOL_LINES[0]);
+    if (nativeEffectTools) {
+      lines.push(`native_effect_tools: authorized. Usa una sola vez la tool nativa con el mismo nombre y NO emitas además el marker.`);
+      lines.push(RUNTIME_EFFECT_PROTOCOL_LINES.at(-1));
+    } else {
+      lines.push(`native_effect_tools: unavailable. Aunque el runtime muestre una tool genérica con ese nombre, no la uses en este turno. Emite un bloque cerrado ":::sancho-effect"; el control plane lo validará, admitirá de forma idempotente y publicará el resultado final en este mismo chat.`);
+      if (permittedRuntimeEffects.includes("leads_search_start")) {
+        lines.push(RUNTIME_EFFECT_PROTOCOL_LINES[1]);
+      }
+      if (permittedRuntimeEffects.includes("partnerships_discovery_start")) {
+        lines.push(RUNTIME_EFFECT_PROTOCOL_LINES[2]);
+      }
+      lines.push(RUNTIME_EFFECT_PROTOCOL_LINES.at(-1));
+    }
   }
   lines.push(`[/MC Chat Context]`);
   return lines.join("\n");

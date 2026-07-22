@@ -231,14 +231,53 @@ test("4xx callback responses remain pending and are retried as temporary", async
   }
 });
 
+test("Retry-After keeps the only durable callback pending until the server lease expires", async () => {
+  const { root, directory } = tempOutbox("sancho-callback-retry-after-");
+  const events = [];
+  let attempts = 0;
+  const outbox = createCallbackOutbox({
+    runtimeId: "openclaw",
+    directory,
+    fetchImpl: async () => {
+      attempts += 1;
+      return new Response("terminal callback already leased", {
+        status: 503,
+        headers: { "Retry-After": "60" },
+      });
+    },
+    retryBaseMs: 5,
+    retryMaxMs: 5,
+    jitterRatio: 0,
+    logger: (event) => events.push(event),
+  });
+  outbox.start();
+
+  try {
+    outbox.enqueueTerminal(
+      terminalInput("http://127.0.0.1:3000/webhook", "retry-after"),
+    );
+    await waitFor(() => events.some(({ event }) => event === "retry_scheduled"));
+    const retry = events.find(({ event }) => event === "retry_scheduled");
+    assert.equal(attempts, 1);
+    assert.equal(retry.delayMs, 60_000);
+    assert.equal(retry.status, 503);
+    assert.equal(outbox.pendingCount(), 1);
+  } finally {
+    outbox.stop();
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("outbox repairs permissions and prunes invalid, temporary and max-age records", () => {
   const { root, directory } = tempOutbox("sancho-callback-prune-");
   let currentTime = Date.now();
+  const events = [];
   const outbox = createCallbackOutbox({
     runtimeId: "codex",
     directory,
     now: () => currentTime,
     maxAgeMs: 100,
+    logger: (event) => events.push(event),
   });
   const queued = outbox.enqueueTerminal(
     terminalInput("http://127.0.0.1:3000/webhook", "expired"),
@@ -264,6 +303,14 @@ test("outbox repairs permissions and prunes invalid, temporary and max-age recor
     assert.equal(fs.existsSync(queued.file), false);
     assert.equal(fs.existsSync(invalid), false);
     assert.equal(fs.existsSync(temporary), false);
+    assert.equal(
+      events.some(
+        (event) =>
+          event.event === "pruned_invalid" &&
+          event.callbackId === "f".repeat(64),
+      ),
+      true,
+    );
   } finally {
     outbox.stop();
     fs.rmSync(root, { recursive: true, force: true });
@@ -290,9 +337,7 @@ test("callback transport rejects redirects and resolves the documented outbox ro
     resolveCallbackOutboxDir("hermes", { SANCHO_HOME: "/srv/sancho" }),
     path.join(
       "/srv/sancho",
-      "workspace-sancho",
-      "_system",
-      "runtime-callback-outbox",
+      ".runtime-callback-outbox",
       "hermes",
     ),
   );
@@ -306,10 +351,20 @@ test("callback transport rejects redirects and resolves the documented outbox ro
       SANCHO_HOME: "/nonpersistent",
     }),
     path.join(
-      "/srv/persistent/workspace-sancho",
-      "_system",
-      "runtime-callback-outbox",
+      "/srv/persistent",
+      ".runtime-callback-outbox",
       "claude-code",
+    ),
+  );
+  assert.equal(
+    resolveCallbackOutboxDir("openclaw", {
+      OPENCLAW_HOME: "/root/.openclaw",
+      MC_WORKSPACE: "/root/.openclaw/workspace-sancho",
+    }),
+    path.join(
+      "/root/.openclaw",
+      ".runtime-callback-outbox",
+      "openclaw",
     ),
   );
 

@@ -22,12 +22,30 @@ export interface InboundMessage {
    * logs, environment variables and callbacks.
    */
   runtimeToolCapability?: string;
+  /**
+   * Signed, webhook-only authority for replaying the terminal callback after
+   * the short-lived runtime/tool capability window. It must never be placed in
+   * prompts, model context, logs or non-terminal callback headers.
+   */
+  runtimeTerminalCallbackGrant?: string;
+  /** Absolute expiry for runtime-side fail-closed admission and outbox bounds. */
+  runtimeTerminalCallbackGrantExpiresAt?: string;
+  /** Exact spend-bearing effects authorized by the current human message. */
+  runtimeEffectIntent?: Array<
+    "leads_search_start" | "partnerships_discovery_start"
+  >;
   /** Original user text used only for server-side runtime envelope binding. */
   runtimeAuthorityText?: string;
   /** Request-facing correlation id, also forwarded as X-Request-Id. */
   traceId?: string;
   /** W3C propagation header for runtimes with tracing support. */
   traceparent?: string;
+  /**
+   * Control-plane-only transport action. This is carried in a separate HTTP
+   * header too; runtimes must require both signals and bind the request to the
+   * exact active run before acting on it.
+   */
+  runtimeControlAction?: "stop";
   /** Authenticated control-plane hop count. Control actions stop at depth 1. */
   controlDepth?: 0 | 1;
   threadName?: string;
@@ -83,6 +101,16 @@ export interface InboundMessage {
   attachments?: unknown[];
   isAdmin?: boolean;
   senderRole?: "admin" | "client";
+  /**
+   * Server-authored portable agent contract. External runtimes must apply the
+   * instructions as system/developer context and must never echo or persist it
+   * as user-authored text.
+   */
+  runtimeContract?: {
+    schemaVersion: 1;
+    kind: "sancho.mc-chat-context";
+    instructions: string;
+  };
   /** A trusted channel may force a turn to analysis-only behavior. */
   readOnly?: boolean;
   /** Server-derived read-only experience. Browsers cannot select this mode. */
@@ -137,6 +165,8 @@ export interface RuntimeJobEndedAt {
 }
 
 export interface RuntimeMessaging {
+  /** Whether a successful turn returns inline or owns an async final callback. */
+  terminalDeliveryMode(): "callback" | "inline";
   sendInbound(
     message: InboundMessage,
     opts?: SendInboundOptions,

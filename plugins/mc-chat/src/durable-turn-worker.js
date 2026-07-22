@@ -10,6 +10,9 @@ const CONTROL_TIMEOUT_MS = 8_000;
 const RUN_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$/;
 const LEASE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,256}$/;
 const CAPABILITY_PATTERN = /^[a-f0-9]{64}$/;
+const TERMINAL_CALLBACK_GRANT_PATTERN =
+  /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const TERMINAL_CALLBACK_GRANT_MAX_BYTES = 4_096;
 const WORKER_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$/;
 const CONTROL_ACTIONS = new Set(["heartbeat", "started", "complete", "requeue"]);
 const REQUEUE_REASONS = new Set([
@@ -106,6 +109,15 @@ export function safeDurableTurnClaim(value) {
     typeof value.runtimeToolCapability !== "string" ||
     !CAPABILITY_PATTERN.test(value.runtimeToolCapability) ||
     value.runtimeToolCapability !== derivedCapability(value) ||
+    typeof value.runtimeTerminalCallbackGrant !== "string" ||
+    Buffer.byteLength(value.runtimeTerminalCallbackGrant, "utf8") >
+      TERMINAL_CALLBACK_GRANT_MAX_BYTES ||
+    !TERMINAL_CALLBACK_GRANT_PATTERN.test(
+      value.runtimeTerminalCallbackGrant,
+    ) ||
+    typeof value.runtimeTerminalCallbackGrantExpiresAt !== "string" ||
+    !Number.isFinite(Date.parse(value.runtimeTerminalCallbackGrantExpiresAt)) ||
+    Date.parse(value.runtimeTerminalCallbackGrantExpiresAt) <= Date.now() ||
     value.envelope.missionControlRunId !== value.parentAgentRunId ||
     value.envelope.runtimeToolCapability !== value.runtimeToolCapability
   ) {

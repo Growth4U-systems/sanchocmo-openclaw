@@ -6,7 +6,8 @@ const RECORD_VERSION = 1;
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_RESPONSE_MAX_BYTES = 8 * 1024;
 const DEFAULT_RECORD_MAX_BYTES = 2 * 1024 * 1024;
-const DEFAULT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// Must not exceed the server-issued terminal callback grant lifetime.
+const DEFAULT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RETRY_BASE_MS = 1_000;
 const DEFAULT_RETRY_MAX_MS = 60_000;
 const DEFAULT_JITTER_RATIO = 0.2;
@@ -77,6 +78,11 @@ function safeUnlink(file) {
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
   }
+}
+
+function recordIdentityFromFile(file) {
+  const match = /^callback-([a-f0-9]{64})\.json$/.exec(path.basename(file));
+  return match ? { callbackId: match[1] } : null;
 }
 
 function ensurePrivateDirectory(directory) {
@@ -181,6 +187,19 @@ async function readResponseBodyLimited(response, maxBytes) {
   }
 }
 
+function parseRetryAfterMs(value, nowMs = Date.now()) {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  if (/^\d+$/.test(normalized)) {
+    const seconds = Number(normalized);
+    return Number.isSafeInteger(seconds) ? seconds * 1_000 : undefined;
+  }
+  const retryAt = Date.parse(normalized);
+  if (!Number.isFinite(retryAt)) return undefined;
+  return Math.max(0, retryAt - nowMs);
+}
+
 /**
  * Perform one bounded callback attempt. Errors intentionally contain no URL,
  * headers, response body, payload or run capability.
@@ -229,6 +248,7 @@ export async function postJsonCallback({
     const error = new Error(`Callback returned HTTP ${response.status}`);
     error.kind = "http";
     error.status = response.status;
+    error.retryAfterMs = parseRetryAfterMs(response.headers?.get?.("retry-after"));
     throw error;
   }
   return { status: response.status };
@@ -238,17 +258,14 @@ export function resolveCallbackOutboxDir(runtimeId, env = process.env) {
   const safeRuntimeId = assertRuntimeId(runtimeId);
   const configuredRoot = env.SANCHO_CALLBACK_OUTBOX_DIR?.trim();
   const workspace = env.MC_WORKSPACE?.trim();
-  const sanchoHome = env.SANCHO_HOME?.trim() || process.cwd();
+  const privateHome = workspace
+    ? path.dirname(path.resolve(workspace))
+    : env.SANCHO_HOME?.trim() ||
+      env.OPENCLAW_HOME?.trim() ||
+      process.cwd();
   const root = configuredRoot
     ? path.resolve(configuredRoot)
-    : workspace
-      ? path.resolve(workspace, "_system", "runtime-callback-outbox")
-    : path.resolve(
-      sanchoHome,
-      "workspace-sancho",
-      "_system",
-      "runtime-callback-outbox",
-    );
+    : path.resolve(privateHome, ".runtime-callback-outbox");
   return path.join(root, safeRuntimeId);
 }
 
@@ -355,7 +372,7 @@ export function createCallbackOutbox(options) {
       } catch {
         safeUnlink(file);
         removed += 1;
-        emit("pruned_invalid", null);
+        emit("pruned_invalid", recordIdentityFromFile(file));
       }
     }
     if (removed > 0) syncDirectory(directory);
@@ -390,6 +407,8 @@ export function createCallbackOutbox(options) {
       record = readRecord(file, runtimeId, maxRecordBytes);
     } catch {
       safeUnlink(file);
+      syncDirectory(directory);
+      emit("pruned_invalid", recordIdentityFromFile(file));
       return;
     }
     if (now() - record.createdAt > maxAgeMs) {
@@ -422,7 +441,15 @@ export function createCallbackOutbox(options) {
         kind: typeof error?.kind === "string" ? error.kind : "unknown",
         status: Number.isInteger(error?.status) ? error.status : undefined,
       };
-      const delayMs = retryDelay(record.attempts);
+      const exponentialDelayMs = retryDelay(record.attempts);
+      const requestedDelayMs = Number.isFinite(error?.retryAfterMs)
+        ? Math.max(0, error.retryAfterMs)
+        : 0;
+      const remainingAgeMs = Math.max(1, maxAgeMs - (now() - record.createdAt));
+      const delayMs = Math.min(
+        remainingAgeMs,
+        Math.max(exponentialDelayMs, requestedDelayMs),
+      );
       record.nextAttemptAt = now() + delayMs;
       try {
         atomicWriteRecord(file, record, maxRecordBytes);
@@ -450,6 +477,8 @@ export function createCallbackOutbox(options) {
         schedule(file, Math.max(0, record.nextAttemptAt - now()));
       } catch {
         safeUnlink(file);
+        syncDirectory(directory);
+        emit("pruned_invalid", recordIdentityFromFile(file));
       }
     }
   }

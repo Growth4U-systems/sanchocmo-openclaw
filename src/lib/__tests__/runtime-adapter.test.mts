@@ -369,9 +369,14 @@ test("external HTTP adapter uses only external endpoint and secret", async () =>
     const result = await runtime.getRuntime().messaging.sendInbound({
       slug: "acme",
       threadId: "acme:general",
-      text: "hola",
+      text: "Busca leads de founders",
+      runtimeEffectIntent: ["leads_search_start"],
       userId: "mc-admin",
       userName: "Admin",
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      controlDepth: 0,
     });
 
     assert.equal(result.ok, true);
@@ -379,6 +384,17 @@ test("external HTTP adapter uses only external endpoint and secret", async () =>
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "https://customer-runtime.test/runtime/inbound");
     assert.equal((calls[0].init?.headers as Record<string, string>)["X-MC-Secret"], "external-secret");
+    const body = JSON.parse(String(calls[0].init?.body));
+    assert.deepEqual(
+      {
+        schemaVersion: body.runtimeContract?.schemaVersion,
+        kind: body.runtimeContract?.kind,
+      },
+      { schemaVersion: 1, kind: "sancho.mc-chat-context" },
+    );
+    assert.match(body.runtimeContract.instructions, /:::sancho-effect/);
+    assert.match(body.runtimeContract.instructions, /leads_search_start/);
+    assert.doesNotMatch(body.runtimeContract.instructions, /runtimeToolCapability/);
   } finally {
     globalThis.fetch = previousFetch;
     runtime.resetRuntimeForTests();
@@ -425,9 +441,14 @@ test("external HTTP bridge shares Sancho generalist and pinned skill semantics",
       slug: "acme",
       threadId: "acme:general",
       threadName: "General",
-      text: "hola",
+      text: "Busca leads de founders",
+      runtimeEffectIntent: ["leads_search_start"],
       userId: "mc-admin",
       userName: "Admin",
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      controlDepth: 0,
     });
 
     assert.equal(result.ok, true);
@@ -448,8 +469,10 @@ test("external HTTP bridge shares Sancho generalist and pinned skill semantics",
     assert.match(body.message, /Eres Sancho, el agente generalista/);
     assert.match(body.message, /:::delegate/);
     assert.match(body.message, /:::task-route/);
+    assert.match(body.message, /:::sancho-effect/);
+    assert.match(body.message, /leads_search_start/);
     assert.doesNotMatch(body.message, /skill_hint:/);
-    assert.match(body.message, /Mensaje:\nhola/);
+    assert.match(body.message, /Mensaje:\nBusca leads de founders/);
 
     const pinnedResult = await runtime.getRuntime().messaging.sendInbound({
       slug: "acme",

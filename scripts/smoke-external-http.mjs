@@ -13,11 +13,28 @@ const bridgeMode = protocol === "mc-bridge";
 const artifactDir = path.join(root, ".context", bridgeMode ? "external-http-bridge-smoke" : "external-http-smoke");
 const workspace = path.join(artifactDir, "workspace");
 const summaryFile = path.join(artifactDir, "latest.json");
-const secret = process.env.SMOKE_EXTERNAL_SECRET || "external-http-smoke-secret";
+const secret =
+  process.env.SMOKE_EXTERNAL_SECRET || randomBytes(32).toString("hex");
 const adminToken =
   process.env.SMOKE_EXTERNAL_ADMIN_TOKEN || randomBytes(32).toString("hex");
-if (Buffer.byteLength(adminToken, "utf8") < 32) {
-  throw new Error("SMOKE_EXTERNAL_ADMIN_TOKEN must be at least 32 bytes");
+const terminalGrantSecret =
+  process.env.SMOKE_EXTERNAL_TERMINAL_GRANT_SECRET ||
+  randomBytes(32).toString("hex");
+const encryptionKey =
+  process.env.SMOKE_EXTERNAL_ENCRYPTION_KEY || randomBytes(32).toString("hex");
+const internalApiToken =
+  process.env.SMOKE_EXTERNAL_INTERNAL_API_TOKEN ||
+  randomBytes(32).toString("hex");
+for (const [name, value] of [
+  ["SMOKE_EXTERNAL_SECRET", secret],
+  ["SMOKE_EXTERNAL_ADMIN_TOKEN", adminToken],
+  ["SMOKE_EXTERNAL_TERMINAL_GRANT_SECRET", terminalGrantSecret],
+  ["SMOKE_EXTERNAL_ENCRYPTION_KEY", encryptionKey],
+  ["SMOKE_EXTERNAL_INTERNAL_API_TOKEN", internalApiToken],
+]) {
+  if (Buffer.byteLength(value, "utf8") < 32) {
+    throw new Error(`${name} must be at least 32 bytes`);
+  }
 }
 
 function sleep(ms) {
@@ -103,6 +120,7 @@ async function waitForCompletedRun(runsFile, threadId, timeoutMs = 10000) {
 
 function startFakeRuntime(port, sanchoPort) {
   const received = [];
+  const callbacks = [];
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === "GET" && req.url === (bridgeMode ? "/health" : "/healthz")) {
@@ -131,6 +149,20 @@ function startFakeRuntime(port, sanchoPort) {
 
       if (req.method === "POST" && req.url === "/sancho/inbound") {
         const payload = await readJsonBody(req);
+        const terminalCallbackGrant =
+          typeof payload.runtimeTerminalCallbackGrant === "string"
+            ? payload.runtimeTerminalCallbackGrant.trim()
+            : "";
+        const terminalCallbackGrantExpiresAt = Date.parse(
+          payload.runtimeTerminalCallbackGrantExpiresAt,
+        );
+        if (
+          !terminalCallbackGrant ||
+          !Number.isFinite(terminalCallbackGrantExpiresAt) ||
+          terminalCallbackGrantExpiresAt <= Date.now()
+        ) {
+          throw new Error("async runtime admission is missing valid terminal callback authority");
+        }
         received.push({
           headers: {
             "x-mc-secret": req.headers["x-mc-secret"],
@@ -142,23 +174,45 @@ function startFakeRuntime(port, sanchoPort) {
         res.end(JSON.stringify({ runId: "fake_external_run_1" }));
 
         setTimeout(async () => {
+          const missionControlRunId =
+            typeof payload.missionControlRunId === "string"
+              ? payload.missionControlRunId.trim()
+              : "";
+          if (!missionControlRunId) {
+            throw new Error("async runtime callback is missing missionControlRunId");
+          }
           const webhookPayload = {
             slug: payload.slug,
             threadId: payload.threadId,
-            missionControlRunId: payload.missionControlRunId,
+            missionControlRunId,
             agent: payload.agent || payload.agentId || "sancho",
             text: `Smoke OK desde runtime externo para: ${payload.text}`,
           };
-          await fetch(`http://127.0.0.1:${sanchoPort}/api/chat/webhook`, {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              "x-mc-secret": secret,
-              "x-mission-control-run-id": payload.missionControlRunId,
-              "x-sancho-run-capability": payload.runtimeToolCapability,
+          const callbackHeaders = {
+            "content-type": "application/json",
+            "x-mc-secret": secret,
+            "x-mission-control-run-id": missionControlRunId,
+            "x-sancho-run-capability": payload.runtimeToolCapability,
+            "x-sancho-terminal-callback-grant": terminalCallbackGrant,
+          };
+          const callback = {
+            bodyMissionControlRunId: webhookPayload.missionControlRunId,
+            headerMissionControlRunId: missionControlRunId,
+            terminalGrantForwarded:
+              callbackHeaders["x-sancho-terminal-callback-grant"] ===
+              payload.runtimeTerminalCallbackGrant,
+            status: null,
+          };
+          callbacks.push(callback);
+          const callbackResponse = await fetch(
+            `http://127.0.0.1:${sanchoPort}/api/chat/webhook`,
+            {
+              method: "POST",
+              headers: callbackHeaders,
+              body: JSON.stringify(webhookPayload),
             },
-            body: JSON.stringify(webhookPayload),
-          });
+          );
+          callback.status = callbackResponse.status;
         }, 100);
         return;
       }
@@ -173,7 +227,7 @@ function startFakeRuntime(port, sanchoPort) {
 
   return new Promise((resolve, reject) => {
     server.once("error", reject);
-    server.listen(port, "127.0.0.1", () => resolve({ server, received }));
+    server.listen(port, "127.0.0.1", () => resolve({ server, received, callbacks }));
   });
 }
 
@@ -199,9 +253,10 @@ function startSancho(port, runtimePort) {
             SANCHO_EXTERNAL_AGENT: "sancho-coordinator",
           }
         : {}),
-      NEXTAUTH_SECRET: "external-http-smoke-nextauth",
-      ENCRYPTION_KEY: "external-http-smoke-encryption",
-      SANCHO_INTERNAL_API_TOKEN: "external-http-smoke-token",
+      SANCHO_RUNTIME_TERMINAL_GRANT_SECRET: terminalGrantSecret,
+      NEXTAUTH_SECRET: terminalGrantSecret,
+      ENCRYPTION_KEY: encryptionKey,
+      SANCHO_INTERNAL_API_TOKEN: internalApiToken,
       LOCAL_DASHBOARD_BYPASS: "0",
       NEXT_TELEMETRY_DISABLED: "1",
     },
@@ -264,7 +319,7 @@ async function main() {
       slug: "smoke",
       threadId: "smoke:general",
       threadName: "Smoke external-http",
-      text: "probando external-http end-to-end",
+      text: "Busca leads para probar external-http end-to-end",
       userName: "Smoke",
       userId: "smoke-user",
     };
@@ -296,6 +351,7 @@ async function main() {
       console.error(sancho.logs.join("").split("\n").slice(-80).join("\n"));
       throw new Error(`/api/chat/send failed HTTP ${sendRes.status}: ${sendText}`);
     }
+    const sendResponse = JSON.parse(sendText);
 
     const threadFile = path.join(workspace, "brand", "smoke", "chat", "general.json");
     const thread = await waitForThread(threadFile);
@@ -304,6 +360,45 @@ async function main() {
       runsFile,
       "smoke:general",
     );
+    if (!bridgeMode) {
+      const inboundPayload = fakeRuntime.received.at(-1)?.payload;
+      const inboundMissionControlRunId = inboundPayload?.missionControlRunId;
+      const callback = fakeRuntime.callbacks.at(-1);
+      const correlatedRunIds = [
+        sendResponse.runId,
+        inboundMissionControlRunId,
+        callback?.bodyMissionControlRunId,
+        callback?.headerMissionControlRunId,
+      ];
+      if (correlatedRunIds.some((runId) => runId !== latestRun.id)) {
+        throw new Error(
+          `async callback did not preserve the Mission Control run id: ${JSON.stringify({
+            expected: latestRun.id,
+            observed: correlatedRunIds,
+          })}`,
+        );
+      }
+      if (
+        callback?.terminalGrantForwarded !== true ||
+        !Number.isInteger(callback?.status) ||
+        callback.status < 200 ||
+        callback.status >= 300
+      ) {
+        throw new Error(
+          `async terminal callback did not forward valid terminal authority: ${JSON.stringify(callback)}`,
+        );
+      }
+      const runtimeContract = inboundPayload?.runtimeContract;
+      if (
+        runtimeContract?.schemaVersion !== 1 ||
+        runtimeContract?.kind !== "sancho.mc-chat-context" ||
+        typeof runtimeContract?.instructions !== "string" ||
+        !runtimeContract.instructions.includes(":::sancho-effect") ||
+        runtimeContract.instructions.includes("runtimeToolCapability")
+      ) {
+        throw new Error("async runtime did not receive the closed portable agent contract");
+      }
+    }
 
     const summary = {
       ok: true,
@@ -312,7 +407,7 @@ async function main() {
       runtimePort,
       workspace,
       unauthenticatedStatus: unauthenticated.status,
-      sendResponse: JSON.parse(sendText),
+      sendResponse,
       latestRun: {
         id: latestRun.id,
         runtime: latestRun.runtime,
@@ -335,6 +430,7 @@ async function main() {
             payload: {
               slug: entry.payload.slug,
               threadId: entry.payload.threadId,
+              missionControlRunId: entry.payload.missionControlRunId,
               text: entry.payload.text,
               userId: entry.payload.userId,
               userName: entry.payload.userName,
@@ -344,8 +440,16 @@ async function main() {
                 skills: entry.payload.skills,
                 scope: entry.payload.scope,
               },
+              runtimeContract: {
+                schemaVersion: entry.payload.runtimeContract?.schemaVersion,
+                kind: entry.payload.runtimeContract?.kind,
+                hasEffectRail: String(
+                  entry.payload.runtimeContract?.instructions || "",
+                ).includes(":::sancho-effect"),
+              },
             },
           }),
+      asyncCallback: bridgeMode ? null : fakeRuntime.callbacks.at(-1) || null,
       threadMessages: thread.messages.map((m) => ({
         role: m.role,
         agent: m.agent,

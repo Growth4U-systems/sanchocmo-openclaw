@@ -29,6 +29,7 @@ function dependencies(overrides = {}) {
       missionControlRunId: "arun-chat-001",
       runtimeToolCapability,
       allowExternalEffects: true,
+      allowedExternalEffects: [LEADS_SEARCH_START_TOOL],
     }),
     loadConfig: () => ({
       channels: {
@@ -271,6 +272,7 @@ test("durable leads admission propagates the lease pair only in headers", async 
         dispatchRunId: "dispatch-1",
         dispatchLeaseToken,
         allowExternalEffects: true,
+        allowedExternalEffects: [LEADS_SEARCH_START_TOOL],
       }),
       fetchImpl: async (_url, init) => {
         calls.push(init);

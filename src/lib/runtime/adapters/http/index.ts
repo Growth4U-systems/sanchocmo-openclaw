@@ -174,10 +174,10 @@ function bridgeAttachmentBlock(attachments: unknown[] | undefined): string | nul
   ].join("\n");
 }
 
-function bridgePrompt(message: InboundMessage): string {
+function portableRuntimeContract(message: InboundMessage): string {
   const skillMode = resolveTurnSkillPolicy(message);
   const requestedAgent = message.agent || message.agentId || "sancho";
-  const contract = buildMcChatContextBlock({
+  return buildMcChatContextBlock({
     slug: message.slug,
     threadId: message.threadId,
     threadName: message.threadName,
@@ -196,13 +196,20 @@ function bridgePrompt(message: InboundMessage): string {
     canDelegate: message.temporaryAgent !== true && message.controlDepth !== 1 && message.readOnly !== true,
     temporaryAgent: message.temporaryAgent,
     controlDepth: message.controlDepth,
+    isAdmin: message.isAdmin,
+    senderRole: message.senderRole,
     readOnly: message.readOnly,
     channelMode: message.channelMode,
     supportContext: message.supportContext,
     taskRouteProposal: message.taskRouteProposal,
     priorThreadMessages: message.priorThreadMessages,
     attachments: message.attachments,
+    runtimeEffectIntent: message.runtimeEffectIntent,
   });
+}
+
+function bridgePrompt(message: InboundMessage): string {
+  const contract = portableRuntimeContract(message);
 
   const attachmentBlock = bridgeAttachmentBlock(message.attachments);
   const sections = [
@@ -343,10 +350,23 @@ export class ExternalHttpAdapter implements RuntimeAdapter {
   readonly capabilities = EXTERNAL_HTTP_CAPABILITIES;
 
   readonly messaging = {
+    terminalDeliveryMode: (): "callback" | "inline" =>
+      externalProtocol() === "mc-bridge" ? "inline" : "callback",
     sendInbound: (message: InboundMessage, opts?: SendInboundOptions) =>
       externalProtocol() === "mc-bridge"
         ? sendMcBridgeInbound(message, opts)
-        : sendHttpRuntimeInbound(message, opts, EXTERNAL_HTTP_CONNECTION),
+        : sendHttpRuntimeInbound(
+            {
+              ...message,
+              runtimeContract: {
+                schemaVersion: 1,
+                kind: "sancho.mc-chat-context",
+                instructions: portableRuntimeContract(message),
+              },
+            },
+            opts,
+            EXTERNAL_HTTP_CONNECTION,
+          ),
     cancel: async (threadId: string): Promise<void> => {
       markCancelled(threadId);
     },
