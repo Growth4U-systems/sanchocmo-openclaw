@@ -1,0 +1,16 @@
+{
+  "source": "github",
+  "repo": "Cold-IQ/ColdIQ-s-GTM-Skills",
+  "skills": [
+    "inbound-triggers-30",
+    "outbound-triggers-6",
+    "bridgebound-relationship-39",
+    "bridgebound-history-16",
+    "bridgebound-in-market-20",
+    "bridgebound-symptoms-11",
+    "bridgebound-firmographic-15",
+    "outreach-4-categories",
+    "buying-signals-6"
+  ],
+  "note": "Destilado y reescrito, no copia literal: el repo fuente no declara licencia. Metodología original: Flip the Script, curada por ColdIQ."
+}

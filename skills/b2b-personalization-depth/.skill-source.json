@@ -1,0 +1,17 @@
+{
+  "source": "github",
+  "repo": "Cold-IQ/ColdIQ-s-GTM-Skills",
+  "skills": [
+    "personalization-6-buckets",
+    "personalization-hooks",
+    "personalization-playbooks",
+    "atl-btl-messaging",
+    "cold-email-4-sequence",
+    "cold-email-templates-34",
+    "email-1-variations-7",
+    "email-writing-frameworks",
+    "sdr-outbound-rules",
+    "master-skills/cold-email/personalization"
+  ],
+  "note": "Destilado y reescrito, no copia literal: el repo fuente no declara licencia. Plantillas re-creadas como esqueletos propios, no copiadas."
+}

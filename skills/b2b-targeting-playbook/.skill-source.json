@@ -1,0 +1,14 @@
+{
+  "source": "github",
+  "repo": "Cold-IQ/ColdIQ-s-GTM-Skills",
+  "skills": [
+    "master-skills/list-building",
+    "master-skills/list-building/define-icp",
+    "master-skills/list-building/qualify-accounts",
+    "master-skills/list-building/account-selection",
+    "master-skills/list-building/persona-mapping",
+    "list-building-tips",
+    "lead-sources-guide"
+  ],
+  "note": "Destilado y reescrito, no copia literal: el repo fuente no declara licencia."
+}
