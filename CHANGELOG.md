@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.11.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.10.0...v1.11.0) (2026-07-22)
+
+
+### Features
+
+* **metrics:** continuous Explee conversation sync into GHL (SAN-488) ([#1391](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1391)) ([268844a](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/268844aaba8b499f353c217b31905b03a259f388))
+* **metrics:** Explee bridge writes conversation summary and status to GHL (SAN-488) ([#1388](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1388)) ([904dc28](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/904dc28e8b134cfe36f0c8f8d3e1fc9f25a3a62a))
+* **metrics:** Explee hot-leads bridge to GHL, opt-in per brand (SAN-488) ([#1385](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1385)) ([9ff43b2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9ff43b243233a7d491a7b1eee27df40f6a0d05cb))
+* **metrics:** sales engine drill-down and conversion rates (SAN-326) ([#1390](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1390)) ([7f1636e](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/7f1636e9fd993f4178e9ba5642929a855977202d))
+* **metrics:** sales engine funnel-by-channel matrix from GHL (SAN-326) ([#1389](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1389)) ([2766989](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/2766989bf73302e995d3aa84577c3d7542e8991d))
+* **skills:** ColdIQ GTM playbooks adaptados a outbound B2B (SAN-480) ([#1398](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1398)) ([a526c5d](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/a526c5d1ddabf673c24a83788ede46ce85fe7d70))
+* **support:** give Growie tenant-wide evidence (threads, runs, docs) (SAN-476) ([#1393](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1393)) ([90d3bc0](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/90d3bc0c84b0b0c5a4eec1b20a490999d0015c81))
+
+
+### Bug Fixes
+
+* **deploy:** prod rollout default follows Environment vars (SAN-480) ([#1394](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1394)) ([9914cc2](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/9914cc2d8e428658f7627de07d60444f093482f5))
+* **docs:** tolerate transient Growie provider delays ([#1387](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1387)) ([73fb56f](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/73fb56f416357b24de09f492262dec065b1b11af))
+* **metrics:** reconcile sales engine totals with channel rows (SAN-326) ([#1392](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1392)) ([4194e35](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/4194e35cbeb6da18ab3a2c674a9481d76dccdf81))
+* **metrics:** sales engine matrix counts live from GHL (SAN-326) ([#1395](https://github.com/Growth4U-systems/sanchocmo-openclaw/issues/1395)) ([c6eccc5](https://github.com/Growth4U-systems/sanchocmo-openclaw/commit/c6eccc564275e9b01f63eaa7e6c9c423d2027dcd))
+
 ## [1.10.0](https://github.com/Growth4U-systems/sanchocmo-openclaw/compare/v1.9.0...v1.10.0) (2026-07-18)
 
 
