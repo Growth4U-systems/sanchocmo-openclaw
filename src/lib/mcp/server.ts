@@ -5,7 +5,6 @@ import { promises as fs } from "fs";
 import path from "path";
 import * as z from "zod/v4";
 import {
-  addMessage,
   getPendingProgress,
   getStatusEntry,
   getThread,
@@ -5157,15 +5156,6 @@ async function dispatchMcChatThroughControlPlane(
     chatId: response.chatId || extractChatId(response.data) || payload.threadId,
     controlPlane: response.data,
   };
-}
-
-function parseGatewayBody(raw: string): unknown {
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return { raw };
-  }
 }
 
 function normalizeDelegateAgent(agent: string): string {
