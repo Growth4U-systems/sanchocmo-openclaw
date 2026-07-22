@@ -30,10 +30,31 @@ HERMES_CHAT_SECRET=<openssl-rand-hex-32>
 HERMES_CLI=hermes
 HERMES_CLI_PROVIDER=anthropic
 HERMES_CLI_MODEL=claude-sonnet-4-6
-HERMES_WORKDIR=/root/.openclaw
+HERMES_CLI_TOOLSETS=web,vision
 
 ANTHROPIC_API_KEY=<anthropic-key>
 ```
+
+The bundled bridge ignores host project workdirs and starts each turn in an
+opaque tenant/thread directory beneath the OS temporary directory. It passes
+only OS/proxy/certificate variables, the credential for `HERMES_CLI_PROVIDER`,
+and bounded Sancho routing metadata to the Hermes child process. Application
+secrets such as `DATABASE_URL`, `NEXTAUTH_SECRET`, and `MC_CHAT_SECRET` are not
+inherited. To preserve an existing `hermes auth` login, only `auth.json` and
+`.anthropic_oauth.json` are copied from `~/.hermes` into the isolated turn home
+with mode `0600`; host rules, hooks, memories, sessions and plugins are never
+copied. Set `HERMES_AUTH_SOURCE_DIR` only for a custom credential-store path.
+
+`web,vision` is the default toolset allowlist. Unsafe toolsets are rejected by
+default; `HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS=1` is an explicit escape hatch
+for primary turns only and must not be enabled in normal deployments. Read-only,
+control-depth and temporary turns remain pinned to `web,vision` regardless.
+
+Terminal callbacks are written atomically to
+`$SANCHO_HOME/workspace-sancho/_system/runtime-callback-outbox/hermes` before
+delivery and replayed after bridge restarts until Mission Control returns 2xx.
+Use `SANCHO_CALLBACK_OUTBOX_DIR` only when the default Sancho home is not on a
+persistent volume.
 
 Port `18791` is reserved by OpenClaw browser control inside the Sancho container; do not reuse it for Hermes.
 
@@ -108,10 +129,16 @@ locally:
 ```bash
 npm run build
 npm run smoke:runtime:external-http
+SMOKE_HERMES_PROVIDER=anthropic \
+  SMOKE_HERMES_MODEL=claude-sonnet-4-6 \
+  npm run smoke:runtime:hermes
 ```
 
-That smoke uses a fake runtime and writes the latest result to
-`.context/external-http-smoke/latest.json`.
+The first smoke uses a fake runtime and writes the latest result to
+`.context/external-http-smoke/latest.json`. The Hermes smoke uses the real CLI
+and writes its result to `.context/cli-runtime-smoke/hermes/latest.json`; it
+requires the matching provider credential in the environment or Hermes auth
+store.
 
 1. Log in to Mission Control on `https://staging-hermes.sanchocmo.ai`.
 2. Go to `Ajustes -> Runtime`.

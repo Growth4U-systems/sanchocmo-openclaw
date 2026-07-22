@@ -341,6 +341,16 @@ export class PostgresAgentRunsRepository implements AgentRunsRepository {
     return row ? agentRunFromDatabaseRow(row) : null;
   }
 
+  async listActive(limit = 100): Promise<AgentRun[]> {
+    const rows = await this.database
+      .select()
+      .from(runsTable)
+      .where(inArray(runsTable.status, [...ACTIVE_STATUSES]))
+      .orderBy(desc(runsTable.createdAt), desc(runsTable.id))
+      .limit(Math.max(0, limit));
+    return rows.map(agentRunFromDatabaseRow);
+  }
+
   async markDispatched(runId: string, threadId: string, data?: unknown): Promise<AgentRun | null> {
     const now = new Date();
     return this.transition({

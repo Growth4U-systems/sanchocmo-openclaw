@@ -1,25 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import crypto from "node:crypto";
 import { withErrorHandler } from "@/lib/api-middleware";
 import { assembleContextPack } from "@/lib/data/context-pack";
 import { getAgentRunByIdAsync } from "@/lib/data/agent-runs";
-import { getRuntime } from "@/lib/runtime";
+import { createRuntimeAdapter, resolveRuntimeId } from "@/lib/runtime";
 import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 import { authorizeRuntimeRunRequest } from "@/lib/runtime/runtime-run-request-authority";
+import { authorizeRuntimeTransportSecret } from "@/lib/runtime/runtime-transport-secret";
 
 function singleHeader(req: NextApiRequest, name: string): string | undefined {
   const value = req.headers[name];
   return Array.isArray(value) ? undefined : value;
-}
-
-function safeEqual(left: string | undefined, right: string): boolean {
-  if (!left) return false;
-  const supplied = Buffer.from(left);
-  const expected = Buffer.from(right);
-  return (
-    supplied.length === expected.length &&
-    crypto.timingSafeEqual(supplied, expected)
-  );
 }
 
 /**
@@ -41,14 +31,6 @@ export async function contextPackHandler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Verify shared secret (identical guard to /api/chat/webhook).
-  const secret = getRuntime().messaging.getSharedSecret?.();
-  if (!secret) {
-    return res.status(503).json({ error: "MC_CHAT_SECRET not configured" });
-  }
-  if (!safeEqual(singleHeader(req, "x-mc-secret"), secret)) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
   if (
     req.body !== undefined &&
     req.body !== null &&
@@ -73,6 +55,27 @@ export async function contextPackHandler(
   );
   if (!authority) {
     return res.status(403).json({ error: "Runtime run authority invalid" });
+  }
+  const runtimeId = resolveRuntimeId(authority.run.runtime);
+  if (!runtimeId) {
+    return res.status(403).json({ error: "Runtime context binding invalid" });
+  }
+  // Authenticate against the runtime that admitted this exact run. Looking at
+  // the current selection here strands in-flight turns during a rollout and
+  // can let the new runtime's secret authorize an old runtime's context.
+  const transportAuthorization = authorizeRuntimeTransportSecret({
+    suppliedSecret: singleHeader(req, "x-mc-secret"),
+    runInput: authority.input,
+    resolveLegacySecret: () =>
+      createRuntimeAdapter(runtimeId).messaging.getSharedSecret?.(),
+  });
+  if (transportAuthorization === "legacy_secret_missing") {
+    return res
+      .status(503)
+      .json({ error: "Runtime context secret not configured" });
+  }
+  if (transportAuthorization !== "authorized") {
+    return res.status(403).json({ error: "Forbidden" });
   }
   const persistedPrimarySkill = authority.input.primarySkill;
   const skillArg =

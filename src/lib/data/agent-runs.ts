@@ -151,6 +151,7 @@ export interface AgentRunsRepository {
   getByIdempotencyKey(threadId: string, idempotencyKey: string): Promise<AgentRun | null>;
   claimCallbackFingerprint(runId: string, fingerprint: string): Promise<boolean>;
   getLatestActive(threadId: string): Promise<AgentRun | null>;
+  listActive(limit?: number): Promise<AgentRun[]>;
   markDispatched(runId: string, threadId: string, data?: unknown): Promise<AgentRun | null>;
   markFailed(
     runId: string,
@@ -577,6 +578,19 @@ class JsonAgentRunsRepository implements AgentRunsRepository {
     return getLatestActiveRun(threadId);
   }
 
+  async listActive(limit = 100) {
+    const boundedLimit = Math.max(0, limit);
+    if (boundedLimit === 0) return [];
+    return readStore().runs
+      .filter((run) => ACTIVE_STATUSES.has(run.status))
+      .sort(
+        (left, right) =>
+          right.createdAt.localeCompare(left.createdAt) ||
+          right.id.localeCompare(left.id),
+      )
+      .slice(0, boundedLimit);
+  }
+
   async markDispatched(runId: string, threadId: string, data?: unknown) {
     return markAgentRunDispatched(runId, threadId, data);
   }
@@ -694,6 +708,10 @@ export async function claimAgentRunCallbackFingerprintAsync(
 
 export async function getLatestActiveRunAsync(threadId: string): Promise<AgentRun | null> {
   return getAgentRunsRepository().getLatestActive(threadId);
+}
+
+export async function listActiveAgentRunsAsync(limit = 100): Promise<AgentRun[]> {
+  return getAgentRunsRepository().listActive(limit);
 }
 
 export async function markAgentRunDispatchedAsync(

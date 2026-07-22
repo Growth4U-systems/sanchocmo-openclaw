@@ -1,31 +1,53 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import http from "node:http";
+import os from "node:os";
+import path from "node:path";
 import {
   buildHermesArgs,
   buildHermesChildEnv,
   buildHermesPrompt,
+  buildHermesWorkdir,
+  cleanupHermesWorkdir,
   cleanHermesStdout,
   createServer,
   fetchContextPack,
+  resolveHermesToolsets,
+  stageHermesAuthFiles,
 } from "./bridge.mjs";
 
-test("buildHermesChildEnv exposes chat context to deterministic CLI wrappers", () => {
+test("buildHermesChildEnv exposes bounded Sancho metadata to CLI wrappers", () => {
   const env = buildHermesChildEnv(
     {
       slug: "growth4u",
       threadId: "growth4u:outbound",
       agent: "rocinante",
       text: "Crea una base real",
+      readOnly: true,
+      controlDepth: 1,
+      temporaryAgent: true,
     },
     "run-1",
+    { PATH: "/usr/bin", DATABASE_URL: "postgres://do-not-leak" },
+    "/tmp/sancho-hermes-test/tenant/thread",
   );
 
+  assert.equal(env.PATH, "/usr/bin");
+  assert.equal(env.HOME, "/tmp/sancho-hermes-test/tenant/thread");
+  assert.equal(env.USERPROFILE, "/tmp/sancho-hermes-test/tenant/thread");
+  assert.equal(env.XDG_CONFIG_HOME, "/tmp/sancho-hermes-test/tenant/thread/.config");
+  assert.equal(env.HERMES_HOME, "/tmp/sancho-hermes-test/tenant/thread/.hermes");
   assert.equal(env.HERMES_SANCHO_RUN_ID, "run-1");
+  assert.equal(env.SANCHO_RUNTIME, "hermes");
   assert.equal(env.SANCHO_CHAT_SLUG, "growth4u");
   assert.equal(env.SANCHO_CHAT_THREAD_ID, "growth4u:outbound");
   assert.equal(env.SANCHO_CHAT_AGENT, "rocinante");
-  assert.equal(env.SANCHO_CHAT_REQUEST, "Crea una base real");
+  assert.equal(env.SANCHO_CHAT_READ_ONLY, "1");
+  assert.equal(env.SANCHO_CHAT_CONTROL_DEPTH, "1");
+  assert.equal(env.SANCHO_CHAT_TEMPORARY_AGENT, "1");
+  assert.equal(env.SANCHO_CHAT_REQUEST, undefined);
+  assert.equal(env.DATABASE_URL, undefined);
 });
 
 test("buildHermesChildEnv isolates Anthropic API auth from Claude Code OAuth", () => {
@@ -37,23 +59,175 @@ test("buildHermesChildEnv isolates Anthropic API auth from Claude Code OAuth", (
       ANTHROPIC_API_KEY: "anthropic-api-key",
       CLAUDE_CODE_OAUTH_TOKEN: "claude-code-oauth",
     },
+    "/tmp/sancho-hermes-test/anthropic",
   );
 
   assert.equal(env.ANTHROPIC_API_KEY, "anthropic-api-key");
   assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, undefined);
 });
 
-test("buildHermesChildEnv preserves Claude OAuth when Hermes has no API key", () => {
+test("buildHermesChildEnv translates Sancho Anthropic OAuth for Hermes", () => {
   const env = buildHermesChildEnv(
     { threadId: "growth4u:general", text: "Hola" },
     "run-3",
     {
       HERMES_CLI_PROVIDER: "anthropic",
-      CLAUDE_CODE_OAUTH_TOKEN: "claude-code-oauth",
+      ANTHROPIC_OAUTH_TOKEN: "sancho-anthropic-oauth",
     },
+    "/tmp/sancho-hermes-test/anthropic-oauth",
   );
 
-  assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, "claude-code-oauth");
+  assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, "sancho-anthropic-oauth");
+  assert.equal(env.ANTHROPIC_OAUTH_TOKEN, undefined);
+});
+
+test("buildHermesChildEnv only forwards the selected provider and OS plumbing", () => {
+  const env = buildHermesChildEnv(
+    { slug: "acme", threadId: "acme:general", text: "Hola" },
+    "run-isolated",
+    {
+      HERMES_CLI_PROVIDER: "openrouter",
+      PATH: "/usr/local/bin:/usr/bin",
+      HTTPS_PROXY: "http://proxy.internal:8080",
+      SSL_CERT_FILE: "/etc/ssl/custom.pem",
+      OPENROUTER_API_KEY: "selected-provider-key",
+      OPENROUTER_BASE_URL: "https://openrouter.example/v1",
+      ANTHROPIC_API_KEY: "unrelated-provider-key",
+      ANTHROPIC_OAUTH_TOKEN: "unrelated-provider-oauth",
+      OPENAI_API_KEY: "also-unrelated",
+      DATABASE_URL: "postgres://sancho-db",
+      NEXTAUTH_SECRET: "nextauth-secret",
+      MC_CHAT_SECRET: "mc-secret",
+      HERMES_CHAT_SECRET: "bridge-secret",
+      HERMES_BRIDGE_SECRET: "bridge-secret-2",
+      SANCHO_INTERNAL_API_TOKEN: "internal-token",
+      ENCRYPTION_KEY: "encryption-key",
+      NODE_OPTIONS: "--require /tmp/evil.cjs",
+      LD_PRELOAD: "/tmp/evil.so",
+      BASH_ENV: "/tmp/evil.sh",
+    },
+    "/tmp/sancho-hermes-test/openrouter",
+  );
+
+  assert.equal(env.PATH, "/usr/local/bin:/usr/bin");
+  assert.equal(env.HTTPS_PROXY, "http://proxy.internal:8080");
+  assert.equal(env.SSL_CERT_FILE, "/etc/ssl/custom.pem");
+  assert.equal(env.OPENROUTER_API_KEY, "selected-provider-key");
+  assert.equal(env.OPENROUTER_BASE_URL, "https://openrouter.example/v1");
+  for (const forbidden of [
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_OAUTH_TOKEN",
+    "CLAUDE_CODE_OAUTH_TOKEN",
+    "OPENAI_API_KEY",
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "MC_CHAT_SECRET",
+    "HERMES_CHAT_SECRET",
+    "HERMES_BRIDGE_SECRET",
+    "SANCHO_INTERNAL_API_TOKEN",
+    "ENCRYPTION_KEY",
+    "NODE_OPTIONS",
+    "LD_PRELOAD",
+    "BASH_ENV",
+  ]) {
+    assert.equal(env[forbidden], undefined, `${forbidden} must not reach Hermes`);
+  }
+});
+
+test("buildHermesWorkdir is isolated by tenant/thread and resists traversal", () => {
+  const tempRoot = "/tmp/sancho-hermes-adversarial-root";
+  const escaped = buildHermesWorkdir(
+    {
+      slug: "../../../../root/.openclaw",
+      threadId: "../../../../etc/passwd\0acme",
+    },
+    tempRoot,
+  );
+  const otherTenant = buildHermesWorkdir(
+    { slug: "other", threadId: "../../../../etc/passwd\0acme" },
+    tempRoot,
+  );
+  const otherThread = buildHermesWorkdir(
+    { slug: "../../../../root/.openclaw", threadId: "other-thread" },
+    tempRoot,
+  );
+
+  assert.match(
+    escaped,
+    /^\/tmp\/sancho-hermes-adversarial-root\/tenant-[a-f0-9]{24}\/thread-[a-f0-9]{24}$/,
+  );
+  assert.equal(escaped.includes(".."), false);
+  assert.equal(escaped.includes("openclaw"), false);
+  assert.notEqual(escaped, otherTenant);
+  assert.notEqual(escaped, otherThread);
+});
+
+test("Hermes isolation stages credentials but not host rules or plugins", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-auth-"));
+  const source = path.join(root, "persistent-hermes");
+  const workdir = path.join(root, "isolated-turn");
+  fs.mkdirSync(source, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(
+    path.join(source, "auth.json"),
+    JSON.stringify({ version: 2, credential_pool: { anthropic: ["secret"] } }),
+    { mode: 0o600 },
+  );
+  fs.writeFileSync(
+    path.join(source, ".anthropic_oauth.json"),
+    JSON.stringify({ access_token: "oauth-secret" }),
+    { mode: 0o600 },
+  );
+  fs.writeFileSync(path.join(source, "config.yaml"), "unsafe rules", {
+    mode: 0o600,
+  });
+
+  try {
+    assert.deepEqual(
+      await stageHermesAuthFiles(workdir, {
+        HERMES_AUTH_SOURCE_DIR: source,
+      }),
+      ["auth.json", ".anthropic_oauth.json"],
+    );
+    for (const filename of ["auth.json", ".anthropic_oauth.json"]) {
+      const target = path.join(workdir, ".hermes", filename);
+      assert.equal(fs.statSync(target).mode & 0o777, 0o600);
+      assert.equal(
+        fs.readFileSync(target, "utf8"),
+        fs.readFileSync(path.join(source, filename), "utf8"),
+      );
+    }
+    assert.equal(
+      fs.existsSync(path.join(workdir, ".hermes", "config.yaml")),
+      false,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("cleanupHermesWorkdir removes only an exact hashed run directory", async () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-cleanup-"));
+  const workdir = buildHermesWorkdir(
+    { slug: "acme", threadId: "acme:private" },
+    tempRoot,
+  );
+  fs.mkdirSync(workdir, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(path.join(workdir, "prompt.txt"), "private prompt", { mode: 0o600 });
+
+  try {
+    await cleanupHermesWorkdir(workdir, tempRoot);
+    assert.equal(fs.existsSync(workdir), false);
+    await assert.rejects(
+      cleanupHermesWorkdir(tempRoot, tempRoot),
+      /Refusing to remove a non-isolated Hermes workdir/,
+    );
+    await assert.rejects(
+      cleanupHermesWorkdir(path.dirname(tempRoot), tempRoot),
+      /Refusing to remove a non-isolated Hermes workdir/,
+    );
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
 });
 
 test("buildHermesPrompt preserves Sancho routing metadata", () => {
@@ -132,100 +306,101 @@ test("buildHermesPrompt includes Sancho context pack when available", () => {
 });
 
 test("buildHermesArgs keeps Sancho skills portable instead of requiring Hermes installation", () => {
-  const previousProvider = process.env.HERMES_CLI_PROVIDER;
-  const previousModel = process.env.HERMES_CLI_MODEL;
-  const previousToolsets = process.env.HERMES_CLI_TOOLSETS;
-  const previousSkills = process.env.HERMES_CLI_SKILLS;
-  process.env.HERMES_CLI_PROVIDER = "nous";
-  process.env.HERMES_CLI_MODEL = "anthropic/claude-sonnet-4";
-  process.env.HERMES_CLI_TOOLSETS = "web,terminal,skills";
-  delete process.env.HERMES_CLI_SKILLS;
+  const args = buildHermesArgs(
+    {
+      skill: "seo-content",
+      skills: ["seo-content", "content-review"],
+    },
+    "hello",
+    {
+      HERMES_CLI_PROVIDER: "nous",
+      HERMES_CLI_MODEL: "anthropic/claude-sonnet-4",
+    },
+  );
 
-  try {
-    const args = buildHermesArgs(
-      {
-        skill: "seo-content",
-        skills: ["seo-content", "content-review"],
-      },
-      "hello",
-    );
-
-    assert.deepEqual(args, [
-      "chat",
-      "-Q",
-      "--provider",
-      "nous",
-      "--model",
-      "anthropic/claude-sonnet-4",
-      "--toolsets",
-      "web,terminal,skills",
-      "-q",
-      "hello",
-    ]);
-  } finally {
-    if (previousProvider === undefined) delete process.env.HERMES_CLI_PROVIDER;
-    else process.env.HERMES_CLI_PROVIDER = previousProvider;
-    if (previousModel === undefined) delete process.env.HERMES_CLI_MODEL;
-    else process.env.HERMES_CLI_MODEL = previousModel;
-    if (previousToolsets === undefined) delete process.env.HERMES_CLI_TOOLSETS;
-    else process.env.HERMES_CLI_TOOLSETS = previousToolsets;
-    if (previousSkills === undefined) delete process.env.HERMES_CLI_SKILLS;
-    else process.env.HERMES_CLI_SKILLS = previousSkills;
-  }
+  assert.deepEqual(args, [
+    "chat",
+    "-Q",
+    "--source",
+    "sancho",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--provider",
+    "nous",
+    "--model",
+    "anthropic/claude-sonnet-4",
+    "--toolsets",
+    "web,vision",
+    "-q",
+    "hello",
+  ]);
 });
 
 test("buildHermesArgs supports explicit Hermes-native skills", () => {
-  const previousSkills = process.env.HERMES_CLI_SKILLS;
-  process.env.HERMES_CLI_SKILLS = "computer-use";
-  const args = buildHermesArgs({ skill: "sancho-manager" }, "hello");
+  const args = buildHermesArgs(
+    { skill: "sancho-manager" },
+    "hello",
+    { HERMES_CLI_SKILLS: "computer-use" },
+  );
 
-  try {
-    assert.deepEqual(args, ["chat", "-Q", "-s", "computer-use", "-q", "hello"]);
-  } finally {
-    if (previousSkills === undefined) delete process.env.HERMES_CLI_SKILLS;
-    else process.env.HERMES_CLI_SKILLS = previousSkills;
+  assert.deepEqual(args, [
+    "chat",
+    "-Q",
+    "--source",
+    "sancho",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "-s",
+    "computer-use",
+    "--toolsets",
+    "web,vision",
+    "-q",
+    "hello",
+  ]);
+});
+
+test("restricted Hermes turns cannot widen toolsets even with the unsafe opt-in", () => {
+  const hostileEnv = {
+    HERMES_CLI_TOOLSETS: "terminal,file,messaging,browser,mcp,cron",
+    HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS: "1",
+  };
+  for (const message of [
+    { readOnly: true },
+    { controlDepth: 1 },
+    { temporaryAgent: true },
+    { temporary: true },
+  ]) {
+    assert.equal(resolveHermesToolsets(message, hostileEnv), "web,vision");
+    const args = buildHermesArgs(message, "diagnose", hostileEnv);
+    assert.equal(args[args.indexOf("--toolsets") + 1], "web,vision");
+    assert.equal(
+      args.some((arg) => /terminal|file|messaging|browser|mcp|cron/.test(arg)),
+      false,
+    );
   }
 });
 
-test("buildHermesArgs restricts read-only turns to non-mutating toolsets", () => {
-  const previousToolsets = process.env.HERMES_CLI_TOOLSETS;
-  const previousReadOnlyToolsets = process.env.HERMES_CLI_READ_ONLY_TOOLSETS;
-  process.env.HERMES_CLI_TOOLSETS = "web,terminal,file,messaging";
-  delete process.env.HERMES_CLI_READ_ONLY_TOOLSETS;
+test("primary Hermes turns fail closed on dangerous configured toolsets", () => {
+  assert.throws(
+    () => resolveHermesToolsets({}, { HERMES_CLI_TOOLSETS: "web,terminal,file" }),
+    /Unsafe Hermes toolsets denied: terminal, file/,
+  );
+});
 
-  try {
-    const args = buildHermesArgs({ readOnly: true }, "diagnose");
-    assert.deepEqual(args, [
-      "chat",
-      "-Q",
-      "--toolsets",
-      "web,vision",
-      "-q",
-      "diagnose",
-    ]);
-    assert.equal(args.includes("terminal"), false);
-    assert.equal(args.includes("file"), false);
-    assert.equal(args.includes("messaging"), false);
-
-    process.env.HERMES_CLI_READ_ONLY_TOOLSETS = "vision,terminal,file,messaging";
-    const configuredArgs = buildHermesArgs({ readOnly: true }, "inspect image");
-    assert.deepEqual(configuredArgs.slice(-4), [
-      "--toolsets",
-      "vision",
-      "-q",
-      "inspect image",
-    ]);
-  } finally {
-    if (previousToolsets === undefined) delete process.env.HERMES_CLI_TOOLSETS;
-    else process.env.HERMES_CLI_TOOLSETS = previousToolsets;
-    if (previousReadOnlyToolsets === undefined) delete process.env.HERMES_CLI_READ_ONLY_TOOLSETS;
-    else process.env.HERMES_CLI_READ_ONLY_TOOLSETS = previousReadOnlyToolsets;
-  }
+test("dangerous primary toolsets require a clearly unsafe explicit opt-in", () => {
+  assert.equal(
+    resolveHermesToolsets(
+      {},
+      {
+        HERMES_CLI_TOOLSETS: "web,terminal,file",
+        HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS: "1",
+      },
+    ),
+    "web,terminal,file",
+  );
 });
 
 test("buildHermesArgs never preloads a hinted skill in auto mode", () => {
-  const previousSkills = process.env.HERMES_CLI_SKILLS;
-  delete process.env.HERMES_CLI_SKILLS;
   const args = buildHermesArgs(
     {
       skill: "discovery-plan-builder",
@@ -234,14 +409,21 @@ test("buildHermesArgs never preloads a hinted skill in auto mode", () => {
       skillMode: "auto",
     },
     "hello",
+    {},
   );
 
-  try {
-    assert.deepEqual(args, ["chat", "-Q", "-q", "hello"]);
-  } finally {
-    if (previousSkills === undefined) delete process.env.HERMES_CLI_SKILLS;
-    else process.env.HERMES_CLI_SKILLS = previousSkills;
-  }
+  assert.deepEqual(args, [
+    "chat",
+    "-Q",
+    "--source",
+    "sancho",
+    "--ignore-user-config",
+    "--ignore-rules",
+    "--toolsets",
+    "web,vision",
+    "-q",
+    "hello",
+  ]);
 });
 
 test("cleanHermesStdout removes transport metadata and runtime warnings", () => {
@@ -343,6 +525,10 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
   const previousWebhook = process.env.SANCHO_WEBHOOK_URL;
   const previousTimeout = process.env.HERMES_RUN_TIMEOUT_MS;
   const previousContextEnabled = process.env.HERMES_CONTEXT_PACK_ENABLED;
+  const previousToolsets = process.env.HERMES_CLI_TOOLSETS;
+  const previousUnsafeToolsets = process.env.HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS;
+  const previousOutboxDir = process.env.SANCHO_CALLBACK_OUTBOX_DIR;
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-outbox-"));
   const received = [];
   const receivedHeaders = [];
   const runtimeToolCapability = "a".repeat(64);
@@ -367,6 +553,9 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
   process.env.HERMES_RUN_TIMEOUT_MS = "5000";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
   process.env.HERMES_CONTEXT_PACK_ENABLED = "0";
+  process.env.HERMES_CLI_TOOLSETS = "web,vision";
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
+  delete process.env.HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS;
 
   const bridge = createServer();
   const bridgeAddr = await listen(bridge);
@@ -434,6 +623,13 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     else process.env.HERMES_RUN_TIMEOUT_MS = previousTimeout;
     if (previousContextEnabled === undefined) delete process.env.HERMES_CONTEXT_PACK_ENABLED;
     else process.env.HERMES_CONTEXT_PACK_ENABLED = previousContextEnabled;
+    if (previousToolsets === undefined) delete process.env.HERMES_CLI_TOOLSETS;
+    else process.env.HERMES_CLI_TOOLSETS = previousToolsets;
+    if (previousUnsafeToolsets === undefined) delete process.env.HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS;
+    else process.env.HERMES_UNSAFE_ALLOW_DANGEROUS_TOOLSETS = previousUnsafeToolsets;
+    if (previousOutboxDir === undefined) delete process.env.SANCHO_CALLBACK_OUTBOX_DIR;
+    else process.env.SANCHO_CALLBACK_OUTBOX_DIR = previousOutboxDir;
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });
 
@@ -443,7 +639,9 @@ test("Hermes spawn error emits exactly one terminal callback", async () => {
     HERMES_CLI: process.env.HERMES_CLI,
     HERMES_CONTEXT_PACK_ENABLED: process.env.HERMES_CONTEXT_PACK_ENABLED,
     SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+    SANCHO_CALLBACK_OUTBOX_DIR: process.env.SANCHO_CALLBACK_OUTBOX_DIR,
   };
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-hermes-error-outbox-"));
   const received = [];
   const webhook = http.createServer((req, res) => {
     let raw = "";
@@ -460,6 +658,7 @@ test("Hermes spawn error emits exactly one terminal callback", async () => {
   process.env.HERMES_CLI = "/definitely/missing/hermes";
   process.env.HERMES_CONTEXT_PACK_ENABLED = "0";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
   const bridge = createServer();
   const bridgeAddr = await listen(bridge);
 
@@ -486,5 +685,6 @@ test("Hermes spawn error emits exactly one terminal callback", async () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });

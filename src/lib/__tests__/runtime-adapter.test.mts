@@ -94,6 +94,85 @@ test("getRuntime memoizes the selected adapter", () => {
   else process.env.SANCHO_RUNTIME = previous;
 });
 
+test("getRuntime observes a persisted selection written by another process", () => {
+  const previousRuntime = process.env.SANCHO_RUNTIME;
+  const previousGateway = process.env.HERMES_GATEWAY_URL;
+  const previousSecret = process.env.HERMES_BRIDGE_SECRET;
+  try {
+    process.env.SANCHO_RUNTIME = "openclaw";
+    process.env.HERMES_GATEWAY_URL = "http://hermes.test";
+    process.env.HERMES_BRIDGE_SECRET = "bridge-secret";
+    runtime.resetRuntimeForTests();
+
+    const first = runtime.getRuntime();
+    fs.writeFileSync(
+      testRuntimeConfigFile,
+      JSON.stringify({ runtime: "hermes", updatedAt: "2026-07-22T00:00:00.000Z" }),
+      "utf8",
+    );
+    const second = runtime.getRuntime();
+
+    assert.equal(first.id, "openclaw");
+    assert.equal(second.id, "hermes");
+    assert.notEqual(first, second);
+  } finally {
+    runtime.resetRuntimeForTests();
+    if (previousRuntime === undefined) delete process.env.SANCHO_RUNTIME;
+    else process.env.SANCHO_RUNTIME = previousRuntime;
+    if (previousGateway === undefined) delete process.env.HERMES_GATEWAY_URL;
+    else process.env.HERMES_GATEWAY_URL = previousGateway;
+    if (previousSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+    else process.env.HERMES_BRIDGE_SECRET = previousSecret;
+  }
+});
+
+test("async HTTP runtimes are not configured without callback authority", () => {
+  const keys = [
+    "HERMES_GATEWAY_URL",
+    "HERMES_BASE_URL",
+    "HERMES_URL",
+    "HERMES_BRIDGE_SECRET",
+    "HERMES_CHAT_SECRET",
+    "HERMES_SHARED_SECRET",
+    "MC_CHAT_SECRET",
+    "SANCHO_EXTERNAL_GATEWAY_URL",
+    "SANCHO_EXTERNAL_RUNTIME_URL",
+    "HERMES_EXTERNAL_GATEWAY_URL",
+    "HERMES_EXTERNAL_BASE_URL",
+    "HERMES_EXTERNAL_URL",
+    "SANCHO_EXTERNAL_SECRET",
+    "SANCHO_EXTERNAL_RUNTIME_SECRET",
+    "HERMES_EXTERNAL_SECRET",
+    "HERMES_EXTERNAL_API_KEY",
+    "HERMES_EXTERNAL_CHAT_SECRET",
+    "SANCHO_EXTERNAL_PROTOCOL",
+    "SANCHO_EXTERNAL_RUNTIME_PROTOCOL",
+    "HERMES_EXTERNAL_PROTOCOL",
+  ] as const;
+  const previous = new Map(keys.map((key) => [key, process.env[key]]));
+  try {
+    for (const key of keys) delete process.env[key];
+    process.env.HERMES_GATEWAY_URL = "http://hermes.test";
+    assert.equal(runtime.isRuntimeConfigured("hermes"), false);
+    process.env.HERMES_BRIDGE_SECRET = "bridge-secret";
+    assert.equal(runtime.isRuntimeConfigured("hermes"), true);
+
+    process.env.SANCHO_EXTERNAL_GATEWAY_URL = "https://runtime.test";
+    assert.equal(runtime.isRuntimeConfigured("external-http"), false);
+    process.env.SANCHO_EXTERNAL_SECRET = "external-secret";
+    assert.equal(runtime.isRuntimeConfigured("external-http"), true);
+    delete process.env.SANCHO_EXTERNAL_SECRET;
+    process.env.SANCHO_EXTERNAL_PROTOCOL = "mc-bridge";
+    assert.equal(runtime.isRuntimeConfigured("external-http"), true);
+  } finally {
+    for (const key of keys) {
+      const value = previous.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
 test("getRuntime fails closed for unknown runtime ids", () => {
   const previous = process.env.SANCHO_RUNTIME;
   process.env.SANCHO_RUNTIME = "nope";
@@ -162,8 +241,10 @@ test("legacy hermes-external runtime id maps to external-http", () => {
 test("persisted runtime selection from the UI overrides SANCHO_RUNTIME", () => {
   const previous = process.env.SANCHO_RUNTIME;
   const previousGateway = process.env.HERMES_GATEWAY_URL;
+  const previousSecret = process.env.HERMES_BRIDGE_SECRET;
   process.env.SANCHO_RUNTIME = "openclaw";
   process.env.HERMES_GATEWAY_URL = "http://hermes.test";
+  process.env.HERMES_BRIDGE_SECRET = "bridge-secret";
   fs.writeFileSync(
     testRuntimeConfigFile,
     JSON.stringify({ runtime: "hermes", updatedAt: "2026-07-01T00:00:00.000Z" }),
@@ -183,6 +264,8 @@ test("persisted runtime selection from the UI overrides SANCHO_RUNTIME", () => {
   else process.env.SANCHO_RUNTIME = previous;
   if (previousGateway === undefined) delete process.env.HERMES_GATEWAY_URL;
   else process.env.HERMES_GATEWAY_URL = previousGateway;
+  if (previousSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+  else process.env.HERMES_BRIDGE_SECRET = previousSecret;
 });
 
 test("persisted external HTTP selection falls back when not configured", () => {

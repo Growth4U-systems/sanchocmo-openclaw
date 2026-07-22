@@ -18,6 +18,7 @@
     "test:runtime": "tsx --test src/lib/__tests__/runtime-*.test.mts && node --test docker/runtimes/*.test.mjs docker/runtimes/*/bridge.test.mjs",
     "smoke:runtime:external-http": "node scripts/smoke-external-http.mjs",
     "smoke:runtime:external-http:bridge": "node scripts/smoke-external-http.mjs --protocol=mc-bridge",
+    "smoke:runtime:hermes": "node scripts/smoke-cli-runtime.mjs --runtime=hermes",
     "smoke:runtime:codex": "node scripts/smoke-cli-runtime.mjs --runtime=codex",
     "smoke:execution-control": "tsx scripts/smoke-execution-control.mts",
     "smoke:execution-control:upgrade": "tsx scripts/smoke-execution-control-upgrade.mts",

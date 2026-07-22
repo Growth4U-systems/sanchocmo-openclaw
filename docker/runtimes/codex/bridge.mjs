@@ -11,11 +11,16 @@ import {
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
 import { callbackAuthorityHeaders } from "../callback-authority.mjs";
+import {
+  createCallbackOutbox,
+  resolveCallbackOutboxDir,
+} from "../callback-outbox.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18793;
 const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
 const activeRuns = new Map();
+const callbackOutboxes = new Map();
 
 function trimTrailingSlash(value) {
   return String(value || "").replace(/\/+$/, "");
@@ -115,22 +120,45 @@ function webhookUrl() {
   return `${trimTrailingSlash(base)}/api/chat/webhook`;
 }
 
-async function postWebhook(payload, message) {
+function callbackHeaders(message) {
   const headers = {
     "Content-Type": "application/json",
     ...callbackAuthorityHeaders(message),
   };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
-  const res = await fetch(webhookUrl(), {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const raw = await res.text().catch(() => "");
-    throw new Error(`Sancho webhook rejected ${res.status}${raw ? `: ${raw}` : ""}`);
+  return headers;
+}
+
+function terminalCallbackOutbox() {
+  const directory = resolveCallbackOutboxDir("codex");
+  let outbox = callbackOutboxes.get(directory);
+  if (!outbox) {
+    outbox = createCallbackOutbox({
+      runtimeId: "codex",
+      directory,
+      logger(event) {
+        if (event.event !== "retry_scheduled" && event.event !== "expired") return;
+        const status = event.status ? ` status=${event.status}` : "";
+        console.warn(
+          `[codex bridge] terminal callback ${event.event}` +
+          ` id=${String(event.callbackId || "unknown").slice(0, 12)}` +
+          ` attempts=${event.attempts || 0}${status}`,
+        );
+      },
+    });
+    callbackOutboxes.set(directory, outbox);
   }
+  outbox.start();
+  return outbox;
+}
+
+async function postWebhook(payload, message) {
+  await terminalCallbackOutbox().postBestEffort({
+    url: webhookUrl(),
+    headers: callbackHeaders(message),
+    payload,
+  });
 }
 
 function callbackIdentity(message) {
@@ -142,10 +170,22 @@ function callbackIdentity(message) {
 function postTerminalOnce(message, payload, label) {
   const entry = activeRuns.get(message.threadId);
   if (!entry || entry.terminalPosted) return false;
+  try {
+    terminalCallbackOutbox().enqueueTerminal({
+      deliveryId: message.missionControlRunId || entry.runId,
+      url: webhookUrl(),
+      headers: callbackHeaders(message),
+      payload: { ...payload, ...callbackIdentity(message) },
+    });
+  } catch (error) {
+    console.error(
+      `[codex bridge] ${label} terminal callback could not be persisted:`,
+      error instanceof Error ? error.message : "unknown outbox error",
+    );
+    return false;
+  }
   entry.terminalPosted = true;
   if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
-  postWebhook({ ...payload, ...callbackIdentity(message) }, message)
-    .catch((e) => console.error(`[codex bridge] ${label} webhook failed:`, e.message));
   return true;
 }
 
@@ -327,7 +367,7 @@ async function postProgress(message, runId, label, detail) {
   }, message);
 }
 
-async function startCodexRun(message, runId) {
+async function startCodexRun(message, runId, admittedEntry) {
   let contextPack = null;
   try {
     contextPack = await fetchContextPack(message);
@@ -343,8 +383,8 @@ async function startCodexRun(message, runId) {
   const args = buildCodexArgs(message, prompt, outputFile);
   const command = firstEnv(["CODEX_CLI"]) || "codex";
   const existing = activeRuns.get(message.threadId);
-  if (existing?.killed) {
-    activeRuns.delete(message.threadId);
+  if (admittedEntry.killed || existing !== admittedEntry) {
+    if (existing === admittedEntry) activeRuns.delete(message.threadId);
     return;
   }
 
@@ -353,7 +393,7 @@ async function startCodexRun(message, runId) {
     env: { ...process.env, SANCHO_RUNTIME_RUN_ID: runId },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const entry = existing || { runId, child: null, killed: false, pending: false, terminalPosted: false };
+  const entry = admittedEntry;
   entry.child = child;
   entry.pending = false;
   activeRuns.set(message.threadId, entry);
@@ -445,11 +485,18 @@ async function startCodexRun(message, runId) {
   });
 }
 
-function cancelThread(threadId) {
+function cancelThread(threadId, missionControlRunId) {
   const entry = activeRuns.get(threadId);
   if (!entry) return false;
+  if (
+    missionControlRunId &&
+    entry.missionControlRunId !== missionControlRunId
+  ) return false;
   entry.killed = true;
-  if (!entry.child) return true;
+  if (!entry.child) {
+    if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
+    return true;
+  }
   entry.child.kill("SIGTERM");
   setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
   activeRuns.delete(threadId);
@@ -474,7 +521,10 @@ async function handleInbound(req, res) {
       : `${message.slug}:general`;
 
   if (message.text.trim() === "/stop") {
-    const cancelled = cancelThread(message.threadId);
+    const cancelled = cancelThread(
+      message.threadId,
+      message.missionControlRunId,
+    );
     return json(res, 200, { ok: true, cancelled });
   }
 
@@ -483,8 +533,19 @@ async function handleInbound(req, res) {
   }
 
   const runId = `codex_${randomUUID()}`;
-  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true, terminalPosted: false });
-  startCodexRun(message, runId).catch((e) => {
+  const admittedEntry = {
+    runId,
+    missionControlRunId:
+      typeof message.missionControlRunId === "string"
+        ? message.missionControlRunId
+        : undefined,
+    child: null,
+    killed: false,
+    pending: true,
+    terminalPosted: false,
+  };
+  activeRuns.set(message.threadId, admittedEntry);
+  startCodexRun(message, runId, admittedEntry).catch((e) => {
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
@@ -511,10 +572,18 @@ async function handleCancel(req, res) {
   }
   const threadId = typeof body?.threadId === "string" ? body.threadId.trim() : "";
   if (!threadId) return json(res, 400, { error: "Missing threadId" });
-  return json(res, 200, { ok: true, cancelled: cancelThread(threadId) });
+  const missionControlRunId =
+    typeof body?.missionControlRunId === "string"
+      ? body.missionControlRunId.trim()
+      : undefined;
+  return json(res, 200, {
+    ok: true,
+    cancelled: cancelThread(threadId, missionControlRunId),
+  });
 }
 
 export function createServer() {
+  terminalCallbackOutbox();
   return http.createServer((req, res) => {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
     if (req.method === "GET" && url.pathname === "/healthz") {

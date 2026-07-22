@@ -12,7 +12,11 @@ import {
   clearProgress,
   markCancelled,
 } from "@/lib/data/mc-chat";
-import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import {
+  createRuntimeAdapter,
+  resolveRuntimeId,
+  type InboundMessage,
+} from "@/lib/runtime";
 import {
   appendAgentRunEventAsync,
   getAgentRunByIdAsync,
@@ -76,13 +80,17 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
           ? "rocinante"
           : undefined;
 
-  const runtime = getRuntime();
   const activeRun = await getAgentRunByIdAsync(runId.trim());
   if (!activeRun || activeRun.threadId !== tid) {
     return res
       .status(409)
       .json({ error: "Agent run is no longer active in this thread" });
   }
+  const runtimeId = resolveRuntimeId(activeRun.runtime);
+  if (!runtimeId) {
+    return res.status(409).json({ error: "Agent run runtime binding is invalid" });
+  }
+  const runtime = createRuntimeAdapter(runtimeId);
   const parentWasActive =
     activeRun.status === "queued" || activeRun.status === "running";
   const durableTurn =
@@ -164,7 +172,15 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
     durableCancellationPending =
       parentCancellationPending || childCancellation.pendingRunIds.length > 0;
   }
-  if (parentWasActive) await runtime.messaging.cancel(tid);
+  if (parentWasActive) {
+    await runtime.messaging.cancel(tid, {
+      slug,
+      missionControlRunId: activeRun.id,
+      ...(requestedAgent
+        ? { agent: requestedAgent, agentId: requestedAgent }
+        : {}),
+    });
+  }
   if (
     durableTurn &&
     (durableCancellationPending ||
@@ -220,6 +236,7 @@ export async function cancelHandler(req: NextApiRequest, res: NextApiResponse) {
     const payload: InboundMessage = {
       slug,
       threadId: tid,
+      missionControlRunId: activeRun.id,
       text: "/stop",
       traceId: traceContext.traceId,
       traceparent: traceContext.traceparent,

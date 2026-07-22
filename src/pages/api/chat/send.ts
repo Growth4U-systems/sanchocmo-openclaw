@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import {
   canAccessSlug,
   compose,
@@ -27,7 +27,13 @@ import { stripAskProtocol } from "@/lib/chat-tool-echo";
 import { resolveTaskThreadExecutionRoute } from "@/lib/data/task-routing";
 import { getTask } from "@/lib/data/tasks";
 import { buildTaskContractSnapshot } from "@/lib/quality/task-contract-snapshot";
-import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import {
+  createRuntimeAdapter,
+  getRuntime,
+  resolveRuntimeId,
+  type InboundMessage,
+  type RuntimeId,
+} from "@/lib/runtime";
 import {
   resolveAgentTurnPolicy,
   toThreadRouting,
@@ -80,7 +86,16 @@ import {
 } from "@/lib/chat/agent-turn-atomic-admission";
 import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 import { authorizeRuntimeRunRequest } from "@/lib/runtime/runtime-run-request-authority";
+import {
+  authorizeRuntimeTransportSecret,
+  runtimeTransportSecretSha256,
+} from "@/lib/runtime/runtime-transport-secret";
 import { gatherGrowieSupportDiagnostics } from "@/lib/support/growie-diagnostics";
+import {
+  consumeRuntimeRouteDispatchGrant,
+  normalizeRuntimeRouteAgent,
+  runtimeRouteBriefSha256,
+} from "@/lib/data/runtime-route-dispatch-grants";
 
 function normalizedIdempotencyKey(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
@@ -93,16 +108,12 @@ function singleHeader(req: NextApiRequest, name: string): string | undefined {
   return Array.isArray(value) ? undefined : value;
 }
 
-function safeSecretEqual(left: string | undefined, right: string): boolean {
-  if (!left) return false;
-  const supplied = Buffer.from(left);
-  const expected = Buffer.from(right);
-  return (
-    supplied.length === expected.length && timingSafeEqual(supplied, expected)
-  );
-}
-
 interface RuntimeParentAuthority {
+  runId: string;
+  runtimeId: RuntimeId;
+  runInput: Record<string, unknown>;
+  slug: string;
+  sourceThreadId: string;
   isAdmin: boolean;
   readOnly: boolean;
   senderRole: "admin" | "client";
@@ -112,8 +123,6 @@ interface RuntimeParentAuthority {
 
 async function resolveRuntimeParentAuthority(
   req: NextApiRequest,
-  slug: string,
-  threadId: string,
 ): Promise<RuntimeParentAuthority | null> {
   const authority = await authorizeRuntimeRunRequest(
     {
@@ -132,8 +141,6 @@ async function resolveRuntimeParentAuthority(
   if (
     !authority ||
     !input ||
-    authority.slug !== slug ||
-    authority.threadId !== threadId ||
     typeof input.isAdmin !== "boolean" ||
     (input.senderRole !== "admin" && input.senderRole !== "client") ||
     typeof input.readOnly !== "boolean" ||
@@ -145,7 +152,14 @@ async function resolveRuntimeParentAuthority(
   ) {
     return null;
   }
+  const runtimeId = resolveRuntimeId(authority.run.runtime);
+  if (!runtimeId) return null;
   return {
+    runId: authority.run.id,
+    runtimeId,
+    runInput: authority.input,
+    slug: authority.slug,
+    sourceThreadId: authority.threadId,
     isAdmin: input.isAdmin,
     readOnly: input.readOnly,
     senderRole: input.senderRole,
@@ -218,6 +232,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     scope,
     skillMode,
     temporaryAgent,
+    displayText,
     controlDepth: claimedControlDepth,
     idempotencyKey: claimedIdempotencyKey,
     isAdmin: claimedIsAdmin,
@@ -229,11 +244,49 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Missing slug or text" });
   }
 
-  const runtime = getRuntime();
-  const sharedSecret = runtime.messaging.getSharedSecret?.();
+  // Authentication belongs to the runtime that owns the active parent run,
+  // while delivery belongs to the runtime selected for the new child. Those
+  // can legitimately differ when an operator switches runtimes mid-flight.
   const suppliedSecret = singleHeader(req, "x-mc-secret");
-  const trustedRuntimeRequest = Boolean(
-    sharedSecret && safeSecretEqual(suppliedSecret, sharedSecret),
+  const runtimeTransportAttempt = req.headers["x-mc-secret"] !== undefined;
+  const runtimeParentCandidate = runtimeTransportAttempt
+    ? await resolveRuntimeParentAuthority(req)
+    : null;
+  const parentTransportAuthorization = runtimeParentCandidate
+    ? authorizeRuntimeTransportSecret({
+        suppliedSecret,
+        runInput: runtimeParentCandidate.runInput,
+        resolveLegacySecret: () =>
+          createRuntimeAdapter(
+            runtimeParentCandidate.runtimeId,
+          ).messaging.getSharedSecret?.(),
+      })
+    : "forbidden";
+  const trustedRuntimeRequest =
+    parentTransportAuthorization === "authorized";
+  if (
+    runtimeTransportAttempt &&
+    runtimeParentCandidate &&
+    parentTransportAuthorization === "legacy_secret_missing"
+  ) {
+    return res
+      .status(503)
+      .json({ error: "Parent runtime secret not configured" });
+  }
+  if (runtimeTransportAttempt && !trustedRuntimeRequest) {
+    return res
+      .status(403)
+      .json({ error: "Runtime parent transport authority invalid" });
+  }
+  const runtime = getRuntime();
+  const outboundSharedSecret = runtime.messaging.getSharedSecret?.();
+  const outboundTransportSecretDigest = runtimeTransportSecretSha256(
+    outboundSharedSecret,
+  );
+  const trustedInternalDispatch = Boolean(
+    !runtimeTransportAttempt &&
+      req.ctx?.isAdmin === true &&
+      singleHeader(req, "x-sancho-internal-dispatch") === "1",
   );
   if (!trustedRuntimeRequest && !canAccessSlug(req.ctx, String(slug))) {
     return res.status(403).json({ error: "Forbidden" });
@@ -243,11 +296,6 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       return res
         .status(400)
         .json({ error: "temporaryAgent is only valid for Sancho" });
-    }
-    if (!sharedSecret) {
-      return res
-        .status(503)
-        .json({ error: "Temporary intervention requires MC_CHAT_SECRET" });
     }
     if (!trustedRuntimeRequest) {
       return res.status(403).json({
@@ -275,14 +323,23 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // The shared gateway secret authenticates transport only. A runtime-created
   // child must also be bound to the exact active parent run (and, for durable
   // chat, its fenced dispatch lease) before it can select a tenant.
-  const runtimeParent = trustedRuntimeRequest
-    ? await resolveRuntimeParentAuthority(req, String(slug), tid)
-    : null;
-  if (trustedRuntimeRequest && !runtimeParent) {
+  const runtimeParent = trustedRuntimeRequest ? runtimeParentCandidate : null;
+  if (
+    trustedRuntimeRequest &&
+    (!runtimeParent || runtimeParent.slug !== String(slug))
+  ) {
     return res.status(403).json({ error: "Runtime parent authority invalid" });
   }
   if (trustedRuntimeRequest && claimedControlDepth !== 1) {
     return res.status(403).json({ error: "Runtime follow-up depth invalid" });
+  }
+  const runtimeCrossThread = Boolean(
+    trustedRuntimeRequest && runtimeParent?.sourceThreadId !== tid,
+  );
+  if (runtimeCrossThread && temporaryAgent === true) {
+    return res.status(403).json({
+      error: "Temporary intervention cannot change threads",
+    });
   }
   const runtimeClaimsAdmin =
     trustedRuntimeRequest &&
@@ -330,7 +387,11 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // Snapshot before any async routing work or current-message persistence. The
   // signed gateway payload can then bootstrap a newly isolated model session
   // without racing a later user turn or trusting browser-supplied history.
-  const priorThreadMessages = isGrowieSupport
+  // Native OpenClaw owns persistent sessions. Stateless/BYO runtimes receive
+  // a bounded server-derived visible history so changing runtime does not turn
+  // every follow-up into a context-free first message. Browser-supplied
+  // history is never trusted.
+  const priorThreadMessages = isGrowieSupport || runtime.id !== "openclaw"
     ? snapshotGrowieThreadHistory(getThread(tid).messages)
     : undefined;
   const persistedRoute = getThreadRouting(tid);
@@ -427,21 +488,29 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // sender. OpenClaw applies the same rule again at its tool boundary.
   const isAdmin = trustedRuntimeRequest
     ? runtimeParent?.isAdmin === true && runtimeParent.readOnly === false
-    : req.ctx?.isAdmin === true;
+    : trustedInternalDispatch
+      ? claimedIsAdmin === true && claimedSenderRole === "admin"
+      : req.ctx?.isAdmin === true;
   const senderRole: "admin" | "client" = isAdmin ? "admin" : "client";
   const readOnly =
     isGrowieSupport ||
     (trustedRuntimeRequest
       ? (runtimeParent?.readOnly ?? claimedReadOnly === true)
-      : false);
+      : trustedInternalDispatch && claimedReadOnly === true);
   const resolvedUserId = resolveChatUserId({
-    trustedRuntimeRequest,
+    trustedRuntimeRequest: trustedRuntimeRequest || trustedInternalDispatch,
     isAdmin,
     slug: String(slug),
     claimedUserId: runtimeParent?.userId ?? userId,
   });
   const resolvedUserName =
     runtimeParent?.userName || userName || (isAdmin ? "Admin" : slug);
+  const visibleUserText =
+    trustedInternalDispatch &&
+    typeof displayText === "string" &&
+    displayText.trim()
+      ? displayText.trim().slice(0, 8_000)
+      : text;
   // Authenticated browser and runtime callers share the same thread-scoped
   // idempotency contract. A browser cannot affect another tenant because slug
   // access and canonical thread ownership were established above.
@@ -450,6 +519,52 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   );
   if (claimedIdempotencyKey !== undefined && !acceptedIdempotencyKey) {
     return res.status(400).json({ error: "Invalid idempotencyKey" });
+  }
+  if (runtimeCrossThread) {
+    const routeAgent = normalizeRuntimeRouteAgent(agent);
+    if (
+      !runtimeParent ||
+      !routeAgent ||
+      resolvedAgent !== routeAgent ||
+      !acceptedIdempotencyKey
+    ) {
+      return res.status(403).json({ error: "Runtime route grant claims invalid" });
+    }
+    const grantClaim = await consumeRuntimeRouteDispatchGrant(
+      singleHeader(req, "x-sancho-route-dispatch-grant"),
+      {
+        parentRunId: runtimeParent.runId,
+        clientSlug: String(slug),
+        sourceThreadId: runtimeParent.sourceThreadId,
+        targetThreadId: tid,
+        agent: routeAgent,
+        briefSha256: runtimeRouteBriefSha256(text),
+        idempotencyKey: acceptedIdempotencyKey,
+      },
+    );
+    if (grantClaim === "invalid") {
+      return res.status(403).json({ error: "Runtime route grant invalid" });
+    }
+    if (grantClaim === "already_consumed") {
+      const existingRun = await getAgentRunByIdempotencyKeyAsync(
+        tid,
+        acceptedIdempotencyKey,
+      );
+      if (
+        !existingRun ||
+        !["queued", "running", "completed"].includes(existingRun.status)
+      ) {
+        return res.status(403).json({ error: "Runtime route grant replay invalid" });
+      }
+      return res.status(200).json({
+        ok: true,
+        duplicate: true,
+        runId: existingRun.id,
+        traceId: existingRun.traceId ?? traceContext.traceId,
+        status: existingRun.status,
+        chatId: tid,
+      });
+    }
   }
   // `/stop` targets the currently active runtime session and is not a model
   // turn. Durable admission is a runtime capability: runtimes without the
@@ -494,7 +609,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     !readOnly &&
     !isGrowieSupport;
   if (allowUserDeterministicOutbound && isOutboundCampaignStartPrompt(text)) {
-    addMessage(tid, "user", String(text), undefined, parsedAttachments);
+    addMessage(tid, "user", String(visibleUserText), undefined, parsedAttachments);
     const prepared = buildOutboundCampaignOptions(String(slug));
     addMessage(tid, "bot", prepared.message, resolvedAgent || "rocinante");
     return res.status(200).json({
@@ -780,6 +895,9 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       threadState: threadState || undefined,
       controlBaseUrl: runtimeControlBaseUrl,
       runtimeIdempotencyFingerprint,
+      ...(outboundTransportSecretDigest
+        ? { runtimeTransportSecretSha256: outboundTransportSecretDigest }
+        : {}),
       ...(durableTurnEnabled
         ? { runtimeDispatchMode: "ledger-v1" }
         : { runtimeToolCapabilitySha256 }),
@@ -836,7 +954,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
   // state. Persist the route before the message so Discord, callbacks and a
   // reopened tab continue with the same agent while re-evaluating skills.
   // Store user message locally
-  addMessage(tid, "user", text, undefined, parsedAttachments);
+  addMessage(tid, "user", visibleUserText, undefined, parsedAttachments);
 
   // Deterministic clarify transition (SAN-152): when this message carries
   // `[ask:…] respuesta:` lines on a content thread and they complete the
@@ -1021,7 +1139,7 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
         const controlled = await dispatchRuntimeControlActions(
           parsedControl,
           controlContext,
-          { secret: sharedSecret },
+          { secret: outboundSharedSecret },
         );
         for (const followup of controlled.followupMessages) {
           addMessage(tid, "bot", followup, "sancho");
@@ -1070,19 +1188,11 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 const sessionAuthed = compose(withErrorHandler, withAuth)(sendHandler);
-const runtimeAuthed = withErrorHandler(
-  async (req: NextApiRequest, res: NextApiResponse) => {
-    const expected = getRuntime().messaging.getSharedSecret?.();
-    const supplied = Array.isArray(req.headers["x-mc-secret"])
-      ? req.headers["x-mc-secret"][0]
-      : req.headers["x-mc-secret"];
-    if (!expected)
-      return res.status(503).json({ error: "MC_CHAT_SECRET not configured" });
-    if (!supplied || supplied !== expected)
-      return res.status(403).json({ error: "Forbidden" });
-    return sendHandler(req, res);
-  },
-);
+// Runtime authentication happens inside sendHandler because only the exact
+// parent run can tell us which runtime secret is authoritative. A wrapper
+// bound to the current selection would reject valid in-flight Hermes replies
+// immediately after a runtime switch.
+const runtimeAuthed = withErrorHandler(sendHandler);
 
 export default function entry(req: NextApiRequest, res: NextApiResponse) {
   // Runtime/plugin calls always carry X-MC-Secret. Browser calls use the

@@ -349,7 +349,6 @@ jobs:
           HERMES_CLI: hermes
           HERMES_CLI_PROVIDER: ${{ vars.HERMES_CLI_PROVIDER || 'anthropic' }}
           HERMES_CLI_MODEL: ${{ vars.HERMES_CLI_MODEL || 'claude-sonnet-4-6' }}
-          HERMES_WORKDIR: /root/.openclaw
           # Force the Neon HTTP driver in G4U deploys (belt over the runtime's
           # *.neon.tech auto-detect) so prod can never fall back to the
           # vanilla-Postgres driver used by the bundled local-db.
@@ -426,7 +425,7 @@ jobs:
               "ANTHROPIC_AUTH_MODE", "OPENAI_AUTH_MODE",
               "ADMIN_EMAIL_DOMAIN", "ADMIN_IDENTITY_EMAIL", "DATABASE_DRIVER",
               "INSTALL_HERMES", "HERMES_AGENT_REF", "HERMES_CLI",
-              "HERMES_CLI_PROVIDER", "HERMES_CLI_MODEL", "HERMES_WORKDIR",
+              "HERMES_CLI_PROVIDER", "HERMES_CLI_MODEL",
               "SANCHO_MCP_AUDIT_BACKEND", "SANCHO_MCP_AUDIT_FAIL_CLOSED",
               "SANCHO_MCP_AUDIT_FILE",
               "YALC_BASE_URL", "SANCHO_REPLY_WEBHOOK_URL",

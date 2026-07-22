@@ -28,6 +28,10 @@ import {
   resetRuntimeCache,
   writeRuntimeSelection,
 } from "@/lib/runtime";
+import {
+  listRuntimeTransitionBlockers,
+  runtimeTransitionBlockedPayload,
+} from "@/lib/runtime/transition-guard";
 
 const ENV_FILE = path.join(BASE, "..", ".env");
 const HEALTH_TIMEOUT_MS = 5000;
@@ -269,6 +273,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const action = typeof req.body?.action === "string" ? req.body.action : "";
 
+  const mutatesRuntimeContract =
+    action === "prepare" ||
+    action === "start" ||
+    (action === "verify" && req.body?.activate !== false);
+  if (mutatesRuntimeContract) {
+    const activeRuns = await listRuntimeTransitionBlockers();
+    if (activeRuns.length > 0) {
+      return res
+        .status(409)
+        .json(runtimeTransitionBlockedPayload(activeRuns));
+    }
+  }
+
   if (action === "prepare") {
     const providerId = providerFromBody(req.body);
     if (!providerId) return res.status(400).json({ error: "Unknown CLI runtime" });
@@ -389,7 +406,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       setEnvVars(
         managedBridgeBootVarsForCliBridge(providerId, gatewayUrl, secret),
       );
-      writeRuntimeSelection("external-http", "admin");
+      // A server-managed Hermes bridge is the native Hermes adapter. Keeping
+      // it persisted as external-http created two identities for the same
+      // process and made restarts/config rotation choose a different path.
+      writeRuntimeSelection("hermes", "admin");
       resetRuntimeCache();
     }
 

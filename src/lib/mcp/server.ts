@@ -13,6 +13,7 @@ import {
 } from "@/lib/data/mc-chat";
 import { loadClient, loadClients, loadClientsData, writeClientsFile } from "@/lib/data/clients";
 import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import { dispatchAdmittedChatTurn } from "@/lib/chat/control-plane-dispatch";
 import type { AgentRichEntry } from "@/lib/runtime/adapters/openclaw/control";
 import { getModelCatalog, invalidateCatalogCache, isModelAvailable } from "@/lib/data/models-catalog";
 import { loadRecurringTasks, saveRecurringTasks } from "@/lib/data/recurring-tasks";
@@ -1521,16 +1522,15 @@ export function createSanchoMcpServer(context: SanchoMcpContext): McpServer {
           });
         }
 
-        addMessage(tid, "user", text);
-        const result = await getRuntime().messaging.sendInbound(payload, {
-          headers: traceHeaders(context),
+        const dispatch = await dispatchMcChatThroughControlPlane(
+          context,
+          payload,
+        );
+        return jsonResult({
+          ok: true,
+          chatId: dispatch.chatId,
+          controlPlane: dispatch.controlPlane,
         });
-        const data = parseGatewayBody(result.raw);
-        if (!result.ok) {
-          const detail = result.raw ? `: ${result.raw.slice(0, 500)}` : "";
-          throw new Error(`Mission Control runtime rejected message: HTTP ${result.status}${detail}`);
-        }
-        return jsonResult({ ok: true, chatId: result.chatId || extractChatId(data) || tid, gateway: data });
       }),
   );
 
@@ -5144,29 +5144,18 @@ async function dispatchMcChatThroughControlPlane(
   context: SanchoMcpContext,
   payload: InboundMessage,
 ): Promise<{ chatId: string; controlPlane: unknown }> {
-  const secret = getRuntime().messaging.getSharedSecret?.();
-  if (!secret) {
-    throw new McpAuthError(503, "MCP delegation requires the runtime MC chat shared secret");
-  }
-  const response = await fetch(`${mcNextBaseUrl()}/api/chat/send`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-MC-Secret": secret,
-      ...traceHeaders(context),
-    },
-    body: JSON.stringify(payload),
+  const response = await dispatchAdmittedChatTurn(payload, {
+    baseUrl: mcNextBaseUrl(),
+    headers: traceHeaders(context),
   });
-  const raw = await response.text();
-  const data = parseGatewayBody(raw);
   if (!response.ok) {
     throw new Error(
-      `Mission Control task harness rejected message: HTTP ${response.status}${raw ? `: ${raw.slice(0, 500)}` : ""}`,
+      `Mission Control task harness rejected message: HTTP ${response.status}${response.raw ? `: ${response.raw.slice(0, 500)}` : ""}`,
     );
   }
   return {
-    chatId: extractChatId(data) || payload.threadId,
-    controlPlane: data,
+    chatId: response.chatId || extractChatId(response.data) || payload.threadId,
+    controlPlane: response.data,
   };
 }
 

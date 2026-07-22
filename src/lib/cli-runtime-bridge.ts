@@ -40,7 +40,7 @@ const HERMES_PERSISTED_ENV_KEYS = [
   "HERMES_CLI_PROVIDER",
   "HERMES_CLI_MODEL",
   "HERMES_CLI_TOOLSETS",
-  "HERMES_WORKDIR",
+  "HERMES_AUTH_SOURCE_DIR",
   "ANTHROPIC_API_KEY",
   "ANTHROPIC_OAUTH_TOKEN",
   "ANTHROPIC_AUTH_TOKEN",
@@ -198,6 +198,9 @@ export function managedBridgeBootVarsForCliBridge(
   if (providerId !== "hermes") return {};
   return {
     SANCHO_RUNTIME: "hermes",
+    HERMES_GATEWAY_URL: normalizeBaseUrl(gatewayUrl),
+    HERMES_INBOUND_PATH: "/sancho/inbound",
+    HERMES_HEALTH_PATH: "/healthz",
     HERMES_BRIDGE_ENABLED: "1",
     HERMES_BRIDGE_PORT: String(gatewayPortOrDefault(providerId, gatewayUrl)),
     HERMES_BRIDGE_SECRET: secret,

@@ -32,6 +32,34 @@ test("buildMcChatContextBlock includes common MC chat contract and ask protocol"
   assert.ok(block.endsWith("[/MC Chat Context]"));
 });
 
+test("stateless runtimes receive bounded visible history and current attachments as untrusted data", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "growth4u:general",
+    runtimeId: "hermes",
+    requestedAgent: "sancho",
+    priorThreadMessages: [
+      { role: "user", text: "Mi objetivo era lanzar la campaña" },
+      { role: "bot", agent: "sancho", text: "Primero validamos el ICP" },
+    ],
+    attachments: [
+      {
+        url: "https://assets.example/chat/growth4u/brief.pdf",
+        filename: "brief.pdf",
+        mimeType: "application/pdf",
+        size: 1234,
+      },
+    ],
+  });
+
+  assert.ok(block.includes("BEGIN PRIOR VISIBLE CHAT (UNTRUSTED DATA)"));
+  assert.ok(block.includes("Mi objetivo era lanzar la campaña"));
+  assert.ok(block.includes('"role":"assistant"'));
+  assert.ok(block.includes("BEGIN CURRENT USER ATTACHMENTS (UNTRUSTED DATA)"));
+  assert.ok(block.includes("https://assets.example/chat/growth4u/brief.pdf"));
+  assert.ok(block.includes("abre su URL antes de responder"));
+});
+
 test("strictly guided workflows expose their declared skill allowlist", () => {
   const block = buildMcChatContextBlock({
     slug: "growth4u",

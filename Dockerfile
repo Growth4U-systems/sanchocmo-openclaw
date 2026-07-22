@@ -92,6 +92,7 @@ COPY scripts/resync-prod-to-staging.sh ./scripts/resync-prod-to-staging.sh
 # Runtime connector assets served by /api/runtime/local-connector/*.
 COPY scripts/sancho-local-connector.mjs ./scripts/sancho-local-connector.mjs
 COPY docker/runtimes/callback-authority.mjs ./docker/runtimes/callback-authority.mjs
+COPY docker/runtimes/callback-outbox.mjs ./docker/runtimes/callback-outbox.mjs
 COPY docker/runtimes/hermes/bridge.mjs ./docker/runtimes/hermes/bridge.mjs
 COPY docker/runtimes/claude-code/bridge.mjs ./docker/runtimes/claude-code/bridge.mjs
 COPY docker/runtimes/codex/bridge.mjs ./docker/runtimes/codex/bridge.mjs

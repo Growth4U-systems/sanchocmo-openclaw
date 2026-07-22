@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import net from "node:net";
@@ -13,6 +14,11 @@ const artifactDir = path.join(root, ".context", bridgeMode ? "external-http-brid
 const workspace = path.join(artifactDir, "workspace");
 const summaryFile = path.join(artifactDir, "latest.json");
 const secret = process.env.SMOKE_EXTERNAL_SECRET || "external-http-smoke-secret";
+const adminToken =
+  process.env.SMOKE_EXTERNAL_ADMIN_TOKEN || randomBytes(32).toString("hex");
+if (Buffer.byteLength(adminToken, "utf8") < 32) {
+  throw new Error("SMOKE_EXTERNAL_ADMIN_TOKEN must be at least 32 bytes");
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -65,6 +71,36 @@ async function waitForThread(threadFile, timeoutMs = 10000) {
   throw new Error(`thread did not receive user+bot messages: ${threadFile}`);
 }
 
+async function waitForCompletedRun(runsFile, threadId, timeoutMs = 10000) {
+  const started = Date.now();
+  let latestRun = null;
+  let runs = null;
+  while (Date.now() - started < timeoutMs) {
+    runs = fs.existsSync(runsFile)
+      ? JSON.parse(fs.readFileSync(runsFile, "utf8"))
+      : null;
+    latestRun = Array.isArray(runs?.runs)
+      ? runs.runs.filter((run) => run.threadId === threadId).at(-1)
+      : null;
+    const hasTerminalEvent = Array.isArray(runs?.events)
+      && runs.events.some(
+        (event) => event.runId === latestRun?.id && event.type === "bot_reply",
+      );
+    if (
+      latestRun?.runtime === "external-http"
+      && latestRun.status === "completed"
+      && typeof latestRun.finishedAt === "string"
+      && hasTerminalEvent
+    ) {
+      return { runs, latestRun };
+    }
+    await sleep(200);
+  }
+  throw new Error(
+    `agent run did not close with a terminal callback: ${JSON.stringify(latestRun)}`,
+  );
+}
+
 function startFakeRuntime(port, sanchoPort) {
   const received = [];
   const server = http.createServer(async (req, res) => {
@@ -109,6 +145,7 @@ function startFakeRuntime(port, sanchoPort) {
           const webhookPayload = {
             slug: payload.slug,
             threadId: payload.threadId,
+            missionControlRunId: payload.missionControlRunId,
             agent: payload.agent || payload.agentId || "sancho",
             text: `Smoke OK desde runtime externo para: ${payload.text}`,
           };
@@ -117,6 +154,8 @@ function startFakeRuntime(port, sanchoPort) {
             headers: {
               "content-type": "application/json",
               "x-mc-secret": secret,
+              "x-mission-control-run-id": payload.missionControlRunId,
+              "x-sancho-run-capability": payload.runtimeToolCapability,
             },
             body: JSON.stringify(webhookPayload),
           });
@@ -144,6 +183,11 @@ function startSancho(port, runtimePort) {
     env: {
       ...process.env,
       MC_WORKSPACE: workspace,
+      MC_ADMIN_TOKEN: adminToken,
+      // The smoke intentionally uses its isolated disposable JSON ledger.
+      // Production itself remains fail-closed without Postgres.
+      SANCHO_AGENT_RUNS_BACKEND: "json",
+      SANCHO_AGENT_RUNS_ALLOW_NON_DURABLE: "true",
       SANCHO_RUNTIME: "external-http",
       SANCHO_EXTERNAL_GATEWAY_URL: `http://127.0.0.1:${runtimePort}`,
       SANCHO_EXTERNAL_SECRET: secret,
@@ -158,6 +202,7 @@ function startSancho(port, runtimePort) {
       NEXTAUTH_SECRET: "external-http-smoke-nextauth",
       ENCRYPTION_KEY: "external-http-smoke-encryption",
       SANCHO_INTERNAL_API_TOKEN: "external-http-smoke-token",
+      LOCAL_DASHBOARD_BYPASS: "0",
       NEXT_TELEMETRY_DISABLED: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -183,6 +228,28 @@ async function main() {
   fs.rmSync(artifactDir, { recursive: true, force: true });
   fs.mkdirSync(path.join(workspace, "brand", "smoke", "chat"), { recursive: true });
   fs.mkdirSync(path.join(workspace, "_system"), { recursive: true });
+  fs.writeFileSync(
+    path.join(workspace, "clients.json"),
+    `${JSON.stringify(
+      {
+        adminToken,
+        clients: [
+          {
+            slug: "smoke",
+            name: "External runtime smoke",
+            active: true,
+            workspace,
+            phase: 0,
+            paths: { brand: "brand/smoke" },
+            metrics: { apis: [] },
+            enabledFeatures: [],
+          },
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+  );
 
   const sanchoPort = await freePort();
   const runtimePort = await freePort();
@@ -193,27 +260,50 @@ async function main() {
     await waitFor(`http://127.0.0.1:${sanchoPort}/api/health`, "Sancho");
     await waitFor(`http://127.0.0.1:${runtimePort}${bridgeMode ? "/health" : "/healthz"}`, "fake runtime");
 
+    const sendBody = {
+      slug: "smoke",
+      threadId: "smoke:general",
+      threadName: "Smoke external-http",
+      text: "probando external-http end-to-end",
+      userName: "Smoke",
+      userId: "smoke-user",
+    };
+    const unauthenticated = await fetch(
+      `http://127.0.0.1:${sanchoPort}/api/chat/send`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(sendBody),
+      },
+    );
+    await unauthenticated.text();
+    if (unauthenticated.status !== 403) {
+      throw new Error(
+        `unauthenticated /api/chat/send must fail closed, got HTTP ${unauthenticated.status}`,
+      );
+    }
+
     const sendRes = await fetch(`http://127.0.0.1:${sanchoPort}/api/chat/send`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        slug: "smoke",
-        threadId: "smoke:general",
-        threadName: "Smoke external-http",
-        text: "probando external-http end-to-end",
-        userName: "Smoke",
-        userId: "smoke-user",
-      }),
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(sendBody),
     });
     const sendText = await sendRes.text();
     if (!sendRes.ok) {
+      console.error(sancho.logs.join("").split("\n").slice(-80).join("\n"));
       throw new Error(`/api/chat/send failed HTTP ${sendRes.status}: ${sendText}`);
     }
 
     const threadFile = path.join(workspace, "brand", "smoke", "chat", "general.json");
     const thread = await waitForThread(threadFile);
     const runsFile = path.join(workspace, "_system", "agent-runs.json");
-    const runs = fs.existsSync(runsFile) ? JSON.parse(fs.readFileSync(runsFile, "utf8")) : null;
+    const { runs, latestRun } = await waitForCompletedRun(
+      runsFile,
+      "smoke:general",
+    );
 
     const summary = {
       ok: true,
@@ -221,7 +311,16 @@ async function main() {
       sanchoPort,
       runtimePort,
       workspace,
+      unauthenticatedStatus: unauthenticated.status,
       sendResponse: JSON.parse(sendText),
+      latestRun: {
+        id: latestRun.id,
+        runtime: latestRun.runtime,
+        status: latestRun.status,
+        agent: latestRun.agent,
+        startedAt: latestRun.startedAt,
+        finishedAt: latestRun.finishedAt,
+      },
       runtimeReceived: fakeRuntime.received.map((entry) => bridgeMode
         ? {
             headers: entry.headers,

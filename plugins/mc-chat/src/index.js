@@ -52,6 +52,7 @@ import {
   releaseRuntimeInbound,
 } from "./runtime-run-state.js";
 import { buildCanonicalHistoryBootstrapIfNeeded } from "./canonical-history.js";
+import { createTerminalDeliveryBuffer } from "./terminal-delivery-buffer.js";
 import {
   LEADS_SEARCH_START_TOOL,
   registerLeadsSearchTools,
@@ -707,6 +708,7 @@ export default defineChannelPluginEntry({
         let runtimeErrorPosted = false;
         let runtimeErrorPromise = null;
         let visibleReplyPosted = false;
+        const terminalDeliveryBuffer = createTerminalDeliveryBuffer();
         let turnControlAction = null;
         let temporaryInterventionDispatched = false;
         const turnSeenRouteRequests = new Set();
@@ -876,7 +878,8 @@ export default defineChannelPluginEntry({
             shouldRetryTransportAbort({
               raw,
               retryUsed: transportAbortRetryUsed,
-              visibleReplyPosted,
+              visibleReplyPosted:
+                visibleReplyPosted || terminalDeliveryBuffer.hasVisible(),
               channelDeliveryObserved: hasRecentVisibleDelivery(slug, threadId, turnStartedAt),
               guardAbortMessage: mcChatCostGuard.abortMessageFor(guardRunId, sessionKey),
               signalAborted: abortController.signal.aborted,
@@ -1073,58 +1076,10 @@ export default defineChannelPluginEntry({
                   }
                 } catch {}
 
-                // A runtime run has one terminal result. Join multipart output
-                // before persistence so later parts cannot look like separate
-                // assistant turns. The result is run through the error rewriter:
-                // if it matches a
-                // known error pattern (rate_limit / auth / watchdog_abort / …)
-                // the user-facing text is replaced with a clear Spanish summary
-                // and the raw payload is surfaced as `errorDetail` for the UI
-                // modal. Untouched otherwise.
-                const authInfo = {
-                  ...(readCodexAuthInfo(respondingAgent) || {}),
-                  anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
-                };
-                const msgText = texts.map((part) => String(part || "").trim()).filter(Boolean).join("\n\n");
-                if (msgText) {
-                  const { text: rewritten, errorDetail: classified } = classifyAndRewriteError(msgText, authInfo);
-                  let errorDetail = classified;
-                  if (errorDetail?.category === "watchdog_abort") {
-                    const prior = errorTracker.getRecent(respondingAgent);
-                    if (prior) errorDetail = mergeWithPriorCategory(errorDetail, prior);
-                  }
-                  const posted = await postWithRetry(callbackUrl, {
-                    slug,
-                    threadId,
-                    ...callbackIdentity,
-                    text: rewritten,
-                    role: "bot",
-                    agent: respondingAgent,
-                    ts: new Date().toISOString(),
-                    ...(errorDetail ? { errorDetail } : {}),
-                  }, "Bot callback");
-                  if (posted) {
-                    visibleReplyPosted = true;
-                    markVisibleDelivery(slug, threadId);
-                  }
-                  // Also relay to Discord if linked (skip if message came from Discord)
-                  if (discordLink && _source !== "discord") {
-                    try {
-                      await tools.message.send({
-                        action: "send",
-                        target: `channel:${discordLink.threadId}`,
-                        message: rewritten + "\n||[_mc_relay]||", // Hidden spoiler tag
-                      });
-                      logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
-                    } catch (discordErr) {
-                      logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
-                    }
-                  }
-                }
-
                 // Same task, same thread, one-turn Sancho override. send.ts
                 // deliberately does not persist this route, so the next user
                 // turn returns to the original owning agent and skill harness.
+                const controlFeedback = [];
                 for (const intervention of sanchoInterventions) {
                   // Exactly one intervention may be launched by an owning turn,
                   // including when the runtime delivers multiple response parts.
@@ -1154,15 +1109,7 @@ export default defineChannelPluginEntry({
                   if (dispatched) {
                     logger.info(`[mc-chat] temporary Sancho intervention dispatched in-place owner=${respondingAgent} thread=${threadId}`);
                   } else {
-                    await postWithRetry(callbackUrl, {
-                      slug,
-                      threadId,
-                      ...callbackIdentity,
-                      role: "bot",
-                      agent: respondingAgent,
-                      text: "⚠️ No pude iniciar la intervención temporal de Sancho. La tarea y su agente original no cambiaron.",
-                      ts: new Date().toISOString(),
-                    }, "Temporary Sancho intervention fail-loud");
+                    controlFeedback.push("⚠️ No pude iniciar la intervención temporal de Sancho. La tarea y su agente original no cambiaron.");
                   }
                 }
 
@@ -1216,7 +1163,18 @@ export default defineChannelPluginEntry({
                   const targetThreadId = typeof routeData?.threadId === "string"
                     ? routeData.threadId
                     : null;
-                  if ((routeData?.action === "reuse" || routeData?.action === "created") && targetThreadId) {
+                  const dispatchGrant = typeof routeData?.dispatchGrant === "string"
+                    ? routeData.dispatchGrant
+                    : null;
+                  const dispatchIdempotencyKey = typeof routeData?.dispatchIdempotencyKey === "string"
+                    ? routeData.dispatchIdempotencyKey
+                    : null;
+                  if (
+                    (routeData?.action === "reuse" || routeData?.action === "created")
+                    && targetThreadId
+                    && dispatchGrant
+                    && dispatchIdempotencyKey
+                  ) {
                     const dispatched = await postWithRetry(sendUrl, {
                       slug,
                       threadId: targetThreadId,
@@ -1225,19 +1183,19 @@ export default defineChannelPluginEntry({
                       agent: routeAgent,
                       skill: routeRequest.skill,
                       controlDepth: 1,
-                      idempotencyKey: controlIdempotencyKey("task-dispatch", {
-                        routeAgent,
-                        targetThreadId,
-                        brief: routeRequest.brief,
-                        proposalId: routeRequest.proposalId,
-                      }),
+                      idempotencyKey: dispatchIdempotencyKey,
                       userId,
                       userName,
                       isAdmin: isAdmin === true,
                       senderRole: senderRole === "admin" ? "admin" : "client",
                       attachments,
                       _source,
-                    }, `Task dispatch→${routeAgent}`, parentRunAuthorityHeaders);
+                    }, `Task dispatch→${routeAgent}`, {
+                      ...parentRunAuthorityHeaders,
+                      ...(dispatchGrant
+                        ? { "X-Sancho-Route-Dispatch-Grant": dispatchGrant }
+                        : {}),
+                    });
                     if (dispatched) {
                       logger.info(`[mc-chat] task routed → ${routeAgent} task=${routeData.taskId || "unknown"} thread=${targetThreadId} action=${routeData.action}`);
                       continue;
@@ -1247,15 +1205,23 @@ export default defineChannelPluginEntry({
                   const routeMessage = typeof routeData?.message === "string" && routeData.message.trim()
                     ? routeData.message
                     : `⚠️ No pude resolver una tarea segura para **${routeAgent}** dentro de este grupo. No se despachó nada.`;
-                  await postWithRetry(callbackUrl, {
-                    slug,
-                    threadId,
-                    ...callbackIdentity,
-                    role: "bot",
+                  controlFeedback.push(routeMessage);
+                }
+
+                // A runtime run has one terminal result. Execute every child
+                // control action while its parent authority is still active,
+                // then buffer every visible part until OpenClaw's dispatcher
+                // has finished all deliver calls.
+                const msgText = [...texts, ...controlFeedback]
+                  .map((part) => String(part || "").trim())
+                  .filter(Boolean)
+                  .join("\n\n");
+                if (msgText) {
+                  terminalDeliveryBuffer.append({
+                    text: msgText,
                     agent: respondingAgent,
-                    text: routeMessage,
-                    ts: new Date().toISOString(),
-                  }, "Task route feedback");
+                    discordLink,
+                  });
                 }
               },
               onError: (err, info) => {
@@ -1281,6 +1247,10 @@ export default defineChannelPluginEntry({
                 if (canRetryTransportAbort(rawError)) {
                   pendingTransportAbortRaw = rawError;
                   logger.warn(`[mc-chat] transport abort deferred for one retry thread=${threadId}`);
+                  return;
+                }
+                if (terminalDeliveryBuffer.hasVisible()) {
+                  logger.warn(`[mc-chat] runtime error arrived after a visible buffered delivery; preserving the complete buffered reply thread=${threadId}`);
                   return;
                 }
                 postRuntimeError(rawError, requestedAgent || "sancho").catch((postErr) => {
@@ -1453,8 +1423,13 @@ export default defineChannelPluginEntry({
               dispatchResult = await dispatchPromise;
             } catch (dispatchErr) {
               const raw = dispatchErr?.message || String(dispatchErr);
-              if (!canRetryTransportAbort(raw)) throw dispatchErr;
-              pendingTransportAbortRaw = raw;
+              if (canRetryTransportAbort(raw)) {
+                pendingTransportAbortRaw = raw;
+              } else if (terminalDeliveryBuffer.hasVisible()) {
+                logger.warn(`[mc-chat] dispatcher ended after a visible buffered delivery; preserving partial result thread=${threadId}`);
+              } else {
+                throw dispatchErr;
+              }
             }
             if (pendingTransportAbortRaw) {
               const raw = pendingTransportAbortRaw;
@@ -1465,7 +1440,12 @@ export default defineChannelPluginEntry({
                 transportAbortRetryUsed = true;
                 logger.warn(`[mc-chat] transport abort ("${raw.slice(0, 120)}"); retrying dispatch once in ${TRANSPORT_ABORT_RETRY_DELAY_MS}ms thread=${threadId}`);
                 await new Promise((resolve) => setTimeout(resolve, TRANSPORT_ABORT_RETRY_DELAY_MS));
-                dispatchResult = await startDispatch();
+                try {
+                  dispatchResult = await startDispatch();
+                } catch (retryErr) {
+                  if (!terminalDeliveryBuffer.hasVisible()) throw retryErr;
+                  logger.warn(`[mc-chat] retry ended after a visible buffered delivery; preserving partial result thread=${threadId}`);
+                }
               } else {
                 // Conditions changed between the deferred onError and now
                 // (e.g. a partial reply became visible) — surface the original
@@ -1476,6 +1456,49 @@ export default defineChannelPluginEntry({
           } finally {
             restoreChatEnv();
             restoreBrandEnv();
+          }
+          const terminalDelivery = terminalDeliveryBuffer.drain();
+          if (terminalDelivery && !runtimeErrorPosted) {
+            const respondingAgent = terminalDelivery.agent;
+            const authInfo = {
+              ...(readCodexAuthInfo(respondingAgent) || {}),
+              anthropicAuthMode: process.env.ANTHROPIC_AUTH_MODE,
+            };
+            const { text: rewritten, errorDetail: classified } =
+              classifyAndRewriteError(terminalDelivery.text, authInfo);
+            let errorDetail = classified;
+            if (errorDetail?.category === "watchdog_abort") {
+              const prior = errorTracker.getRecent(respondingAgent);
+              if (prior) errorDetail = mergeWithPriorCategory(errorDetail, prior);
+            }
+            const posted = await postWithRetry(callbackUrl, {
+              slug,
+              threadId,
+              ...callbackIdentity,
+              text: rewritten,
+              role: "bot",
+              agent: respondingAgent,
+              ts: new Date().toISOString(),
+              ...(errorDetail ? { errorDetail } : {}),
+            }, "Bot callback");
+            if (posted) {
+              visibleReplyPosted = true;
+              markVisibleDelivery(slug, threadId);
+            }
+            const discordLink = terminalDelivery.discordLink;
+            if (discordLink && _source !== "discord") {
+              try {
+                await tools.message.send({
+                  action: "send",
+                  target: `channel:${discordLink.threadId}`,
+                  message: rewritten + "\n||[_mc_relay]||",
+                });
+                logger.info(`[mc-chat] Relayed to Discord thread ${discordLink.threadId}`);
+              } catch (discordErr) {
+                logger.error(`[mc-chat] Discord relay error: ${discordErr?.message}`);
+              }
+            }
+            logger.info(`[mc-chat] published ${terminalDelivery.deliveryCount} buffered delivery part(s) as one terminal result thread=${threadId}`);
           }
           const deliveredFinal = dispatchResult?.queuedFinal === true || (dispatchResult?.counts?.final || 0) > 0;
           const deliveredBlock = (dispatchResult?.counts?.block || 0) > 0;

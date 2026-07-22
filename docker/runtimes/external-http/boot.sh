@@ -3,7 +3,7 @@ set -euo pipefail
 
 export SANCHO_RUNTIME="${SANCHO_RUNTIME:-external-http}"
 
-SANCHO_HOME="${SANCHO_HOME:-/root/.openclaw}"
+export SANCHO_HOME="${SANCHO_HOME:-/root/.openclaw}"
 NEXT_PORT="${PORT:-3000}"
 
 if [ -x /opt/sancho-seed/docker/init-home.sh ]; then
@@ -17,6 +17,14 @@ fi
 # the Next.js app started below.
 if [ -f /opt/sancho-seed/docker/bootstrap-common.sh ]; then
   . /opt/sancho-seed/docker/bootstrap-common.sh "$SANCHO_HOME"
+fi
+
+# Runtime selection must not decide whether the shared Mission Control schema
+# is current. This is the same self-gated, non-fatal migration used by the
+# OpenClaw entrypoint.
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "[external-http boot] Checking local DB migrations..."
+  ( cd /app/mc-nextjs && node scripts/migrate-local.mjs ) || true
 fi
 
 if [ -z "${SANCHO_EXTERNAL_GATEWAY_URL:-}${SANCHO_EXTERNAL_RUNTIME_URL:-}${HERMES_EXTERNAL_GATEWAY_URL:-}${HERMES_EXTERNAL_BASE_URL:-}${HERMES_EXTERNAL_URL:-}" ]; then

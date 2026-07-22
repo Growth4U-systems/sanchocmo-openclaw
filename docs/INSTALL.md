@@ -204,9 +204,15 @@ After `npm run build`, validate a runtime end to end with:
 
 ```bash
 npm run smoke:runtime:external-http    # generic BYO gateway (fake runtime)
+npm run smoke:runtime:hermes           # Hermes CLI bridge (needs explicit provider/model + credential)
 npm run smoke:runtime:codex            # Codex CLI bridge (needs `codex` on PATH)
 npm run smoke:runtime:claude-code      # Claude Code bridge (needs `claude` on PATH)
 ```
+
+The Hermes smoke intentionally ignores the user's runtime config. Set
+`SMOKE_HERMES_PROVIDER` and `SMOKE_HERMES_MODEL` (or their `HERMES_CLI_*`
+equivalents) and provide the matching provider credential. This keeps the test
+deterministic and verifies the same isolated bridge boundary used in production.
 
 The runtime adapter/bridge unit suite runs without a build via
 `npm run test:runtime`.

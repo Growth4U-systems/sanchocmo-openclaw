@@ -6,6 +6,7 @@ import { readRuntimeSelection, type RuntimeId } from "./config";
 import type { RuntimeAdapter } from "./types";
 
 let cachedRuntime: RuntimeAdapter | null = null;
+let cachedRuntimeId: RuntimeId | null = null;
 
 export function createRuntimeAdapter(runtime: RuntimeId): RuntimeAdapter {
   switch (runtime) {
@@ -21,15 +22,21 @@ export function createRuntimeAdapter(runtime: RuntimeId): RuntimeAdapter {
 }
 
 export function getRuntime(): RuntimeAdapter {
-  if (cachedRuntime) return cachedRuntime;
-
   const selection = readRuntimeSelection();
+  // runtime-config.json is shared by every Next process. Key the cache by the
+  // persisted selection instead of keeping the first adapter forever so a
+  // change made by another worker is observed without a process restart.
+  if (cachedRuntime && cachedRuntimeId === selection.runtime) {
+    return cachedRuntime;
+  }
   cachedRuntime = createRuntimeAdapter(selection.runtime);
+  cachedRuntimeId = selection.runtime;
   return cachedRuntime;
 }
 
 export function resetRuntimeCache(): void {
   cachedRuntime = null;
+  cachedRuntimeId = null;
 }
 
 export function resetRuntimeForTests(): void {

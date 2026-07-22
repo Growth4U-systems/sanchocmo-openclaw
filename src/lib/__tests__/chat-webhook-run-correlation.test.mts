@@ -10,6 +10,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-chat-webhook-run-"));
 process.env.MC_WORKSPACE = tmp;
 process.env.SANCHO_RUNTIME = "external-http";
 process.env.SANCHO_EXTERNAL_SECRET = "callback-secret";
+process.env.MC_CHAT_SECRET = "callback-secret";
 
 const { resetRuntimeForTests } = await import("../runtime");
 resetRuntimeForTests();
@@ -54,7 +55,6 @@ function createCallbackRun(
   const slug = input.threadId.slice(0, input.threadId.indexOf(":"));
   return agentRuns.createAgentRun({
     ...input,
-    runtime: "openclaw",
     input: {
       ...persisted,
       slug,
@@ -123,6 +123,69 @@ test("a late owner callback completes only its exact run and preserves the tempo
   assert.equal(chat.getStatusEntry(threadId)?.text, "Sancho sigue trabajando");
 });
 
+test("an external callback dispatches authorized control before terminalizing its parent", async () => {
+  const threadId = "demo:runtime-control";
+  const run = createCallbackRun({
+    threadId,
+    runtime: "external-http",
+    agent: "rocinante",
+    input: {
+      slug: "demo",
+      userText: "diagnostica",
+      userId: "mc-admin",
+      userName: "Admin",
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      controlDepth: 0,
+    },
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  const previousFetch = globalThis.fetch;
+  const calls: Array<{ headers: Record<string, string> }> = [];
+  globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
+    assert.equal(agentRuns.getAgentRunById(run.id)?.status, "running");
+    calls.push({ headers: init?.headers as Record<string, string> });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }) as typeof fetch;
+
+  try {
+    const mocked = mockResponse();
+    await webhookHandler(
+      {
+        method: "POST",
+        headers: callbackHeaders(run.id),
+        body: {
+          slug: "demo",
+          threadId,
+          missionControlRunId: run.id,
+          text: ':::sancho-intervene\n{"brief":"Revisa el runtime"}\n:::',
+          agent: "rocinante",
+        },
+        query: {},
+      } as unknown as NextApiRequest,
+      mocked.res,
+    );
+
+    assert.equal(mocked.read().statusCode, 200);
+    assert.equal(calls.length, 1);
+    assert.equal(
+      calls[0].headers["X-Mission-Control-Parent-Run-Id"],
+      run.id,
+    );
+    assert.equal(
+      calls[0].headers["X-Sancho-Parent-Run-Capability"],
+      callbackCapability,
+    );
+    assert.equal(agentRuns.getAgentRunById(run.id)?.status, "completed");
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test("a callback run id cannot be replayed onto another thread", async () => {
   const run = createCallbackRun({
     threadId: "demo:one",
@@ -177,6 +240,129 @@ test("a wrong callback capability fails before any thread mutation", async () =>
   assert.equal(mocked.read().statusCode, 403);
   assert.equal(chat.getThread(threadId).messages.length, 0);
   assert.equal(agentRuns.getAgentRunById(run.id)?.status, "running");
+});
+
+test("callback transport secret follows the run runtime after selection changes", async () => {
+  const threadId = "demo:runtime-secret-binding";
+  const run = createCallbackRun({
+    threadId,
+    runtime: "hermes",
+    agent: "sancho",
+    input: { slug: "demo", userText: "hazlo", senderRole: "client" },
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  const previousHermesSecret = process.env.HERMES_BRIDGE_SECRET;
+  process.env.HERMES_BRIDGE_SECRET = "hermes-callback-secret";
+  const body = {
+    slug: "demo",
+    threadId,
+    missionControlRunId: run.id,
+    text: "Resultado Hermes",
+    agent: "sancho",
+  };
+  try {
+    const selectedRuntimeSecret = mockResponse();
+    await webhookHandler(
+      {
+        method: "POST",
+        headers: callbackHeaders(run.id),
+        body,
+        query: {},
+      } as unknown as NextApiRequest,
+      selectedRuntimeSecret.res,
+    );
+    assert.equal(selectedRuntimeSecret.read().statusCode, 403);
+    assert.equal(agentRuns.getAgentRunById(run.id)?.status, "running");
+
+    const boundRuntimeSecret = mockResponse();
+    await webhookHandler(
+      {
+        method: "POST",
+        headers: {
+          ...callbackHeaders(run.id),
+          "x-mc-secret": "hermes-callback-secret",
+        },
+        body,
+        query: {},
+      } as unknown as NextApiRequest,
+      boundRuntimeSecret.res,
+    );
+    assert.equal(boundRuntimeSecret.read().statusCode, 200);
+    assert.equal(agentRuns.getAgentRunById(run.id)?.status, "completed");
+  } finally {
+    if (previousHermesSecret === undefined) {
+      delete process.env.HERMES_BRIDGE_SECRET;
+    } else {
+      process.env.HERMES_BRIDGE_SECRET = previousHermesSecret;
+    }
+  }
+});
+
+test("callback transport remains bound to the admission secret after rotation", async () => {
+  const threadId = "demo:runtime-secret-rotation";
+  const admissionSecret = "hermes-secret-at-admission";
+  const run = createCallbackRun({
+    threadId,
+    runtime: "hermes",
+    agent: "sancho",
+    input: {
+      slug: "demo",
+      userText: "hazlo",
+      senderRole: "client",
+      runtimeTransportSecretSha256: createHash("sha256")
+        .update(admissionSecret)
+        .digest("hex"),
+    },
+  });
+  agentRuns.markAgentRunDispatched(run.id, threadId);
+  const previousHermesSecret = process.env.HERMES_BRIDGE_SECRET;
+  process.env.HERMES_BRIDGE_SECRET = "rotated-hermes-secret";
+  const body = {
+    slug: "demo",
+    threadId,
+    missionControlRunId: run.id,
+    text: "Resultado del run anterior a la rotación",
+    agent: "sancho",
+  };
+  try {
+    const rotatedSecret = mockResponse();
+    await webhookHandler(
+      {
+        method: "POST",
+        headers: {
+          ...callbackHeaders(run.id),
+          "x-mc-secret": "rotated-hermes-secret",
+        },
+        body,
+        query: {},
+      } as unknown as NextApiRequest,
+      rotatedSecret.res,
+    );
+    assert.equal(rotatedSecret.read().statusCode, 403);
+    assert.equal(agentRuns.getAgentRunById(run.id)?.status, "running");
+
+    const admissionBoundSecret = mockResponse();
+    await webhookHandler(
+      {
+        method: "POST",
+        headers: {
+          ...callbackHeaders(run.id),
+          "x-mc-secret": admissionSecret,
+        },
+        body,
+        query: {},
+      } as unknown as NextApiRequest,
+      admissionBoundSecret.res,
+    );
+    assert.equal(admissionBoundSecret.read().statusCode, 200);
+    assert.equal(agentRuns.getAgentRunById(run.id)?.status, "completed");
+  } finally {
+    if (previousHermesSecret === undefined) {
+      delete process.env.HERMES_BRIDGE_SECRET;
+    } else {
+      process.env.HERMES_BRIDGE_SECRET = previousHermesSecret;
+    }
+  }
 });
 
 test("a retried terminal callback is acknowledged without duplicating the visible reply", async () => {

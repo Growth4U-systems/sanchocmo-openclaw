@@ -1,5 +1,5 @@
 import { addMessage } from "@/lib/data/mc-chat";
-import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import { dispatchAdmittedChatTurn, type AdmittedChatTurn } from "@/lib/chat/control-plane-dispatch";
 import {
   DiscoveryDurableAuthorityError,
   isDiscoveryLedgerAuthoritative,
@@ -76,9 +76,8 @@ export async function triggerDiscoveryRunner(
     "system",
     "🐴 Pidiendo a Rocinante que ejecute el discovery (scraping real)…",
   );
-  addMessage(threadId, "user", message);
 
-  const payload: InboundMessage = {
+  const payload: AdmittedChatTurn = {
     slug: input.slug,
     threadId,
     threadName: input.title
@@ -94,10 +93,12 @@ export async function triggerDiscoveryRunner(
     threadState: "continue",
     isAdmin: true,
     senderRole: "admin",
+    idempotencyKey: `discovery-run:${input.slug}:${input.searchId}`,
+    _source: "partnerships-trigger",
   };
 
   try {
-    const result = await getRuntime().messaging.sendInbound(payload);
+    const result = await dispatchAdmittedChatTurn(payload);
     if (!result.ok) {
       return {
         forwardedToGateway: false,

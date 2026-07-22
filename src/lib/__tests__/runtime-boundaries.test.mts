@@ -40,3 +40,44 @@ test("runtime-routed APIs do not call OpenClaw directly", () => {
     );
   }
 });
+
+test("OpenClaw routes with the server grant before terminalizing its parent", () => {
+  const source = fs.readFileSync(
+    path.join(REPO_ROOT, "plugins/mc-chat/src/index.js"),
+    "utf8",
+  );
+  const grantDispatch = source.indexOf("X-Sancho-Route-Dispatch-Grant");
+  const bufferedDelivery = source.indexOf("terminalDeliveryBuffer.append", grantDispatch);
+  const drainedDelivery = source.indexOf("terminalDeliveryBuffer.drain", bufferedDelivery);
+  const terminalCallback = source.indexOf('}, "Bot callback");', grantDispatch);
+  assert.ok(grantDispatch > 0, "OpenClaw must forward the opaque route grant");
+  assert.match(source, /idempotencyKey:\s*dispatchIdempotencyKey/);
+  assert.ok(
+    bufferedDelivery > grantDispatch && drainedDelivery > bufferedDelivery,
+    "OpenClaw must join every deliver call before terminal callback",
+  );
+  assert.equal(
+    source.match(/}, "Bot callback"\);/g)?.length,
+    1,
+    "one OpenClaw turn must publish only one terminal callback",
+  );
+  assert.ok(
+    terminalCallback > drainedDelivery,
+    "OpenClaw must dispatch child control before its terminal callback",
+  );
+});
+
+test("external HTTP smoke callback carries the exact run in header and body", () => {
+  const source = fs.readFileSync(
+    path.join(REPO_ROOT, "scripts/smoke-external-http.mjs"),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /missionControlRunId:\s*payload\.missionControlRunId/,
+  );
+  assert.match(
+    source,
+    /"x-mission-control-run-id":\s*payload\.missionControlRunId/,
+  );
+});

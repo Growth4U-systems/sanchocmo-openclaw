@@ -5,6 +5,10 @@ export interface RuntimeControlTurnContext {
   slug: string;
   threadId: string;
   missionControlRunId?: string;
+  /** Raw one-turn capability used only as authority for child control turns. */
+  parentCapability?: string;
+  parentDispatchRunId?: string;
+  parentDispatchLeaseToken?: string;
   controlDepth?: number;
   threadName?: string;
   respondingAgent: string;
@@ -48,6 +52,8 @@ async function postJson(
   url: string,
   secret: string,
   body: unknown,
+  context: RuntimeControlTurnContext,
+  extraHeaders: Record<string, string> = {},
 ): Promise<{ ok: boolean; status: number; data: Record<string, unknown> | null }> {
   try {
     const response = await fetchImpl(url, {
@@ -55,6 +61,15 @@ async function postJson(
       headers: {
         "Content-Type": "application/json",
         "X-MC-Secret": secret,
+        "X-Mission-Control-Parent-Run-Id": context.missionControlRunId || "",
+        "X-Sancho-Parent-Run-Capability": context.parentCapability || "",
+        ...(context.parentDispatchRunId && context.parentDispatchLeaseToken
+          ? {
+              "X-Sancho-Dispatch-Run-Id": context.parentDispatchRunId,
+              "X-Sancho-Dispatch-Lease-Token": context.parentDispatchLeaseToken,
+            }
+          : {}),
+        ...extraHeaders,
       },
       body: JSON.stringify(body),
     });
@@ -134,6 +149,12 @@ export async function dispatchRuntimeControlActions(
     result.followupMessages.push("⚠️ No ejecuté el cambio solicitado porque el control plane no tiene MC_CHAT_SECRET configurado.");
     return result;
   }
+  if (!context.missionControlRunId || !context.parentCapability) {
+    result.followupMessages.push(
+      "⚠️ No ejecuté el cambio solicitado porque falta la autoridad del turno padre.",
+    );
+    return result;
+  }
   const fetchImpl = options.fetchImpl ?? (fetch as unknown as FetchLike);
   const nextBaseUrl = (options.nextBaseUrl || baseUrl()).replace(/\/+$/, "");
 
@@ -152,7 +173,7 @@ export async function dispatchRuntimeControlActions(
       linkedTo: context.linkedTo,
       docPath: context.docPath,
       docKind: context.docKind,
-    });
+    }, context);
     if (dispatch.ok) result.actionsDispatched += 1;
     else result.followupMessages.push("⚠️ No pude iniciar la intervención temporal de Sancho. La tarea y su agente original no cambiaron.");
     return result;
@@ -184,11 +205,24 @@ export async function dispatchRuntimeControlActions(
       brief: routeRequest.brief,
       confirmCreate: routeRequest.confirmCreate === true,
       confirmationText: routeRequest.confirmCreate === true ? context.userText : undefined,
-    });
+    }, context);
     const routeData = route.data;
     const action = typeof routeData?.action === "string" ? routeData.action : "";
     const targetThreadId = typeof routeData?.threadId === "string" ? routeData.threadId : "";
-    if (route.ok && (action === "reuse" || action === "created") && targetThreadId) {
+    const dispatchGrant = typeof routeData?.dispatchGrant === "string"
+      ? routeData.dispatchGrant
+      : "";
+    const dispatchIdempotencyKey =
+      typeof routeData?.dispatchIdempotencyKey === "string"
+        ? routeData.dispatchIdempotencyKey
+        : "";
+    if (
+      route.ok &&
+      (action === "reuse" || action === "created") &&
+      targetThreadId &&
+      dispatchGrant &&
+      dispatchIdempotencyKey
+    ) {
       const dispatch = await postJson(fetchImpl, `${nextBaseUrl}/api/chat/send`, secret, {
         ...commonDispatchBody(context),
         threadId: targetThreadId,
@@ -197,12 +231,9 @@ export async function dispatchRuntimeControlActions(
         agent: routeAgent,
         skill: routeRequest.skill,
         controlDepth: 1,
-        idempotencyKey: actionIdempotencyKey(context, "task-dispatch", {
-          routeAgent,
-          targetThreadId,
-          brief: routeRequest.brief,
-          proposalId: routeRequest.proposalId,
-        }),
+        idempotencyKey: dispatchIdempotencyKey,
+      }, context, {
+        "X-Sancho-Route-Dispatch-Grant": dispatchGrant,
       });
       if (dispatch.ok) {
         result.actionsDispatched += 1;

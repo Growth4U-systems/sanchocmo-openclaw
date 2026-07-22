@@ -200,6 +200,8 @@ function bridgePrompt(message: InboundMessage): string {
     channelMode: message.channelMode,
     supportContext: message.supportContext,
     taskRouteProposal: message.taskRouteProposal,
+    priorThreadMessages: message.priorThreadMessages,
+    attachments: message.attachments,
   });
 
   const attachmentBlock = bridgeAttachmentBlock(message.attachments);

@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import http from "node:http";
+import os from "node:os";
+import path from "node:path";
 import {
   buildCodexArgs,
   buildCodexPrompt,
@@ -180,7 +183,9 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     CODEX_RUNTIME_TIMEOUT_MS: process.env.CODEX_RUNTIME_TIMEOUT_MS,
     CODEX_CONTEXT_PACK_ENABLED: process.env.CODEX_CONTEXT_PACK_ENABLED,
     SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+    SANCHO_CALLBACK_OUTBOX_DIR: process.env.SANCHO_CALLBACK_OUTBOX_DIR,
   };
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-codex-outbox-"));
   const received = [];
   const receivedHeaders = [];
   const runtimeToolCapability = "c".repeat(64);
@@ -205,6 +210,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
   process.env.CODEX_RUNTIME_TIMEOUT_MS = "5000";
   process.env.CODEX_CONTEXT_PACK_ENABLED = "0";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
 
   const bridge = createServer();
   const bridgeAddr = await listen(bridge);
@@ -263,6 +269,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     await close(bridge);
     await close(webhook);
     restoreEnv(previous);
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });
 
@@ -272,7 +279,9 @@ test("Codex spawn error emits exactly one terminal callback", async () => {
     CODEX_CLI: process.env.CODEX_CLI,
     CODEX_CONTEXT_PACK_ENABLED: process.env.CODEX_CONTEXT_PACK_ENABLED,
     SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+    SANCHO_CALLBACK_OUTBOX_DIR: process.env.SANCHO_CALLBACK_OUTBOX_DIR,
   };
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-codex-error-outbox-"));
   const received = [];
   const webhook = http.createServer((req, res) => {
     let raw = "";
@@ -289,6 +298,7 @@ test("Codex spawn error emits exactly one terminal callback", async () => {
   process.env.CODEX_CLI = "/definitely/missing/codex";
   process.env.CODEX_CONTEXT_PACK_ENABLED = "0";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
   const bridge = createServer();
   const bridgeAddr = await listen(bridge);
 
@@ -312,5 +322,6 @@ test("Codex spawn error emits exactly one terminal callback", async () => {
     await close(bridge);
     await close(webhook);
     restoreEnv(previous);
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });

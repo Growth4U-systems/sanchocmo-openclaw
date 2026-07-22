@@ -94,7 +94,7 @@ export interface InboundMessage {
     imageDigest?: string;
     environment?: string;
   };
-  /** Server-derived visible history used to bootstrap a new Growie model session once. */
+  /** Server-derived visible history used to bootstrap a stateless runtime turn. */
   priorThreadMessages?: GrowieThreadHistoryMessage[];
   _source?: string;
   agentId?: string;
@@ -120,6 +120,8 @@ export interface RuntimeCancelOptions {
   slug?: string;
   agent?: string;
   agentId?: string;
+  /** Exact Mission Control run to stop; prevents a stale cancel killing a newer turn. */
+  missionControlRunId?: string;
 }
 
 export interface RuntimeRunningCron {

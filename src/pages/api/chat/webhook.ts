@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash } from "node:crypto";
 import { withErrorHandler } from "@/lib/api-middleware";
-import { getRuntime } from "@/lib/runtime";
+import { createRuntimeAdapter, resolveRuntimeId } from "@/lib/runtime";
 import {
   appendAgentRunEventAsync,
   claimAgentRunCallbackFingerprintAsync,
@@ -32,6 +32,7 @@ import {
 } from "@/lib/runtime/control-actions";
 import { parseRuntimeControlReply } from "@/lib/runtime/agent-contract/control-reply.mjs";
 import { authorizeRuntimeRunRequest } from "@/lib/runtime/runtime-run-request-authority";
+import { authorizeRuntimeTransportSecret } from "@/lib/runtime/runtime-transport-secret";
 import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
 
 // How long after a successful bot reply we should treat a watchdog_abort on
@@ -60,15 +61,6 @@ function singleHeader(req: NextApiRequest, name: string): string | undefined {
   return Array.isArray(value) ? undefined : value;
 }
 
-function safeSecretEqual(left: string | undefined, right: string): boolean {
-  if (!left) return false;
-  const supplied = Buffer.from(left);
-  const expected = Buffer.from(right);
-  return (
-    supplied.length === expected.length && timingSafeEqual(supplied, expected)
-  );
-}
-
 /**
  * POST /api/chat/webhook (was /webhook/mc-chat/response)
  * Ported from mc-server.js:5001-5041
@@ -85,15 +77,6 @@ export async function webhookHandler(
 ) {
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
-
-  // Verify shared secret
-  const secret = getRuntime().messaging.getSharedSecret?.();
-  if (!secret) {
-    return res.status(503).json({ error: "MC_CHAT_SECRET not configured" });
-  }
-  if (!safeSecretEqual(singleHeader(req, "x-mc-secret"), secret)) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
@@ -127,6 +110,28 @@ export async function webhookHandler(
     return res
       .status(403)
       .json({ error: "Runtime callback authority invalid" });
+  }
+  // Resolve transport authentication from the runtime that admitted this run,
+  // never from the adapter selected now. A runtime switch must not strand an
+  // in-flight callback or let the new runtime's secret authorize an old run.
+  const callbackRuntimeId = resolveRuntimeId(callbackAuthority.run.runtime);
+  if (!callbackRuntimeId) {
+    return res.status(403).json({ error: "Runtime callback binding invalid" });
+  }
+  const suppliedTransportSecret = singleHeader(req, "x-mc-secret");
+  const transportAuthorization = authorizeRuntimeTransportSecret({
+    suppliedSecret: suppliedTransportSecret,
+    runInput: callbackAuthority.input,
+    resolveLegacySecret: () =>
+      createRuntimeAdapter(callbackRuntimeId).messaging.getSharedSecret?.(),
+  });
+  if (transportAuthorization === "legacy_secret_missing") {
+    return res
+      .status(503)
+      .json({ error: "Runtime callback secret not configured" });
+  }
+  if (transportAuthorization !== "authorized") {
+    return res.status(403).json({ error: "Forbidden" });
   }
   const claimedRunId =
     typeof missionControlRunId === "string" ? missionControlRunId.trim() : "";
@@ -375,6 +380,12 @@ export async function webhookHandler(
             : String(slug || "default"),
         threadId: tid,
         missionControlRunId: callbackRun.id,
+        parentCapability: singleHeader(req, "x-sancho-run-capability"),
+        parentDispatchRunId: singleHeader(req, "x-sancho-dispatch-run-id"),
+        parentDispatchLeaseToken: singleHeader(
+          req,
+          "x-sancho-dispatch-lease-token",
+        ),
         controlDepth: input.controlDepth === 1 ? 1 : 0,
         threadName:
           typeof input.threadName === "string" ? input.threadName : tid,
@@ -445,6 +456,18 @@ export async function webhookHandler(
       errorDetail,
       terminalCallbackClaim,
     );
+    // Child control turns authenticate against an active parent run. Dispatch
+    // them before terminalizing the parent, using the already-verified raw
+    // callback capability; only its digest remains persisted.
+    if (parsedControl && controlContext) {
+      const controlled = await dispatchRuntimeControlActions(
+        parsedControl,
+        controlContext,
+        { secret: suppliedTransportSecret },
+      );
+      for (const followup of controlled.followupMessages)
+        addMessage(tid, "bot", followup, "sancho");
+    }
     if (callbackRunWasActive && callbackRun && terminalRunOutput) {
       if (errorDetail) {
         await markAgentRunFailedAsync(
@@ -461,15 +484,6 @@ export async function webhookHandler(
           terminalRunOutput,
         );
       }
-    }
-    if (parsedControl && controlContext) {
-      const controlled = await dispatchRuntimeControlActions(
-        parsedControl,
-        controlContext,
-        { secret },
-      );
-      for (const followup of controlled.followupMessages)
-        addMessage(tid, "bot", followup, "sancho");
     }
     console.log(
       `[mc-chat] Bot response → ${tid}: ${botText.slice(0, 60)} (${sealed.length} progress events${errorDetail ? `, errorDetail=${errorDetail.category}` : ""})`,

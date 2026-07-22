@@ -20,7 +20,8 @@
  * Same fire-and-forget runtime dispatch pattern as feedback-triage-trigger.ts.
  */
 
-import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import crypto from "node:crypto";
+import { dispatchAdmittedChatTurn, type AdmittedChatTurn } from "@/lib/chat/control-plane-dispatch";
 import { addMessage } from "./mc-chat";
 import { type CommentRow, loadDocCommentsFamily } from "@/lib/comments";
 import { getOriginalDocPath } from "@/lib/comments-file";
@@ -149,9 +150,8 @@ export async function triggerReviewComments(
     "system",
     `💬 Pidiendo a ${author.agent} que revise el feedback de ${originalDocPath.split("/").pop()}...`,
   );
-  addMessage(author.threadId, "user", buildThreadCard(originalDocPath, author.agent, comments));
 
-  const payload: InboundMessage = {
+  const payload: AdmittedChatTurn = {
     slug: input.slug,
     threadId: author.threadId,
     threadName: author.threadName,
@@ -167,13 +167,16 @@ export async function triggerReviewComments(
     docPath: originalDocPath,
     isAdmin: true,
     senderRole: "admin",
+    displayText: buildThreadCard(originalDocPath, author.agent, comments),
+    idempotencyKey: `review-comments:${crypto.createHash("sha256").update(message).digest("hex").slice(0, 32)}`,
+    _source: "review-comments",
   };
 
   try {
     // Never hang the caller on a slow/down runtime: the manual buttons
     // in the dashboard await this request, and without a timeout the UI
     // sits in "Despachando..." forever (SAN-148 staging finding).
-    const result = await getRuntime().messaging.sendInbound(payload, { timeoutMs: 15_000 });
+    const result = await dispatchAdmittedChatTurn(payload, { timeoutMs: 15_000 });
     if (!result.ok) {
       return {
         forwardedToGateway: false,

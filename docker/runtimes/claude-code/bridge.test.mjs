@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import http from "node:http";
+import os from "node:os";
+import path from "node:path";
 import {
   buildClaudeArgs,
   buildClaudePrompt,
@@ -275,7 +278,9 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     CLAUDE_CODE_CONTEXT_PACK_ENABLED: process.env.CLAUDE_CODE_CONTEXT_PACK_ENABLED,
     CLAUDE_CODE_SANCHO_MCP_URL: process.env.CLAUDE_CODE_SANCHO_MCP_URL,
     SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+    SANCHO_CALLBACK_OUTBOX_DIR: process.env.SANCHO_CALLBACK_OUTBOX_DIR,
   };
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-claude-outbox-"));
   const received = [];
   const receivedHeaders = [];
   const runtimeToolCapability = "b".repeat(64);
@@ -302,6 +307,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
   process.env.CLAUDE_CODE_CONTEXT_PACK_ENABLED = "0";
   process.env.CLAUDE_CODE_SANCHO_MCP_URL = "http://localhost:3000/api/mcp/sancho";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
 
   const bridge = createServer();
   const bridgeAddr = await listen(bridge);
@@ -360,6 +366,7 @@ test("bridge accepts Sancho inbound and posts progress/final webhooks", async ()
     await close(bridge);
     await close(webhook);
     restoreEnv(previous);
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });
 
@@ -369,7 +376,9 @@ test("Claude Code spawn error emits exactly one terminal callback", async () => 
     CLAUDE_CODE_CLI: process.env.CLAUDE_CODE_CLI,
     CLAUDE_CODE_CONTEXT_PACK_ENABLED: process.env.CLAUDE_CODE_CONTEXT_PACK_ENABLED,
     SANCHO_WEBHOOK_URL: process.env.SANCHO_WEBHOOK_URL,
+    SANCHO_CALLBACK_OUTBOX_DIR: process.env.SANCHO_CALLBACK_OUTBOX_DIR,
   };
+  const outboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-claude-error-outbox-"));
   const received = [];
   const webhook = http.createServer((req, res) => {
     let raw = "";
@@ -386,6 +395,7 @@ test("Claude Code spawn error emits exactly one terminal callback", async () => 
   process.env.CLAUDE_CODE_CLI = "/definitely/missing/claude";
   process.env.CLAUDE_CODE_CONTEXT_PACK_ENABLED = "0";
   process.env.SANCHO_WEBHOOK_URL = `http://127.0.0.1:${webhookAddr.port}/api/chat/webhook`;
+  process.env.SANCHO_CALLBACK_OUTBOX_DIR = outboxRoot;
   const bridge = createServer();
   const bridgeAddr = await listen(bridge);
 
@@ -409,5 +419,6 @@ test("Claude Code spawn error emits exactly one terminal callback", async () => 
     await close(bridge);
     await close(webhook);
     restoreEnv(previous);
+    fs.rmSync(outboxRoot, { recursive: true, force: true });
   }
 });
