@@ -15,6 +15,7 @@ import type {
 
 const FAKE_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: false,
   cron: false,
   modelPicker: false,
   agentRegistry: false,

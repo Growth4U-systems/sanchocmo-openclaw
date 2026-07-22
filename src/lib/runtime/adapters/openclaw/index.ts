@@ -42,6 +42,7 @@ import type {
 
 const OPENCLAW_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: true,
   cron: true,
   modelPicker: true,
   agentRegistry: true,

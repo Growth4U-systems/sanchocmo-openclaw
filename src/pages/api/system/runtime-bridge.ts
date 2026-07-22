@@ -17,6 +17,7 @@ import {
   gatewayListenHost,
   gatewayPortOrDefault,
   isCliBridgeProviderId,
+  managedBridgeBootVarsForCliBridge,
   normalizeBaseUrl,
   resolveServerCliAvailability,
   type CliBridgeProviderId,
@@ -385,6 +386,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const activate = req.body?.activate !== false;
     if (activate) {
+      setEnvVars(
+        managedBridgeBootVarsForCliBridge(providerId, gatewayUrl, secret),
+      );
       writeRuntimeSelection("external-http", "admin");
       resetRuntimeCache();
     }

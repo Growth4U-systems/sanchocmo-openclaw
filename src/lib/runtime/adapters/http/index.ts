@@ -26,6 +26,7 @@ import {
 
 const EXTERNAL_HTTP_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: false,
   cron: false,
   modelPicker: false,
   agentRegistry: false,

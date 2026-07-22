@@ -184,6 +184,27 @@ export function externalRuntimeVarsForCliBridge(
   };
 }
 
+/**
+ * Persist the boot contract for a server-managed bridge after it has passed
+ * health verification. The UI-started child is intentionally only the
+ * immediate activation path; these values make the same bridge supervised by
+ * the container entrypoint after a deploy or restart.
+ */
+export function managedBridgeBootVarsForCliBridge(
+  providerId: CliBridgeProviderId,
+  gatewayUrl: string,
+  secret: string,
+): Record<string, string> {
+  if (providerId !== "hermes") return {};
+  return {
+    SANCHO_RUNTIME: "hermes",
+    HERMES_BRIDGE_ENABLED: "1",
+    HERMES_BRIDGE_PORT: String(gatewayPortOrDefault(providerId, gatewayUrl)),
+    HERMES_BRIDGE_SECRET: secret,
+    HERMES_SANCHO_SECRET: secret,
+  };
+}
+
 function shellQuote(value: string): string {
   if (/^[A-Za-z0-9_./:@%+=,-]+$/.test(value)) return value;
   return `'${value.replace(/'/g, "'\\''")}'`;
@@ -269,6 +290,7 @@ const cliRuntimeBridge = {
   gatewayListenHost,
   gatewayPortOrDefault,
   isCliBridgeProviderId,
+  managedBridgeBootVarsForCliBridge,
   normalizeBaseUrl,
   resolveServerCliAvailability,
 };

@@ -31,6 +31,7 @@ test("getRuntime defaults to the OpenClaw adapter", () => {
 
   assert.equal(adapter.id, "openclaw");
   assert.equal(adapter.capabilities.chat, true);
+  assert.equal(adapter.capabilities.durableChatTurns, true);
   assert.equal(adapter.capabilities.cron, true);
 
   runtime.resetRuntimeForTests();
@@ -114,6 +115,7 @@ test("getRuntime selects the Hermes adapter", () => {
 
   assert.equal(adapter.id, "hermes");
   assert.equal(adapter.capabilities.chat, true);
+  assert.equal(adapter.capabilities.durableChatTurns, false);
   assert.equal(adapter.capabilities.cron, false);
   assert.equal(adapter.capabilities.discord, false);
 
@@ -132,6 +134,7 @@ test("getRuntime selects the external HTTP adapter", () => {
   assert.equal(adapter.id, "external-http");
   assert.equal(adapter.displayName, "Runtime externo HTTP");
   assert.equal(adapter.capabilities.chat, true);
+  assert.equal(adapter.capabilities.durableChatTurns, false);
   assert.equal(adapter.capabilities.cron, false);
 
   runtime.resetRuntimeForTests();

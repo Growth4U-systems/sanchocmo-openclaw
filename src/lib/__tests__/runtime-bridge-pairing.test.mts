@@ -11,6 +11,7 @@ const {
   externalRuntimeVarsForCliBridge,
   gatewayListenHost,
   gatewayPortOrDefault,
+  managedBridgeBootVarsForCliBridge,
   resolveServerCliAvailability,
 } = cliRuntimeBridge;
 
@@ -25,6 +26,31 @@ test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", (
       SANCHO_EXTERNAL_INBOUND_PATH: "/sancho/inbound",
       SANCHO_EXTERNAL_HEALTH_PATH: "/healthz",
     },
+  );
+});
+
+test("a verified managed Hermes bridge persists its restart contract", () => {
+  assert.deepEqual(
+    managedBridgeBootVarsForCliBridge(
+      "hermes",
+      "http://127.0.0.1:19998",
+      "secret",
+    ),
+    {
+      SANCHO_RUNTIME: "hermes",
+      HERMES_BRIDGE_ENABLED: "1",
+      HERMES_BRIDGE_PORT: "19998",
+      HERMES_BRIDGE_SECRET: "secret",
+      HERMES_SANCHO_SECRET: "secret",
+    },
+  );
+  assert.deepEqual(
+    managedBridgeBootVarsForCliBridge(
+      "codex",
+      "http://127.0.0.1:18793",
+      "secret",
+    ),
+    {},
   );
 });
 

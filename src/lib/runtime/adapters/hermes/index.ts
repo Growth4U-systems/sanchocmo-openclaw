@@ -26,6 +26,7 @@ import type {
 
 const HERMES_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: false,
   cron: false,
   modelPicker: false,
   agentRegistry: false,

@@ -1,7 +1,13 @@
 import type { GrowieThreadHistoryMessage } from "@/lib/support/growie";
 
 export type RuntimeCapability =
-  "chat" | "cron" | "modelPicker" | "agentRegistry" | "discord" | "slack";
+  | "chat"
+  | "durableChatTurns"
+  | "cron"
+  | "modelPicker"
+  | "agentRegistry"
+  | "discord"
+  | "slack";
 
 export type RuntimeCapabilities = Record<RuntimeCapability, boolean>;
 

@@ -12,6 +12,11 @@ process.env.MC_WORKSPACE = tmp;
 process.env.MC_TASKS_BACKEND = "json";
 process.env.SANCHO_RUNTIME = "external-http";
 process.env.SANCHO_EXTERNAL_SECRET = "runtime-secret";
+// Reproduce the production regression: enabling the OpenClaw durable rollout
+// must not make an otherwise healthy external/Hermes adapter return 503.
+process.env.CHAT_AGENT_TURN_EXECUTION_V1 = "canary";
+process.env.CHAT_AGENT_TURN_V1_SLUGS = "demo";
+process.env.CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED = "1";
 process.env.GIT_COMMIT = "deployed-support-sha";
 process.env.SANCHOCMO_IMAGE_DIGEST = "sha256:support-image";
 process.env.NEXT_PUBLIC_ENV_LABEL = "Staging";

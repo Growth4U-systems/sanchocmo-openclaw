@@ -452,15 +452,17 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ error: "Invalid idempotencyKey" });
   }
   // `/stop` targets the currently active runtime session and is not a model
-  // turn. Resolve durable rollout before every other prose fast-path so an
-  // enabled tenant cannot bypass the Ledger through deterministic routing.
+  // turn. Durable admission is a runtime capability: runtimes without the
+  // Ledger worker keep using their normal adapter instead of losing chat.
   const ordinaryAgentTurn = text.trim().toLowerCase() !== "/stop";
   const durableTurnRollout = ordinaryAgentTurn
     ? resolveChatAgentTurnPolicy(String(slug))
     : null;
+  const durableTurnSupported = runtime.capabilities.durableChatTurns;
   const durableTurnEnabled =
-    durableTurnRollout?.enabled === true && runtime.id === "openclaw";
+    durableTurnRollout?.enabled === true && durableTurnSupported;
   if (
+    durableTurnSupported &&
     durableTurnRollout &&
     (durableTurnRollout.reason === "invalid_mode" ||
       durableTurnRollout.reason === "invalid_allowlist" ||
@@ -474,12 +476,10 @@ export async function sendHandler(req: NextApiRequest, res: NextApiResponse) {
       retryable: true,
     });
   }
-  if (durableTurnRollout?.enabled === true && runtime.id !== "openclaw") {
-    console.error(`[chat-agent-turn] rollout runtime rejected: ${runtime.id}`);
-    return res.status(503).json({
-      error: "La ejecución durable del chat no está disponible",
-      retryable: true,
-    });
+  if (durableTurnRollout?.enabled === true && !durableTurnSupported) {
+    console.warn(
+      `[chat-agent-turn] runtime ${runtime.id} has no durable-turn worker; using adapter delivery`,
+    );
   }
 
   // Persist ownership before any deterministic early return so a reload
