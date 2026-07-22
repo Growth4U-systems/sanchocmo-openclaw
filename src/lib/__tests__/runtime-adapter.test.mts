@@ -444,14 +444,18 @@ test("Hermes adapter posts inbound messages to the configured bridge", async () 
   const previousRuntime = process.env.SANCHO_RUNTIME;
   const previousGateway = process.env.HERMES_GATEWAY_URL;
   const previousPath = process.env.HERMES_INBOUND_PATH;
-  const previousSecret = process.env.HERMES_CHAT_SECRET;
+  const previousBridgeSecret = process.env.HERMES_BRIDGE_SECRET;
+  const previousChatSecret = process.env.HERMES_CHAT_SECRET;
+  const previousManagedSecret = process.env.MC_CHAT_SECRET;
   const previousFetch = globalThis.fetch;
   const calls: { url: string; init?: RequestInit }[] = [];
 
   process.env.SANCHO_RUNTIME = "hermes";
   process.env.HERMES_GATEWAY_URL = "http://hermes.test/";
   process.env.HERMES_INBOUND_PATH = "runtime/inbound";
-  process.env.HERMES_CHAT_SECRET = "shh";
+  process.env.HERMES_BRIDGE_SECRET = "bridge-shh";
+  process.env.HERMES_CHAT_SECRET = "legacy-shh";
+  process.env.MC_CHAT_SECRET = "openclaw-shh";
   runtime.resetRuntimeForTests();
 
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -477,7 +481,10 @@ test("Hermes adapter posts inbound messages to the configured bridge", async () 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "http://hermes.test/runtime/inbound");
     assert.equal(calls[0].init?.method, "POST");
-    assert.equal((calls[0].init?.headers as Record<string, string>)["X-MC-Secret"], "shh");
+    assert.equal(
+      (calls[0].init?.headers as Record<string, string>)["X-MC-Secret"],
+      "bridge-shh",
+    );
     assert.equal((calls[0].init?.headers as Record<string, string>)["X-Test"], "1");
     assert.equal(JSON.parse(String(calls[0].init?.body)).threadId, "acme:general");
   } finally {
@@ -489,7 +496,11 @@ test("Hermes adapter posts inbound messages to the configured bridge", async () 
     else process.env.HERMES_GATEWAY_URL = previousGateway;
     if (previousPath === undefined) delete process.env.HERMES_INBOUND_PATH;
     else process.env.HERMES_INBOUND_PATH = previousPath;
-    if (previousSecret === undefined) delete process.env.HERMES_CHAT_SECRET;
-    else process.env.HERMES_CHAT_SECRET = previousSecret;
+    if (previousBridgeSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+    else process.env.HERMES_BRIDGE_SECRET = previousBridgeSecret;
+    if (previousChatSecret === undefined) delete process.env.HERMES_CHAT_SECRET;
+    else process.env.HERMES_CHAT_SECRET = previousChatSecret;
+    if (previousManagedSecret === undefined) delete process.env.MC_CHAT_SECRET;
+    else process.env.MC_CHAT_SECRET = previousManagedSecret;
   }
 });

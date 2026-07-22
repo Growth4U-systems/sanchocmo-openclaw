@@ -4,7 +4,6 @@ import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import {
   buildMcChatContextBlock,
-  groundingSkillForTurn,
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
@@ -157,19 +156,19 @@ function contextPackTimeoutMs() {
 export async function fetchContextPack(message) {
   if (process.env.HERMES_CONTEXT_PACK_ENABLED === "0") return null;
   if (!message?.slug) return null;
-  const groundingSkill = groundingSkillForTurn(message);
 
-  const headers = { "Content-Type": "application/json" };
+  const headers = {
+    "Content-Type": "application/json",
+    ...callbackAuthorityHeaders(message),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
 
   const res = await fetch(contextPackUrl(), {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      slug: message.slug,
-      skill: groundingSkill,
-    }),
+    // Tenant and skill are derived from the authorized persisted run.
+    body: JSON.stringify({}),
     signal: AbortSignal.timeout(contextPackTimeoutMs()),
   });
   const raw = await res.text();

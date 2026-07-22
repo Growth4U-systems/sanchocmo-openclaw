@@ -280,7 +280,7 @@ function waitFor(predicate, timeoutMs = 2000) {
   });
 }
 
-test("fetchContextPack calls Sancho context-pack endpoint with shared secret", async () => {
+test("fetchContextPack calls Sancho with transport and run authority", async () => {
   const previousUrl = process.env.SANCHO_CONTEXT_PACK_URL;
   const previousSecret = process.env.HERMES_SANCHO_SECRET;
   const previousEnabled = process.env.HERMES_CONTEXT_PACK_ENABLED;
@@ -292,7 +292,7 @@ test("fetchContextPack calls Sancho context-pack endpoint with shared secret", a
       raw += chunk;
     });
     req.on("end", () => {
-      calls.push({ path: req.url, secret: req.headers["x-mc-secret"], body: JSON.parse(raw) });
+      calls.push({ path: req.url, headers: req.headers, body: JSON.parse(raw) });
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ slug: "acme", skill: "seo-content", verdict: "ok" }));
     });
@@ -303,8 +303,11 @@ test("fetchContextPack calls Sancho context-pack endpoint with shared secret", a
   delete process.env.HERMES_CONTEXT_PACK_ENABLED;
 
   try {
+    const runtimeToolCapability = "d".repeat(64);
     const pack = await fetchContextPack({
       slug: "acme",
+      missionControlRunId: "run_mc_hermes_context",
+      runtimeToolCapability,
       skill: "seo-content",
       scope: "agent",
       skillMode: "auto",
@@ -313,8 +316,16 @@ test("fetchContextPack calls Sancho context-pack endpoint with shared secret", a
     assert.deepEqual(pack, { slug: "acme", skill: "seo-content", verdict: "ok" });
     assert.equal(calls.length, 1);
     assert.equal(calls[0].path, "/api/chat/context-pack");
-    assert.equal(calls[0].secret, "sancho-secret");
-    assert.deepEqual(calls[0].body, { slug: "acme", skill: "seo-content" });
+    assert.equal(calls[0].headers["x-mc-secret"], "sancho-secret");
+    assert.equal(
+      calls[0].headers["x-mission-control-run-id"],
+      "run_mc_hermes_context",
+    );
+    assert.equal(
+      calls[0].headers["x-sancho-run-capability"],
+      runtimeToolCapability,
+    );
+    assert.deepEqual(calls[0].body, {});
   } finally {
     await close(server);
     if (previousUrl === undefined) delete process.env.SANCHO_CONTEXT_PACK_URL;

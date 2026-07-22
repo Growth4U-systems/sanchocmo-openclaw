@@ -88,6 +88,11 @@ jobs:
       - name: Mission Control plugin tests
         run: npm run test:plugins
 
+      # CLI bridges are production runtime code, not test fixtures. Gate their
+      # transport/auth/context contract alongside the server and plugin.
+      - name: Runtime adapter and bridge tests
+        run: npm run test:runtime
+
       # Product definitions are executable governance: missing source/tests,
       # ambiguous routes or an overdue approved definition must fail closed.
       - name: Product capability drift

@@ -222,17 +222,18 @@ export async function fetchContextPack(message) {
   if (flagDisabled(["CLAUDE_CODE_CONTEXT_PACK_ENABLED", "SANCHO_CONTEXT_PACK_ENABLED"])) return null;
   if (!message?.slug) return null;
 
-  const headers = { "Content-Type": "application/json" };
+  const headers = {
+    "Content-Type": "application/json",
+    ...callbackAuthorityHeaders(message),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
 
   const res = await fetch(contextPackUrl(), {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      slug: message.slug,
-      skill: typeof message.skill === "string" && message.skill.trim() ? message.skill.trim() : null,
-    }),
+    // Tenant and skill are derived from the authorized persisted run.
+    body: JSON.stringify({}),
     signal: AbortSignal.timeout(contextPackTimeoutMs()),
   });
   const raw = await res.text();

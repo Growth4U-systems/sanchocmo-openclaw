@@ -19,7 +19,15 @@ export const MANAGED_HERMES_CONNECTION: HermesConnectionConfig = {
   baseUrlEnv: ["HERMES_GATEWAY_URL", "HERMES_BASE_URL", "HERMES_URL"],
   inboundPathEnv: ["HERMES_INBOUND_PATH"],
   healthPathEnv: ["HERMES_HEALTH_PATH"],
-  secretEnv: ["HERMES_CHAT_SECRET", "HERMES_SHARED_SECRET", "MC_CHAT_SECRET"],
+  // The managed bridge verifies HERMES_BRIDGE_SECRET first. Keep the adapter
+  // on the same precedence so an unrelated OpenClaw MC_CHAT_SECRET cannot
+  // make a healthy Hermes bridge reject every inbound turn with 403.
+  secretEnv: [
+    "HERMES_BRIDGE_SECRET",
+    "HERMES_CHAT_SECRET",
+    "HERMES_SHARED_SECRET",
+    "MC_CHAT_SECRET",
+  ],
   label: "Hermes managed",
 };
 
