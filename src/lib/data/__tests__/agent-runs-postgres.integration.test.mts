@@ -6,7 +6,6 @@ import path from "node:path";
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Db } from "@/db/drizzle";
-import { AgentRunParentInactiveError } from "../agent-runs";
 import { PostgresAgentRunsRepository } from "../agent-runs-postgres";
 import {
   AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE,
@@ -131,8 +130,9 @@ test("the parent row lock linearizes child admission against Stop", {
   timeout: 30_000,
 }, async () => {
   const client = postgres(databaseUrl as string, { max: 6 });
+  const database = drizzle(client);
   const repository = new PostgresAgentRunsRepository(
-    drizzle(client) as unknown as Db,
+    database as unknown as Db,
   );
   const suffix = crypto.randomUUID();
 
@@ -200,7 +200,16 @@ test("the parent row lock linearizes child admission against Stop", {
     await stopTransaction;
     const stopFirstResult = await stopFirstAdmission;
     assert.equal(stopFirstResult.receipt, null);
-    assert.ok(stopFirstResult.error instanceof AgentRunParentInactiveError);
+    assert.ok(stopFirstResult.error instanceof Error);
+    assert.equal(stopFirstResult.error.name, "AgentRunParentInactiveError");
+    assert.equal(
+      (stopFirstResult.error as Error & { code?: unknown }).code,
+      "agent_run_parent_inactive",
+    );
+    assert.equal(
+      stopFirstResult.error.message,
+      "agent_runs: active parent fence rejected child admission",
+    );
     assert.deepEqual(
       await repository.listActiveChildren(stopFirstParent.id),
       [],
@@ -226,9 +235,9 @@ test("the parent row lock linearizes child admission against Stop", {
       releaseChild = resolve;
     });
     let childRunId = "";
-    const childTransaction = client.begin(async (transaction) => {
+    const childTransaction = database.transaction(async (transaction) => {
       const transactionalRepository = new PostgresAgentRunsRepository(
-        drizzle(transaction) as unknown as Db,
+        transaction as unknown as Db,
       );
       const child = await transactionalRepository.createWithReceipt({
         threadId: `integration:child-first-child:${suffix}`,
