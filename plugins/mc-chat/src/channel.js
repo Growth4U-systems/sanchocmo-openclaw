@@ -24,6 +24,7 @@ import {
   isConfigured,
 } from "./account.js";
 import { markVisibleDelivery } from "./delivery-state.js";
+import { enqueueOpenClawTerminalCallback } from "./callback-delivery.js";
 import { looksLikeToolEcho } from "./tool-echo.js";
 import { runtimeRunCallbackAuthorityFor } from "./runtime-run-state.js";
 import { validatedControlPlaneOrigin } from "./chat-turn-authority.js";
@@ -37,13 +38,21 @@ function missionControlWebhookUrl(account) {
   return origin ? `${origin}/api/chat/webhook` : null;
 }
 
-function durableDispatchHeaders(authority) {
-  return authority?.dispatchRunId && authority?.dispatchLeaseToken
-    ? {
-        "X-Sancho-Dispatch-Run-Id": authority.dispatchRunId,
-        "X-Sancho-Dispatch-Lease-Token": authority.dispatchLeaseToken,
-      }
-    : {};
+function terminalCallbackHeaders(authority) {
+  return {
+    ...(authority?.dispatchRunId && authority?.dispatchLeaseToken
+      ? {
+          "X-Sancho-Dispatch-Run-Id": authority.dispatchRunId,
+          "X-Sancho-Dispatch-Lease-Token": authority.dispatchLeaseToken,
+        }
+      : {}),
+    ...(authority?.runtimeTerminalCallbackGrant
+      ? {
+          "X-Sancho-Terminal-Callback-Grant":
+            authority.runtimeTerminalCallbackGrant,
+        }
+      : {}),
+  };
 }
 
 export const mcChatPlugin = createChatChannelPlugin({
@@ -149,9 +158,9 @@ export const mcChatPlugin = createChatChannelPlugin({
           ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
           "X-Mission-Control-Run-Id": callbackAuthority.missionControlRunId,
           "X-Sancho-Run-Capability": callbackAuthority.runtimeToolCapability,
-          ...durableDispatchHeaders(callbackAuthority),
+          ...terminalCallbackHeaders(callbackAuthority),
         };
-        const body = JSON.stringify({
+        const payload = {
           slug,
           threadId,
           ...(missionControlRunId ? { missionControlRunId } : {}),
@@ -159,36 +168,29 @@ export const mcChatPlugin = createChatChannelPlugin({
           role: "bot",
           agent: respondingAgent,
           ts: new Date().toISOString(),
-        });
+        };
 
-        console.error(`[mc-chat] sendText to=${to} slug=${slug} threadId=${threadId} url=${callbackUrl} textLen=${(text||"").length}`);
+        console.error(`[mc-chat] sendText to=${to} slug=${slug} threadId=${threadId} textLen=${(text||"").length}`);
 
-        // Retry with exponential backoff for transient Next.js outages.
-        const delays = [0, 750, 2250];
-        let lastErr;
-        for (let i = 0; i < delays.length; i++) {
-          if (delays[i]) await new Promise((r) => setTimeout(r, delays[i]));
-          try {
-            const response = await fetch(callbackUrl, {
-              method: "POST",
-              headers,
-              body,
-              redirect: "error",
-              signal: AbortSignal.timeout(8_000),
-            });
-            if (response.ok) {
-              const result = await response.json().catch(() => ({}));
-              markVisibleDelivery(slug, threadId);
-              return { messageId: result.messageId || `mc-${Date.now()}` };
-            }
-            lastErr = new Error(`HTTP ${response.status}`);
-            if (response.status >= 400 && response.status < 500) break; // don't retry 4xx
-          } catch (err) {
-            lastErr = err;
-          }
+        try {
+          const queued = enqueueOpenClawTerminalCallback({
+            deliveryId: missionControlRunId,
+            url: callbackUrl,
+            headers,
+            payload,
+          });
+          // Once fsynced, this turn owns a replayable visible delivery. Keep
+          // awaiting the webhook ACK so the durable parent cannot complete
+          // before Mission Control has accepted the terminal result.
+          markVisibleDelivery(slug, threadId);
+          await queued.delivery;
+          return { messageId: `mc-${queued.callbackId.slice(0, 24)}` };
+        } catch (error) {
+          console.error(
+            `[mc-chat] durable sendText failed code=${error?.code || "unknown"}`,
+          );
+          throw error;
         }
-        console.error(`[mc-chat] sendText failed after ${delays.length} attempts: ${lastErr?.message || lastErr} (url=${callbackUrl})`);
-        return { messageId: `mc-err-${Date.now()}` };
       },
     },
     base: {
@@ -216,16 +218,17 @@ export const mcChatPlugin = createChatChannelPlugin({
         }
 
         try {
-          const response = await fetch(callbackUrl, {
-            method: "POST",
+          const queued = enqueueOpenClawTerminalCallback({
+            deliveryId: missionControlRunId,
+            url: callbackUrl,
             headers: {
               "Content-Type": "application/json",
               ...(account?.sharedSecret ? { "X-MC-Secret": account.sharedSecret } : {}),
               "X-Mission-Control-Run-Id": callbackAuthority.missionControlRunId,
               "X-Sancho-Run-Capability": callbackAuthority.runtimeToolCapability,
-              ...durableDispatchHeaders(callbackAuthority),
+              ...terminalCallbackHeaders(callbackAuthority),
             },
-            body: JSON.stringify({
+            payload: {
               slug,
               threadId,
               ...(missionControlRunId ? { missionControlRunId } : {}),
@@ -233,13 +236,15 @@ export const mcChatPlugin = createChatChannelPlugin({
               role: "bot",
               agent: "sancho",
               ts: new Date().toISOString(),
-            }),
-            redirect: "error",
-            signal: AbortSignal.timeout(8_000),
+            },
           });
-          if (response.ok) markVisibleDelivery(slug, threadId);
+          markVisibleDelivery(slug, threadId);
+          await queued.delivery;
         } catch (err) {
-          console.error(`[mc-chat] Media callback error:`, err?.message);
+          console.error(
+            `[mc-chat] durable media callback failed code=${err?.code || "unknown"}`,
+          );
+          throw err;
         }
       },
     },

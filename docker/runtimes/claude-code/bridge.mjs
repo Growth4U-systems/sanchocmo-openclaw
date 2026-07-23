@@ -1,17 +1,89 @@
 #!/usr/bin/env node
 import http from "node:http";
+import os from "node:os";
+import path from "node:path";
 import { spawn } from "node:child_process";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmod, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import {
   buildMcChatContextBlock,
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
+import {
+  callbackAuthorityHeaders,
+  terminalCallbackAuthorityHeaders,
+} from "../callback-authority.mjs";
+import {
+  createCallbackOutbox,
+  resolveCallbackOutboxDir,
+} from "../callback-outbox.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18792;
 const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
+const CLAUDE_PROCESS_TMP_ROOT = path.resolve(
+  os.tmpdir(),
+  `sancho-claude-code-${process.pid}-${randomUUID()}`,
+);
+const CLAUDE_AUTH_FILES = Object.freeze([
+  ".credentials.json",
+  "credentials.json",
+]);
+const CLAUDE_AUTH_FILE_MAX_BYTES = 2 * 1024 * 1024;
+const CLAUDE_CHILD_OS_ENV_KEYS = Object.freeze([
+  "PATH",
+  "SHELL",
+  "LANG",
+  "LANGUAGE",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TZ",
+  "TERM",
+  "SYSTEMROOT",
+  "WINDIR",
+  "COMSPEC",
+  "PATHEXT",
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "ALL_PROXY",
+  "NO_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "all_proxy",
+  "no_proxy",
+  "SSL_CERT_FILE",
+  "SSL_CERT_DIR",
+  "REQUESTS_CA_BUNDLE",
+  "CURL_CA_BUNDLE",
+  "NODE_EXTRA_CA_CERTS",
+]);
+const CLAUDE_PROVIDER_ENV_KEYS = Object.freeze([
+  "ANTHROPIC_API_KEY",
+  "CLAUDE_CODE_OAUTH_TOKEN",
+  "ANTHROPIC_AUTH_TOKEN",
+  "ANTHROPIC_BASE_URL",
+  "CLAUDE_CODE_USE_BEDROCK",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_SESSION_TOKEN",
+  "AWS_BEARER_TOKEN_BEDROCK",
+  "AWS_REGION",
+  "AWS_DEFAULT_REGION",
+  "AWS_PROFILE",
+  "AWS_CONFIG_FILE",
+  "AWS_SHARED_CREDENTIALS_FILE",
+  "CLAUDE_CODE_USE_VERTEX",
+  "ANTHROPIC_VERTEX_PROJECT_ID",
+  "CLOUD_ML_REGION",
+  "GOOGLE_APPLICATION_CREDENTIALS",
+  "GOOGLE_CLOUD_PROJECT",
+  "CLAUDE_CODE_USE_FOUNDRY",
+  "ANTHROPIC_FOUNDRY_RESOURCE",
+  "ANTHROPIC_FOUNDRY_API_KEY",
+]);
 const activeRuns = new Map();
+const callbackOutboxes = new Map();
 
 function trimTrailingSlash(value) {
   return String(value || "").replace(/\/+$/, "");
@@ -50,12 +122,7 @@ function secret() {
 }
 
 function sanchoSharedSecret() {
-  return firstEnv([
-    "CLAUDE_CODE_SANCHO_SECRET",
-    "CLAUDE_CODE_BRIDGE_SECRET",
-    "SANCHO_EXTERNAL_SECRET",
-    "MC_CHAT_SECRET",
-  ]);
+  return secret();
 }
 
 function safeEqual(a, b) {
@@ -114,19 +181,47 @@ function webhookUrl() {
   return `${trimTrailingSlash(base)}/api/chat/webhook`;
 }
 
-async function postWebhook(payload) {
-  const headers = { "Content-Type": "application/json" };
+function callbackHeaders(message, { terminal = false } = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(terminal
+      ? terminalCallbackAuthorityHeaders(message)
+      : callbackAuthorityHeaders(message)),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
-  const res = await fetch(webhookUrl(), {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const raw = await res.text().catch(() => "");
-    throw new Error(`Sancho webhook rejected ${res.status}${raw ? `: ${raw}` : ""}`);
+  return headers;
+}
+
+function terminalCallbackOutbox() {
+  const directory = resolveCallbackOutboxDir("claude-code");
+  let outbox = callbackOutboxes.get(directory);
+  if (!outbox) {
+    outbox = createCallbackOutbox({
+      runtimeId: "claude-code",
+      directory,
+      logger(event) {
+        if (event.event !== "retry_scheduled" && event.event !== "expired") return;
+        const status = event.status ? ` status=${event.status}` : "";
+        console.warn(
+          `[claude-code bridge] terminal callback ${event.event}` +
+          ` id=${String(event.callbackId || "unknown").slice(0, 12)}` +
+          ` attempts=${event.attempts || 0}${status}`,
+        );
+      },
+    });
+    callbackOutboxes.set(directory, outbox);
   }
+  outbox.start();
+  return outbox;
+}
+
+async function postWebhook(payload, message) {
+  await terminalCallbackOutbox().postBestEffort({
+    url: webhookUrl(),
+    headers: callbackHeaders(message),
+    payload,
+  });
 }
 
 function callbackIdentity(message) {
@@ -138,10 +233,22 @@ function callbackIdentity(message) {
 function postTerminalOnce(message, payload, label) {
   const entry = activeRuns.get(message.threadId);
   if (!entry || entry.terminalPosted) return false;
+  try {
+    terminalCallbackOutbox().enqueueTerminal({
+      deliveryId: message.missionControlRunId || entry.runId,
+      url: webhookUrl(),
+      headers: callbackHeaders(message, { terminal: true }),
+      payload: { ...payload, ...callbackIdentity(message) },
+    });
+  } catch (error) {
+    console.error(
+      `[claude-code bridge] ${label} terminal callback could not be persisted:`,
+      error instanceof Error ? error.message : "unknown outbox error",
+    );
+    return false;
+  }
   entry.terminalPosted = true;
   if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
-  postWebhook({ ...payload, ...callbackIdentity(message) })
-    .catch((e) => console.error(`[claude-code bridge] ${label} webhook failed:`, e.message));
   return true;
 }
 
@@ -218,17 +325,18 @@ export async function fetchContextPack(message) {
   if (flagDisabled(["CLAUDE_CODE_CONTEXT_PACK_ENABLED", "SANCHO_CONTEXT_PACK_ENABLED"])) return null;
   if (!message?.slug) return null;
 
-  const headers = { "Content-Type": "application/json" };
+  const headers = {
+    "Content-Type": "application/json",
+    ...callbackAuthorityHeaders(message),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
 
   const res = await fetch(contextPackUrl(), {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      slug: message.slug,
-      skill: typeof message.skill === "string" && message.skill.trim() ? message.skill.trim() : null,
-    }),
+    // Tenant and skill are derived from the authorized persisted run.
+    body: JSON.stringify({}),
     signal: AbortSignal.timeout(contextPackTimeoutMs()),
   });
   const raw = await res.text();
@@ -298,8 +406,107 @@ function runTimeoutMs() {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TIMEOUT_MS;
 }
 
-function bridgeWorkdir() {
-  return firstEnv(["CLAUDE_CODE_RUNTIME_WORKDIR", "CLAUDE_RUNTIME_WORKDIR", "SANCHO_HOME"]) || process.cwd();
+function opaquePathSegment(label, value) {
+  const digest = createHash("sha256")
+    .update(String(value || "unknown"), "utf8")
+    .digest("hex")
+    .slice(0, 24);
+  return `${label}-${digest}`;
+}
+
+export function buildClaudeWorkdir(
+  message,
+  runId,
+  tempRoot = CLAUDE_PROCESS_TMP_ROOT,
+) {
+  if (typeof runId !== "string" || !runId.trim()) {
+    throw new Error("Claude Code workdir requires a unique run id");
+  }
+  const root = path.resolve(tempRoot);
+  const tenant = opaquePathSegment("tenant", message?.slug);
+  const thread = opaquePathSegment("thread", message?.threadId);
+  const run = opaquePathSegment("run", runId);
+  const workdir = path.resolve(root, tenant, thread, run);
+  if (!workdir.startsWith(`${root}${path.sep}`)) {
+    throw new Error("Refusing Claude Code workdir outside the isolated temp root");
+  }
+  return workdir;
+}
+
+export async function cleanupClaudeWorkdir(
+  workdir,
+  tempRoot = CLAUDE_PROCESS_TMP_ROOT,
+) {
+  const root = path.resolve(tempRoot);
+  const target = path.resolve(workdir);
+  const relativeTarget = path.relative(root, target);
+  const segments = relativeTarget.split(path.sep);
+  const isExactRunDirectory =
+    relativeTarget &&
+    !relativeTarget.startsWith(`..${path.sep}`) &&
+    !relativeTarget.includes(`${path.sep}..${path.sep}`) &&
+    segments.length === 3 &&
+    /^tenant-[a-f0-9]{24}$/.test(segments[0]) &&
+    /^thread-[a-f0-9]{24}$/.test(segments[1]) &&
+    /^run-[a-f0-9]{24}$/.test(segments[2]);
+  if (!isExactRunDirectory) {
+    throw new Error("Refusing to remove a non-isolated Claude Code workdir");
+  }
+  await rm(target, { recursive: true, force: true, maxRetries: 2 });
+  return true;
+}
+
+function claudeAuthSourceDir(baseEnv = process.env) {
+  const explicit = String(
+    baseEnv.CLAUDE_CODE_AUTH_SOURCE_DIR ||
+    baseEnv.CLAUDE_AUTH_SOURCE_DIR ||
+    "",
+  ).trim();
+  if (explicit) return path.resolve(explicit);
+  const configuredClaudeHome = String(baseEnv.CLAUDE_CONFIG_DIR || "").trim();
+  if (configuredClaudeHome) return path.resolve(configuredClaudeHome);
+  const userHome = String(baseEnv.HOME || "").trim() || os.homedir();
+  return path.resolve(userHome, ".claude");
+}
+
+export async function stageClaudeAuthFiles(
+  workdir,
+  baseEnv = process.env,
+  { signal } = {},
+) {
+  signal?.throwIfAborted();
+  const sourceDir = claudeAuthSourceDir(baseEnv);
+  const targetDir = path.join(path.resolve(workdir), ".claude");
+  await mkdir(targetDir, { recursive: true, mode: 0o700 });
+  signal?.throwIfAborted();
+  const copied = [];
+  for (const filename of CLAUDE_AUTH_FILES) {
+    signal?.throwIfAborted();
+    const source = path.join(sourceDir, filename);
+    let stat;
+    try {
+      stat = await lstat(source);
+    } catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+    signal?.throwIfAborted();
+    if (!stat.isFile() || stat.isSymbolicLink()) {
+      throw new Error(`Refusing non-regular Claude Code auth file: ${filename}`);
+    }
+    if (stat.size > CLAUDE_AUTH_FILE_MAX_BYTES) {
+      throw new Error(`Claude Code auth file exceeds safe limit: ${filename}`);
+    }
+    const contents = await readFile(source);
+    signal?.throwIfAborted();
+    const target = path.join(targetDir, filename);
+    await writeFile(target, contents, { mode: 0o600 });
+    signal?.throwIfAborted();
+    await chmod(target, 0o600);
+    signal?.throwIfAborted();
+    copied.push(filename);
+  }
+  return copied;
 }
 
 function appendOptionalArg(args, flag, keys) {
@@ -413,18 +620,45 @@ async function postProgress(message, runId, label, detail) {
       detail,
       target: runId,
     },
-  });
+  }, message);
 }
 
-function buildClaudeEnv(runId) {
-  const env = { ...process.env, SANCHO_RUNTIME_RUN_ID: runId };
-  if (!env.CLAUDE_CODE_OAUTH_TOKEN && env.ANTHROPIC_OAUTH_TOKEN) {
-    env.CLAUDE_CODE_OAUTH_TOKEN = env.ANTHROPIC_OAUTH_TOKEN;
+function copyAllowedEnv(target, source, keys) {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (typeof value === "string" && value.length > 0) target[key] = value;
   }
+}
+
+export function buildClaudeChildEnv(
+  runId,
+  baseEnv = process.env,
+  workdir = buildClaudeWorkdir({}, runId),
+) {
+  const env = {};
+  copyAllowedEnv(env, baseEnv, CLAUDE_CHILD_OS_ENV_KEYS);
+  copyAllowedEnv(env, baseEnv, CLAUDE_PROVIDER_ENV_KEYS);
+  if (
+    !env.CLAUDE_CODE_OAUTH_TOKEN &&
+    typeof baseEnv.ANTHROPIC_OAUTH_TOKEN === "string" &&
+    baseEnv.ANTHROPIC_OAUTH_TOKEN.length > 0
+  ) {
+    env.CLAUDE_CODE_OAUTH_TOKEN = baseEnv.ANTHROPIC_OAUTH_TOKEN;
+  }
+  Object.assign(env, {
+    HOME: workdir,
+    USERPROFILE: workdir,
+    XDG_CONFIG_HOME: path.join(workdir, ".config"),
+    CLAUDE_CONFIG_DIR: path.join(workdir, ".claude"),
+    TMPDIR: workdir,
+    TMP: workdir,
+    TEMP: workdir,
+    SANCHO_RUNTIME_RUN_ID: runId,
+  });
   return env;
 }
 
-async function startClaudeRun(message, runId) {
+async function startClaudeRun(message, runId, admittedEntry) {
   let contextPack = null;
   try {
     contextPack = await fetchContextPack(message);
@@ -439,21 +673,40 @@ async function startClaudeRun(message, runId) {
   const mcpConfig = buildMcpConfig();
   const args = buildClaudeArgs(message, prompt, mcpConfig);
   const command = firstEnv(["CLAUDE_CODE_CLI", "CLAUDE_CLI"]) || "claude";
+  const workdir = buildClaudeWorkdir(message, runId);
+  admittedEntry.workdir = workdir;
   const existing = activeRuns.get(message.threadId);
-  if (existing?.killed) {
-    activeRuns.delete(message.threadId);
+  if (admittedEntry.killed || existing !== admittedEntry) {
+    return;
+  }
+  await stageClaudeAuthFiles(workdir, process.env, {
+    signal: admittedEntry.startupAbortController.signal,
+  });
+  const afterPrepare = activeRuns.get(message.threadId);
+  if (admittedEntry.killed || afterPrepare !== admittedEntry) {
+    await cleanupClaudeWorkdir(workdir);
     return;
   }
 
   const child = spawn(command, args, {
-    cwd: bridgeWorkdir(),
-    env: buildClaudeEnv(runId),
+    cwd: workdir,
+    env: buildClaudeChildEnv(runId, process.env, workdir),
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const entry = existing || { runId, child: null, killed: false, pending: false, terminalPosted: false };
+  const entry = admittedEntry;
   entry.child = child;
+  entry.workdir = workdir;
   entry.pending = false;
   activeRuns.set(message.threadId, entry);
+
+  const cleanupWorkdir = () => {
+    void cleanupClaudeWorkdir(workdir).catch((error) => {
+      console.error(
+        "[claude-code bridge] isolated workdir cleanup failed:",
+        error instanceof Error ? error.message : "unknown cleanup error",
+      );
+    });
+  };
 
   let stdout = "";
   let stderr = "";
@@ -504,11 +757,18 @@ async function startClaudeRun(message, runId) {
         classifiedAt: Date.now(),
       },
     }, "error");
+    cleanupWorkdir();
   });
 
   child.on("close", (code, signal) => {
     clearTimeout(timeout);
-    if (entry.killed || entry.terminalPosted) return;
+    if (entry.killed || entry.terminalPosted) {
+      if (activeRuns.get(message.threadId) === entry) {
+        activeRuns.delete(message.threadId);
+      }
+      cleanupWorkdir();
+      return;
+    }
 
     const cleanStdout = cleanClaudeStdout(stdout);
     const cleanStderr = stripAnsi(stderr).trim();
@@ -519,6 +779,7 @@ async function startClaudeRun(message, runId) {
         text: cleanStdout || "(Claude Code finished without text output.)",
         agent: message.agent || message.agentId || "claude-code",
       }, "final");
+      cleanupWorkdir();
       return;
     }
 
@@ -538,17 +799,33 @@ async function startClaudeRun(message, runId) {
         ...failure.errorDetail,
       },
     }, "failure");
+    cleanupWorkdir();
   });
 }
 
-function cancelThread(threadId) {
+async function cancelThread(threadId, missionControlRunId) {
   const entry = activeRuns.get(threadId);
   if (!entry) return false;
+  if (
+    !missionControlRunId ||
+    entry.missionControlRunId !== missionControlRunId
+  ) return false;
   entry.killed = true;
-  if (!entry.child) return true;
-  entry.child.kill("SIGTERM");
-  setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
-  activeRuns.delete(threadId);
+  entry.startupAbortController?.abort();
+  if (entry.child) {
+    entry.child.kill("SIGTERM");
+    setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
+    if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
+    return true;
+  }
+
+  await entry.startupPromise;
+  if (entry.child) {
+    entry.child.kill("SIGTERM");
+    setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
+  }
+  if (entry.workdir) await cleanupClaudeWorkdir(entry.workdir);
+  if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
   return true;
 }
 
@@ -570,8 +847,24 @@ async function handleInbound(req, res) {
       : `${message.slug}:general`;
 
   if (message.text.trim() === "/stop") {
-    const cancelled = cancelThread(message.threadId);
+    const missionControlRunId =
+      typeof message.missionControlRunId === "string"
+        ? message.missionControlRunId.trim()
+        : "";
+    if (!missionControlRunId) {
+      return json(res, 400, { error: "Missing missionControlRunId" });
+    }
+    const cancelled = await cancelThread(
+      message.threadId,
+      missionControlRunId,
+    );
     return json(res, 200, { ok: true, cancelled });
+  }
+
+  if (Object.keys(terminalCallbackAuthorityHeaders(message)).length === 0) {
+    return json(res, 400, {
+      error: "Missing or expired terminal callback authority",
+    });
   }
 
   if (activeRuns.has(message.threadId)) {
@@ -579,8 +872,32 @@ async function handleInbound(req, res) {
   }
 
   const runId = `claude_code_${randomUUID()}`;
-  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true, terminalPosted: false });
-  startClaudeRun(message, runId).catch((e) => {
+  const admittedEntry = {
+    runId,
+    missionControlRunId:
+      typeof message.missionControlRunId === "string"
+        ? message.missionControlRunId.trim()
+        : undefined,
+    child: null,
+    killed: false,
+    pending: true,
+    terminalPosted: false,
+    startupAbortController: new AbortController(),
+    startupPromise: null,
+  };
+  activeRuns.set(message.threadId, admittedEntry);
+  admittedEntry.startupPromise = startClaudeRun(message, runId, admittedEntry).catch(async (e) => {
+    if (admittedEntry.workdir) {
+      try {
+        await cleanupClaudeWorkdir(admittedEntry.workdir);
+      } catch (cleanupError) {
+        console.error(
+          "[claude-code bridge] startup cleanup failed:",
+          cleanupError instanceof Error ? cleanupError.message : "unknown cleanup error",
+        );
+      }
+    }
+    if (admittedEntry.killed) return;
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
@@ -607,10 +924,21 @@ async function handleCancel(req, res) {
   }
   const threadId = typeof body?.threadId === "string" ? body.threadId.trim() : "";
   if (!threadId) return json(res, 400, { error: "Missing threadId" });
-  return json(res, 200, { ok: true, cancelled: cancelThread(threadId) });
+  const missionControlRunId =
+    typeof body?.missionControlRunId === "string"
+      ? body.missionControlRunId.trim()
+      : "";
+  if (!missionControlRunId) {
+    return json(res, 400, { error: "Missing missionControlRunId" });
+  }
+  return json(res, 200, {
+    ok: true,
+    cancelled: await cancelThread(threadId, missionControlRunId),
+  });
 }
 
 export function createServer() {
+  terminalCallbackOutbox();
   return http.createServer((req, res) => {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
     if (req.method === "GET" && url.pathname === "/healthz") {

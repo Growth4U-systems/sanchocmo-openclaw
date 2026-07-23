@@ -10,6 +10,10 @@ import {
   writeRuntimeSelection,
   type RuntimeId,
 } from "@/lib/runtime";
+import {
+  listRuntimeTransitionBlockers,
+  runtimeTransitionBlockedPayload,
+} from "@/lib/runtime/transition-guard";
 
 const HEALTH_TIMEOUT_MS = 3000;
 
@@ -105,6 +109,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       error: `${meta?.label || runtime} no está configurado todavía.`,
       requiredEnv: meta?.requiredEnv || [],
     });
+  }
+
+  const current = readRuntimeSelection().runtime;
+  if (runtime !== current) {
+    const activeRuns = await listRuntimeTransitionBlockers();
+    if (activeRuns.length > 0) {
+      return res
+        .status(409)
+        .json(runtimeTransitionBlockedPayload(activeRuns));
+    }
   }
 
   const health = await runtimeHealth(runtime);

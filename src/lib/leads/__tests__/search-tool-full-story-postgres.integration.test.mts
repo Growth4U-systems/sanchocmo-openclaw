@@ -292,6 +292,7 @@ test(
             dispatchRunId,
             dispatchLeaseToken,
             allowExternalEffects: true,
+            allowedExternalEffects: ["leads_search_start"],
           }),
           loadConfig: () => ({
             channels: {

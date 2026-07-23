@@ -40,6 +40,7 @@ export interface RuntimeChatTurnClaims {
   taskRouteProposal?: unknown;
   threadState?: unknown;
   controlBaseUrl?: unknown;
+  runtimeEffectIntent?: unknown;
 }
 
 export interface RuntimeChatTurnAuthority {
@@ -60,6 +61,9 @@ export interface RuntimeChatTurnAuthority {
   userName?: string;
   source?: string;
   activeOutboundWorkflow?: unknown;
+  runtimeEffectIntent?: Array<
+    "leads_search_start" | "partnerships_discovery_start"
+  >;
 }
 
 export interface RuntimeChatTurnAuthorityDependencies {
@@ -255,6 +259,7 @@ export async function authorizeRuntimeChatTurn(
     taskRouteProposal: persisted.taskRouteProposal,
     threadState: persisted.threadState,
     controlBaseUrl: persisted.controlBaseUrl,
+    runtimeEffectIntent: persisted.runtimeEffectIntent,
   };
   const claimed = {
     slug: input.claims.slug,
@@ -288,6 +293,7 @@ export async function authorizeRuntimeChatTurn(
     taskRouteProposal: input.claims.taskRouteProposal,
     threadState: input.claims.threadState,
     controlBaseUrl: input.claims.controlBaseUrl,
+    runtimeEffectIntent: input.claims.runtimeEffectIntent,
   };
   if (!isDeepStrictEqual(claimed, expected)) return null;
 
@@ -296,6 +302,15 @@ export async function authorizeRuntimeChatTurn(
   const primarySkill = optionalString(persisted.primarySkill);
   const userName = optionalString(persisted.userName);
   const source = optionalString(persisted.source);
+  const runtimeEffectIntent = Array.isArray(persisted.runtimeEffectIntent)
+    ? persisted.runtimeEffectIntent.filter(
+        (name): name is
+          | "leads_search_start"
+          | "partnerships_discovery_start" =>
+          name === "leads_search_start" ||
+          name === "partnerships_discovery_start",
+      )
+    : undefined;
   return {
     slug: parsedThread.slug,
     threadId: run.threadId,
@@ -316,5 +331,6 @@ export async function authorizeRuntimeChatTurn(
     ...(persisted.activeOutboundWorkflow === undefined
       ? {}
       : { activeOutboundWorkflow: persisted.activeOutboundWorkflow }),
+    ...(runtimeEffectIntent?.length ? { runtimeEffectIntent } : {}),
   };
 }

@@ -31,6 +31,7 @@ test("getRuntime defaults to the OpenClaw adapter", () => {
 
   assert.equal(adapter.id, "openclaw");
   assert.equal(adapter.capabilities.chat, true);
+  assert.equal(adapter.capabilities.durableChatTurns, true);
   assert.equal(adapter.capabilities.cron, true);
 
   runtime.resetRuntimeForTests();
@@ -93,6 +94,85 @@ test("getRuntime memoizes the selected adapter", () => {
   else process.env.SANCHO_RUNTIME = previous;
 });
 
+test("getRuntime observes a persisted selection written by another process", () => {
+  const previousRuntime = process.env.SANCHO_RUNTIME;
+  const previousGateway = process.env.HERMES_GATEWAY_URL;
+  const previousSecret = process.env.HERMES_BRIDGE_SECRET;
+  try {
+    process.env.SANCHO_RUNTIME = "openclaw";
+    process.env.HERMES_GATEWAY_URL = "http://hermes.test";
+    process.env.HERMES_BRIDGE_SECRET = "bridge-secret";
+    runtime.resetRuntimeForTests();
+
+    const first = runtime.getRuntime();
+    fs.writeFileSync(
+      testRuntimeConfigFile,
+      JSON.stringify({ runtime: "hermes", updatedAt: "2026-07-22T00:00:00.000Z" }),
+      "utf8",
+    );
+    const second = runtime.getRuntime();
+
+    assert.equal(first.id, "openclaw");
+    assert.equal(second.id, "hermes");
+    assert.notEqual(first, second);
+  } finally {
+    runtime.resetRuntimeForTests();
+    if (previousRuntime === undefined) delete process.env.SANCHO_RUNTIME;
+    else process.env.SANCHO_RUNTIME = previousRuntime;
+    if (previousGateway === undefined) delete process.env.HERMES_GATEWAY_URL;
+    else process.env.HERMES_GATEWAY_URL = previousGateway;
+    if (previousSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+    else process.env.HERMES_BRIDGE_SECRET = previousSecret;
+  }
+});
+
+test("async HTTP runtimes are not configured without callback authority", () => {
+  const keys = [
+    "HERMES_GATEWAY_URL",
+    "HERMES_BASE_URL",
+    "HERMES_URL",
+    "HERMES_BRIDGE_SECRET",
+    "HERMES_CHAT_SECRET",
+    "HERMES_SHARED_SECRET",
+    "MC_CHAT_SECRET",
+    "SANCHO_EXTERNAL_GATEWAY_URL",
+    "SANCHO_EXTERNAL_RUNTIME_URL",
+    "HERMES_EXTERNAL_GATEWAY_URL",
+    "HERMES_EXTERNAL_BASE_URL",
+    "HERMES_EXTERNAL_URL",
+    "SANCHO_EXTERNAL_SECRET",
+    "SANCHO_EXTERNAL_RUNTIME_SECRET",
+    "HERMES_EXTERNAL_SECRET",
+    "HERMES_EXTERNAL_API_KEY",
+    "HERMES_EXTERNAL_CHAT_SECRET",
+    "SANCHO_EXTERNAL_PROTOCOL",
+    "SANCHO_EXTERNAL_RUNTIME_PROTOCOL",
+    "HERMES_EXTERNAL_PROTOCOL",
+  ] as const;
+  const previous = new Map(keys.map((key) => [key, process.env[key]]));
+  try {
+    for (const key of keys) delete process.env[key];
+    process.env.HERMES_GATEWAY_URL = "http://hermes.test";
+    assert.equal(runtime.isRuntimeConfigured("hermes"), false);
+    process.env.HERMES_BRIDGE_SECRET = "bridge-secret";
+    assert.equal(runtime.isRuntimeConfigured("hermes"), true);
+
+    process.env.SANCHO_EXTERNAL_GATEWAY_URL = "https://runtime.test";
+    assert.equal(runtime.isRuntimeConfigured("external-http"), false);
+    process.env.SANCHO_EXTERNAL_SECRET = "external-secret";
+    assert.equal(runtime.isRuntimeConfigured("external-http"), true);
+    delete process.env.SANCHO_EXTERNAL_SECRET;
+    process.env.SANCHO_EXTERNAL_PROTOCOL = "mc-bridge";
+    assert.equal(runtime.isRuntimeConfigured("external-http"), true);
+  } finally {
+    for (const key of keys) {
+      const value = previous.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
 test("getRuntime fails closed for unknown runtime ids", () => {
   const previous = process.env.SANCHO_RUNTIME;
   process.env.SANCHO_RUNTIME = "nope";
@@ -114,6 +194,7 @@ test("getRuntime selects the Hermes adapter", () => {
 
   assert.equal(adapter.id, "hermes");
   assert.equal(adapter.capabilities.chat, true);
+  assert.equal(adapter.capabilities.durableChatTurns, false);
   assert.equal(adapter.capabilities.cron, false);
   assert.equal(adapter.capabilities.discord, false);
 
@@ -132,6 +213,7 @@ test("getRuntime selects the external HTTP adapter", () => {
   assert.equal(adapter.id, "external-http");
   assert.equal(adapter.displayName, "Runtime externo HTTP");
   assert.equal(adapter.capabilities.chat, true);
+  assert.equal(adapter.capabilities.durableChatTurns, false);
   assert.equal(adapter.capabilities.cron, false);
 
   runtime.resetRuntimeForTests();
@@ -159,8 +241,10 @@ test("legacy hermes-external runtime id maps to external-http", () => {
 test("persisted runtime selection from the UI overrides SANCHO_RUNTIME", () => {
   const previous = process.env.SANCHO_RUNTIME;
   const previousGateway = process.env.HERMES_GATEWAY_URL;
+  const previousSecret = process.env.HERMES_BRIDGE_SECRET;
   process.env.SANCHO_RUNTIME = "openclaw";
   process.env.HERMES_GATEWAY_URL = "http://hermes.test";
+  process.env.HERMES_BRIDGE_SECRET = "bridge-secret";
   fs.writeFileSync(
     testRuntimeConfigFile,
     JSON.stringify({ runtime: "hermes", updatedAt: "2026-07-01T00:00:00.000Z" }),
@@ -180,6 +264,8 @@ test("persisted runtime selection from the UI overrides SANCHO_RUNTIME", () => {
   else process.env.SANCHO_RUNTIME = previous;
   if (previousGateway === undefined) delete process.env.HERMES_GATEWAY_URL;
   else process.env.HERMES_GATEWAY_URL = previousGateway;
+  if (previousSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+  else process.env.HERMES_BRIDGE_SECRET = previousSecret;
 });
 
 test("persisted external HTTP selection falls back when not configured", () => {
@@ -283,9 +369,14 @@ test("external HTTP adapter uses only external endpoint and secret", async () =>
     const result = await runtime.getRuntime().messaging.sendInbound({
       slug: "acme",
       threadId: "acme:general",
-      text: "hola",
+      text: "Busca leads de founders",
+      runtimeEffectIntent: ["leads_search_start"],
       userId: "mc-admin",
       userName: "Admin",
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      controlDepth: 0,
     });
 
     assert.equal(result.ok, true);
@@ -293,6 +384,17 @@ test("external HTTP adapter uses only external endpoint and secret", async () =>
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "https://customer-runtime.test/runtime/inbound");
     assert.equal((calls[0].init?.headers as Record<string, string>)["X-MC-Secret"], "external-secret");
+    const body = JSON.parse(String(calls[0].init?.body));
+    assert.deepEqual(
+      {
+        schemaVersion: body.runtimeContract?.schemaVersion,
+        kind: body.runtimeContract?.kind,
+      },
+      { schemaVersion: 1, kind: "sancho.mc-chat-context" },
+    );
+    assert.match(body.runtimeContract.instructions, /:::sancho-effect/);
+    assert.match(body.runtimeContract.instructions, /leads_search_start/);
+    assert.doesNotMatch(body.runtimeContract.instructions, /runtimeToolCapability/);
   } finally {
     globalThis.fetch = previousFetch;
     runtime.resetRuntimeForTests();
@@ -339,9 +441,14 @@ test("external HTTP bridge shares Sancho generalist and pinned skill semantics",
       slug: "acme",
       threadId: "acme:general",
       threadName: "General",
-      text: "hola",
+      text: "Busca leads de founders",
+      runtimeEffectIntent: ["leads_search_start"],
       userId: "mc-admin",
       userName: "Admin",
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      controlDepth: 0,
     });
 
     assert.equal(result.ok, true);
@@ -362,8 +469,10 @@ test("external HTTP bridge shares Sancho generalist and pinned skill semantics",
     assert.match(body.message, /Eres Sancho, el agente generalista/);
     assert.match(body.message, /:::delegate/);
     assert.match(body.message, /:::task-route/);
+    assert.match(body.message, /:::sancho-effect/);
+    assert.match(body.message, /leads_search_start/);
     assert.doesNotMatch(body.message, /skill_hint:/);
-    assert.match(body.message, /Mensaje:\nhola/);
+    assert.match(body.message, /Mensaje:\nBusca leads de founders/);
 
     const pinnedResult = await runtime.getRuntime().messaging.sendInbound({
       slug: "acme",
@@ -441,14 +550,18 @@ test("Hermes adapter posts inbound messages to the configured bridge", async () 
   const previousRuntime = process.env.SANCHO_RUNTIME;
   const previousGateway = process.env.HERMES_GATEWAY_URL;
   const previousPath = process.env.HERMES_INBOUND_PATH;
-  const previousSecret = process.env.HERMES_CHAT_SECRET;
+  const previousBridgeSecret = process.env.HERMES_BRIDGE_SECRET;
+  const previousChatSecret = process.env.HERMES_CHAT_SECRET;
+  const previousManagedSecret = process.env.MC_CHAT_SECRET;
   const previousFetch = globalThis.fetch;
   const calls: { url: string; init?: RequestInit }[] = [];
 
   process.env.SANCHO_RUNTIME = "hermes";
   process.env.HERMES_GATEWAY_URL = "http://hermes.test/";
   process.env.HERMES_INBOUND_PATH = "runtime/inbound";
-  process.env.HERMES_CHAT_SECRET = "shh";
+  process.env.HERMES_BRIDGE_SECRET = "bridge-shh";
+  process.env.HERMES_CHAT_SECRET = "legacy-shh";
+  process.env.MC_CHAT_SECRET = "openclaw-shh";
   runtime.resetRuntimeForTests();
 
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -474,7 +587,10 @@ test("Hermes adapter posts inbound messages to the configured bridge", async () 
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "http://hermes.test/runtime/inbound");
     assert.equal(calls[0].init?.method, "POST");
-    assert.equal((calls[0].init?.headers as Record<string, string>)["X-MC-Secret"], "shh");
+    assert.equal(
+      (calls[0].init?.headers as Record<string, string>)["X-MC-Secret"],
+      "bridge-shh",
+    );
     assert.equal((calls[0].init?.headers as Record<string, string>)["X-Test"], "1");
     assert.equal(JSON.parse(String(calls[0].init?.body)).threadId, "acme:general");
   } finally {
@@ -486,7 +602,11 @@ test("Hermes adapter posts inbound messages to the configured bridge", async () 
     else process.env.HERMES_GATEWAY_URL = previousGateway;
     if (previousPath === undefined) delete process.env.HERMES_INBOUND_PATH;
     else process.env.HERMES_INBOUND_PATH = previousPath;
-    if (previousSecret === undefined) delete process.env.HERMES_CHAT_SECRET;
-    else process.env.HERMES_CHAT_SECRET = previousSecret;
+    if (previousBridgeSecret === undefined) delete process.env.HERMES_BRIDGE_SECRET;
+    else process.env.HERMES_BRIDGE_SECRET = previousBridgeSecret;
+    if (previousChatSecret === undefined) delete process.env.HERMES_CHAT_SECRET;
+    else process.env.HERMES_CHAT_SECRET = previousChatSecret;
+    if (previousManagedSecret === undefined) delete process.env.MC_CHAT_SECRET;
+    else process.env.MC_CHAT_SECRET = previousManagedSecret;
   }
 });

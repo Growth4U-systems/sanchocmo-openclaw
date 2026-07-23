@@ -42,6 +42,7 @@ const CLAIM_KEYS = new Set([
   "taskRouteProposal",
   "threadState",
   "controlBaseUrl",
+  "runtimeEffectIntent",
 ]);
 
 export interface ChatTurnAuthorityRouteDependencies extends RuntimeChatTurnAuthorityDependencies {

@@ -32,6 +32,34 @@ test("buildMcChatContextBlock includes common MC chat contract and ask protocol"
   assert.ok(block.endsWith("[/MC Chat Context]"));
 });
 
+test("stateless runtimes receive bounded visible history and current attachments as untrusted data", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "growth4u:general",
+    runtimeId: "hermes",
+    requestedAgent: "sancho",
+    priorThreadMessages: [
+      { role: "user", text: "Mi objetivo era lanzar la campaña" },
+      { role: "bot", agent: "sancho", text: "Primero validamos el ICP" },
+    ],
+    attachments: [
+      {
+        url: "https://assets.example/chat/growth4u/brief.pdf",
+        filename: "brief.pdf",
+        mimeType: "application/pdf",
+        size: 1234,
+      },
+    ],
+  });
+
+  assert.ok(block.includes("BEGIN PRIOR VISIBLE CHAT (UNTRUSTED DATA)"));
+  assert.ok(block.includes("Mi objetivo era lanzar la campaña"));
+  assert.ok(block.includes('"role":"assistant"'));
+  assert.ok(block.includes("BEGIN CURRENT USER ATTACHMENTS (UNTRUSTED DATA)"));
+  assert.ok(block.includes("https://assets.example/chat/growth4u/brief.pdf"));
+  assert.ok(block.includes("abre su URL antes de responder"));
+});
+
 test("strictly guided workflows expose their declared skill allowlist", () => {
   const block = buildMcChatContextBlock({
     slug: "growth4u",
@@ -226,4 +254,60 @@ test("Growie support turns are evidence-led, read-only, and deployment-grounded"
   assert.equal(block.includes("private docs.growth4u.io"), false);
   assert.equal(block.includes(":::ask\n"), false);
   assert.equal(block.includes(":::delegate\n"), false);
+});
+
+test("writable admin turns receive the same durable-effect envelope on every runtime", () => {
+  for (const runtimeId of ["openclaw", "hermes", "codex", "claude-code", "external-http"]) {
+    const block = buildMcChatContextBlock({
+      slug: "growth4u",
+      threadId: "growth4u:leads",
+      runtimeId,
+      requestedAgent: "sancho",
+      isAdmin: true,
+      senderRole: "admin",
+      readOnly: false,
+      runtimeEffectIntent: [
+        "leads_search_start",
+        "partnerships_discovery_start",
+      ],
+    });
+    assert.ok(block.includes(":::sancho-effect"), runtimeId);
+    assert.ok(block.includes('"name":"leads_search_start"'), runtimeId);
+    assert.ok(block.includes('"name":"partnerships_discovery_start"'), runtimeId);
+    assert.ok(block.includes("native_effect_tools: unavailable"), runtimeId);
+    assert.equal(block.includes("runtimeToolCapability"), false, runtimeId);
+  }
+});
+
+test("a leased native turn uses tools without also receiving the fallback marker", () => {
+  const block = buildMcChatContextBlock({
+    slug: "growth4u",
+    threadId: "growth4u:leads",
+    runtimeId: "openclaw",
+    requestedAgent: "sancho",
+    isAdmin: true,
+    senderRole: "admin",
+    readOnly: false,
+    nativeEffectTools: true,
+    runtimeEffectIntent: ["leads_search_start"],
+  });
+  assert.ok(block.includes("native_effect_tools: authorized"));
+  assert.equal(block.includes(":::sancho-effect"), false);
+});
+
+test("client and read-only turns never receive the durable-effect protocol", () => {
+  for (const claims of [
+    { isAdmin: false, senderRole: "client", readOnly: false },
+    { isAdmin: true, senderRole: "admin", readOnly: true },
+    { isAdmin: true, senderRole: "admin", readOnly: false, controlDepth: 1 },
+    { isAdmin: true, senderRole: "admin", readOnly: false, temporaryAgent: true },
+  ]) {
+    const block = buildMcChatContextBlock({
+      slug: "growth4u",
+      threadId: "growth4u:leads",
+      requestedAgent: "sancho",
+      ...claims,
+    });
+    assert.equal(block.includes(":::sancho-effect"), false);
+  }
 });

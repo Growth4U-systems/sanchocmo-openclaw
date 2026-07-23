@@ -135,13 +135,42 @@ export function isRuntimeConfigured(runtime: RuntimeId): boolean {
   if (runtime === "openclaw") return true;
   if (runtime === "fake") return isFakeRuntimeAllowed();
   if (runtime === "hermes") {
-    return Boolean(process.env.HERMES_GATEWAY_URL || process.env.HERMES_BASE_URL || process.env.HERMES_URL);
+    const endpoint =
+      process.env.HERMES_GATEWAY_URL ||
+      process.env.HERMES_BASE_URL ||
+      process.env.HERMES_URL;
+    const callbackSecret =
+      process.env.HERMES_BRIDGE_SECRET ||
+      process.env.HERMES_CHAT_SECRET ||
+      process.env.HERMES_SHARED_SECRET ||
+      process.env.MC_CHAT_SECRET;
+    // Hermes is asynchronous: a URL without callback authority can pass a
+    // superficial healthcheck but every terminal webhook will be rejected.
+    return Boolean(endpoint && callbackSecret);
   }
-  return Boolean(
+  const endpoint =
     process.env.SANCHO_EXTERNAL_GATEWAY_URL ||
-      process.env.SANCHO_EXTERNAL_RUNTIME_URL ||
-      process.env.HERMES_EXTERNAL_GATEWAY_URL ||
-      process.env.HERMES_EXTERNAL_BASE_URL ||
-      process.env.HERMES_EXTERNAL_URL,
-  );
+    process.env.SANCHO_EXTERNAL_RUNTIME_URL ||
+    process.env.HERMES_EXTERNAL_GATEWAY_URL ||
+    process.env.HERMES_EXTERNAL_BASE_URL ||
+    process.env.HERMES_EXTERNAL_URL;
+  if (!endpoint) return false;
+  const protocol = (
+    process.env.SANCHO_EXTERNAL_PROTOCOL ||
+    process.env.SANCHO_EXTERNAL_RUNTIME_PROTOCOL ||
+    process.env.HERMES_EXTERNAL_PROTOCOL ||
+    "sancho"
+  ).trim().toLowerCase();
+  // mc-bridge returns its final response synchronously. The default Sancho
+  // protocol is async and therefore requires a shared callback credential.
+  if (["mc-bridge", "mission-control-bridge", "bridge"].includes(protocol)) {
+    return true;
+  }
+  const callbackSecret =
+    process.env.SANCHO_EXTERNAL_SECRET ||
+    process.env.SANCHO_EXTERNAL_RUNTIME_SECRET ||
+    process.env.HERMES_EXTERNAL_SECRET ||
+    process.env.HERMES_EXTERNAL_API_KEY ||
+    process.env.HERMES_EXTERNAL_CHAT_SECRET;
+  return Boolean(callbackSecret);
 }

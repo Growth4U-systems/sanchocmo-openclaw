@@ -9,6 +9,7 @@ process.env.MC_WORKSPACE = tmp;
 
 const mod = await import("../agent-runs");
 const agentRuns = (mod as unknown as { default: typeof mod }).default ?? mod;
+const syntheticLoss = await import("../agent-run-synthetic-runtime-loss");
 
 test("agent run ledger records lifecycle events for a thread", () => {
   const run = agentRuns.createAgentRun({
@@ -145,4 +146,96 @@ test("async facade atomically reuses an in-flight idempotency key and correlates
   assert.deepEqual(events.map((event) => event.type), ["run_created"]);
   assert.equal(events[0].runId, run.id);
   assert.equal(events[0].traceId, run.traceId);
+});
+
+test("active-parent admission rejects post-Stop children and exposes pre-Stop children for draining", async () => {
+  const parentThreadId = "acme:control-parent";
+  const parent = await agentRuns.createAgentRunAsync({
+    threadId: parentThreadId,
+    runtime: "hermes",
+  });
+  await agentRuns.markAgentRunDispatchedAsync(parent.id, parent.threadId);
+
+  const child = await agentRuns.createAgentRunWithReceiptAsync({
+    threadId: "acme:control-child",
+    runtime: "external-http",
+    activeParent: { runId: parent.id, threadId: parent.threadId },
+    input: {
+      controlParentAgentRunId: parent.id,
+      controlParentThreadId: parent.threadId,
+    },
+  });
+  assert.equal(child.created, true);
+  assert.deepEqual(
+    (await agentRuns.listActiveChildAgentRunsAsync(parent.id)).map(
+      (run) => run.id,
+    ),
+    [child.run.id],
+  );
+
+  await agentRuns.markAgentRunCancelledAsync(parent.id, parent.threadId);
+  await assert.rejects(
+    agentRuns.createAgentRunWithReceiptAsync({
+      threadId: "acme:late-control-child",
+      runtime: "external-http",
+      activeParent: { runId: parent.id, threadId: parent.threadId },
+      input: {
+        controlParentAgentRunId: parent.id,
+        controlParentThreadId: parent.threadId,
+      },
+    }),
+    (error: unknown) =>
+      error instanceof agentRuns.AgentRunParentInactiveError &&
+      error.code === "agent_run_parent_inactive",
+  );
+
+  await agentRuns.markAgentRunCancelledAsync(
+    child.run.id,
+    child.run.threadId,
+    { code: "control_parent_stopped" },
+  );
+  assert.deepEqual(await agentRuns.listActiveChildAgentRunsAsync(parent.id), []);
+});
+
+test("synthetic runtime-loss recovery cannot steal an idempotency key from its retry", async () => {
+  const threadId = "acme:synthetic-loss-retry-conflict";
+  const idempotencyKey = "retry:synthetic-loss:1";
+  const dispatchRunId = "dispatch-synthetic-loss-conflict";
+  const original = await agentRuns.createAgentRunAsync({
+    threadId,
+    runtime: "openclaw",
+    idempotencyKey,
+  });
+  await agentRuns.markAgentRunDispatchedAsync(original.id, threadId);
+  await agentRuns.markAgentRunFailedAsync(
+    original.id,
+    threadId,
+    syntheticLoss.AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR,
+    "runtime_unreachable",
+    {
+      code: syntheticLoss.AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE,
+      dispatchRunId,
+    },
+  );
+  const retry = await agentRuns.createAgentRunWithReceiptAsync({
+    threadId,
+    runtime: "openclaw",
+    idempotencyKey,
+  });
+  assert.equal(retry.created, true);
+  assert.notEqual(retry.run.id, original.id);
+
+  assert.equal(
+    await agentRuns.recoverAgentRunSyntheticRuntimeLossAsync({
+      runId: original.id,
+      threadId,
+      dispatchRunId,
+      fingerprint: "a".repeat(64),
+      output: { text: "late" },
+      terminalStatus: "completed",
+    }),
+    null,
+  );
+  assert.equal(agentRuns.getAgentRunById(original.id)?.status, "failed");
+  assert.equal(agentRuns.getAgentRunById(retry.run.id)?.status, "queued");
 });

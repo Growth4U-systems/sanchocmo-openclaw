@@ -4,17 +4,75 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmod, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import {
   buildMcChatContextBlock,
   resolveTurnSkillPolicy,
 } from "../../../src/lib/runtime/agent-contract/mc-chat-context.mjs";
 import { classifyRuntimeCliFailure } from "../../../src/lib/runtime/agent-contract/runtime-cli-failure.mjs";
+import {
+  callbackAuthorityHeaders,
+  terminalCallbackAuthorityHeaders,
+} from "../callback-authority.mjs";
+import {
+  createCallbackOutbox,
+  resolveCallbackOutboxDir,
+} from "../callback-outbox.mjs";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 18793;
 const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
+const CODEX_PROCESS_TMP_ROOT = path.resolve(
+  os.tmpdir(),
+  `sancho-codex-${process.pid}-${randomUUID()}`,
+);
+const CODEX_AUTH_FILES = Object.freeze(["auth.json"]);
+const CODEX_AUTH_FILE_MAX_BYTES = 2 * 1024 * 1024;
+const CODEX_CHILD_OS_ENV_KEYS = Object.freeze([
+  "PATH",
+  "SHELL",
+  "LANG",
+  "LANGUAGE",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TZ",
+  "TERM",
+  "SYSTEMROOT",
+  "WINDIR",
+  "COMSPEC",
+  "PATHEXT",
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "ALL_PROXY",
+  "NO_PROXY",
+  "http_proxy",
+  "https_proxy",
+  "all_proxy",
+  "no_proxy",
+  "SSL_CERT_FILE",
+  "SSL_CERT_DIR",
+  "REQUESTS_CA_BUNDLE",
+  "CURL_CA_BUNDLE",
+  "NODE_EXTRA_CA_CERTS",
+]);
+const CODEX_PROVIDER_ENV_KEYS = Object.freeze([
+  "OPENAI_API_KEY",
+  "CODEX_API_KEY",
+  "OPENAI_BASE_URL",
+  "OPENAI_API_BASE",
+  "OPENAI_ORG_ID",
+  "OPENAI_ORGANIZATION",
+  "OPENAI_PROJECT_ID",
+  "AZURE_OPENAI_API_KEY",
+  "AZURE_OPENAI_ENDPOINT",
+  "OPENAI_API_VERSION",
+  "OLLAMA_HOST",
+  "LMSTUDIO_BASE_URL",
+  "LM_STUDIO_BASE_URL",
+]);
 const activeRuns = new Map();
+const callbackOutboxes = new Map();
 
 function trimTrailingSlash(value) {
   return String(value || "").replace(/\/+$/, "");
@@ -50,12 +108,7 @@ function secret() {
 }
 
 function sanchoSharedSecret() {
-  return firstEnv([
-    "CODEX_SANCHO_SECRET",
-    "CODEX_BRIDGE_SECRET",
-    "SANCHO_EXTERNAL_SECRET",
-    "MC_CHAT_SECRET",
-  ]);
+  return secret();
 }
 
 function safeEqual(a, b) {
@@ -114,19 +167,47 @@ function webhookUrl() {
   return `${trimTrailingSlash(base)}/api/chat/webhook`;
 }
 
-async function postWebhook(payload) {
-  const headers = { "Content-Type": "application/json" };
+function callbackHeaders(message, { terminal = false } = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(terminal
+      ? terminalCallbackAuthorityHeaders(message)
+      : callbackAuthorityHeaders(message)),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
-  const res = await fetch(webhookUrl(), {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const raw = await res.text().catch(() => "");
-    throw new Error(`Sancho webhook rejected ${res.status}${raw ? `: ${raw}` : ""}`);
+  return headers;
+}
+
+function terminalCallbackOutbox() {
+  const directory = resolveCallbackOutboxDir("codex");
+  let outbox = callbackOutboxes.get(directory);
+  if (!outbox) {
+    outbox = createCallbackOutbox({
+      runtimeId: "codex",
+      directory,
+      logger(event) {
+        if (event.event !== "retry_scheduled" && event.event !== "expired") return;
+        const status = event.status ? ` status=${event.status}` : "";
+        console.warn(
+          `[codex bridge] terminal callback ${event.event}` +
+          ` id=${String(event.callbackId || "unknown").slice(0, 12)}` +
+          ` attempts=${event.attempts || 0}${status}`,
+        );
+      },
+    });
+    callbackOutboxes.set(directory, outbox);
   }
+  outbox.start();
+  return outbox;
+}
+
+async function postWebhook(payload, message) {
+  await terminalCallbackOutbox().postBestEffort({
+    url: webhookUrl(),
+    headers: callbackHeaders(message),
+    payload,
+  });
 }
 
 function callbackIdentity(message) {
@@ -138,10 +219,22 @@ function callbackIdentity(message) {
 function postTerminalOnce(message, payload, label) {
   const entry = activeRuns.get(message.threadId);
   if (!entry || entry.terminalPosted) return false;
+  try {
+    terminalCallbackOutbox().enqueueTerminal({
+      deliveryId: message.missionControlRunId || entry.runId,
+      url: webhookUrl(),
+      headers: callbackHeaders(message, { terminal: true }),
+      payload: { ...payload, ...callbackIdentity(message) },
+    });
+  } catch (error) {
+    console.error(
+      `[codex bridge] ${label} terminal callback could not be persisted:`,
+      error instanceof Error ? error.message : "unknown outbox error",
+    );
+    return false;
+  }
   entry.terminalPosted = true;
   if (activeRuns.get(message.threadId) === entry) activeRuns.delete(message.threadId);
-  postWebhook({ ...payload, ...callbackIdentity(message) })
-    .catch((e) => console.error(`[codex bridge] ${label} webhook failed:`, e.message));
   return true;
 }
 
@@ -172,17 +265,18 @@ export async function fetchContextPack(message) {
   if (flagDisabled(["CODEX_CONTEXT_PACK_ENABLED", "SANCHO_CONTEXT_PACK_ENABLED"])) return null;
   if (!message?.slug) return null;
 
-  const headers = { "Content-Type": "application/json" };
+  const headers = {
+    "Content-Type": "application/json",
+    ...callbackAuthorityHeaders(message),
+  };
   const shared = sanchoSharedSecret();
   if (shared) headers["X-MC-Secret"] = shared;
 
   const res = await fetch(contextPackUrl(), {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      slug: message.slug,
-      skill: typeof message.skill === "string" && message.skill.trim() ? message.skill.trim() : null,
-    }),
+    // Tenant and skill are derived from the authorized persisted run.
+    body: JSON.stringify({}),
     signal: AbortSignal.timeout(contextPackTimeoutMs()),
   });
   const raw = await res.text();
@@ -255,13 +349,131 @@ function bridgeWorkdir() {
   return firstEnv(["CODEX_RUNTIME_WORKDIR", "SANCHO_HOME"]) || process.cwd();
 }
 
-function outputDir() {
-  return firstEnv(["CODEX_RUNTIME_OUTPUT_DIR"]) || path.join(os.tmpdir(), "sancho-codex-runtime");
+function opaquePathSegment(label, value) {
+  const digest = createHash("sha256")
+    .update(String(value || "unknown"), "utf8")
+    .digest("hex")
+    .slice(0, 24);
+  return `${label}-${digest}`;
 }
 
-function runOutputFile(runId) {
-  fs.mkdirSync(outputDir(), { recursive: true });
-  return path.join(outputDir(), `${runId}.txt`);
+export function buildCodexWorkdir(
+  message,
+  runId,
+  tempRoot = CODEX_PROCESS_TMP_ROOT,
+) {
+  if (typeof runId !== "string" || !runId.trim()) {
+    throw new Error("Codex workdir requires a unique run id");
+  }
+  const root = path.resolve(tempRoot);
+  const tenant = opaquePathSegment("tenant", message?.slug);
+  const thread = opaquePathSegment("thread", message?.threadId);
+  const run = opaquePathSegment("run", runId);
+  const workdir = path.resolve(root, tenant, thread, run);
+  if (!workdir.startsWith(`${root}${path.sep}`)) {
+    throw new Error("Refusing Codex workdir outside the isolated temp root");
+  }
+  return workdir;
+}
+
+export async function cleanupCodexWorkdir(
+  workdir,
+  tempRoot = CODEX_PROCESS_TMP_ROOT,
+) {
+  const root = path.resolve(tempRoot);
+  const target = path.resolve(workdir);
+  const relativeTarget = path.relative(root, target);
+  const segments = relativeTarget.split(path.sep);
+  const isExactRunDirectory =
+    relativeTarget &&
+    !relativeTarget.startsWith(`..${path.sep}`) &&
+    !relativeTarget.includes(`${path.sep}..${path.sep}`) &&
+    segments.length === 3 &&
+    /^tenant-[a-f0-9]{24}$/.test(segments[0]) &&
+    /^thread-[a-f0-9]{24}$/.test(segments[1]) &&
+    /^run-[a-f0-9]{24}$/.test(segments[2]);
+  if (!isExactRunDirectory) {
+    throw new Error("Refusing to remove a non-isolated Codex workdir");
+  }
+  await rm(target, { recursive: true, force: true, maxRetries: 2 });
+  return true;
+}
+
+function codexAuthSourceDir(baseEnv = process.env) {
+  const explicit = String(baseEnv.CODEX_AUTH_SOURCE_DIR || "").trim();
+  if (explicit) return path.resolve(explicit);
+  const configuredCodexHome = String(baseEnv.CODEX_HOME || "").trim();
+  if (configuredCodexHome) return path.resolve(configuredCodexHome);
+  const userHome = String(baseEnv.HOME || "").trim() || os.homedir();
+  return path.resolve(userHome, ".codex");
+}
+
+export async function stageCodexAuthFiles(
+  workdir,
+  baseEnv = process.env,
+  { signal } = {},
+) {
+  signal?.throwIfAborted();
+  const sourceDir = codexAuthSourceDir(baseEnv);
+  const targetDir = path.join(path.resolve(workdir), ".codex");
+  await mkdir(targetDir, { recursive: true, mode: 0o700 });
+  signal?.throwIfAborted();
+  const copied = [];
+  for (const filename of CODEX_AUTH_FILES) {
+    signal?.throwIfAborted();
+    const source = path.join(sourceDir, filename);
+    let stat;
+    try {
+      stat = await lstat(source);
+    } catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+    signal?.throwIfAborted();
+    if (!stat.isFile() || stat.isSymbolicLink()) {
+      throw new Error(`Refusing non-regular Codex auth file: ${filename}`);
+    }
+    if (stat.size > CODEX_AUTH_FILE_MAX_BYTES) {
+      throw new Error(`Codex auth file exceeds safe limit: ${filename}`);
+    }
+    const contents = await readFile(source);
+    signal?.throwIfAborted();
+    const target = path.join(targetDir, filename);
+    await writeFile(target, contents, { mode: 0o600 });
+    signal?.throwIfAborted();
+    await chmod(target, 0o600);
+    signal?.throwIfAborted();
+    copied.push(filename);
+  }
+  return copied;
+}
+
+function copyAllowedEnv(target, source, keys) {
+  for (const key of keys) {
+    const value = source?.[key];
+    if (typeof value === "string" && value.length > 0) target[key] = value;
+  }
+}
+
+export function buildCodexChildEnv(
+  runId,
+  baseEnv = process.env,
+  workdir = buildCodexWorkdir({}, runId),
+) {
+  const env = {};
+  copyAllowedEnv(env, baseEnv, CODEX_CHILD_OS_ENV_KEYS);
+  copyAllowedEnv(env, baseEnv, CODEX_PROVIDER_ENV_KEYS);
+  Object.assign(env, {
+    HOME: workdir,
+    USERPROFILE: workdir,
+    XDG_CONFIG_HOME: path.join(workdir, ".config"),
+    CODEX_HOME: path.join(workdir, ".codex"),
+    TMPDIR: workdir,
+    TMP: workdir,
+    TEMP: workdir,
+    SANCHO_RUNTIME_RUN_ID: runId,
+  });
+  return env;
 }
 
 function appendOptionalArg(args, flag, keys) {
@@ -269,7 +481,12 @@ function appendOptionalArg(args, flag, keys) {
   if (value) args.push(flag, value);
 }
 
-export function buildCodexArgs(message, prompt, outputFile = "") {
+export function buildCodexArgs(
+  message,
+  prompt,
+  outputFile = "",
+  workdir = bridgeWorkdir(),
+) {
   const args = ["exec"];
   appendOptionalArg(args, "-m", ["CODEX_RUNTIME_MODEL"]);
   appendOptionalArg(args, "-p", ["CODEX_RUNTIME_PROFILE"]);
@@ -277,7 +494,7 @@ export function buildCodexArgs(message, prompt, outputFile = "") {
 
   if (process.env.CODEX_RUNTIME_OSS === "1") args.push("--oss");
   args.push("-s", firstEnv(["CODEX_RUNTIME_SANDBOX"]) || "read-only");
-  args.push("-C", bridgeWorkdir());
+  args.push("-C", workdir);
   args.push("--skip-git-repo-check", "--ephemeral", "--color", "never");
 
   if (!flagDisabled(["CODEX_RUNTIME_IGNORE_USER_CONFIG"])) args.push("--ignore-user-config");
@@ -319,10 +536,10 @@ async function postProgress(message, runId, label, detail) {
       detail,
       target: runId,
     },
-  });
+  }, message);
 }
 
-async function startCodexRun(message, runId) {
+async function startCodexRun(message, runId, admittedEntry) {
   let contextPack = null;
   try {
     contextPack = await fetchContextPack(message);
@@ -334,24 +551,43 @@ async function startCodexRun(message, runId) {
   }
 
   const prompt = buildCodexPrompt(message, contextPack);
-  const outputFile = runOutputFile(runId);
-  const args = buildCodexArgs(message, prompt, outputFile);
   const command = firstEnv(["CODEX_CLI"]) || "codex";
+  const workdir = buildCodexWorkdir(message, runId);
+  const outputFile = path.join(workdir, "last-message.txt");
+  const args = buildCodexArgs(message, prompt, outputFile, workdir);
+  admittedEntry.workdir = workdir;
   const existing = activeRuns.get(message.threadId);
-  if (existing?.killed) {
-    activeRuns.delete(message.threadId);
+  if (admittedEntry.killed || existing !== admittedEntry) {
+    return;
+  }
+  await stageCodexAuthFiles(workdir, process.env, {
+    signal: admittedEntry.startupAbortController.signal,
+  });
+  const afterPrepare = activeRuns.get(message.threadId);
+  if (admittedEntry.killed || afterPrepare !== admittedEntry) {
+    await cleanupCodexWorkdir(workdir);
     return;
   }
 
   const child = spawn(command, args, {
-    cwd: bridgeWorkdir(),
-    env: { ...process.env, SANCHO_RUNTIME_RUN_ID: runId },
+    cwd: workdir,
+    env: buildCodexChildEnv(runId, process.env, workdir),
     stdio: ["ignore", "pipe", "pipe"],
   });
-  const entry = existing || { runId, child: null, killed: false, pending: false, terminalPosted: false };
+  const entry = admittedEntry;
   entry.child = child;
+  entry.workdir = workdir;
   entry.pending = false;
   activeRuns.set(message.threadId, entry);
+
+  const cleanupWorkdir = () => {
+    void cleanupCodexWorkdir(workdir).catch((error) => {
+      console.error(
+        "[codex bridge] isolated workdir cleanup failed:",
+        error instanceof Error ? error.message : "unknown cleanup error",
+      );
+    });
+  };
 
   let stdout = "";
   let stderr = "";
@@ -402,11 +638,18 @@ async function startCodexRun(message, runId) {
         classifiedAt: Date.now(),
       },
     }, "error");
+    cleanupWorkdir();
   });
 
   child.on("close", (code, signal) => {
     clearTimeout(timeout);
-    if (entry.killed || entry.terminalPosted) return;
+    if (entry.killed || entry.terminalPosted) {
+      if (activeRuns.get(message.threadId) === entry) {
+        activeRuns.delete(message.threadId);
+      }
+      cleanupWorkdir();
+      return;
+    }
 
     const fileOutput = fs.existsSync(outputFile) ? fs.readFileSync(outputFile, "utf8") : "";
     const cleanOutput = cleanCodexOutput(fileOutput || stdout);
@@ -418,6 +661,7 @@ async function startCodexRun(message, runId) {
         text: cleanOutput || "(Codex finished without text output.)",
         agent: message.agent || message.agentId || "codex",
       }, "final");
+      cleanupWorkdir();
       return;
     }
 
@@ -437,17 +681,33 @@ async function startCodexRun(message, runId) {
         ...failure.errorDetail,
       },
     }, "failure");
+    cleanupWorkdir();
   });
 }
 
-function cancelThread(threadId) {
+async function cancelThread(threadId, missionControlRunId) {
   const entry = activeRuns.get(threadId);
   if (!entry) return false;
+  if (
+    !missionControlRunId ||
+    entry.missionControlRunId !== missionControlRunId
+  ) return false;
   entry.killed = true;
-  if (!entry.child) return true;
-  entry.child.kill("SIGTERM");
-  setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
-  activeRuns.delete(threadId);
+  entry.startupAbortController?.abort();
+  if (entry.child) {
+    entry.child.kill("SIGTERM");
+    setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
+    if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
+    return true;
+  }
+
+  await entry.startupPromise;
+  if (entry.child) {
+    entry.child.kill("SIGTERM");
+    setTimeout(() => entry.child.kill("SIGKILL"), 1000).unref();
+  }
+  if (entry.workdir) await cleanupCodexWorkdir(entry.workdir);
+  if (activeRuns.get(threadId) === entry) activeRuns.delete(threadId);
   return true;
 }
 
@@ -469,8 +729,24 @@ async function handleInbound(req, res) {
       : `${message.slug}:general`;
 
   if (message.text.trim() === "/stop") {
-    const cancelled = cancelThread(message.threadId);
+    const missionControlRunId =
+      typeof message.missionControlRunId === "string"
+        ? message.missionControlRunId.trim()
+        : "";
+    if (!missionControlRunId) {
+      return json(res, 400, { error: "Missing missionControlRunId" });
+    }
+    const cancelled = await cancelThread(
+      message.threadId,
+      missionControlRunId,
+    );
     return json(res, 200, { ok: true, cancelled });
+  }
+
+  if (Object.keys(terminalCallbackAuthorityHeaders(message)).length === 0) {
+    return json(res, 400, {
+      error: "Missing or expired terminal callback authority",
+    });
   }
 
   if (activeRuns.has(message.threadId)) {
@@ -478,8 +754,32 @@ async function handleInbound(req, res) {
   }
 
   const runId = `codex_${randomUUID()}`;
-  activeRuns.set(message.threadId, { runId, child: null, killed: false, pending: true, terminalPosted: false });
-  startCodexRun(message, runId).catch((e) => {
+  const admittedEntry = {
+    runId,
+    missionControlRunId:
+      typeof message.missionControlRunId === "string"
+        ? message.missionControlRunId.trim()
+        : undefined,
+    child: null,
+    killed: false,
+    pending: true,
+    terminalPosted: false,
+    startupAbortController: new AbortController(),
+    startupPromise: null,
+  };
+  activeRuns.set(message.threadId, admittedEntry);
+  admittedEntry.startupPromise = startCodexRun(message, runId, admittedEntry).catch(async (e) => {
+    if (admittedEntry.workdir) {
+      try {
+        await cleanupCodexWorkdir(admittedEntry.workdir);
+      } catch (cleanupError) {
+        console.error(
+          "[codex bridge] startup cleanup failed:",
+          cleanupError instanceof Error ? cleanupError.message : "unknown cleanup error",
+        );
+      }
+    }
+    if (admittedEntry.killed) return;
     postTerminalOnce(message, {
       slug: message.slug,
       threadId: message.threadId,
@@ -506,10 +806,21 @@ async function handleCancel(req, res) {
   }
   const threadId = typeof body?.threadId === "string" ? body.threadId.trim() : "";
   if (!threadId) return json(res, 400, { error: "Missing threadId" });
-  return json(res, 200, { ok: true, cancelled: cancelThread(threadId) });
+  const missionControlRunId =
+    typeof body?.missionControlRunId === "string"
+      ? body.missionControlRunId.trim()
+      : "";
+  if (!missionControlRunId) {
+    return json(res, 400, { error: "Missing missionControlRunId" });
+  }
+  return json(res, 200, {
+    ok: true,
+    cancelled: await cancelThread(threadId, missionControlRunId),
+  });
 }
 
 export function createServer() {
+  terminalCallbackOutbox();
   return http.createServer((req, res) => {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
     if (req.method === "GET" && url.pathname === "/healthz") {

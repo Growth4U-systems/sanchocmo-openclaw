@@ -40,7 +40,7 @@ const HERMES_PERSISTED_ENV_KEYS = [
   "HERMES_CLI_PROVIDER",
   "HERMES_CLI_MODEL",
   "HERMES_CLI_TOOLSETS",
-  "HERMES_WORKDIR",
+  "HERMES_AUTH_SOURCE_DIR",
   "ANTHROPIC_API_KEY",
   "ANTHROPIC_OAUTH_TOKEN",
   "ANTHROPIC_AUTH_TOKEN",
@@ -184,6 +184,29 @@ export function externalRuntimeVarsForCliBridge(
   };
 }
 
+/**
+ * Persist the boot contract for a server-managed bridge after it has passed
+ * health verification. The UI-started child is intentionally only the
+ * immediate activation path; these values make the same bridge supervised by
+ * the container entrypoint after a deploy or restart.
+ */
+export function managedBridgeBootVarsForCliBridge(
+  providerId: CliBridgeProviderId,
+  gatewayUrl: string,
+  secret: string,
+): Record<string, string> {
+  if (providerId !== "hermes") return {};
+  return {
+    SANCHO_RUNTIME: "hermes",
+    HERMES_GATEWAY_URL: normalizeBaseUrl(gatewayUrl),
+    HERMES_INBOUND_PATH: "/sancho/inbound",
+    HERMES_HEALTH_PATH: "/healthz",
+    HERMES_BRIDGE_ENABLED: "1",
+    HERMES_BRIDGE_PORT: String(gatewayPortOrDefault(providerId, gatewayUrl)),
+    HERMES_BRIDGE_SECRET: secret,
+  };
+}
+
 function shellQuote(value: string): string {
   if (/^[A-Za-z0-9_./:@%+=,-]+$/.test(value)) return value;
   return `'${value.replace(/'/g, "'\\''")}'`;
@@ -224,9 +247,6 @@ export function buildCliBridgeEnv(
 
   if (providerId === "claude-code") {
     env.CLAUDE_CODE_SANCHO_MCP_ENABLED = "0";
-  }
-  if (providerId === "hermes") {
-    env.HERMES_SANCHO_SECRET = options.secret;
   }
   if (provider.runtimeModelEnv && (options.model || provider.defaultModel)) {
     env[provider.runtimeModelEnv] = options.model || provider.defaultModel || "";
@@ -269,6 +289,7 @@ const cliRuntimeBridge = {
   gatewayListenHost,
   gatewayPortOrDefault,
   isCliBridgeProviderId,
+  managedBridgeBootVarsForCliBridge,
   normalizeBaseUrl,
   resolveServerCliAvailability,
 };

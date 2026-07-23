@@ -1,4 +1,5 @@
-import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import crypto from "node:crypto";
+import { dispatchAdmittedChatTurn, type AdmittedChatTurn } from "@/lib/chat/control-plane-dispatch";
 import { addMessage } from "./mc-chat";
 
 /**
@@ -303,9 +304,8 @@ export async function triggerWriter(
       ? "🤠 Pidiendo a Dulcinea que redacte este draft..."
       : `🔄 Pidiendo a Sancho que itere este draft (${input.channelScope || "todos los canales"})...`,
   );
-  addMessage(threadId, "user", message);
 
-  const payload: InboundMessage = {
+  const payload: AdmittedChatTurn = {
     slug: input.slug,
     threadId,
     threadName: `Content ${input.contentTaskId}`,
@@ -319,10 +319,12 @@ export async function triggerWriter(
     docPath: `brand/${input.slug}/content/drafts/${input.ideaId}`,
     isAdmin: true,
     senderRole: "admin",
+    idempotencyKey: `writer-trigger:${crypto.randomUUID()}`,
+    _source: "writer-trigger",
   };
 
   try {
-    const result = await getRuntime().messaging.sendInbound(payload);
+    const result = await dispatchAdmittedChatTurn(payload);
     if (!result.ok) {
       return { forwardedToGateway: false, threadId, error: `gateway ${result.status}: ${result.raw}` };
     }

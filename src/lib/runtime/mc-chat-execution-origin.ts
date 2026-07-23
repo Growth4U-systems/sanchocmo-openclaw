@@ -14,6 +14,7 @@ import {
   type ExecutionRun,
 } from "@/lib/execution-control";
 import { canonicalThreadId, parseThreadId } from "@/lib/thread-id";
+import { resolveRuntimeId } from "@/lib/runtime/config";
 
 const SAFE_AGENT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
@@ -97,7 +98,7 @@ export async function resolveMcChatExecutionOrigin(
   if (
     !parentRun ||
     parentRun.id !== origin.parentAgentRunId ||
-    parentRun.runtime !== "openclaw" ||
+    !resolveRuntimeId(parentRun.runtime) ||
     !input ||
     !parsedThread ||
     parsedThread.slug !== parsedThread.slug.toLowerCase() ||

@@ -11,18 +11,32 @@ import {
 } from "@/lib/cli-runtime-bridge";
 import {
   authenticateLocalConnectorToken,
+  authenticateLocalConnectorSessionCredential,
   bridgePortForLocalConnector,
+  claimLocalConnectorAgentRunRecovery,
   claimLocalConnectorJob,
   enqueueLocalConnectorJob,
+  finishLocalConnectorAgentRunRecovery,
   finishLocalConnectorJob,
   heartbeatLocalConnector,
   isLocalConnectorProviderId,
   localConnectorHealth,
   localConnectorInstallerScript,
+  nextLocalConnectorRecoveryAt,
   registerLocalConnector,
   type LocalConnectorProviderId,
 } from "@/lib/runtime/local-connector";
+import {
+  getAgentRunByIdAsync,
+  markAgentRunFailedAsync,
+} from "@/lib/data/agent-runs";
+import { clearStatus } from "@/lib/data/mc-chat";
+import { resolveRuntimeId } from "@/lib/runtime/config";
 import type { InboundMessage } from "@/lib/runtime";
+
+const MAX_RECOVERY_DRAIN = 20;
+let recoveryTimer: ReturnType<typeof setTimeout> | null = null;
+let recoveryDrainInFlight: Promise<void> | null = null;
 
 function routeName(req: NextApiRequest): string {
   const route = req.query.route;
@@ -37,6 +51,13 @@ function bearerToken(req: NextApiRequest): string {
     if (match) return match[1];
   }
   return typeof req.query.token === "string" ? req.query.token : "";
+}
+
+function authorizationBearerToken(req: NextApiRequest): string {
+  const auth = req.headers.authorization;
+  if (typeof auth !== "string") return "";
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1] : "";
 }
 
 function runtimeSecretFromEnv(): string {
@@ -83,6 +104,83 @@ function bridgeScriptPath(provider: LocalConnectorProviderId): string {
   return path.join(process.cwd(), cliBridgeProvider(provider).scriptPath);
 }
 
+function bridgeSharedScriptPath(asset: string): string | null {
+  const files: Record<string, string> = {
+    "callback-authority": "callback-authority.mjs",
+    "callback-outbox": "callback-outbox.mjs",
+  };
+  const filename = files[asset];
+  return filename
+    ? path.join(process.cwd(), "docker", "runtimes", filename)
+    : null;
+}
+
+async function drainAgentRunRecoveries(): Promise<void> {
+  if (recoveryDrainInFlight) return recoveryDrainInFlight;
+  recoveryDrainInFlight = (async () => {
+    for (let index = 0; index < MAX_RECOVERY_DRAIN; index += 1) {
+      const recovery = claimLocalConnectorAgentRunRecovery();
+      if (!recovery) break;
+      let delivered = false;
+      try {
+        const run = await getAgentRunByIdAsync(recovery.missionControlRunId);
+        if (
+          run &&
+          run.threadId === recovery.threadId &&
+          resolveRuntimeId(run.runtime) === "external-http" &&
+          (run.status === "queued" || run.status === "running")
+        ) {
+          const failed = await markAgentRunFailedAsync(
+            run.id,
+            run.threadId,
+            recovery.error,
+            "runtime_unreachable",
+            {
+              localConnectorJobId: recovery.jobId,
+              connectorSessionId: recovery.connectorSessionId,
+              provider: recovery.provider,
+              reason: recovery.reason,
+            },
+          );
+          if (failed?.status === "failed") clearStatus(run.threadId);
+        }
+        // Missing, mismatched or already-terminal runs have nothing left to
+        // recover. A later runtime callback is independently idempotent.
+        delivered = true;
+      } catch (error) {
+        console.error(
+          "[local connector] AgentRun recovery failed:",
+          error instanceof Error ? error.message : "unknown error",
+        );
+      } finally {
+        finishLocalConnectorAgentRunRecovery(
+          recovery.jobId,
+          recovery.claimId,
+          delivered,
+        );
+      }
+    }
+  })().finally(() => {
+    recoveryDrainInFlight = null;
+  });
+  return recoveryDrainInFlight;
+}
+
+function scheduleAgentRunRecoveryWatchdog(): void {
+  const nextAt = nextLocalConnectorRecoveryAt();
+  if (recoveryTimer) {
+    clearTimeout(recoveryTimer);
+    recoveryTimer = null;
+  }
+  if (nextAt === null) return;
+  const delay = Math.min(Math.max(0, nextAt - Date.now()), 2_147_483_647);
+  recoveryTimer = setTimeout(() => {
+    recoveryTimer = null;
+    void drainAgentRunRecoveries().finally(scheduleAgentRunRecoveryWatchdog);
+  }, delay);
+  recoveryTimer.unref?.();
+}
+
 function contractScriptPath(asset = "mc-chat-context"): string | null {
   const files: Record<string, string> = {
     "mc-chat-context": "mc-chat-context.mjs",
@@ -124,6 +222,7 @@ async function handleRegister(req: NextApiRequest, res: NextApiResponse, token: 
     ok: true,
     session: registered.session,
     runtimeSecret: registered.runtimeSecret,
+    sessionCredential: registered.sessionCredential,
     bridge: {
       provider,
       port,
@@ -147,12 +246,13 @@ async function handleHeartbeat(req: NextApiRequest, res: NextApiResponse, token:
 async function handleJobs(req: NextApiRequest, res: NextApiResponse, token: string) {
   if (req.method === "GET") {
     const job = claimLocalConnectorJob(token);
-    if (!job) return res.status(204).end();
+    if (!job?.message) return res.status(204).end();
     return res.status(200).json({
       ok: true,
       job: {
         id: job.id,
         provider: job.provider,
+        sessionId: job.connectorSessionId,
         message: job.message,
       },
     });
@@ -199,13 +299,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return text(res, 200, fs.readFileSync(localScriptPath(), "utf-8"), "text/javascript; charset=utf-8");
   }
 
-  if (route === "bridge") {
+  if (route === "bridge" || route.startsWith("bridge/")) {
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
     const session = authenticateLocalConnectorToken(bearerToken(req));
     if (!session || !isCliBridgeProviderId(session.provider)) {
       return res.status(401).json({ error: "Pairing inválido o caducado" });
     }
-    return text(res, 200, fs.readFileSync(bridgeScriptPath(session.provider), "utf-8"), "text/javascript; charset=utf-8");
+    const scriptPath =
+      route === "bridge"
+        ? bridgeScriptPath(session.provider)
+        : bridgeSharedScriptPath(route.slice("bridge/".length));
+    if (!scriptPath) return res.status(404).json({ error: "Bridge asset not found" });
+    return text(
+      res,
+      200,
+      fs.readFileSync(scriptPath, "utf-8"),
+      "text/javascript; charset=utf-8",
+    );
   }
 
   if (route === "contract" || route.startsWith("contract/")) {
@@ -241,17 +351,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(202).json({ ok: true, runId: job.id, chatId: job.id });
   }
 
-  const token = bearerToken(req);
-  const session = authenticateLocalConnectorToken(token);
-  if (!session) return res.status(401).json({ error: "Pairing inválido o caducado" });
+  if (route === "register") {
+    const token = authorizationBearerToken(req);
+    if (!token) return res.status(401).json({ error: "Pairing inválido o caducado" });
+    return handleRegister(req, res, token);
+  }
 
-  if (route === "register") return handleRegister(req, res, token);
-  if (route === "heartbeat") return handleHeartbeat(req, res, token);
-  if (route === "jobs") return handleJobs(req, res, token);
+  if (route === "heartbeat" || route === "jobs") {
+    const token = authorizationBearerToken(req);
+    if (!authenticateLocalConnectorSessionCredential(token)) {
+      return res.status(401).json({ error: "Credencial de conector inválida o caducada" });
+    }
+    if (route === "heartbeat") return handleHeartbeat(req, res, token);
+    return handleJobs(req, res, token);
+  }
 
   return res.status(404).json({ error: "Not found" });
 }
 
 export default withErrorHandler(async (req, res) => {
-  await handler(req, res);
+  try {
+    await handler(req, res);
+  } finally {
+    await drainAgentRunRecoveries();
+    scheduleAgentRunRecoveryWatchdog();
+  }
 });

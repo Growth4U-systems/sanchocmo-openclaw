@@ -42,6 +42,7 @@ import type {
 
 const OPENCLAW_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: true,
   cron: true,
   modelPicker: true,
   agentRegistry: true,
@@ -55,6 +56,7 @@ export class OpenclawAdapter implements RuntimeAdapter {
   readonly capabilities = OPENCLAW_CAPABILITIES;
 
   readonly messaging = {
+    terminalDeliveryMode: (): "callback" => "callback",
     sendInbound: sendOpenclawInbound,
     cancel: async (threadId: string): Promise<void> => {
       markCancelled(threadId);

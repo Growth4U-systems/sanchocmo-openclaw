@@ -3350,8 +3350,10 @@ test("sancho_delegate reuses only a same-group owned task through the central ha
   const originalFetch = globalThis.fetch;
   const originalNextUrl = process.env.MC_NEXT_URL;
   const originalSecret = process.env.MC_CHAT_SECRET;
+  const originalAdminToken = process.env.MC_ADMIN_TOKEN;
   process.env.MC_NEXT_URL = "http://mission-control.test";
   process.env.MC_CHAT_SECRET = "mcp-delegate-secret";
+  process.env.MC_ADMIN_TOKEN = "mcp-control-plane-admin";
   const calls: Array<{ url: string; headers: Record<string, string>; body: Record<string, unknown> }> = [];
   globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
     const url = String(input);
@@ -3428,7 +3430,9 @@ test("sancho_delegate reuses only a same-group owned task through the central ha
     assert.equal(payloadOf(dispatched).action, "reuse");
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, "http://mission-control.test/api/chat/send");
-    assert.equal(calls[0].headers["X-MC-Secret"], "mcp-delegate-secret");
+    assert.equal(calls[0].headers.Authorization, "Bearer mcp-control-plane-admin");
+    assert.equal(calls[0].headers["X-MC-Secret"], undefined);
+    assert.equal(calls[0].headers["X-Sancho-Internal-Dispatch"], "1");
     assert.equal(calls[0].headers["X-Request-Id"], "trace-test-1");
     assert.equal(calls[0].body.threadId, "alpha:task-p90-research");
     assert.equal(calls[0].body.agent, "hamete");
@@ -3545,6 +3549,8 @@ test("sancho_delegate reuses only a same-group owned task through the central ha
     else process.env.MC_NEXT_URL = originalNextUrl;
     if (originalSecret === undefined) delete process.env.MC_CHAT_SECRET;
     else process.env.MC_CHAT_SECRET = originalSecret;
+    if (originalAdminToken === undefined) delete process.env.MC_ADMIN_TOKEN;
+    else process.env.MC_ADMIN_TOKEN = originalAdminToken;
     fs.rmSync(sourceGroupDir, { recursive: true, force: true });
     fs.rmSync(outsideGroupDir, { recursive: true, force: true });
     resetTaskRouteProposalsForTests();

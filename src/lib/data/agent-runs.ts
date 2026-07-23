@@ -5,6 +5,11 @@ import { BASE } from "./paths";
 import { readJSON, writeJSON } from "./json-io";
 import { PostgresAgentRunsRepository } from "./agent-runs-postgres";
 import { createTraceContext, getTraceId, normalizeTraceId } from "@/lib/trace-context";
+import { terminalCallbackClaimIsStale } from "./agent-run-callback-claim";
+import {
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE,
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR,
+} from "./agent-run-synthetic-runtime-loss";
 
 export type AgentRunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
@@ -68,7 +73,7 @@ export interface AgentRun {
   input?: unknown;
   output?: unknown;
   error?: string;
-  /** Bounded transport fingerprints used to make terminal callbacks idempotent. */
+  /** Winning terminal transport fingerprint (array-shaped for legacy rows). */
   callbackFingerprints?: string[];
   createdAt: string;
   startedAt?: string;
@@ -104,6 +109,20 @@ export interface CreateAgentRunInput {
   taskContract?: AgentRunTaskContractSnapshot;
   input?: unknown;
   now?: Date;
+  /**
+   * Optional active-parent fence for runtime-created control children. The
+   * repository must serialize this check with the parent's Stop tombstone.
+   */
+  activeParent?: { runId: string; threadId: string };
+}
+
+export class AgentRunParentInactiveError extends Error {
+  readonly code = "agent_run_parent_inactive";
+
+  constructor() {
+    super("agent_runs: active parent fence rejected child admission");
+    this.name = "AgentRunParentInactiveError";
+  }
 }
 
 export interface AppendAgentRunEventInput {
@@ -123,6 +142,31 @@ export interface UpdateAgentRunInput {
   finishedAt?: string;
   now?: Date;
 }
+
+interface RecoverSyntheticRuntimeLossBase {
+  runId: string;
+  threadId: string;
+  /** Durable dispatch identity also bound into the terminal callback grant. */
+  dispatchRunId: string;
+  /** Exact terminal payload fingerprint; one competing payload may win. */
+  fingerprint: string;
+  output: unknown;
+  completedAt?: Date;
+}
+
+/**
+ * Purpose-built exception to terminal immutability. The repository may apply
+ * it only to the exact machine-marked `runtime_committed_worker_lost` failure.
+ */
+export type RecoverSyntheticRuntimeLossInput =
+  | (RecoverSyntheticRuntimeLossBase & {
+      terminalStatus: "completed";
+      terminalError?: never;
+    })
+  | (RecoverSyntheticRuntimeLossBase & {
+      terminalStatus: "failed";
+      terminalError: string;
+    });
 
 export interface AgentRunsRetention {
   storage: "bounded-json" | "postgres";
@@ -150,7 +194,12 @@ export interface AgentRunsRepository {
   getById(runId: string): Promise<AgentRun | null>;
   getByIdempotencyKey(threadId: string, idempotencyKey: string): Promise<AgentRun | null>;
   claimCallbackFingerprint(runId: string, fingerprint: string): Promise<boolean>;
+  recoverSyntheticRuntimeLoss(
+    input: RecoverSyntheticRuntimeLossInput,
+  ): Promise<AgentRun | null>;
   getLatestActive(threadId: string): Promise<AgentRun | null>;
+  listActive(limit?: number): Promise<AgentRun[]>;
+  listActiveChildren(parentRunId: string): Promise<AgentRun[]>;
   markDispatched(runId: string, threadId: string, data?: unknown): Promise<AgentRun | null>;
   markFailed(
     runId: string,
@@ -415,8 +464,8 @@ export function getAgentRunByIdempotencyKey(
 }
 
 /**
- * Atomically claims a runtime callback fingerprint in the JSON ledger.
- * Returns false when a transport retry already delivered the same callback.
+ * Atomically claims the one terminal callback fingerprint in the JSON ledger.
+ * Returns false for both a retry and a competing terminal payload.
  */
 export function claimAgentRunCallbackFingerprint(runId: string, fingerprint: string): boolean {
   assertLegacySyncBackend();
@@ -424,14 +473,123 @@ export function claimAgentRunCallbackFingerprint(runId: string, fingerprint: str
   const store = readStore();
   const index = store.runs.findIndex((run) => run.id === runId);
   if (index < 0) return false;
-  const existing = store.runs[index].callbackFingerprints ?? [];
-  if (existing.includes(fingerprint)) return false;
+  const current = store.runs[index];
+  const existing = current.callbackFingerprints ?? [];
+  const recoveringStaleClaim =
+    existing.length === 1 &&
+    existing[0] === fingerprint &&
+    ACTIVE_STATUSES.has(current.status) &&
+    terminalCallbackClaimIsStale(current.updatedAt);
+  if (existing.length > 0 && !recoveringStaleClaim) return false;
+  const now = new Date().toISOString();
   store.runs[index] = {
-    ...store.runs[index],
-    callbackFingerprints: [...existing, fingerprint].slice(-100),
+    ...current,
+    callbackFingerprints: [fingerprint],
+    updatedAt: now,
   };
   writeStore(store);
   return true;
+}
+
+const TERMINAL_CALLBACK_FINGERPRINT_PATTERN = /^[a-f0-9]{64}$/;
+const AGENT_RUN_IDENTIFIER_PATTERN =
+  /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$/;
+
+/**
+ * JSON-backend implementation of the narrowly-scoped late terminal CAS.
+ * Production uses the Postgres statement below; this synchronous snapshot
+ * mutation keeps local/test behavior contract-compatible without weakening
+ * `updateAgentRun`'s general terminal-state fence.
+ */
+export function recoverAgentRunSyntheticRuntimeLoss(
+  input: RecoverSyntheticRuntimeLossInput,
+): AgentRun | null {
+  assertLegacySyncBackend();
+  const completedAt = input.completedAt ?? new Date();
+  if (
+    !AGENT_RUN_IDENTIFIER_PATTERN.test(input.runId) ||
+    !input.threadId ||
+    !AGENT_RUN_IDENTIFIER_PATTERN.test(input.dispatchRunId) ||
+    !TERMINAL_CALLBACK_FINGERPRINT_PATTERN.test(input.fingerprint) ||
+    Number.isNaN(completedAt.getTime()) ||
+    (input.terminalStatus === "failed" &&
+      (typeof input.terminalError !== "string" ||
+        !input.terminalError.trim() ||
+        input.terminalError.length > 256)) ||
+    (input.terminalStatus === "completed" &&
+      input.terminalError !== undefined)
+  ) {
+    return null;
+  }
+  const store = readStore();
+  const index = store.runs.findIndex((run) => run.id === input.runId);
+  if (index < 0) return null;
+  const current = store.runs[index];
+  const fingerprints = current.callbackFingerprints ?? [];
+  const ownsFingerprintSlot =
+    fingerprints.length === 0 ||
+    (fingerprints.length === 1 && fingerprints[0] === input.fingerprint);
+  const hasExactSyntheticMarker = store.events.some((event) => {
+    const data =
+      event.data && typeof event.data === "object" && !Array.isArray(event.data)
+        ? (event.data as Record<string, unknown>)
+        : null;
+    return (
+      event.runId === input.runId &&
+      event.threadId === input.threadId &&
+      event.type === "runtime_unreachable" &&
+      data?.code === AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE &&
+      data.dispatchRunId === input.dispatchRunId
+    );
+  });
+  const idempotencyConflict = Boolean(
+    current.idempotencyKey &&
+      store.runs.some(
+        (candidate) =>
+          candidate.id !== current.id &&
+          candidate.threadId === current.threadId &&
+          candidate.idempotencyKey === current.idempotencyKey &&
+          (candidate.status === "queued" ||
+            candidate.status === "running" ||
+            candidate.status === "completed"),
+      ),
+  );
+  if (
+    current.threadId !== input.threadId ||
+    current.status !== "failed" ||
+    current.error !== AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR ||
+    !ownsFingerprintSlot ||
+    !hasExactSyntheticMarker ||
+    idempotencyConflict
+  ) {
+    return null;
+  }
+
+  const now = completedAt.toISOString();
+  const recovered: AgentRun = {
+    ...current,
+    status: input.terminalStatus,
+    output: input.output,
+    ...(input.terminalStatus === "failed"
+      ? { error: input.terminalError }
+      : {}),
+    callbackFingerprints: [input.fingerprint],
+    finishedAt: now,
+    updatedAt: now,
+  };
+  if (input.terminalStatus === "completed") delete recovered.error;
+  store.runs[index] = recovered;
+  store.events.push({
+    id: id("evt"),
+    runId: recovered.id,
+    threadId: recovered.threadId,
+    traceId: recovered.traceId,
+    type: input.terminalStatus === "failed" ? "failed" : "bot_reply",
+    ts: now,
+    data: input.output,
+  });
+  writeStore(store);
+  return recovered;
 }
 
 export function getLatestActiveRun(threadId: string): AgentRun | null {
@@ -546,6 +704,16 @@ class JsonAgentRunsRepository implements AgentRunsRepository {
         return { run: existing, created: false };
       }
     }
+    if (input.activeParent) {
+      const parent = getAgentRunById(input.activeParent.runId);
+      if (
+        !parent ||
+        parent.threadId !== input.activeParent.threadId ||
+        (parent.status !== "queued" && parent.status !== "running")
+      ) {
+        throw new AgentRunParentInactiveError();
+      }
+    }
     return { run: createAgentRun(input), created: true };
   }
 
@@ -573,8 +741,40 @@ class JsonAgentRunsRepository implements AgentRunsRepository {
     return claimAgentRunCallbackFingerprint(runId, fingerprint);
   }
 
+  async recoverSyntheticRuntimeLoss(
+    input: RecoverSyntheticRuntimeLossInput,
+  ) {
+    return recoverAgentRunSyntheticRuntimeLoss(input);
+  }
+
   async getLatestActive(threadId: string) {
     return getLatestActiveRun(threadId);
+  }
+
+  async listActive(limit = 100) {
+    const boundedLimit = Math.max(0, limit);
+    if (boundedLimit === 0) return [];
+    return readStore().runs
+      .filter((run) => ACTIVE_STATUSES.has(run.status))
+      .sort(
+        (left, right) =>
+          right.createdAt.localeCompare(left.createdAt) ||
+          right.id.localeCompare(left.id),
+      )
+      .slice(0, boundedLimit);
+  }
+
+  async listActiveChildren(parentRunId: string) {
+    return readStore().runs.filter((run) => {
+      const input =
+        run.input && typeof run.input === "object" && !Array.isArray(run.input)
+          ? (run.input as Record<string, unknown>)
+          : null;
+      return (
+        input?.controlParentAgentRunId === parentRunId &&
+        ACTIVE_STATUSES.has(run.status)
+      );
+    });
   }
 
   async markDispatched(runId: string, threadId: string, data?: unknown) {
@@ -692,8 +892,24 @@ export async function claimAgentRunCallbackFingerprintAsync(
   return getAgentRunsRepository().claimCallbackFingerprint(runId, fingerprint);
 }
 
+export async function recoverAgentRunSyntheticRuntimeLossAsync(
+  input: RecoverSyntheticRuntimeLossInput,
+): Promise<AgentRun | null> {
+  return getAgentRunsRepository().recoverSyntheticRuntimeLoss(input);
+}
+
 export async function getLatestActiveRunAsync(threadId: string): Promise<AgentRun | null> {
   return getAgentRunsRepository().getLatestActive(threadId);
+}
+
+export async function listActiveAgentRunsAsync(limit = 100): Promise<AgentRun[]> {
+  return getAgentRunsRepository().listActive(limit);
+}
+
+export async function listActiveChildAgentRunsAsync(
+  parentRunId: string,
+): Promise<AgentRun[]> {
+  return getAgentRunsRepository().listActiveChildren(parentRunId);
 }
 
 export async function markAgentRunDispatchedAsync(

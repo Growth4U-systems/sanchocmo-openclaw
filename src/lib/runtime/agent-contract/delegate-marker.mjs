@@ -28,7 +28,8 @@ export function parseDelegateMarkers(text, allowedAgents = DELEGATE_AGENTS) {
   }
   const delegations = [];
   const malformed = [];
-  let cleaned = text.replace(DELEGATE_BLOCK_RE, (block, json) => {
+  const normalized = text.replace(/\r\n?/g, "\n");
+  let cleaned = normalized.replace(DELEGATE_BLOCK_RE, (block, json) => {
     const parsed = parseOne(json, allowedAgents);
     if (parsed) delegations.push(parsed);
     else malformed.push(block);

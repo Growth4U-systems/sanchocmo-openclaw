@@ -32,7 +32,10 @@ function stubFetch(impl: (url: string, init?: RequestInit) => Promise<Response>)
 before(async () => {
   fs.writeFileSync(
     path.join(tmp, "clients.json"),
-    JSON.stringify({ clients: [{ slug: "monzo", name: "Monzo", active: true }] }),
+    JSON.stringify({
+      adminToken: "trigger-admin-token",
+      clients: [{ slug: "monzo", name: "Monzo", active: true }],
+    }),
   );
   stubFetch(async (url, init) => {
     calls.push({ url, init: init || {} });
@@ -56,11 +59,13 @@ test("triggerDiscoveryRunner despacha al gateway con skill+agent del runner", as
   assert.equal(res.forwardedToGateway, true);
   assert.equal(res.threadId, "monzo:discovery-run-ds-20260625-9qpm");
 
-  const call = calls.find((c) => c.url.endsWith("/mc-chat/inbound"));
-  assert.ok(call, "POST a /mc-chat/inbound");
-  assert.equal(call!.url, "http://gw.test/mc-chat/inbound");
+  const call = calls.find((c) => c.url.endsWith("/api/chat/send"));
+  assert.ok(call, "POST a /api/chat/send");
+  assert.equal(call!.url, "http://127.0.0.1:3000/api/chat/send");
   const headers = call!.init.headers as Record<string, string>;
-  assert.equal(headers["X-MC-Secret"], "s3cr3t");
+  assert.equal(headers.Authorization, "Bearer trigger-admin-token");
+  assert.equal(headers["X-MC-Secret"], undefined);
+  assert.equal(headers["X-Sancho-Internal-Dispatch"], "1");
 
   const body = JSON.parse(String(call!.init.body));
   assert.equal(body.slug, "monzo");

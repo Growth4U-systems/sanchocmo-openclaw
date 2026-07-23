@@ -36,6 +36,7 @@ function dependencies(overrides = {}) {
       dispatchRunId: "dispatch-1",
       dispatchLeaseToken,
       allowExternalEffects: true,
+      allowedExternalEffects: [PARTNERSHIPS_DISCOVERY_START_TOOL],
     }),
     loadConfig: () => ({
       channels: {

@@ -88,6 +88,11 @@ jobs:
       - name: Mission Control plugin tests
         run: npm run test:plugins
 
+      # CLI bridges are production runtime code, not test fixtures. Gate their
+      # transport/auth/context contract alongside the server and plugin.
+      - name: Runtime adapter and bridge tests
+        run: npm run test:runtime
+
       # Product definitions are executable governance: missing source/tests,
       # ambiguous routes or an overdue approved definition must fail closed.
       - name: Product capability drift
@@ -101,6 +106,15 @@ jobs:
           NEXTAUTH_URL: http://localhost:3000
           NEXT_PUBLIC_ENV_LABEL: ci
         run: npm run build
+
+      # Contract/unit tests do not prove that the compiled Next server, a
+      # runtime adapter, terminal callback authority and AgentRun projection
+      # still converge together. Exercise both external runtime delivery modes
+      # against disposable fake runtimes before the build can merge.
+      - name: Runtime full-story smokes
+        run: |
+          npm run smoke:runtime:external-http
+          npm run smoke:runtime:external-http:bridge
 
       # A production build can succeed while auth redirects or the top-level
       # dashboard fail at runtime. Exercise the compiled app before allowing a

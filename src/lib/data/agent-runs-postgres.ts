@@ -12,16 +12,23 @@ import {
 import { db, type Db } from "@/db/drizzle";
 import { agentRunEvents as eventsTable, agentRuns as runsTable } from "@/db/schema";
 import { createTraceContext, getTraceId, normalizeTraceId } from "@/lib/trace-context";
-import type {
-  AgentRun,
-  AgentRunEvent,
-  AgentRunEventType,
-  AgentRunsRepository,
-  AgentRunsSnapshot,
-  AppendAgentRunEventInput,
-  CreateAgentRunInput,
-  CreateAgentRunReceipt,
-  UpdateAgentRunInput,
+import { TERMINAL_CALLBACK_CLAIM_LEASE_MS } from "./agent-run-callback-claim";
+import {
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE,
+  AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR,
+} from "./agent-run-synthetic-runtime-loss";
+import {
+  AgentRunParentInactiveError,
+  type AgentRun,
+  type AgentRunEvent,
+  type AgentRunEventType,
+  type AgentRunsRepository,
+  type AgentRunsSnapshot,
+  type AppendAgentRunEventInput,
+  type CreateAgentRunInput,
+  type CreateAgentRunReceipt,
+  type RecoverSyntheticRuntimeLossInput,
+  type UpdateAgentRunInput,
 } from "./agent-runs";
 
 const ACTIVE_STATUSES = ["queued", "running"] as const;
@@ -29,9 +36,25 @@ const TERMINAL_STATUSES = ["completed", "failed", "cancelled"] as const;
 const IDEMPOTENCY_CONFLICT_STATUSES = ["queued", "running", "completed"] as const;
 const SNAPSHOT_RUN_LIMIT = 2_000;
 const SNAPSHOT_EVENT_LIMIT = 10_000;
+const TERMINAL_CALLBACK_FINGERPRINT_PATTERN = /^[a-f0-9]{64}$/;
+const AGENT_RUN_IDENTIFIER_PATTERN =
+  /^[A-Za-z0-9][A-Za-z0-9._:@/+~-]{0,159}$/;
 
 type RunRow = typeof runsTable.$inferSelect;
 type EventRow = typeof eventsTable.$inferSelect;
+type StatementRow = Record<string, unknown>;
+
+function statementRows(result: unknown): StatementRow[] {
+  if (Array.isArray(result)) return result as StatementRow[];
+  if (
+    result &&
+    typeof result === "object" &&
+    Array.isArray((result as { rows?: unknown }).rows)
+  ) {
+    return (result as { rows: StatementRow[] }).rows;
+  }
+  return [];
+}
 
 function id(prefix: "run" | "evt"): string {
   return `${prefix}_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
@@ -167,20 +190,30 @@ export class PostgresAgentRunsRepository implements AgentRunsRepository {
       taskId: input.taskId,
       traceId,
     };
+    const parentGate = input.activeParent
+      ? drizzleSql`
+          SELECT 1 AS "allowed"
+          FROM "agent_runs"
+          WHERE "id" = ${input.activeParent.runId}
+            AND "thread_id" = ${input.activeParent.threadId}
+            AND "status" IN ('queued', 'running')
+          FOR UPDATE
+        `
+      : drizzleSql`SELECT 1 AS "allowed"`;
 
     await this.database.execute(drizzleSql`
-      WITH inserted_run AS (
+      WITH parent_gate AS (${parentGate}), inserted_run AS (
         INSERT INTO "agent_runs" (
           "id", "idempotency_key", "thread_id", "trace_id", "runtime",
           "agent", "skill", "skills", "skill_mode", "task_id",
           "task_contract", "status", "input", "callback_fingerprints",
           "created_at", "updated_at"
-        ) VALUES (
+        ) SELECT
           ${runId}, ${input.idempotencyKey ?? null}, ${input.threadId}, ${traceId}, ${input.runtime},
           ${input.agent ?? null}, ${input.skill ?? null}, ${jsonValue(input.skills)},
           ${input.skillMode ?? null}, ${input.taskId ?? null}, ${jsonValue(input.taskContract)},
           'queued', ${jsonValue(input.input)}, '[]'::jsonb, ${timestampValue(now)}, ${timestampValue(now)}
-        )
+        FROM parent_gate
         ON CONFLICT DO NOTHING
         RETURNING "id", "thread_id", "trace_id"
       )
@@ -203,6 +236,7 @@ export class PostgresAgentRunsRepository implements AgentRunsRepository {
       );
       if (existing) return { run: existing, created: false };
     }
+    if (input.activeParent) throw new AgentRunParentInactiveError();
     throw new Error("agent_runs: create did not persist or resolve an idempotent run");
   }
 
@@ -311,21 +345,112 @@ export class PostgresAgentRunsRepository implements AgentRunsRepository {
 
   async claimCallbackFingerprint(runId: string, fingerprint: string): Promise<boolean> {
     if (!runId || !fingerprint) return false;
+    const now = new Date();
+    const staleBefore = new Date(
+      now.getTime() - TERMINAL_CALLBACK_CLAIM_LEASE_MS,
+    );
     const [claimed] = await this.database
       .update(runsTable)
       .set({
-        callbackFingerprints: drizzleSql`CASE
-          WHEN jsonb_array_length(${runsTable.callbackFingerprints}) >= 100
-            THEN (${runsTable.callbackFingerprints} - 0) || jsonb_build_array(${fingerprint}::text)
-          ELSE ${runsTable.callbackFingerprints} || jsonb_build_array(${fingerprint}::text)
-        END`,
+        callbackFingerprints: drizzleSql`jsonb_build_array(${fingerprint}::text)`,
+        updatedAt: now,
       })
       .where(and(
         eq(runsTable.id, runId),
-        drizzleSql`NOT (${runsTable.callbackFingerprints} ? ${fingerprint}::text)`,
+        inArray(runsTable.status, [...ACTIVE_STATUSES]),
+        drizzleSql`(
+          jsonb_array_length(${runsTable.callbackFingerprints}) = 0
+          OR (
+            ${runsTable.callbackFingerprints} ? ${fingerprint}::text
+            AND ${runsTable.updatedAt} <= ${timestampValue(staleBefore)}
+          )
+        )`,
       ))
       .returning({ id: runsTable.id });
     return Boolean(claimed);
+  }
+
+  async recoverSyntheticRuntimeLoss(
+    input: RecoverSyntheticRuntimeLossInput,
+  ): Promise<AgentRun | null> {
+    const completedAt = input.completedAt ?? new Date();
+    if (
+      !AGENT_RUN_IDENTIFIER_PATTERN.test(input.runId) ||
+      !input.threadId ||
+      input.threadId.length > 512 ||
+      !AGENT_RUN_IDENTIFIER_PATTERN.test(input.dispatchRunId) ||
+      !TERMINAL_CALLBACK_FINGERPRINT_PATTERN.test(input.fingerprint) ||
+      Number.isNaN(completedAt.getTime()) ||
+      (input.terminalStatus === "failed" &&
+        (typeof input.terminalError !== "string" ||
+          !input.terminalError.trim() ||
+          input.terminalError.length > 256)) ||
+      (input.terminalStatus === "completed" &&
+        input.terminalError !== undefined)
+    ) {
+      return null;
+    }
+    const eventId = id("evt");
+    const eventType: AgentRunEventType =
+      input.terminalStatus === "failed" ? "failed" : "bot_reply";
+    const terminalError =
+      input.terminalStatus === "failed" ? input.terminalError : null;
+    const result = await this.database.execute(drizzleSql`
+      WITH recovered_run AS (
+        UPDATE "agent_runs"
+        SET
+          "status" = ${input.terminalStatus},
+          "output" = ${jsonValue(input.output)},
+          "error" = ${terminalError},
+          "callback_fingerprints" = jsonb_build_array(${input.fingerprint}::text),
+          "finished_at" = ${timestampValue(completedAt)},
+          "updated_at" = ${timestampValue(completedAt)}
+        WHERE "id" = ${input.runId}
+          AND "thread_id" = ${input.threadId}
+          AND "status" = 'failed'
+          AND "error" = ${AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_ERROR}
+          AND (
+            jsonb_array_length("callback_fingerprints") = 0
+            OR "callback_fingerprints" = jsonb_build_array(${input.fingerprint}::text)
+          )
+          AND (
+            "idempotency_key" IS NULL
+            OR NOT EXISTS (
+              SELECT 1
+              FROM "agent_runs" AS retry_run
+              WHERE retry_run."id" <> "agent_runs"."id"
+                AND retry_run."thread_id" = "agent_runs"."thread_id"
+                AND retry_run."idempotency_key" = "agent_runs"."idempotency_key"
+                AND retry_run."status" IN ('queued', 'running', 'completed')
+            )
+          )
+          AND EXISTS (
+            SELECT 1
+            FROM "agent_run_events" AS recovery_event
+            WHERE recovery_event."run_id" = "agent_runs"."id"
+              AND recovery_event."thread_id" = "agent_runs"."thread_id"
+              AND recovery_event."type" = 'runtime_unreachable'
+              AND recovery_event."data"->>'code' = ${AGENT_RUN_SYNTHETIC_RUNTIME_LOSS_CODE}
+              AND recovery_event."data"->>'dispatchRunId' = ${input.dispatchRunId}
+          )
+        RETURNING "id", "thread_id", "trace_id"
+      ), inserted_event AS (
+        INSERT INTO "agent_run_events" (
+          "id", "run_id", "thread_id", "trace_id", "type", "ts", "data"
+        )
+        SELECT ${eventId}, "id", "thread_id", "trace_id", ${eventType},
+               ${timestampValue(completedAt)}, ${jsonValue(input.output)}
+        FROM recovered_run
+        RETURNING "run_id"
+      )
+      SELECT "run_id" AS "runId" FROM inserted_event
+    `);
+    if (!statementRows(result)[0]) return null;
+    const recovered = await this.getById(input.runId);
+    if (!recovered) {
+      throw new Error("agent_runs: synthetic runtime-loss recovery disappeared");
+    }
+    return recovered;
   }
 
   async getLatestActive(threadId: string): Promise<AgentRun | null> {
@@ -339,6 +464,31 @@ export class PostgresAgentRunsRepository implements AgentRunsRepository {
       .orderBy(desc(runsTable.createdAt), desc(runsTable.id))
       .limit(1);
     return row ? agentRunFromDatabaseRow(row) : null;
+  }
+
+  async listActive(limit = 100): Promise<AgentRun[]> {
+    const rows = await this.database
+      .select()
+      .from(runsTable)
+      .where(inArray(runsTable.status, [...ACTIVE_STATUSES]))
+      .orderBy(desc(runsTable.createdAt), desc(runsTable.id))
+      .limit(Math.max(0, limit));
+    return rows.map(agentRunFromDatabaseRow);
+  }
+
+  async listActiveChildren(parentRunId: string): Promise<AgentRun[]> {
+    if (!parentRunId) return [];
+    const rows = await this.database
+      .select()
+      .from(runsTable)
+      .where(
+        and(
+          inArray(runsTable.status, [...ACTIVE_STATUSES]),
+          drizzleSql`${runsTable.input}->>'controlParentAgentRunId' = ${parentRunId}`,
+        ),
+      )
+      .orderBy(asc(runsTable.createdAt), asc(runsTable.id));
+    return rows.map(agentRunFromDatabaseRow);
   }
 
   async markDispatched(runId: string, threadId: string, data?: unknown): Promise<AgentRun | null> {

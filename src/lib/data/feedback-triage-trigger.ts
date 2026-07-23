@@ -9,7 +9,7 @@
  */
 
 import crypto from "crypto";
-import { getRuntime, type InboundMessage } from "@/lib/runtime";
+import { dispatchAdmittedChatTurn, type AdmittedChatTurn } from "@/lib/chat/control-plane-dispatch";
 import { addMessage } from "./mc-chat";
 import { type CommentRow, loadDocComments, loadDocCommentsFamily } from "@/lib/comments";
 import { getOriginalDocPath } from "@/lib/comments-file";
@@ -105,9 +105,8 @@ export async function triggerFeedbackTriage(
     "system",
     `🛡️ Pidiendo a Sansón que analice el feedback de ${input.docPath}...`,
   );
-  addMessage(threadId, "user", message);
 
-  const payload: InboundMessage = {
+  const payload: AdmittedChatTurn = {
     slug: input.slug,
     threadId,
     threadName: `Feedback triage ${input.docPath}`,
@@ -121,13 +120,15 @@ export async function triggerFeedbackTriage(
     docPath: input.docPath,
     isAdmin: true,
     senderRole: "admin",
+    idempotencyKey: `feedback-triage:${runId}`,
+    _source: "feedback-triage",
   };
 
   try {
     // Never hang the caller on a slow/down runtime: the manual buttons
     // in the dashboard await this request, and without a timeout the UI
     // sits in "Despachando..." forever (SAN-148 staging finding).
-    const result = await getRuntime().messaging.sendInbound(payload, { timeoutMs: 15_000 });
+    const result = await dispatchAdmittedChatTurn(payload, { timeoutMs: 15_000 });
     if (!result.ok) {
       return {
         forwardedToGateway: false,

@@ -13,6 +13,13 @@ const ORIGIN_CHILD_PAGE_SIZE = 100;
 export type ExecutionOriginCancellationRepository =
   ExecutionOriginControlRepository & ExecutionCancellationControlRepository;
 
+export interface ExecutionOriginCancellationInput {
+  tenantKey: string;
+  parentAgentRunId: string;
+  actor: { type: "user" | "service" | "system"; id: string };
+  reasonCode?: ExecutionCancellationReasonCode;
+}
+
 export interface ExecutionOriginCancellationResult {
   originCancellation: ExecutionOriginCancellationReceipt;
   children: ExecutionRun[];
@@ -35,24 +42,16 @@ function originCancellationId(parentAgentRunId: string): string {
 }
 
 /**
- * Request cancellation for every non-terminal durable child that was admitted
- * from one server-attested MC Chat parent. The bounded reverse lookup must fail
- * rather than truncate: silently missing child 101 would violate Stop.
+ * Seal one trusted execution origin before touching either the AgentRun parent
+ * or its durable children. This monotonic write is the first linearization
+ * point for Stop: no new effect-bearing child may be admitted afterwards.
  */
-export async function requestExecutionOriginCancellation(
-  input: {
-    tenantKey: string;
-    parentAgentRunId: string;
-    actor: { type: "user" | "service" | "system"; id: string };
-    reasonCode?: ExecutionCancellationReasonCode;
-  },
+export async function sealExecutionOriginCancellation(
+  input: ExecutionOriginCancellationInput,
   repository: ExecutionOriginCancellationRepository,
-): Promise<ExecutionOriginCancellationResult> {
+): Promise<ExecutionOriginCancellationReceipt> {
   const reasonCode = input.reasonCode ?? "user_requested";
-  // This monotonic write is deliberately first. It serializes against trusted
-  // child creation, so every child is either visible in the pages below or was
-  // rejected before admission.
-  const originCancellation = await repository.requestOriginCancellation({
+  return repository.requestOriginCancellation({
     tenantKey: input.tenantKey,
     origin: {
       schemaVersion: 1,
@@ -63,6 +62,28 @@ export async function requestExecutionOriginCancellation(
     actor: input.actor,
     reasonCode,
   });
+}
+
+/**
+ * Drain every non-terminal durable child after the origin has been sealed. The
+ * bounded reverse lookup must fail rather than truncate: silently missing child
+ * 101 would violate Stop. Callers may tombstone their transport parent between
+ * seal and drain so neither product effects nor chat-control children can race
+ * through the cancellation window.
+ */
+export async function cancelSealedExecutionOriginChildren(
+  input: ExecutionOriginCancellationInput,
+  originCancellation: ExecutionOriginCancellationReceipt,
+  repository: ExecutionOriginCancellationRepository,
+): Promise<ExecutionOriginCancellationResult> {
+  if (
+    originCancellation.tenantKey !== input.tenantKey ||
+    originCancellation.origin.kind !== "mc_chat_parent_run" ||
+    originCancellation.origin.parentAgentRunId !== input.parentAgentRunId
+  ) {
+    throw new Error("execution_origin_cancellation_scope_mismatch");
+  }
+  const reasonCode = input.reasonCode ?? "user_requested";
   const children: ExecutionRun[] = [];
   const requestedRunIds: string[] = [];
   const pendingRunIds: string[] = [];
@@ -109,4 +130,23 @@ export async function requestExecutionOriginCancellation(
     requestedRunIds,
     pendingRunIds,
   };
+}
+
+/**
+ * Backwards-compatible all-in-one operation for workers that have no separate
+ * transport parent to tombstone. Chat Stop uses the split seal/drain API.
+ */
+export async function requestExecutionOriginCancellation(
+  input: ExecutionOriginCancellationInput,
+  repository: ExecutionOriginCancellationRepository,
+): Promise<ExecutionOriginCancellationResult> {
+  const originCancellation = await sealExecutionOriginCancellation(
+    input,
+    repository,
+  );
+  return cancelSealedExecutionOriginChildren(
+    input,
+    originCancellation,
+    repository,
+  );
 }

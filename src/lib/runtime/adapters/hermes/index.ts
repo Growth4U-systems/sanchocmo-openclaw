@@ -26,6 +26,7 @@ import type {
 
 const HERMES_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: false,
   cron: false,
   modelPicker: false,
   agentRegistry: false,
@@ -68,6 +69,7 @@ export class HermesAdapter implements RuntimeAdapter {
   }
 
   readonly messaging = {
+    terminalDeliveryMode: (): "callback" => "callback",
     sendInbound: (message: InboundMessage, opts?: SendInboundOptions) => sendHermesInbound(message, opts, this.connection),
     cancel: cancelHermesThread,
     getSharedSecret: (): string | undefined => getHermesChatSecret(this.connection),

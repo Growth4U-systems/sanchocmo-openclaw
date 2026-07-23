@@ -167,12 +167,12 @@ function assertProgressData(value: unknown): DiscoveryScrapeProgress {
   if (data.schemaVersion !== PROGRESS_SCHEMA_VERSION) {
     throw corrupt("Scrape progress schema version is unsupported");
   }
-  const searchedQueries = stringArray(
+  stringArray(
     data.searchedQueries,
     MAX_TRACKED_QUERIES,
     "searchedQueries",
   );
-  const attempted = stringArray(data.attempted, MAX_POOL_ENTRIES, "attempted");
+  stringArray(data.attempted, MAX_POOL_ENTRIES, "attempted");
   const queryPages = data.queryPages;
   if (
     !queryPages ||

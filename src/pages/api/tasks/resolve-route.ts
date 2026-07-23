@@ -8,8 +8,8 @@ import {
   resolveSameGroupTaskRoute,
   type SameGroupTaskRouteResolution,
 } from "@/lib/data/task-routing";
-import { getRuntime } from "@/lib/runtime";
-import { canonicalThreadId } from "@/lib/thread-id";
+import { createRuntimeAdapter, resolveRuntimeId } from "@/lib/runtime";
+import { canonicalThreadId, parseThreadId } from "@/lib/thread-id";
 import { DELEGATE_AGENTS } from "@/lib/runtime/agent-contract/delegate-marker.mjs";
 import {
   consumeTaskRouteProposal,
@@ -20,6 +20,15 @@ import {
   issueTaskRouteProposal,
   proposalMatches,
 } from "@/lib/data/task-route-proposals";
+import { getAgentRunByIdAsync } from "@/lib/data/agent-runs";
+import { authorizeRuntimeRunRequest } from "@/lib/runtime/runtime-run-request-authority";
+import { authorizeRuntimeTransportSecret } from "@/lib/runtime/runtime-transport-secret";
+import { authorizeChatAgentTurnRuntimeRequest } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
+import {
+  issueRuntimeRouteDispatchGrant,
+  runtimeRouteBriefSha256,
+  runtimeRouteDispatchIdempotencyKey,
+} from "@/lib/data/runtime-route-dispatch-grants";
 
 const AGENT_TOKEN_RE = /^[a-z0-9][a-z0-9_-]{0,127}$/i;
 const TASK_ROUTE_AGENTS = new Set([...DELEGATE_AGENTS, "sancho"]);
@@ -163,32 +172,109 @@ function confirmationRequiredMessage(reason: string): string {
   return `No creé ninguna tarea: ${reason}. Vuelve a mostrar la propuesta y espera una confirmación explícita del usuario.`;
 }
 
-/**
- * Internal adapter endpoint. It is called by the MC Chat runtime, not by the
- * browser. The current runtime shared secret is therefore the trust boundary,
- * matching `/api/chat/webhook` and `/api/chat/context-pack`.
- */
+function singleHeader(req: NextApiRequest, name: string): string | undefined {
+  const value = req.headers[name];
+  return Array.isArray(value) ? undefined : value;
+}
+
+async function routeDispatchAuthority(input: {
+  parentRunId: string;
+  clientSlug: string;
+  sourceThreadId: string;
+  targetThreadId: string;
+  agent: string;
+  brief: string;
+}) {
+  const parsedTarget = parseThreadId(input.targetThreadId);
+  if (
+    !parsedTarget ||
+    parsedTarget.slug !== input.clientSlug ||
+    canonicalThreadId(input.targetThreadId) !== input.targetThreadId
+  ) {
+    throw new Error("Resolved task route produced a non-canonical target thread");
+  }
+  const briefSha256 = runtimeRouteBriefSha256(input.brief);
+  const idempotencyKey = runtimeRouteDispatchIdempotencyKey({
+    parentRunId: input.parentRunId,
+    clientSlug: input.clientSlug,
+    sourceThreadId: input.sourceThreadId,
+    targetThreadId: input.targetThreadId,
+    agent: input.agent,
+    briefSha256,
+  });
+  const issued = await issueRuntimeRouteDispatchGrant({
+    parentRunId: input.parentRunId,
+    clientSlug: input.clientSlug,
+    sourceThreadId: input.sourceThreadId,
+    targetThreadId: input.targetThreadId,
+    agent: input.agent,
+    briefSha256,
+    idempotencyKey,
+  });
+  return {
+    dispatchGrant: issued.token,
+    dispatchGrantExpiresAt: new Date(issued.expiresAt).toISOString(),
+    dispatchIdempotencyKey: idempotencyKey,
+  };
+}
+
+/** Internal adapter endpoint. Transport auth is necessary but never sufficient. */
 export async function resolveRouteHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const secret = getRuntime().messaging.getSharedSecret?.();
-  if (!secret) {
-    return res.status(503).json({ error: "Task routing requires MC_CHAT_SECRET" });
+  const body = (req.body || {}) as RouteRequestBody;
+  const authority = await authorizeRuntimeRunRequest(
+    {
+      runId: singleHeader(req, "x-mission-control-parent-run-id"),
+      capability: singleHeader(req, "x-sancho-parent-run-capability"),
+      dispatchRunId: singleHeader(req, "x-sancho-dispatch-run-id"),
+      dispatchLeaseToken: singleHeader(req, "x-sancho-dispatch-lease-token"),
+    },
+    {
+      resolveAgentRun: getAgentRunByIdAsync,
+      authorizeDispatchLease: (input) =>
+        authorizeChatAgentTurnRuntimeRequest(input),
+    },
+  );
+  if (
+    !authority ||
+    authority.input.controlDepth !== 0
+  ) {
+    return res.status(403).json({ error: "Runtime parent authority invalid" });
   }
-  const suppliedSecret = Array.isArray(req.headers["x-mc-secret"])
-    ? req.headers["x-mc-secret"][0]
-    : req.headers["x-mc-secret"];
-  if (suppliedSecret !== secret) {
+  const parentRuntimeId = resolveRuntimeId(authority.run.runtime);
+  if (!parentRuntimeId) {
+    return res.status(403).json({ error: "Runtime parent binding invalid" });
+  }
+  const transportAuthorization = authorizeRuntimeTransportSecret({
+    suppliedSecret: singleHeader(req, "x-mc-secret"),
+    runInput: authority.input,
+    resolveLegacySecret: () =>
+      createRuntimeAdapter(parentRuntimeId).messaging.getSharedSecret?.(),
+  });
+  if (transportAuthorization === "legacy_secret_missing") {
+    return res.status(503).json({ error: "Task routing requires a runtime secret" });
+  }
+  if (transportAuthorization !== "authorized") {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const body = (req.body || {}) as RouteRequestBody;
-  const slug = optionalText(body.slug, 128);
+  const claimedSlug = typeof body.slug === "string" ? body.slug : undefined;
+  const claimedSourceThreadId = typeof body.sourceThreadId === "string"
+    ? body.sourceThreadId
+    : undefined;
+  if (
+    claimedSlug !== authority.slug ||
+    claimedSourceThreadId !== authority.threadId
+  ) {
+    return res.status(403).json({ error: "Runtime route source authority mismatch" });
+  }
+  const slug = authority.slug;
+  const sourceThreadId = authority.threadId;
   const agent = routeToken(body.agent);
   const name = optionalText(body.name, 180);
   const brief = optionalText(body.brief, 8_000);
-  const sourceThreadId = optionalText(body.sourceThreadId, 300);
-  if (!slug || !agent || !name || !brief || !sourceThreadId) {
+  if (!agent || !name || !brief) {
     return res.status(400).json({ error: "slug, sourceThreadId, agent, name and brief are required" });
   }
   if (!TASK_ROUTE_AGENTS.has(agent)) {
@@ -225,6 +311,14 @@ export async function resolveRouteHandler(req: NextApiRequest, res: NextApiRespo
   }
   if (resolution.kind === "reuse") {
     await discardPendingTaskRouteProposal(slug, sourceThreadId);
+    const dispatchAuthority = await routeDispatchAuthority({
+      parentRunId: authority.run.id,
+      clientSlug: slug,
+      sourceThreadId,
+      targetThreadId: resolution.target.targetThreadId,
+      agent,
+      brief,
+    });
     return res.status(200).json({
       ok: true,
       action: "reuse",
@@ -232,15 +326,26 @@ export async function resolveRouteHandler(req: NextApiRequest, res: NextApiRespo
       taskId: resolution.target.taskId,
       threadId: resolution.target.targetThreadId,
       threadName: resolution.target.taskName,
+      ...dispatchAuthority,
     });
   }
 
   const confirmed = body.confirmCreate === true;
+  const parentUserText = typeof authority.input.userText === "string"
+    ? authority.input.userText
+    : undefined;
+  if (
+    confirmed &&
+    (typeof body.confirmationText !== "string" ||
+      body.confirmationText !== parentUserText)
+  ) {
+    return res.status(403).json({ error: "Runtime route confirmation authority mismatch" });
+  }
   const proposalId = optionalText(body.proposalId, 160);
   const pending = confirmed && proposalId
     ? await getPendingTaskRouteProposal(slug, sourceThreadId)
     : undefined;
-  const explicitNewTaskSelection = isExplicitNewTaskSelection(body.confirmationText);
+  const explicitNewTaskSelection = isExplicitNewTaskSelection(parentUserText);
   // A confirmation may create only while the resolver still sees zero
   // compatible tasks, unless the human explicitly chose "Crear una tarea
   // nueva" from an ambiguous candidate list. In that case the candidate set
@@ -259,7 +364,7 @@ export async function resolveRouteHandler(req: NextApiRequest, res: NextApiRespo
         message: confirmationRequiredMessage("la confirmación no corresponde a una propuesta pendiente"),
       });
     }
-    if (!isExplicitTaskCreationConfirmation(body.confirmationText)) {
+    if (!isExplicitTaskCreationConfirmation(parentUserText)) {
       return res.status(200).json({
         ok: true,
         action: "confirmation_required",
@@ -349,6 +454,14 @@ export async function resolveRouteHandler(req: NextApiRequest, res: NextApiRespo
       skills,
       mc_chat_thread_id: threadId,
     });
+    const dispatchAuthority = await routeDispatchAuthority({
+      parentRunId: authority.run.id,
+      clientSlug: slug,
+      sourceThreadId,
+      targetThreadId: threadId,
+      agent,
+      brief,
+    });
     return res.status(existing ? 200 : 201).json({
       ok: true,
       action: existing ? "reuse" : "created",
@@ -357,6 +470,7 @@ export async function resolveRouteHandler(req: NextApiRequest, res: NextApiRespo
       taskId: taskIdOf(task),
       threadId,
       threadName: name,
+      ...dispatchAuthority,
     });
   }
 

@@ -193,6 +193,16 @@ test(
         `;
       }
 
+      async function expireRecoveryGrace(dispatchRunId: string): Promise<void> {
+        await sql`
+          UPDATE execution_runs
+          SET available_at = clock_timestamp() - interval '1 second'
+          WHERE id = ${dispatchRunId}
+            AND status = 'queued'
+            AND current_step = 'terminal_recovery_wait'
+        `;
+      }
+
       await t.test(
         "atomically admits, authorizes tools, commits runtime and completes both ledgers",
         async () => {
@@ -332,7 +342,7 @@ test(
       );
 
       await t.test(
-        "an expired post-commit lease never redelivers and projects failure before terminalizing",
+        "an expired post-commit lease grants callback recovery before projecting loss",
         async () => {
           const admission = await admit();
           const firstClaim = await claim("lifecycle-worker-postcommit-1");
@@ -367,8 +377,29 @@ test(
               return agentRuns.markFailed(runId, threadId, error, type, data);
             },
           };
-          const redelivery = await claimNextChatAgentTurn(
+          const graceClaim = await claimNextChatAgentTurn(
             "lifecycle-worker-postcommit-2",
+            recoveryDependencies,
+          );
+          assert.equal(graceClaim, null);
+          assert.deepEqual(recoveryOrder, []);
+          assert.equal(
+            (await agentRuns.getById(admission.run.id))?.status,
+            "running",
+          );
+          const waitingDispatch = await executions.getRunById(
+            admission.dispatchRun.id,
+          );
+          assert.equal(waitingDispatch?.claimCount, 2);
+          assert.equal(waitingDispatch?.status, "queued");
+          assert.equal(
+            waitingDispatch?.currentStep,
+            "terminal_recovery_wait",
+          );
+
+          await expireRecoveryGrace(admission.dispatchRun.id);
+          const redelivery = await claimNextChatAgentTurn(
+            "lifecycle-worker-postcommit-3",
             recoveryDependencies,
           );
           assert.equal(redelivery, null);
@@ -381,7 +412,7 @@ test(
           const recoveredDispatch = await executions.getRunById(
             admission.dispatchRun.id,
           );
-          assert.equal(recoveredDispatch?.claimCount, 2);
+          assert.equal(recoveredDispatch?.claimCount, 3);
           assert.equal(recoveredDispatch?.status, "completed");
           assert.deepEqual(recoveredDispatch?.output, {
             completionBoundary: "runtime_finished",
@@ -391,7 +422,7 @@ test(
 
           assert.equal(
             await claimNextChatAgentTurn(
-              "lifecycle-worker-postcommit-3",
+              "lifecycle-worker-postcommit-4",
               recoveryDependencies,
             ),
             null,

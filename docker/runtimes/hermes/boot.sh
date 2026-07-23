@@ -3,7 +3,7 @@ set -euo pipefail
 
 export SANCHO_RUNTIME="${SANCHO_RUNTIME:-hermes}"
 
-SANCHO_HOME="${SANCHO_HOME:-/root/.openclaw}"
+export SANCHO_HOME="${SANCHO_HOME:-/root/.openclaw}"
 NEXT_PORT="${PORT:-3000}"
 HERMES_GATEWAY_COMMAND="${HERMES_GATEWAY_COMMAND:-}"
 HERMES_BRIDGE_ENABLED="${HERMES_BRIDGE_ENABLED:-0}"
@@ -20,6 +20,14 @@ fi
 # bridge and the Next.js app started below.
 if [ -f /opt/sancho-seed/docker/bootstrap-common.sh ]; then
   . /opt/sancho-seed/docker/bootstrap-common.sh "$SANCHO_HOME"
+fi
+
+# Keep the runtime-neutral data plane aligned with the OpenClaw boot path.
+# The migrator self-skips managed/Neon databases and is non-fatal for a local
+# database that is still unavailable.
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "[hermes boot] Checking local DB migrations..."
+  ( cd /app/mc-nextjs && node scripts/migrate-local.mjs ) || true
 fi
 
 BRIDGE_PID=""

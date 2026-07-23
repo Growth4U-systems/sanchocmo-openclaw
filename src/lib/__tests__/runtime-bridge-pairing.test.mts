@@ -11,6 +11,7 @@ const {
   externalRuntimeVarsForCliBridge,
   gatewayListenHost,
   gatewayPortOrDefault,
+  managedBridgeBootVarsForCliBridge,
   resolveServerCliAvailability,
 } = cliRuntimeBridge;
 
@@ -25,6 +26,33 @@ test("externalRuntimeVarsForCliBridge stores Sancho HTTP defaults for Hermes", (
       SANCHO_EXTERNAL_INBOUND_PATH: "/sancho/inbound",
       SANCHO_EXTERNAL_HEALTH_PATH: "/healthz",
     },
+  );
+});
+
+test("a verified managed Hermes bridge persists its restart contract", () => {
+  assert.deepEqual(
+    managedBridgeBootVarsForCliBridge(
+      "hermes",
+      "http://127.0.0.1:19998",
+      "secret",
+    ),
+    {
+      SANCHO_RUNTIME: "hermes",
+      HERMES_GATEWAY_URL: "http://127.0.0.1:19998",
+      HERMES_INBOUND_PATH: "/sancho/inbound",
+      HERMES_HEALTH_PATH: "/healthz",
+      HERMES_BRIDGE_ENABLED: "1",
+      HERMES_BRIDGE_PORT: "19998",
+      HERMES_BRIDGE_SECRET: "secret",
+    },
+  );
+  assert.deepEqual(
+    managedBridgeBootVarsForCliBridge(
+      "codex",
+      "http://127.0.0.1:18793",
+      "secret",
+    ),
+    {},
   );
 });
 
@@ -66,7 +94,7 @@ test("buildCliBridgeCommand emits a single runnable Hermes command", () => {
   assert.match(command, /SANCHO_WEBHOOK_URL=https:\/\/sancho\.example\.com\/api\/chat\/webhook/);
   assert.match(command, /HERMES_BRIDGE_PORT=18795/);
   assert.match(command, /HERMES_BRIDGE_SECRET='shared secret'/);
-  assert.match(command, /HERMES_SANCHO_SECRET='shared secret'/);
+  assert.doesNotMatch(command, /HERMES_SANCHO_SECRET/);
   assert.match(command, /HERMES_RUN_TIMEOUT_MS=900000/);
   assert.match(command, /node docker\/runtimes\/hermes\/bridge\.mjs$/);
 });
@@ -107,12 +135,14 @@ test("managed Hermes bridge restores API auth and removes subscription credentia
     {
       HERMES_CLI_PROVIDER: "anthropic",
       HERMES_CLI_MODEL: "claude-sonnet-4-6",
+      HERMES_AUTH_SOURCE_DIR: "/srv/hermes-auth",
       ANTHROPIC_API_KEY: "persisted-api-key",
       CLAUDE_CODE_OAUTH_TOKEN: "persisted-claude-oauth",
     },
   );
 
   assert.equal(env.HERMES_CLI_MODEL, "claude-sonnet-4-6");
+  assert.equal(env.HERMES_AUTH_SOURCE_DIR, "/srv/hermes-auth");
   assert.equal(env.ANTHROPIC_API_KEY, "persisted-api-key");
   assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, undefined);
   assert.equal(env.ANTHROPIC_OAUTH_TOKEN, undefined);

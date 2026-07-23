@@ -18,6 +18,10 @@ import {
   type LocalConnectorProviderId,
 } from "@/lib/runtime/local-connector";
 import { resetRuntimeCache, writeRuntimeSelection } from "@/lib/runtime";
+import {
+  listRuntimeTransitionBlockers,
+  runtimeTransitionBlockedPayload,
+} from "@/lib/runtime/transition-guard";
 
 const ENV_FILE = path.join(BASE, "..", ".env");
 
@@ -106,6 +110,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (action === "activate") {
+    const activeRuns = await listRuntimeTransitionBlockers();
+    if (activeRuns.length > 0) {
+      return res
+        .status(409)
+        .json(runtimeTransitionBlockedPayload(activeRuns));
+    }
     const sessionId = sessionIdFromBody(req.body);
     if (!sessionId) return res.status(400).json({ error: "Falta sessionId" });
 

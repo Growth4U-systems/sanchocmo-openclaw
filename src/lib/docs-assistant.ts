@@ -8,7 +8,7 @@ import {
   markAgentRunFailedAsync,
 } from "@/lib/data/agent-runs";
 import { assembleContextPack, type ContextPack } from "@/lib/data/context-pack";
-import { getRuntime } from "@/lib/runtime";
+import { dispatchAdmittedChatTurn } from "@/lib/chat/control-plane-dispatch";
 import { getTraceContext, tracePropagationHeaders } from "@/lib/trace-context";
 
 const RECEIPT_TTL_MS = 10 * 60 * 1000;
@@ -303,30 +303,21 @@ function threadIdForConversation(conversationId: string): string {
   return `${DOCS_THREAD_PREFIX}${digest}`;
 }
 
-function internalChatUrl(): string {
+function internalChatBaseUrl(): string {
   const base = (process.env.SANCHO_INTERNAL_BASE_URL || "http://127.0.0.1:3000").replace(/\/+$/, "");
-  return `${base}/api/chat/send`;
+  return base;
 }
 
 async function dispatchDocsAssistantQuestionViaRuntime(
   input: DocsAssistantQuestion,
   options: { fetcher?: typeof fetch; now?: number } = {},
 ): Promise<DocsAssistantDispatch> {
-  const sharedSecret = getRuntime().messaging.getSharedSecret?.();
-  if (!sharedSecret) throw new Error("MC_CHAT_SECRET not configured");
-
   const createdAt = options.now ?? Date.now();
   const requestId = crypto.randomUUID();
   const threadId = threadIdForConversation(input.conversationId);
   const traceContext = getTraceContext();
-  const response = await (options.fetcher || fetch)(internalChatUrl(), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-MC-Secret": sharedSecret,
-      ...(traceContext ? tracePropagationHeaders(traceContext) : {}),
-    },
-    body: JSON.stringify({
+  const response = await dispatchAdmittedChatTurn(
+    {
       slug: "growth4u",
       threadId,
       threadName: `Docs: ${bounded(input.title || input.docId, 120)}`,
@@ -343,21 +334,22 @@ async function dispatchDocsAssistantQuestionViaRuntime(
       isAdmin: false,
       senderRole: "client",
       idempotencyKey: `docs:${requestId}`,
-    }),
-  });
-  const raw = await response.text();
-  let payload: Record<string, unknown> = {};
-  try {
-    payload = raw ? JSON.parse(raw) as Record<string, unknown> : {};
-  } catch {
-    // The status and bounded raw response below are enough for diagnostics.
-  }
-  if (!response.ok || typeof payload.runId !== "string") {
-    throw new Error(`Growie chat dispatch failed (${response.status}): ${raw.slice(0, 300)}`);
+    },
+    {
+      baseUrl: internalChatBaseUrl(),
+      fetchImpl: options.fetcher,
+      headers: traceContext ? tracePropagationHeaders(traceContext) : {},
+      timeoutMs: 30_000,
+    },
+  );
+  if (!response.ok || typeof response.runId !== "string") {
+    throw new Error(
+      `Growie chat dispatch failed (${response.status}): ${response.raw.slice(0, 300)}`,
+    );
   }
 
   return {
-    runId: payload.runId,
+    runId: response.runId,
     threadId,
     conversationId: input.conversationId,
     createdAt,

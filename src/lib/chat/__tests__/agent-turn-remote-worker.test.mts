@@ -35,6 +35,7 @@ import {
   authorizeChatAgentTurnRuntimeRequest,
   CHAT_AGENT_TURN_REMOTE_LEASE_MS,
   CHAT_AGENT_TURN_REMOTE_POLL_MS,
+  CHAT_AGENT_TURN_TERMINAL_RECOVERY_GRACE_MS,
   claimNextChatAgentTurn,
   completeChatAgentTurnRuntime,
   markChatAgentTurnRuntimeStarted,
@@ -70,6 +71,11 @@ function parentRun(overrides: Partial<AgentRun> = {}): AgentRun {
       userName: "Martin",
       source: "mission-control-chat",
       runtimeDispatchMode: "ledger-v1",
+      runtimeEffectIntent: [
+        "partnerships_discovery_start",
+        "unknown_effect",
+        "partnerships_discovery_start",
+      ],
       controlBaseUrl: "https://staging.sanchocmo.ai",
     },
     createdAt: NOW,
@@ -97,6 +103,11 @@ class MemoryRepository implements ExecutionControlRepository {
   >();
   private runSequence = 0;
   private leaseSequence = 0;
+  private clock = NOW;
+
+  setNow(value: string): void {
+    this.clock = value;
+  }
 
   async createRun(input: CreateExecutionRunInput) {
     const id = `dispatch-run-${++this.runSequence}`;
@@ -537,12 +548,15 @@ class MemoryRepository implements ExecutionControlRepository {
 
   private isClaimable(run: ExecutionRun): boolean {
     if (run.status === "queued") {
-      return !run.availableAt || Date.parse(run.availableAt) <= Date.parse(NOW);
+      return (
+        !run.availableAt ||
+        Date.parse(run.availableAt) <= Date.parse(this.clock)
+      );
     }
     return (
       run.status === "running" &&
       typeof run.leaseExpiresAt === "string" &&
-      Date.parse(run.leaseExpiresAt) <= Date.parse(NOW)
+      Date.parse(run.leaseExpiresAt) <= Date.parse(this.clock)
     );
   }
 
@@ -605,6 +619,9 @@ test("remote claim builds the server-owned envelope and lease-bound capability",
   assert.equal(claim.envelope.userName, "Martin");
   assert.equal(claim.envelope.agent, "rocinante");
   assert.deepEqual(claim.envelope.skills, ["partnerships", "leads"]);
+  assert.deepEqual(claim.envelope.runtimeEffectIntent, [
+    "partnerships_discovery_start",
+  ]);
   assert.equal(repository.checkpoints.length, 1);
   assert.equal(repository.checkpoints[0]?.currentStep, "runtime_claimed");
   assert.equal(repository.checkpoints[0]?.incrementHandlerAttempt, true);
@@ -969,7 +986,7 @@ test("runtime start persists the no-replay boundary before marking the parent ru
   assert.equal(repository.checkpoints.at(-1)?.currentStep, "runtime_committed");
 });
 
-test("a recovered committed turn fails visibly and is never yielded to the model twice", async () => {
+test("a recovered committed turn keeps one fixed grace window and lets the real callback win", async () => {
   const { repository, parent, run } = await admittedFixture();
   const claim = await claimNextChatAgentTurn("openclaw-worker-1", {
     repository,
@@ -1000,45 +1017,110 @@ test("a recovered committed turn fails visibly and is never yielded to the model
     leaseExpiresAt: undefined,
   });
   repository.leaseTokens.delete(run.id);
-  let failures = 0;
-  const failedParent = {
-    ...runningParent,
-    status: "failed" as const,
-    finishedAt: NOW,
-  };
-  let visibleFailures = 0;
-  let projectedBeforeTerminal = false;
-
+  let currentParent: AgentRun = runningParent;
+  let syntheticProjections = 0;
+  let syntheticFailures = 0;
   const recovered = await claimNextChatAgentTurn("openclaw-worker-2", {
     repository,
-    resolveParentRun: async () => runningParent,
-    projectCommittedRuntimeLoss: async ({
-      parentRun,
-      dispatchRun,
-      message,
-    }) => {
-      visibleFailures += 1;
-      projectedBeforeTerminal = failures === 0;
-      assert.equal(parentRun.id, parent.id);
-      assert.equal(dispatchRun.id, run.id);
-      assert.match(message, /No lo reejecuté/);
+    now: () => new Date(NOW),
+    resolveParentRun: async () => currentParent,
+    projectCommittedRuntimeLoss: async () => {
+      syntheticProjections += 1;
     },
     markParentFailed: async () => {
-      failures += 1;
-      return failedParent;
+      syntheticFailures += 1;
+      return null;
     },
   });
 
   assert.equal(recovered, null);
-  assert.equal(visibleFailures, 1);
-  assert.equal(projectedBeforeTerminal, true);
-  assert.equal(failures, 1);
+  assert.equal(syntheticProjections, 0);
+  assert.equal(syntheticFailures, 0);
   assert.equal(repository.checkpoints.length, 2);
-  assert.equal(repository.finishes.at(-1)?.status, "completed");
+  assert.equal(repository.finishes.length, 0);
+  assert.equal(repository.requeues.length, 1);
+  const deadline = new Date(
+    Date.parse(NOW) + CHAT_AGENT_TURN_TERMINAL_RECOVERY_GRACE_MS,
+  ).toISOString();
+  assert.equal(repository.requeues[0]?.availableAt.toISOString(), deadline);
+  assert.equal(repository.requeues[0]?.currentStep, "terminal_recovery_wait");
+  assert.equal(
+    repository.requeues[0]?.error,
+    "runtime_terminal_callback_recovery_wait",
+  );
+  assert.deepEqual(repository.requeues[0]?.eventData, {
+    terminalRecoveryDeadline: deadline,
+    recoveryWindowMs: CHAT_AGENT_TURN_TERMINAL_RECOVERY_GRACE_MS,
+    reusedDeadline: false,
+  });
+  const waitingRun = repository.runs.get(run.id);
+  assert.ok(waitingRun);
+  assert.equal(waitingRun.status, "queued");
+  assert.equal(waitingRun.availableAt, deadline);
+  assert.equal(waitingRun.currentStep, "terminal_recovery_wait");
+  assert.deepEqual(waitingRun.output, {
+    stage: "runtime_committed",
+    parentAgentRunId: parent.id,
+    workerId: "openclaw-worker-1",
+  });
+
+  // Even if a repository/clock anomaly makes the run claimable early, the
+  // persisted deadline is reused rather than granting a fresh full window.
+  repository.runs.set(run.id, {
+    ...waitingRun,
+    status: "running",
+    leaseOwner: "dead-openclaw-worker",
+    leaseExpiresAt: EXPIRED_AT,
+  });
+  await claimNextChatAgentTurn("openclaw-worker-3", {
+    repository,
+    now: () => new Date(NOW),
+    resolveParentRun: async () => currentParent,
+    projectCommittedRuntimeLoss: async () => {
+      syntheticProjections += 1;
+    },
+    markParentFailed: async () => {
+      syntheticFailures += 1;
+      return null;
+    },
+  });
+  assert.equal(repository.requeues.length, 2);
+  assert.equal(repository.requeues[1]?.availableAt.toISOString(), deadline);
+  assert.equal(
+    (repository.requeues[1]?.eventData as Record<string, unknown>)
+      .reusedDeadline,
+    true,
+  );
+  assert.equal(syntheticProjections, 0);
+
+  // The real outbox callback terminalizes the parent during the grace. The
+  // next claim observes that terminal state and never projects runtime loss.
+  currentParent = {
+    ...runningParent,
+    status: "completed" as const,
+    finishedAt: deadline,
+  };
+  repository.setNow(deadline);
+  const afterCallback = await claimNextChatAgentTurn("openclaw-worker-4", {
+    repository,
+    now: () => new Date(deadline),
+    resolveParentRun: async () => currentParent,
+    projectCommittedRuntimeLoss: async () => {
+      syntheticProjections += 1;
+    },
+    markParentFailed: async () => {
+      syntheticFailures += 1;
+      return null;
+    },
+  });
+  assert.equal(afterCallback, null);
+  assert.equal(syntheticProjections, 0);
+  assert.equal(syntheticFailures, 0);
+  assert.equal(repository.finishes.length, 1);
   assert.deepEqual(repository.finishes.at(-1)?.output, {
     completionBoundary: "runtime_finished",
     parentAgentRunId: parent.id,
-    parentStatus: "failed",
+    parentStatus: "completed",
   });
 });
 
@@ -1098,9 +1180,30 @@ test("a failed committed-loss projection stays retryable and terminalizes only a
     return currentParent;
   };
 
-  await assert.rejects(
-    claimNextChatAgentTurn("openclaw-worker-2", {
+  const graceScheduled = await claimNextChatAgentTurn(
+    "openclaw-worker-2",
+    {
       repository,
+      now: () => new Date(NOW),
+      resolveParentRun: async () => currentParent,
+      projectCommittedRuntimeLoss,
+      markParentFailed,
+    },
+  );
+  assert.equal(graceScheduled, null);
+  assert.equal(projectionAttempts, 0);
+  assert.equal(terminalizations, 0);
+  assert.equal(repository.requeues.length, 1);
+  const recoveryDeadline = repository.requeues[0]?.availableAt.toISOString();
+  assert.ok(recoveryDeadline);
+  repository.setNow(
+    new Date(Date.parse(recoveryDeadline) + 1).toISOString(),
+  );
+
+  await assert.rejects(
+    claimNextChatAgentTurn("openclaw-worker-3", {
+      repository,
+      now: () => new Date(Date.parse(recoveryDeadline) + 1),
       resolveParentRun: async () => currentParent,
       projectCommittedRuntimeLoss,
       markParentFailed,
@@ -1118,19 +1221,18 @@ test("a failed committed-loss projection stays retryable and terminalizes only a
   const failedProjectionRun = repository.runs.get(run.id);
   assert.ok(failedProjectionRun);
   assert.equal(failedProjectionRun.status, "running");
-  assert.equal(failedProjectionRun.leaseOwner, "openclaw-worker-2");
+  assert.equal(failedProjectionRun.leaseOwner, "openclaw-worker-3");
+  assert.equal(failedProjectionRun.currentStep, "terminal_recovery_wait");
+  assert.equal(failedProjectionRun.availableAt, recoveryDeadline);
   assert.deepEqual(failedProjectionRun.output, {
     stage: "runtime_committed",
     parentAgentRunId: parent.id,
     workerId: "openclaw-worker-1",
   });
 
-  repository.runs.set(run.id, {
-    ...failedProjectionRun,
-    leaseExpiresAt: EXPIRED_AT,
-  });
-  const recovered = await claimNextChatAgentTurn("openclaw-worker-3", {
+  const recovered = await claimNextChatAgentTurn("openclaw-worker-4", {
     repository,
+    now: () => new Date(Date.parse(recoveryDeadline) + 1),
     resolveParentRun: async () => currentParent,
     projectCommittedRuntimeLoss,
     markParentFailed,
@@ -1152,8 +1254,9 @@ test("a failed committed-loss projection stays retryable and terminalizes only a
   });
 
   assert.equal(
-    await claimNextChatAgentTurn("openclaw-worker-4", {
+    await claimNextChatAgentTurn("openclaw-worker-5", {
       repository,
+      now: () => new Date(Date.parse(recoveryDeadline) + 1),
       resolveParentRun: async () => currentParent,
       projectCommittedRuntimeLoss,
       markParentFailed,

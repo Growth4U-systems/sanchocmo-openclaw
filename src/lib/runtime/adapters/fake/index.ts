@@ -15,6 +15,7 @@ import type {
 
 const FAKE_CAPABILITIES: RuntimeCapabilities = {
   chat: true,
+  durableChatTurns: false,
   cron: false,
   modelPicker: false,
   agentRegistry: false,
@@ -90,6 +91,7 @@ export class FakeRuntimeAdapter implements RuntimeAdapter {
   readonly capabilities = FAKE_CAPABILITIES;
 
   readonly messaging = {
+    terminalDeliveryMode: (): "inline" => "inline",
     sendInbound: async (
       message: InboundMessage,
       _opts?: SendInboundOptions,

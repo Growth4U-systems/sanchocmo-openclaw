@@ -80,8 +80,12 @@ By default the bridge calls:
 
 ```text
 POST {SANCHO_BASE_URL}/api/chat/context-pack
-X-MC-Secret: {CODEX_SANCHO_SECRET | CODEX_BRIDGE_SECRET | SANCHO_EXTERNAL_SECRET}
+X-MC-Secret: {the same effective CODEX_BRIDGE_SECRET/SANCHO_EXTERNAL_SECRET that admitted the run}
 ```
+
+Context-pack and webhook callbacks deliberately reuse the inbound transport
+secret. `CODEX_SANCHO_SECRET` is not an independent callback credential; a
+different value cannot authorize a run bound to the bridge secret.
 
 Disable it with:
 

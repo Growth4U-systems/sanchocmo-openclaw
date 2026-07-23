@@ -12,6 +12,11 @@ import {
   authorizeChatAgentTurnRuntimeRequest,
   type ChatAgentTurnRuntimeAuthority,
 } from "@/lib/runtime/chat-agent-turn-dispatch-authority";
+import { getAgentRunByIdAsync } from "@/lib/data/agent-runs";
+import {
+  issueRuntimeTerminalCallbackGrant,
+  runtimeTerminalCallbackGrantConfigured,
+} from "@/lib/runtime/runtime-terminal-callback-grant";
 
 const CLAIM_BODY_KEYS = new Set(["action", "workerId"]);
 const CONTROL_BODY_KEYS = new Set(["action"]);
@@ -26,7 +31,13 @@ type RequeueReason = "runtime_session_busy" | "runtime_dispatch_unavailable";
 export interface ChatAgentTurnDispatchRouteDependencies {
   sharedSecret(): string | undefined;
   enabled(): boolean;
+  terminalGrantReady(): boolean;
   claim(workerId: unknown): Promise<ChatAgentTurnRemoteClaim | null>;
+  issueTerminalCallbackGrant(input: {
+    parentAgentRunId: string;
+    dispatchRunId: string;
+    runtimeToolCapability: string;
+  }): Promise<{ token: string; expiresAt: string }>;
   authorize(input: {
     parentAgentRunId: unknown;
     dispatchRunId: unknown;
@@ -127,8 +138,30 @@ export function createChatAgentTurnDispatchHandler(
             .status(400)
             .json({ error: "chat_agent_turn_request_invalid" });
         }
+        if (!dependencies.terminalGrantReady()) {
+          return res
+            .status(503)
+            .json({ error: "chat_agent_turn_terminal_grant_unavailable" });
+        }
         const claim = await dependencies.claim(body.workerId);
-        return res.status(200).json({ ok: true, claim });
+        const terminalGrant = claim
+          ? await dependencies.issueTerminalCallbackGrant({
+              parentAgentRunId: claim.parentAgentRunId,
+              dispatchRunId: claim.dispatchRunId,
+              runtimeToolCapability: claim.runtimeToolCapability,
+            })
+          : null;
+        const claimedWithTerminalAuthority = claim
+          ? {
+              ...claim,
+              runtimeTerminalCallbackGrant: terminalGrant?.token,
+              runtimeTerminalCallbackGrantExpiresAt:
+                terminalGrant?.expiresAt,
+            }
+          : null;
+        return res
+          .status(200)
+          .json({ ok: true, claim: claimedWithTerminalAuthority });
       }
 
       if (body.action === "requeue") {
@@ -221,7 +254,31 @@ export const config = {
 export default createChatAgentTurnDispatchHandler({
   sharedSecret: () => getRuntime().messaging.getSharedSecret?.(),
   enabled: () => process.env.CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED === "1",
+  terminalGrantReady: () => runtimeTerminalCallbackGrantConfigured(),
   claim: (workerId) => claimNextChatAgentTurn(workerId),
+  issueTerminalCallbackGrant: async (input) => {
+    const parent = await getAgentRunByIdAsync(input.parentAgentRunId);
+    const persisted =
+      parent?.input &&
+      typeof parent.input === "object" &&
+      !Array.isArray(parent.input)
+        ? (parent.input as Record<string, unknown>)
+        : null;
+    const transportSecretSha256 = persisted?.runtimeTransportSecretSha256;
+    if (
+      !parent ||
+      parent.runtime !== "openclaw" ||
+      persisted?.runtimeDispatchMode !== "ledger-v1" ||
+      typeof transportSecretSha256 !== "string"
+    ) {
+      throw new Error("runtime_terminal_callback_grant_parent_invalid");
+    }
+    return issueRuntimeTerminalCallbackGrant({
+      ...input,
+      runtimeId: "openclaw",
+      transportSecretSha256,
+    });
+  },
   authorize: (input) => authorizeChatAgentTurnRuntimeRequest(input),
   markStarted: (authority) => markChatAgentTurnRuntimeStarted(authority),
   complete: (authority) => completeChatAgentTurnRuntime(authority),

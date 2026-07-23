@@ -130,6 +130,21 @@ test("a server-attested parent derives the canonical tenant and thread", async (
   assert.equal(resolved.agent, "sancho");
 });
 
+for (const runtime of ["hermes", "external-http"] as const) {
+  test(`a server-attested ${runtime} parent keeps asynchronous delivery in the same chat`, async () => {
+    const run = executionRun();
+    const resolved = await resolveMcChatExecutionOrigin(run, {
+      originRepository: originRepositoryFor(run),
+      resolveAgentRun: async () => parentRun({ runtime }),
+      resolveAgentRunEvents: noParentEvents,
+    });
+
+    assert.ok(resolved);
+    assert.equal(resolved.parentRun.runtime, runtime);
+    assert.equal(resolved.threadId, "hospital-capilar:leads-search-1");
+  });
+}
+
 test("a cancelled parent suppresses a child result that finishes during Stop", async () => {
   const run = executionRun();
   const resolved = await resolveMcChatExecutionOrigin(run, {
@@ -195,7 +210,7 @@ test("false parent, thread, tenant and admin claims are rejected", async (t) => 
       parent: parentRun({ id: "run-parent-other" }),
     },
     {
-      name: "non-OpenClaw parent",
+      name: "unknown runtime parent",
       parent: parentRun({ runtime: "claude-code" }),
     },
     {

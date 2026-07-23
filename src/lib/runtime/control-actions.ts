@@ -1,10 +1,19 @@
 import { parseRuntimeControlReply } from "./agent-contract/control-reply.mjs";
 import { createHash } from "node:crypto";
+import {
+  dispatchRuntimeEffectActions,
+  type RuntimeEffectActionDependencies,
+  type RuntimeEffectRequest,
+} from "./effect-actions";
 
 export interface RuntimeControlTurnContext {
   slug: string;
   threadId: string;
   missionControlRunId?: string;
+  /** Raw one-turn capability used only as authority for child control turns. */
+  parentCapability?: string;
+  parentDispatchRunId?: string;
+  parentDispatchLeaseToken?: string;
   controlDepth?: number;
   threadName?: string;
   respondingAgent: string;
@@ -14,6 +23,8 @@ export interface RuntimeControlTurnContext {
   userName?: string;
   isAdmin: boolean;
   senderRole: "admin" | "client";
+  readOnly?: boolean;
+  traceId?: string;
   source?: string;
   linkedTo?: string;
   docPath?: string;
@@ -25,6 +36,7 @@ export interface RuntimeControlResult {
   text: string;
   followupMessages: string[];
   actionsDispatched: number;
+  effectsDispatched: number;
 }
 
 interface FetchResponseLike {
@@ -48,6 +60,8 @@ async function postJson(
   url: string,
   secret: string,
   body: unknown,
+  context: RuntimeControlTurnContext,
+  extraHeaders: Record<string, string> = {},
 ): Promise<{ ok: boolean; status: number; data: Record<string, unknown> | null }> {
   try {
     const response = await fetchImpl(url, {
@@ -55,6 +69,15 @@ async function postJson(
       headers: {
         "Content-Type": "application/json",
         "X-MC-Secret": secret,
+        "X-Mission-Control-Parent-Run-Id": context.missionControlRunId || "",
+        "X-Sancho-Parent-Run-Capability": context.parentCapability || "",
+        ...(context.parentDispatchRunId && context.parentDispatchLeaseToken
+          ? {
+              "X-Sancho-Dispatch-Run-Id": context.parentDispatchRunId,
+              "X-Sancho-Dispatch-Lease-Token": context.parentDispatchLeaseToken,
+            }
+          : {}),
+        ...extraHeaders,
       },
       body: JSON.stringify(body),
     });
@@ -103,7 +126,12 @@ function actionIdempotencyKey(
 export async function processRuntimeControlReply(
   rawText: string,
   context: RuntimeControlTurnContext,
-  options: { secret?: string; fetchImpl?: FetchLike; nextBaseUrl?: string } = {},
+  options: {
+    secret?: string;
+    fetchImpl?: FetchLike;
+    nextBaseUrl?: string;
+    effectDependencies?: RuntimeEffectActionDependencies;
+  } = {},
 ): Promise<RuntimeControlResult> {
   const parsed = parseRuntimeControlReply(rawText, {
     respondingAgent: context.respondingAgent,
@@ -115,13 +143,35 @@ export async function processRuntimeControlReply(
 export async function dispatchRuntimeControlActions(
   parsed: ReturnType<typeof parseRuntimeControlReply>,
   context: RuntimeControlTurnContext,
-  options: { secret?: string; fetchImpl?: FetchLike; nextBaseUrl?: string } = {},
+  options: {
+    secret?: string;
+    fetchImpl?: FetchLike;
+    nextBaseUrl?: string;
+    effectDependencies?: RuntimeEffectActionDependencies;
+  } = {},
 ): Promise<RuntimeControlResult> {
   const result: RuntimeControlResult = {
     text: parsed.text,
     followupMessages: [],
     actionsDispatched: 0,
+    effectsDispatched: 0,
   };
+  const effectRequests = Array.isArray(parsed.effectRequests)
+    ? (parsed.effectRequests as RuntimeEffectRequest[])
+    : [];
+  if (effectRequests.length > 0) {
+    const effects = await dispatchRuntimeEffectActions(
+      effectRequests,
+      context,
+      options.effectDependencies,
+    );
+    result.actionsDispatched += effects.dispatched;
+    result.effectsDispatched = effects.dispatched;
+    if (effects.messages.length > 0) {
+      result.text = [result.text, ...effects.messages].filter(Boolean).join("\n\n");
+    }
+  }
+
   const hasActions = Boolean(parsed.intervention || parsed.routeRequests.length);
   if (!hasActions) return result;
   if ((context.controlDepth ?? 0) >= 1) {
@@ -132,6 +182,12 @@ export async function dispatchRuntimeControlActions(
   const secret = options.secret;
   if (!secret) {
     result.followupMessages.push("⚠️ No ejecuté el cambio solicitado porque el control plane no tiene MC_CHAT_SECRET configurado.");
+    return result;
+  }
+  if (!context.missionControlRunId || !context.parentCapability) {
+    result.followupMessages.push(
+      "⚠️ No ejecuté el cambio solicitado porque falta la autoridad del turno padre.",
+    );
     return result;
   }
   const fetchImpl = options.fetchImpl ?? (fetch as unknown as FetchLike);
@@ -152,7 +208,7 @@ export async function dispatchRuntimeControlActions(
       linkedTo: context.linkedTo,
       docPath: context.docPath,
       docKind: context.docKind,
-    });
+    }, context);
     if (dispatch.ok) result.actionsDispatched += 1;
     else result.followupMessages.push("⚠️ No pude iniciar la intervención temporal de Sancho. La tarea y su agente original no cambiaron.");
     return result;
@@ -184,11 +240,24 @@ export async function dispatchRuntimeControlActions(
       brief: routeRequest.brief,
       confirmCreate: routeRequest.confirmCreate === true,
       confirmationText: routeRequest.confirmCreate === true ? context.userText : undefined,
-    });
+    }, context);
     const routeData = route.data;
     const action = typeof routeData?.action === "string" ? routeData.action : "";
     const targetThreadId = typeof routeData?.threadId === "string" ? routeData.threadId : "";
-    if (route.ok && (action === "reuse" || action === "created") && targetThreadId) {
+    const dispatchGrant = typeof routeData?.dispatchGrant === "string"
+      ? routeData.dispatchGrant
+      : "";
+    const dispatchIdempotencyKey =
+      typeof routeData?.dispatchIdempotencyKey === "string"
+        ? routeData.dispatchIdempotencyKey
+        : "";
+    if (
+      route.ok &&
+      (action === "reuse" || action === "created") &&
+      targetThreadId &&
+      dispatchGrant &&
+      dispatchIdempotencyKey
+    ) {
       const dispatch = await postJson(fetchImpl, `${nextBaseUrl}/api/chat/send`, secret, {
         ...commonDispatchBody(context),
         threadId: targetThreadId,
@@ -197,12 +266,9 @@ export async function dispatchRuntimeControlActions(
         agent: routeAgent,
         skill: routeRequest.skill,
         controlDepth: 1,
-        idempotencyKey: actionIdempotencyKey(context, "task-dispatch", {
-          routeAgent,
-          targetThreadId,
-          brief: routeRequest.brief,
-          proposalId: routeRequest.proposalId,
-        }),
+        idempotencyKey: dispatchIdempotencyKey,
+      }, context, {
+        "X-Sancho-Route-Dispatch-Grant": dispatchGrant,
       });
       if (dispatch.ok) {
         result.actionsDispatched += 1;

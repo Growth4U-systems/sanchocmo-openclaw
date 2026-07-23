@@ -7,11 +7,19 @@ import os from "node:os";
 import path from "node:path";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+process.env.SANCHO_RUNTIME_TERMINAL_GRANT_SECRET =
+  "chat-send-runtime-terminal-grant-secret".padEnd(64, "x");
+
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "sancho-chat-send-runtime-"));
 process.env.MC_WORKSPACE = tmp;
 process.env.MC_TASKS_BACKEND = "json";
 process.env.SANCHO_RUNTIME = "external-http";
 process.env.SANCHO_EXTERNAL_SECRET = "runtime-secret";
+// Reproduce the production regression: enabling the OpenClaw durable rollout
+// must not make an otherwise healthy external/Hermes adapter return 503.
+process.env.CHAT_AGENT_TURN_EXECUTION_V1 = "canary";
+process.env.CHAT_AGENT_TURN_V1_SLUGS = "demo";
+process.env.CHAT_AGENT_TURN_DURABLE_WORKER_ENABLED = "1";
 process.env.GIT_COMMIT = "deployed-support-sha";
 process.env.SANCHOCMO_IMAGE_DIGEST = "sha256:support-image";
 process.env.NEXT_PUBLIC_ENV_LABEL = "Staging";
@@ -34,6 +42,10 @@ function mockResponse() {
   let statusCode = 200;
   let payload: Record<string, unknown> = {};
   const res = {
+    headersSent: false,
+    setHeader() {
+      return this;
+    },
     status(code: number) {
       statusCode = code;
       return this;
@@ -66,11 +78,13 @@ function runtimeRequest(
 function createParentAuthority(
   agentRuns: typeof import("../data/agent-runs"),
   threadId: string,
+  runtime = "external-http",
+  transportSecret?: string,
 ): Record<string, string> {
   const raw = "a".repeat(64);
   const run = agentRuns.createAgentRun({
     threadId,
-    runtime: "external-http",
+    runtime,
     agent: "sancho",
     input: {
       slug: threadId.slice(0, threadId.indexOf(":")),
@@ -84,6 +98,13 @@ function createParentAuthority(
       runtimeToolCapabilitySha256: createHash("sha256")
         .update(raw)
         .digest("hex"),
+      ...(transportSecret
+        ? {
+            runtimeTransportSecretSha256: createHash("sha256")
+              .update(transportSecret)
+              .digest("hex"),
+          }
+        : {}),
     },
   });
   agentRuns.markAgentRunDispatched(run.id, threadId);
@@ -92,6 +113,109 @@ function createParentAuthority(
     "x-sancho-parent-run-capability": raw,
   };
 }
+
+test("an in-flight Hermes parent survives runtime selection and secret rotation", async () => {
+  const received: Array<Record<string, unknown>> = [];
+  const outbound = http.createServer((req, res) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      received.push(JSON.parse(raw));
+      res.writeHead(202, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, runId: "external-after-hermes" }));
+    });
+  });
+  const address = await listen(outbound);
+  const previousHermesSecret = process.env.HERMES_BRIDGE_SECRET;
+  process.env.HERMES_BRIDGE_SECRET = "rotated-hermes-secret";
+  process.env.SANCHO_EXTERNAL_GATEWAY_URL = `http://127.0.0.1:${address.port}`;
+
+  const { resetRuntimeForTests } = await import("../runtime");
+  resetRuntimeForTests();
+  const sendRoute = await import("@/pages/api/chat/send");
+  const runsModule = await import("../data/agent-runs");
+  const agentRuns =
+    (runsModule as unknown as { default: typeof runsModule }).default ??
+    runsModule;
+  const parentHeaders = createParentAuthority(
+    agentRuns,
+    "demo:hermes-switch",
+    "hermes",
+    "in-flight-hermes-secret",
+  );
+  const body = {
+    slug: "demo",
+    threadId: "demo:hermes-switch",
+    text: "Continúa aunque el runtime seleccionado haya cambiado",
+    agent: "sancho",
+    scope: "agent",
+    controlDepth: 1,
+    idempotencyKey: "runtime-switch:hermes-to-external",
+  };
+
+  try {
+    const selectedRuntimeSecret = mockResponse();
+    await sendRoute.default(
+      runtimeRequest(body, {
+        ...parentHeaders,
+        "x-mc-secret": "runtime-secret",
+      }),
+      selectedRuntimeSecret.res,
+    );
+    assert.equal(selectedRuntimeSecret.read().statusCode, 403);
+    assert.equal(received.length, 0);
+
+    const rotatedParentRuntimeSecret = mockResponse();
+    await sendRoute.default(
+      runtimeRequest(body, {
+        ...parentHeaders,
+        "x-mc-secret": "rotated-hermes-secret",
+      }),
+      rotatedParentRuntimeSecret.res,
+    );
+    assert.equal(rotatedParentRuntimeSecret.read().statusCode, 403);
+    assert.equal(received.length, 0);
+
+    const parentRuntimeSecret = mockResponse();
+    await sendRoute.default(
+      runtimeRequest(body, {
+        ...parentHeaders,
+        "x-mc-secret": "in-flight-hermes-secret",
+      }),
+      parentRuntimeSecret.res,
+    );
+    assert.equal(parentRuntimeSecret.read().statusCode, 200);
+    assert.equal(received.length, 1);
+    assert.equal(received[0].threadId, "demo:hermes-switch");
+    const childRun = agentRuns.getAgentRunById(
+      String(parentRuntimeSecret.read().payload.runId),
+    );
+    assert.equal(childRun?.runtime, "external-http");
+    assert.equal(
+      (childRun?.input as Record<string, unknown>).controlParentAgentRunId,
+      parentHeaders["x-mission-control-parent-run-id"],
+    );
+    assert.equal(
+      (childRun?.input as Record<string, unknown>).controlParentThreadId,
+      "demo:hermes-switch",
+    );
+    assert.equal(
+      (childRun?.input as Record<string, unknown>)
+        .runtimeTransportSecretSha256,
+      createHash("sha256").update("runtime-secret").digest("hex"),
+    );
+  } finally {
+    if (previousHermesSecret === undefined) {
+      delete process.env.HERMES_BRIDGE_SECRET;
+    } else {
+      process.env.HERMES_BRIDGE_SECRET = previousHermesSecret;
+    }
+    await close(outbound);
+  }
+});
 
 test("trusted send retries reuse one ledger run and a client cannot claim mc-admin", async () => {
   const received: Array<Record<string, unknown>> = [];
@@ -142,6 +266,7 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
     assert.equal(received[0].userId, "mc-client-demo");
     assert.equal(received[0].controlDepth, 1);
     assert.equal(typeof received[0].missionControlRunId, "string");
+    assert.match(String(received[0].runtimeToolCapability), /^[a-f0-9]{64}$/);
     assert.equal(received[0].traceId, "trace-chat-send-1");
     assert.match(
       String(received[0].traceparent),
@@ -323,7 +448,7 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
         threadId: "other:general",
         text: "Do not cross tenants",
         idempotencyKey: "mc-control:cross-tenant",
-      }),
+      }, parentHeaders),
       crossTenant.res,
     );
     assert.equal(crossTenant.read().statusCode, 400);
@@ -332,6 +457,70 @@ test("trusted send retries reuse one ledger run and a client cannot claim mc-adm
       "Thread does not belong to slug",
     );
     assert.equal(received.length, 4);
+  } finally {
+    await close(runtime);
+  }
+});
+
+test("stateless runtimes receive server-derived conversation continuity", async () => {
+  const received: Array<Record<string, unknown>> = [];
+  const runtime = http.createServer((req, res) => {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      received.push(JSON.parse(raw));
+      res.writeHead(202, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, runId: `external-${received.length}` }));
+    });
+  });
+  const address = await listen(runtime);
+  process.env.SANCHO_EXTERNAL_GATEWAY_URL = `http://127.0.0.1:${address.port}`;
+  const { resetRuntimeForTests } = await import("../runtime");
+  resetRuntimeForTests();
+  const { sendHandler } = await import("@/pages/api/chat/send");
+  const adminContext = {
+    isAdmin: true,
+    clientSlug: null,
+    allowedSlugs: null,
+    adminToken: null,
+    portalClient: null,
+  };
+  const request = (text: string, idempotencyKey: string) =>
+    ({
+      method: "POST",
+      headers: {},
+      query: {},
+      ctx: adminContext,
+      body: {
+        slug: "demo",
+        threadId: "demo:continuity",
+        text,
+        agent: "sancho",
+        scope: "agent",
+        idempotencyKey,
+      },
+    }) as unknown as NextApiRequest;
+
+  try {
+    const first = mockResponse();
+    await sendHandler(request("Mi objetivo es lanzar la campaña", "continuity:1"), first.res);
+    assert.equal(first.read().statusCode, 200);
+    const second = mockResponse();
+    await sendHandler(request("¿Cuál era mi objetivo?", "continuity:2"), second.res);
+    assert.equal(second.read().statusCode, 200);
+    assert.equal(received.length, 2);
+    assert.deepEqual(received[0].priorThreadMessages, []);
+    assert.equal(
+      (received[1].priorThreadMessages as Array<Record<string, unknown>>).some(
+        (message) =>
+          message.role === "user" &&
+          message.text === "Mi objetivo es lanzar la campaña",
+      ),
+      true,
+    );
   } finally {
     await close(runtime);
   }

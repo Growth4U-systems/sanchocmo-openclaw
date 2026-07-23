@@ -52,7 +52,7 @@ function response() {
 }
 
 test(
-  "Stop reaches a running Ledger child after its chat parent already completed",
+  "Stop reaches a running durable child after its Hermes parent completed",
   {
     skip: databaseUrl
       ? false
@@ -68,7 +68,9 @@ test(
     process.env.MC_WORKSPACE = workspace;
     process.env.MC_TASKS_BACKEND = "json";
     process.env.SANCHO_AGENT_RUNS_BACKEND = "db";
-    process.env.SANCHO_RUNTIME = "openclaw";
+    process.env.SANCHO_RUNTIME = "hermes";
+    process.env.HERMES_GATEWAY_URL = "http://hermes.invalid";
+    process.env.HERMES_BRIDGE_SECRET = "cancel-origin-hermes-secret";
     process.env.MC_CHAT_SECRET = "cancel-origin-secret";
 
     const sql = postgres(databaseUrl as string, {
@@ -77,7 +79,7 @@ test(
       connection: { TimeZone: "UTC" },
     });
     let parentRunId = "";
-    let dispatchRunId = "";
+    let agentChildRunId = "";
     let childRunId = "";
     let closeApplicationDatabase: (() => Promise<void>) | undefined;
     try {
@@ -91,7 +93,6 @@ test(
         executionControl,
         durableExecution,
         runtimeOrigin,
-        chatTurnContract,
         api,
         db,
       ] = await Promise.all([
@@ -99,7 +100,6 @@ test(
         import("@/lib/execution-control"),
         import("@/lib/durable-execution"),
         import("@/lib/runtime/mc-chat-execution-origin"),
-        import("@/lib/chat/agent-turn-contract-v1"),
         import("@/pages/api/chat/cancel"),
         import("@/db/drizzle"),
       ]);
@@ -107,7 +107,7 @@ test(
       const threadId = `hospital-capilar:cancel-origin-${Date.now()}`;
       const parent = await agentRuns.createAgentRunAsync({
         threadId,
-        runtime: "openclaw",
+        runtime: "hermes",
         agent: "sancho",
         input: {
           slug: "hospital-capilar",
@@ -118,47 +118,34 @@ test(
           isAdmin: true,
           senderRole: "admin",
           readOnly: false,
-          runtimeDispatchMode: "ledger-v1",
+          runtimeEffectMode: "execution-origin-v1",
         },
       });
       parentRunId = parent.id;
+      const agentChildThreadId = `${threadId}-child`;
+      const agentChild = await agentRuns.createAgentRunAsync({
+        threadId: agentChildThreadId,
+        runtime: "hermes",
+        agent: "rocinante",
+        activeParent: { runId: parent.id, threadId },
+        input: {
+          slug: "hospital-capilar",
+          threadId: agentChildThreadId,
+          controlParentAgentRunId: parent.id,
+          controlParentThreadId: threadId,
+        },
+      });
+      agentChildRunId = agentChild.id;
+      await agentRuns.markAgentRunDispatchedAsync(
+        agentChild.id,
+        agentChild.threadId,
+      );
       await agentRuns.markAgentRunCompletedAsync(parent.id, threadId, {
         text: "La búsqueda continúa en segundo plano.",
       });
 
       const repository =
         new executionControl.PostgresExecutionControlRepository();
-      const dispatch = await repository.createRun({
-        tenantKey: "hospital-capilar",
-        idempotencyKey: `dispatch:${parent.id}`,
-        aggregateType: chatTurnContract.CHAT_AGENT_TURN_AGGREGATE_TYPE,
-        aggregateId: parent.id,
-        operation: chatTurnContract.CHAT_AGENT_TURN_OPERATION,
-        mode: "canary",
-        input: { fixture: "terminal-parent" },
-      });
-      dispatchRunId = dispatch.run.id;
-      const dispatchLease = await repository.claimRun({
-        tenantKey: "hospital-capilar",
-        operation: chatTurnContract.CHAT_AGENT_TURN_OPERATION,
-        mode: "canary",
-        runId: dispatch.run.id,
-        workerId: "cancel-origin-fixture",
-        leaseMs: 30_000,
-      });
-      assert.ok(dispatchLease);
-      assert.ok(
-        await repository.finishRun({
-          tenantKey: "hospital-capilar",
-          operation: chatTurnContract.CHAT_AGENT_TURN_OPERATION,
-          mode: "canary",
-          runId: dispatch.run.id,
-          token: dispatchLease.token,
-          status: "completed",
-          eventType: "chat.agent_turn.runtime_finished",
-        }),
-      );
-
       const child = await repository.createRunWithTrustedOrigin({
         command: {
           tenantKey: "hospital-capilar",
@@ -210,10 +197,22 @@ test(
       );
       assert.equal(first.state.status, 200, JSON.stringify(first.state.body));
       assert.equal(first.state.body?.cancellationPending, true);
-      assert.equal(first.state.body?.childCancellationCount, 1);
+      assert.equal(first.state.body?.childCount, 2);
+      assert.equal(first.state.body?.childCancellationCount, 2);
+      assert.equal(first.state.body?.agentRunChildCount, 1);
+      assert.equal(first.state.body?.agentRunChildCancellationCount, 1);
+      assert.equal(first.state.body?.agentRunChildRuntimeCancellationCount, 1);
+      assert.equal(
+        first.state.body?.agentRunChildRuntimeCancellationUnavailable,
+        false,
+      );
       assert.equal(
         (await agentRuns.getAgentRunByIdAsync(parent.id))?.status,
         "completed",
+      );
+      assert.equal(
+        (await agentRuns.getAgentRunByIdAsync(agentChild.id))?.status,
+        "cancelled",
       );
       const requestedChild = await repository.getRunById(child.run.id);
       assert.equal(requestedChild?.status, "running");
@@ -273,10 +272,10 @@ test(
         1,
       );
     } finally {
-      if (childRunId || dispatchRunId) {
+      if (childRunId) {
         await sql`
           DELETE FROM execution_runs
-          WHERE id IN (${childRunId || "missing-child"}, ${dispatchRunId || "missing-dispatch"})
+          WHERE id = ${childRunId}
         `;
       }
       if (parentRunId) {
@@ -286,7 +285,10 @@ test(
             AND kind = 'mc_chat_parent_run'
             AND parent_agent_run_id = ${parentRunId}
         `;
-        await sql`DELETE FROM agent_runs WHERE id = ${parentRunId}`;
+        await sql`
+          DELETE FROM agent_runs
+          WHERE id IN (${agentChildRunId || "missing-child"}, ${parentRunId})
+        `;
       }
       await closeApplicationDatabase?.();
       await sql.end({ timeout: 5 });

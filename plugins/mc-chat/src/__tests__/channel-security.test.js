@@ -15,7 +15,7 @@ function occurrences(source, fragment) {
   return source.split(fragment).length - 1;
 }
 
-test("channel callbacks validate the configured control-plane origin and reject redirects", () => {
+test("channel callbacks validate the control-plane origin and use the durable outbox", () => {
   assert.match(
     channelSource,
     /import \{ validatedControlPlaneOrigin \} from "\.\/chat-turn-authority\.js";/,
@@ -28,7 +28,15 @@ test("channel callbacks validate the configured control-plane origin and reject 
     2,
   );
   assert.equal(occurrences(channelSource, "if (!callbackUrl)"), 2);
-  assert.equal(occurrences(channelSource, 'redirect: "error"'), 2);
+  assert.equal(occurrences(channelSource, 'redirect: "error"'), 0);
+  assert.match(
+    channelSource,
+    /import \{ enqueueOpenClawTerminalCallback \} from "\.\/callback-delivery\.js";/,
+  );
+  assert.equal(
+    occurrences(channelSource, "enqueueOpenClawTerminalCallback({"),
+    2,
+  );
 });
 
 test("Discord outbound ingress remains explicitly fail-closed without scoped authority", () => {
@@ -46,6 +54,13 @@ test("every channel callback carries exact-run capability headers", () => {
   assert.equal(occurrences(channelSource, '"X-Mission-Control-Run-Id"'), 2);
   assert.match(pluginSource, /const callbackRunAuthorityHeaders = \{/);
   assert.match(pluginSource, /\.\.\.callbackRunAuthorityHeaders,/);
+  assert.match(channelSource, /"X-Sancho-Terminal-Callback-Grant"/);
+  assert.match(pluginSource, /"X-Sancho-Terminal-Callback-Grant"/);
+  assert.match(pluginSource, /initializeOpenClawCallbackDelivery\(\{/);
+  assert.equal(
+    occurrences(pluginSource, "await postTerminalDurably({"),
+    3,
+  );
 });
 
 test("Discord thread creation is explicitly fail-closed without scoped authority", () => {
@@ -65,6 +80,10 @@ test("the durable worker is a full-runtime service and dispatches claims in proc
   assert.match(pluginSource, /const request = Readable\.from\(/);
   assert.match(pluginSource, /request\.durableTurnClaim = claim/);
   assert.match(pluginSource, /await handleInboundRequest\(request, response\)/);
+  assert.match(
+    pluginSource,
+    /async stop\(\) \{\s*\/\/[^]*?callbackDelivery\.stop\(\);\s*await stopDurableWorker\(\);/,
+  );
   assert.doesNotMatch(pluginSource, /fetch\([^\n]*\/mc-chat\/inbound/);
 });
 
@@ -86,4 +105,23 @@ test("durable turns install a fail-closed tool boundary before OpenClaw executio
     /const releaseDurableToolBoundary = durableTurnClaim\s*\? durableToolBoundary\.registerTurn/,
   );
   assert.match(pluginSource, /releaseDurableToolBoundary\(\);/);
+});
+
+test("the exact-run Stop rail precedes terminal, chat-turn and duplicate admission", () => {
+  const stopControl = pluginSource.indexOf(
+    "const runtimeStop = processRuntimeStopControl",
+  );
+  const terminalAuthority = pluginSource.indexOf(
+    "const adapterTerminalCallbackAuthority",
+  );
+  const chatTurnAuthority = pluginSource.indexOf(
+    "const trustedTurn = await authorizeChatTurnWithControlPlane",
+  );
+  const inboundAdmission = pluginSource.indexOf(
+    "const inboundAdmission = claimRuntimeInbound",
+  );
+  assert.ok(stopControl >= 0);
+  assert.ok(terminalAuthority > stopControl);
+  assert.ok(chatTurnAuthority > stopControl);
+  assert.ok(inboundAdmission > stopControl);
 });

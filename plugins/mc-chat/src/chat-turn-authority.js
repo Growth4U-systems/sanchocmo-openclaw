@@ -113,6 +113,7 @@ function claimsFromPayload(payload) {
     taskRouteProposal: payload.taskRouteProposal,
     threadState: payload.threadState,
     controlBaseUrl: payload.controlBaseUrl,
+    runtimeEffectIntent: payload.runtimeEffectIntent,
   };
 }
 
@@ -139,7 +140,14 @@ function safeAuthority(value) {
       : value.senderRole !== "client" || value.userId === "mc-admin") ||
     (value.skills !== undefined &&
       (!Array.isArray(value.skills) ||
-        !value.skills.every((item) => typeof item === "string")))
+        !value.skills.every((item) => typeof item === "string"))) ||
+    (value.runtimeEffectIntent !== undefined &&
+      (!Array.isArray(value.runtimeEffectIntent) ||
+        !value.runtimeEffectIntent.every(
+          (name) =>
+            name === "leads_search_start" ||
+            name === "partnerships_discovery_start",
+        )))
   ) {
     return null;
   }

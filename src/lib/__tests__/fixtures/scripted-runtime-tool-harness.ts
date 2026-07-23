@@ -16,6 +16,7 @@ const TOOL_NAME_PATTERN = /^[a-z][a-z0-9_.-]{1,95}$/;
 
 const capabilities: RuntimeCapabilities = Object.freeze({
   chat: true,
+  durableChatTurns: false,
   cron: false,
   modelPicker: false,
   agentRegistry: false,
@@ -177,6 +178,7 @@ export class ScriptedRuntimeToolAdapter implements RuntimeAdapter {
   }
 
   readonly messaging = {
+    terminalDeliveryMode: (): "inline" => "inline",
     sendInbound: async (
       message: InboundMessage,
       sendOptions?: SendInboundOptions,

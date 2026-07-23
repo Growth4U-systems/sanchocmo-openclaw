@@ -16,12 +16,16 @@ const secretEnvNames = [
   "HERMES_EXTERNAL_SECRET",
   "HERMES_EXTERNAL_API_KEY",
   "HERMES_EXTERNAL_CHAT_SECRET",
+  "MC_CHAT_SECRET",
 ] as const;
 const previousSecretEnv = new Map(
   secretEnvNames.map((name) => [name, process.env[name]] as const),
 );
 for (const name of secretEnvNames) delete process.env[name];
 process.env.SANCHO_EXTERNAL_SECRET = "edge-secret";
+process.env.MC_CHAT_SECRET = "openclaw-run-secret";
+process.env.SANCHO_RUNTIME_TERMINAL_GRANT_SECRET =
+  "chat-edge-terminal-grant-secret".padEnd(64, "x");
 delete process.env.LOCAL_DASHBOARD_BYPASS;
 
 const clients = [
@@ -101,6 +105,7 @@ function request(options: {
   body?: Record<string, unknown>;
   ctx?: RequestContext;
   secret?: string;
+  headers?: Record<string, string>;
   runAuthority?: { runId: string; capability: string };
 }): NextApiRequest {
   return {
@@ -110,6 +115,7 @@ function request(options: {
     headers: {
       host: "example.test",
       ...(options.secret ? { "x-mc-secret": options.secret } : {}),
+      ...(options.headers ?? {}),
       ...(options.runAuthority
         ? {
             "x-mission-control-run-id": options.runAuthority.runId,
@@ -121,11 +127,16 @@ function request(options: {
   } as unknown as NextApiRequest;
 }
 
-function createRunAuthority(slug: string, threadId = `${slug}:general`) {
+function createRunAuthority(
+  slug: string,
+  threadId = `${slug}:general`,
+  runtime = "openclaw",
+  transportSecret?: string,
+) {
   const capability = "a".repeat(64);
   const run = agentRuns.createAgentRun({
     threadId,
-    runtime: "openclaw",
+    runtime,
     agent: "sancho",
     skill: `${slug}-skill`,
     skillMode: "auto",
@@ -140,6 +151,13 @@ function createRunAuthority(slug: string, threadId = `${slug}:general`) {
       runtimeToolCapabilitySha256: createHash("sha256")
         .update(capability)
         .digest("hex"),
+      ...(transportSecret
+        ? {
+            runtimeTransportSecretSha256: createHash("sha256")
+              .update(transportSecret)
+              .digest("hex"),
+          }
+        : {}),
     },
   });
   agentRuns.markAgentRunDispatched(run.id, threadId);
@@ -272,15 +290,39 @@ test("context-pack and webhook fail closed when the runtime secret is absent", a
     for (const item of [
       {
         handler: contextPackRoute.contextPackHandler,
-        body: { slug: "alpha", skill: "seo" },
+        body: {},
+        includeRunId: false,
       },
       {
         handler: webhookRoute.webhookHandler,
-        body: { slug: "alpha", threadId: "alpha:general", role: "system", text: "test" },
+        body: {
+          slug: "alpha",
+          threadId: "alpha:general",
+          role: "system",
+          text: "test",
+        },
+        includeRunId: true,
       },
     ]) {
+      const authority = createRunAuthority(
+        "alpha",
+        "alpha:general",
+        "external-http",
+      );
       const mocked = response();
-      await item.handler(request({ method: "POST", body: item.body }), mocked.res);
+      await item.handler(
+        request({
+          method: "POST",
+          body: {
+            ...item.body,
+            ...(item.includeRunId
+              ? { missionControlRunId: authority.runId }
+              : {}),
+          },
+          runAuthority: authority,
+        }),
+        mocked.res,
+      );
       assert.equal(mocked.read().statusCode, 503);
     }
   } finally {
@@ -297,6 +339,18 @@ test("context-pack requires transport secret plus exact run capability and deriv
   );
   assert.equal(denied.read().statusCode, 403);
 
+  const currentRuntimeSecret = response();
+  await contextPackRoute.contextPackHandler(
+    request({
+      method: "POST",
+      body: {},
+      secret: "edge-secret",
+      runAuthority: authority,
+    }),
+    currentRuntimeSecret.res,
+  );
+  assert.equal(currentRuntimeSecret.read().statusCode, 403);
+
   const secretOnly = response();
   await contextPackRoute.contextPackHandler(
     request({ method: "POST", body: {}, secret: "edge-secret" }),
@@ -306,7 +360,12 @@ test("context-pack requires transport secret plus exact run capability and deriv
 
   const allowed = response();
   await contextPackRoute.contextPackHandler(
-    request({ method: "POST", body: {}, secret: "edge-secret", runAuthority: authority }),
+    request({
+      method: "POST",
+      body: {},
+      secret: "openclaw-run-secret",
+      runAuthority: authority,
+    }),
     allowed.res,
   );
   assert.equal(allowed.read().statusCode, 200);
@@ -318,12 +377,55 @@ test("context-pack requires transport secret plus exact run capability and deriv
     request({
       method: "POST",
       body: { slug: "beta", skill: "beta-skill" },
-      secret: "edge-secret",
+      secret: "openclaw-run-secret",
       runAuthority: authority,
     }),
     spoofed.res,
   );
   assert.equal(spoofed.read().statusCode, 400);
+});
+
+test("context-pack accepts the admission secret after adapter secret rotation", async () => {
+  const admissionSecret = "openclaw-secret-at-admission";
+  const authority = createRunAuthority(
+    "alpha",
+    "alpha:context-secret-rotation",
+    "openclaw",
+    admissionSecret,
+  );
+  const previousSecret = process.env.MC_CHAT_SECRET;
+  process.env.MC_CHAT_SECRET = "rotated-openclaw-secret";
+  try {
+    const rotated = response();
+    await contextPackRoute.contextPackHandler(
+      request({
+        method: "POST",
+        body: {},
+        secret: "rotated-openclaw-secret",
+        runAuthority: authority,
+      }),
+      rotated.res,
+    );
+    assert.equal(rotated.read().statusCode, 403);
+
+    const admitted = response();
+    await contextPackRoute.contextPackHandler(
+      request({
+        method: "POST",
+        body: {},
+        secret: admissionSecret,
+        runAuthority: authority,
+      }),
+      admitted.res,
+    );
+    assert.equal(admitted.read().statusCode, 200);
+  } finally {
+    if (previousSecret === undefined) {
+      delete process.env.MC_CHAT_SECRET;
+    } else {
+      process.env.MC_CHAT_SECRET = previousSecret;
+    }
+  }
 });
 
 test("webhook rejects secret-only path-shaped input before any write", async () => {
@@ -350,6 +452,11 @@ test("send rejects traversal tenants and short ids that sanitize empty before wr
     dispatches += 1;
     return { ok: true, status: 202, raw: "{}" };
   };
+  const parentAuthority = createRunAuthority(
+    "alpha",
+    "alpha:general",
+    "external-http",
+  );
   const alphaGeneral = path.join(tmp, "brand", "alpha", "chat", "general.json");
   const before = fs.readFileSync(alphaGeneral, "utf8");
   const ledger = path.join(tmp, "_system", "agent-runs.json");
@@ -369,7 +476,15 @@ test("send rejects traversal tenants and short ids that sanitize empty before wr
     ]) {
       const mocked = response();
       await sendRoute.sendHandler(
-        request({ method: "POST", secret: "edge-secret", body }),
+        request({
+          method: "POST",
+          secret: "edge-secret",
+          headers: {
+            "x-mission-control-parent-run-id": parentAuthority.runId,
+            "x-sancho-parent-run-capability": parentAuthority.capability,
+          },
+          body,
+        }),
         mocked.res,
       );
       assert.equal(mocked.read().statusCode, 400);
@@ -380,6 +495,69 @@ test("send rejects traversal tenants and short ids that sanitize empty before wr
     assert.equal(
       fs.existsSync(ledger) ? fs.readFileSync(ledger, "utf8") : null,
       ledgerBefore,
+    );
+  } finally {
+    runtime.messaging.sendInbound = originalSend;
+  }
+});
+
+test("internal producers enter normal admission while preserving a downgraded principal", async () => {
+  const runtime = (await import("../runtime")).getRuntime();
+  const originalSend = runtime.messaging.sendInbound;
+  let dispatched: Record<string, unknown> | undefined;
+  runtime.messaging.sendInbound = async (payload) => {
+    dispatched = payload as unknown as Record<string, unknown>;
+    return { ok: true, status: 202, raw: JSON.stringify({ ok: true }) };
+  };
+  const threadId = "alpha:internal-dispatch";
+  try {
+    const mocked = response();
+    await sendRoute.sendHandler(
+      request({
+        method: "POST",
+        ctx: context({ isAdmin: true, adminToken: "admin-token-1234567890" }),
+        headers: { "x-sancho-internal-dispatch": "1" },
+        body: {
+          slug: "alpha",
+          threadId,
+          text: "authoritative instructions",
+          displayText: "Visible request card",
+          userId: "docs-assistant",
+          userName: "Docs Assistant",
+          isAdmin: false,
+          senderRole: "client",
+          readOnly: true,
+          agent: "sancho",
+          idempotencyKey: "internal-dispatch:one",
+          _source: "test-internal",
+        },
+      }),
+      mocked.res,
+    );
+    assert.equal(mocked.read().statusCode, 200);
+    assert.equal(dispatched?.text, "authoritative instructions");
+    assert.equal(dispatched?.isAdmin, false);
+    assert.equal(dispatched?.senderRole, "client");
+    assert.equal(dispatched?.readOnly, true);
+    assert.equal(dispatched?.userId, "docs-assistant");
+    const stored = JSON.parse(
+      fs.readFileSync(
+        path.join(tmp, "brand", "alpha", "chat", "internal-dispatch.json"),
+        "utf8",
+      ),
+    ) as { messages?: Array<{ role?: string; text?: string }> };
+    assert.equal(
+      stored.messages?.some(
+        (message) =>
+          message.role === "user" && message.text === "Visible request card",
+      ),
+      true,
+    );
+    assert.equal(
+      stored.messages?.some(
+        (message) => message.text === "authoritative instructions",
+      ),
+      false,
     );
   } finally {
     runtime.messaging.sendInbound = originalSend;
