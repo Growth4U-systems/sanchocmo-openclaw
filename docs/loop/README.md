@@ -87,3 +87,15 @@ assisted loop completes 3–5 clean PRs against the promotion gate:
 See the full target design in `tasks/prd-autonomous-delivery-control-plane.md`
 (planning; not committed to the repo) — this README intentionally implements only
 its first, assisted slice.
+
+## Based on
+
+This loop adapts **[Finn-loop](https://github.com/finna/Finn-loop)** (MIT) — a
+three-skill Claude Code factory (spec / build / review, **humans merge**). Our
+spec shape (`AC-N` / `NG-N` / relevant files / test expectations / how to verify)
+matches Finn's, and the "explicitly deferred" list above maps onto Finn's own
+staged roadmap: fresh-reviewer convergence → a Slack **🚀** merge-ready lane
+(react to authorize; re-verify then squash-merge) → risk-aware merging →
+preview/doc gates → watchdog → leased workers. The executable `finn-*` skills,
+adapted to this repo's `git-workflow` (branch `<author>/san-<n>`, base `main`,
+squash, `Refs/Fixes SAN-<n>`), are adopted in a follow-up packet.
